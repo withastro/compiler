@@ -8,7 +8,8 @@ Astro's current compiler is stateful and coupled to Snowpack. There's a great op
 
 This **experimental** compiler for `.astro` files generates a `.js` module that can be run at server-time. Currently, it is kinda working!
 
-### TBD
+### Todo
+- [ ] Make the generated code run in Node 😅
 - [ ] Support fragments (non-Page components)
 - [ ] Extract styles
 - [ ] Compile TS to JS
