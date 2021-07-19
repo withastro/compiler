@@ -1,10 +1,27 @@
-# WIP: Experimental Astro compiler
+# [Experimental] Astro Compiler
 
-We haven't even talked about this as a team, I just wanted to see if it was theoretically possible 🙃
+> **Note** This is a highly experimental compiler which doesn't really work yet! Consider this a proof-of-concept that is NOT indicative of the future direction of Astro.
 
-Turns out, it is!
+## `.astro` => `.js`
 
-```bash
+Astro's current compiler is stateful and coupled to Snowpack. There's a great opportunity here to improve Astro's separation of concerns and make `.astro` a more general format that can be plugged into different build tools (which may be a non-goal, TBD).
+
+This **experimental** compiler for `.astro` files generates a `.js` module that can be run at server-time. Currently, it is kinda working!
+
+### TBD
+- [] Support fragments (non-Page components)
+- [] Extract styles
+- [] Compile TS to JS
+- [] Handle markup in embedded expressions
+- [] import Astro's `h` function
+- [] Figure out what to do with top-level `await`, `exports`
+- [] Link generated template to `__render` function with slots
+- [] Attach JS variables to `$$data` namespace
+
+
+You can demo it by running
+
+```shell
 go run .
 ```
 
