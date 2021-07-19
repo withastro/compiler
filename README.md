@@ -1,4 +1,4 @@
-# [Experimental] Astro Compiler
+# [Experimental] Tycho – a new Go-based Compiler for Astro
 
 ### **Note** This is a highly experimental compiler which doesn't really work yet! Consider this a proof-of-concept that is NOT indicative of the future direction of Astro.
 
