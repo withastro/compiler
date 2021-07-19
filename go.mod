@@ -1,4 +1,4 @@
-module github.com/snowpackjs/astro
+module github.com/snowpackjs/go-astro
 
 go 1.16
 

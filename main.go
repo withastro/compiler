@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	astro "github.com/snowpackjs/astro/internal"
+	astro "github.com/snowpackjs/go-astro/internal"
 )
 
 func main() {
