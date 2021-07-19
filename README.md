@@ -9,14 +9,14 @@ Astro's current compiler is stateful and coupled to Snowpack. There's a great op
 This **experimental** compiler for `.astro` files generates a `.js` module that can be run at server-time. Currently, it is kinda working!
 
 ### TBD
-- [] Support fragments (non-Page components)
-- [] Extract styles
-- [] Compile TS to JS
-- [] Handle markup in embedded expressions
-- [] import Astro's `h` function
-- [] Figure out what to do with top-level `await`, `exports`
-- [] Link generated template to `__render` function with slots
-- [] Attach JS variables to `$$data` namespace
+- [ ] Support fragments (non-Page components)
+- [ ] Extract styles
+- [ ] Compile TS to JS
+- [ ] Handle markup in embedded expressions
+- [ ] import Astro's `h` function
+- [ ] Figure out what to do with top-level `await`, `exports`
+- [ ] Link generated template to `__render` function with slots
+- [ ] Attach JS variables to `$$data` namespace
 
 
 You can demo it by running
