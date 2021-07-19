@@ -1,4 +1,4 @@
-module github.com/snowpackjs/go-astro
+module github.com/snowpackjs/tycho
 
 go 1.16
 

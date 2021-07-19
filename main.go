@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	astro "github.com/snowpackjs/go-astro/internal"
+	tycho "github.com/snowpackjs/tycho/internal"
 )
 
 func main() {
@@ -52,14 +52,14 @@ import Counter from '../components/Counter.jsx'
 </html>
 `
 
-	doc, err := astro.Parse(strings.NewReader(s))
+	doc, err := tycho.Parse(strings.NewReader(s))
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	w := new(strings.Builder)
-	astro.Render(w, doc)
+	tycho.Render(w, doc)
 
 	fmt.Println(w.String())
 
