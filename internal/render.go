@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/snowpackjs/tycho/internal/js_scanner"
 )
 
 type writer interface {
@@ -57,7 +59,14 @@ func Render(w io.Writer, n *Node) error {
 // has been rendered. No more end tags should be rendered after that.
 var plaintextAbort = errors.New("html: internal error (plaintext abort)")
 
+var importStatements []string
+var css []string
+var renderBody string
+
 func render(w writer, n *Node) error {
+	importStatements = make([]string, 0)
+	renderBody = string("")
+
 	err := render1(w, n, true)
 	if err == plaintextAbort {
 		err = nil
@@ -91,8 +100,30 @@ func render1(w writer, n *Node, options ...bool) error {
 	case ElementNode:
 		// No-op.
 	case FrontmatterNode:
-		if _, err := w.WriteString(n.Data); err != nil {
-			return err
+		imports := js_scanner.FindImportStatements([]byte(n.Data))
+		var prevImport *js_scanner.ImportStatement
+		for i, currImport := range imports {
+			var nextImport *js_scanner.ImportStatement
+			if i < len(imports)-1 {
+				nextImport = imports[i+1]
+			}
+			// Extract import statement
+			text := n.Data[currImport.StatementStart:currImport.StatementEnd]
+			addImportStatement(text)
+
+			if i == 0 {
+				renderBody += strings.TrimSpace(n.Data[0:currImport.StatementStart]) + "\n"
+			}
+			if prevImport != nil {
+				renderBody += strings.TrimSpace(n.Data[prevImport.StatementEnd:currImport.StatementStart]) + "\n"
+			}
+			if nextImport != nil {
+				renderBody += strings.TrimSpace(n.Data[currImport.StatementEnd:nextImport.StatementStart]) + "\n"
+			}
+			if i == len(imports)-1 {
+				renderBody += strings.TrimSpace(n.Data[currImport.StatementEnd:]) + "\n"
+			}
+			prevImport = currImport
 		}
 		return nil
 	case ExpressionNode:
@@ -163,8 +194,20 @@ func render1(w writer, n *Node, options ...bool) error {
 		return errors.New("html: unknown node type")
 	}
 
+	isComponent := n.Component || n.CustomElement
+
 	if isRoot {
-		if _, err := w.WriteString("const __renderTemplate = ($$data) => ("); err != nil {
+		// TODO: write this at the end, not now!
+		if _, err := w.WriteString(strings.Join(importStatements, "\n") + "\n"); err != nil {
+			return err
+		}
+		if _, err := w.WriteString("async function __render(props, ...children) {\n"); err != nil {
+			return err
+		}
+		if _, err := w.WriteString(renderBody); err != nil {
+			return err
+		}
+		if _, err := w.WriteString("  return "); err != nil {
 			return err
 		}
 	} else {
@@ -173,16 +216,18 @@ func render1(w writer, n *Node, options ...bool) error {
 		}
 	}
 
-	if n.Component || n.CustomElement {
-		if _, err := w.WriteString("h(__astro_component,null,"); err != nil {
+	if isComponent {
+		addImportStatement("import { __astro_component } from 'astro/dist/internal/__astro_component.js';")
+		if _, err := w.WriteString("h(__astro_component,{ Component: "); err != nil {
+			return err
+		}
+	} else {
+		// Render the <xxx> opening tag.
+		if _, err := w.WriteString("h("); err != nil {
 			return err
 		}
 	}
 
-	// Render the <xxx> opening tag.
-	if _, err := w.WriteString("h("); err != nil {
-		return err
-	}
 	if n.Component {
 		if _, err := w.WriteString(n.Data); err != nil {
 			return err
@@ -195,11 +240,11 @@ func render1(w writer, n *Node, options ...bool) error {
 	if err := w.WriteByte(','); err != nil {
 		return err
 	}
-	if len(n.Attr) == 0 {
+	if len(n.Attr) == 0 && !isComponent {
 		if _, err := w.WriteString("null"); err != nil {
 			return err
 		}
-	} else {
+	} else if !isComponent {
 		if _, err := w.WriteString("{"); err != nil {
 			return err
 		}
@@ -229,7 +274,7 @@ func render1(w writer, n *Node, options ...bool) error {
 			}
 		}
 	}
-	if len(n.Attr) != 0 {
+	if len(n.Attr) != 0 || isComponent {
 		if _, err := w.WriteString("}"); err != nil {
 			return err
 		}
@@ -285,20 +330,17 @@ func render1(w writer, n *Node, options ...bool) error {
 		}
 	}
 
-	// if n.Component || n.CustomElement {
-	// 	if err := w.WriteByte(')'); err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// if isRoot {
-	// 	if err := w.WriteByte(')'); err != nil {
-	// 		return err
-	// 	}
-	// }
-
 	if _, err := w.WriteString(")"); err != nil {
 		return err
+	}
+
+	if isRoot {
+		if _, err := w.WriteString("\n}\n"); err != nil {
+			return err
+		}
+		if _, err := w.WriteString("\n\nexport default { isAstroComponent: true, __render }\n"); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -342,4 +384,15 @@ var voidElements = map[string]bool{
 	"source": true,
 	"track":  true,
 	"wbr":    true,
+}
+
+func addImportStatement(statement string) {
+	exists := false
+	for _, i := range importStatements {
+		exists = i == statement
+		if exists {
+			return
+		}
+	}
+	importStatements = append(importStatements, statement)
 }

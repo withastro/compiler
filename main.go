@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	esbuild "github.com/evanw/esbuild/pkg/api"
 	tycho "github.com/snowpackjs/tycho/internal"
 )
 
@@ -12,10 +13,15 @@ func main() {
 	s := `---
 // Component Imports
 import Counter from '../components/Counter.jsx'
+import Block from '../components/Block.jsx'
+
+const result = await fetch('https://google.com/').then(res => res.text());
+const Test = 'div';
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/
 ---
+
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -44,6 +50,7 @@ import Counter from '../components/Counter.jsx'
   </head>
   <body>
     <main>
+      <Test>Hello world!</Test>
       <Counter client:visible>
         <h1>Hello React!</h1>
       </Counter>
@@ -60,7 +67,16 @@ import Counter from '../components/Counter.jsx'
 
 	w := new(strings.Builder)
 	tycho.Render(w, doc)
+	js := w.String()
 
-	fmt.Println(w.String())
+	res := esbuild.Transform(js, esbuild.TransformOptions{
+		Loader: esbuild.LoaderJS,
+	})
+
+	if len(res.Errors) != 0 {
+		fmt.Println(js)
+		fmt.Println(res.Errors[0].Text)
+	}
+	fmt.Println(string(res.Code))
 
 }
