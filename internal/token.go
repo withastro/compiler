@@ -17,6 +17,15 @@ import (
 // A TokenType is the type of a Token.
 type TokenType uint32
 
+// A TokenType is the type of a Token.
+type FrontmatterState uint32
+
+const (
+	FrontmatterInitial FrontmatterState = iota
+	FrontmatterOpen
+	FrontmatterClosed
+)
+
 const (
 	// ErrorToken means that an error occurred during tokenization.
 	ErrorToken TokenType = iota
@@ -32,8 +41,15 @@ const (
 	CommentToken
 	// A DoctypeToken looks like <!DOCTYPE x>
 	DoctypeToken
-	// An ExpressionToken looks like {/* Some JS here! */}
-	ExpressionToken
+
+	// ASTRO EXTENSIONS
+	// A FenceToken is the opening or closing --- of Frontmatter
+	FrontmatterFenceToken
+
+	// A StartExpressionToken looks like { and can contain
+	StartExpressionToken
+	// An EndExpressionToken looks like }
+	EndExpressionToken
 )
 
 // ErrBufferExceeded means that the buffering limit was exceeded.
@@ -56,10 +72,26 @@ func (t TokenType) String() string {
 		return "Comment"
 	case DoctypeToken:
 		return "Doctype"
-	case ExpressionToken:
-		return "Expression"
+	case FrontmatterFenceToken:
+		return "FrontmatterFence"
+	case StartExpressionToken:
+		return "StartExpression"
+	case EndExpressionToken:
+		return "EndExpression"
 	}
 	return "Invalid(" + strconv.Itoa(int(t)) + ")"
+}
+
+func (fm FrontmatterState) String() string {
+	switch fm {
+	case FrontmatterInitial:
+		return "Initial"
+	case FrontmatterOpen:
+		return "Open"
+	case FrontmatterClosed:
+		return "Closed"
+	}
+	return "Invalid(" + strconv.Itoa(int(fm)) + ")"
 }
 
 // An Attribute is an attribute namespace-key-value triple. Namespace is
@@ -127,8 +159,6 @@ func (t Token) String() string {
 		return "<!--" + t.Data + "-->"
 	case DoctypeToken:
 		return "<!DOCTYPE " + t.Data + ">"
-	case ExpressionToken:
-		return "{" + t.Data + "}"
 	}
 	return "Invalid(" + strconv.Itoa(int(t.Type)) + ")"
 }
@@ -145,6 +175,7 @@ type Tokenizer struct {
 	r io.Reader
 	// tt is the TokenType of the current token.
 	tt TokenType
+	fm FrontmatterState
 	// err is the first error encountered during tokenization. It is possible
 	// for tt != Error && err != nil to hold: this means that Next returned a
 	// valid token but the subsequent Next call will return an error token.
@@ -173,6 +204,11 @@ type Tokenizer struct {
 	pendingAttr   [2]span
 	attr          [][2]span
 	nAttrReturned int
+	dashCount     int
+	// expressionStack is an array of counters tracking opening and closing
+	// braces in nested expressions
+	expressionStack            []int
+	openBraceIsExpressionStart bool
 	// rawTag is the "script" in "</script>" that closes the next token. If
 	// non-empty, the subsequent call to Next will return a raw or RCDATA text
 	// token: one that treats "<p>" as text instead of an element.
@@ -374,6 +410,12 @@ loop:
 	z.textIsRaw = z.rawTag != "textarea" && z.rawTag != "title"
 	z.rawTag = ""
 }
+
+// readRawWithExpressions reads until the next "</foo>", where "foo" is z.rawTag
+// This is a special case for Astro where we /do/ want expressions like in <title>
+// func (z *Tokenizer) readRawWithExpressions() {
+
+// }
 
 // readRawEndTag attempts to read a tag like "</foo>", where "foo" is z.rawTag.
 // If it succeeds, it backs up the input position to reconsume the tag and
@@ -611,13 +653,6 @@ scriptDataDoubleEscapeEnd:
 	goto scriptDataDoubleEscaped
 }
 
-// readExpression reads until it encounters a matching } tag
-func (z *Tokenizer) readExpression() {
-	z.data.start = z.raw.end
-	z.readUntilMatchedBrace()
-	z.data.end = z.raw.end - len("}")
-}
-
 // readComment reads the next comment token starting with "<!--". The opening
 // "<!--" has already been consumed.
 func (z *Tokenizer) readComment() {
@@ -678,31 +713,6 @@ func (z *Tokenizer) readUntilCloseAngle() {
 			return
 		}
 	}
-}
-
-// readUntilMatchedBrace reads until all opening "{" are matched with a closing "}".
-func (z *Tokenizer) readUntilMatchedBrace() {
-	z.data.start = z.raw.end
-	for braceCount := 1; ; {
-		c := z.readByte()
-		if z.err != nil {
-			z.data.end = z.raw.end
-			return
-		}
-		switch c {
-		case '{':
-			braceCount++
-			continue
-		case '}':
-			braceCount--
-			if braceCount == 0 {
-				z.data.end = z.raw.end - len("}")
-				return
-			}
-			continue
-		}
-	}
-
 }
 
 // readMarkupDeclaration reads the next token starting with "<!". It might be
@@ -1012,6 +1022,8 @@ func (z *Tokenizer) Next() TokenType {
 			}
 			z.data.end = z.raw.end
 			z.textIsRaw = true
+		} else if z.rawTag == "title" {
+			goto raw_with_expression_loop
 		} else {
 			z.readRawOrRCDATA()
 		}
@@ -1031,20 +1043,45 @@ loop:
 			break loop
 		}
 		var tokenType TokenType
-		if c == '{' {
-			// We have a non-text token, but we might have accumulated some text
-			// before that. If so, we return the text first, and return the non-
-			// text token on the subsequent call to Next.
-			if x := z.raw.end - len("<a"); z.raw.start < x {
+
+		// if c == '-' && z.fm != FrontmatterClosed {
+		// 	z.dashCount++
+		// 	if z.dashCount == 3 {
+		// 		if z.fm == FrontmatterInitial {
+		// 			z.dashCount = 0
+		// 			z.fm = FrontmatterOpen
+		// 			z.data.end = z.raw.end
+		// 			z.tt = FrontmatterFenceToken
+		// 			z.openBraceIsExpressionStart = false
+		// 			return z.tt
+		// 		}
+		// 		if z.fm == FrontmatterOpen {
+		// 			z.dashCount = 0
+		// 			z.fm = FrontmatterClosed
+		// 			z.data.end = z.raw.end
+		// 			z.tt = FrontmatterFenceToken
+		// 			return z.tt
+		// 		}
+		// 		z.raw.end--
+		// 		continue
+		// 	}
+		// }
+
+		// if c != '-' && z.dashCount > 0 {
+		// 	z.dashCount = 0
+		// }
+
+		if c == '{' || c == '}' {
+			if x := z.raw.end - len("{"); z.raw.start < x {
 				z.raw.end = x
 				z.data.end = x
 				z.tt = TextToken
 				return z.tt
 			}
-			z.readExpression()
-			z.tt = ExpressionToken
-			return z.tt
+			z.raw.end--
+			goto expression_loop
 		}
+
 		if c != '<' {
 			continue loop
 		}
@@ -1055,6 +1092,9 @@ loop:
 		if z.err != nil {
 			break loop
 		}
+
+		// We're in an element again, so open braces should open an expression
+		z.openBraceIsExpressionStart = true
 		switch {
 		case 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z':
 			tokenType = StartTagToken
@@ -1089,6 +1129,7 @@ loop:
 				break loop
 			}
 			if c == '>' {
+				// TODO: </> should be overloaded as a shorthand for Fragment!
 				// "</>" does not generate a token at all. Generate an empty comment
 				// to allow passthrough clients to pick up the data using Raw.
 				// Reset the tokenizer state and start again.
@@ -1117,6 +1158,109 @@ loop:
 			z.readUntilCloseAngle()
 			z.tt = CommentToken
 			return z.tt
+		}
+	}
+	if z.raw.start < z.raw.end {
+		// We're scanning Text, so open braces should be ignored
+		z.openBraceIsExpressionStart = false
+		z.data.end = z.raw.end
+		z.tt = TextToken
+		return z.tt
+	}
+	z.tt = ErrorToken
+	return z.tt
+
+raw_with_expression_loop:
+	for {
+		c := z.readByte()
+		if z.err != nil {
+			break raw_with_expression_loop
+		}
+		if c == '{' || c == '}' {
+			if x := z.raw.end - len("{"); z.raw.start < x {
+				z.raw.end = x
+				z.data.end = x
+				z.tt = TextToken
+				return z.tt
+			}
+			z.raw.end--
+			goto expression_loop
+		}
+		if c != '<' {
+			continue raw_with_expression_loop
+		}
+		c = z.readByte()
+		if z.err != nil {
+			break raw_with_expression_loop
+		}
+		if c != '/' {
+			z.raw.end--
+			continue raw_with_expression_loop
+		}
+		if z.readRawEndTag() || z.err != nil {
+			break raw_with_expression_loop
+		}
+	}
+	z.data.end = z.raw.end
+	// A textarea's or title's RCDATA can contain escaped entities.
+	z.textIsRaw = z.rawTag != "textarea" && z.rawTag != "title"
+	z.rawTag = ""
+
+expression_loop:
+	for {
+		c := z.readByte()
+
+		if z.err != nil {
+			break expression_loop
+		}
+
+		if c == '<' {
+			z.raw.end--
+			z.data.end = z.raw.end
+			if z.rawTag != "" {
+				goto raw_with_expression_loop
+			} else {
+				goto loop
+			}
+		}
+
+		if c != '{' && c != '}' {
+			continue expression_loop
+		}
+
+		if x := z.raw.end - len("{"); z.raw.start < x {
+			z.raw.end = x
+			z.data.end = x
+			z.tt = TextToken
+			return z.tt
+		}
+
+		switch c {
+		case '{':
+			if z.openBraceIsExpressionStart {
+				z.openBraceIsExpressionStart = false
+				z.expressionStack = append(z.expressionStack, 0)
+				z.data.end = z.raw.end - 1
+				z.tt = StartExpressionToken
+				return z.tt
+			} else {
+				z.expressionStack[len(z.expressionStack)-1]++
+				z.data.end = z.raw.end
+				z.tt = TextToken
+				return z.tt
+			}
+		case '}':
+			z.expressionStack[len(z.expressionStack)-1]--
+			if len(z.expressionStack) == 0 {
+				z.err = errors.New("matched }")
+				return ErrorToken
+			}
+			if z.expressionStack[len(z.expressionStack)-1] == -1 {
+				z.expressionStack = z.expressionStack[0 : len(z.expressionStack)-1]
+				z.data.end = z.raw.end
+				z.tt = EndExpressionToken
+				return z.tt
+			}
 		}
 	}
 	if z.raw.start < z.raw.end {
@@ -1188,29 +1332,11 @@ func (z *Tokenizer) Text() []byte {
 		if (z.convertNUL || z.tt == CommentToken) && bytes.Contains(s, nul) {
 			s = bytes.Replace(s, nul, replacement, -1)
 		}
-		if !z.textIsRaw {
-			s = unescape(s, false)
-		}
-		return s
-	}
-	return nil
-}
 
-// Text returns the unescaped text of a text, comment or doctype token. The
-// contents of the returned slice may change on the next call to Next.
-func (z *Tokenizer) Expression() []byte {
-	switch z.tt {
-	case ExpressionToken, TextToken, CommentToken, DoctypeToken:
-		s := z.buf[z.data.start:z.data.end]
-		z.data.start = z.raw.end
-		z.data.end = z.raw.end
-		s = convertNewlines(s)
-		if (z.convertNUL || z.tt == CommentToken) && bytes.Contains(s, nul) {
-			s = bytes.Replace(s, nul, replacement, -1)
-		}
-		if !z.textIsRaw {
-			s = unescape(s, false)
-		}
+		// Do not unescape text, leave it raw for the browser
+		// if !z.textIsRaw {
+		// 	s = unescape(s, false)
+		// }
 		return s
 	}
 	return nil
@@ -1254,8 +1380,10 @@ func (z *Tokenizer) TagAttr() (key, val []byte, moreAttr bool) {
 func (z *Tokenizer) Token() Token {
 	t := Token{Type: z.tt}
 	switch z.tt {
-	case ExpressionToken:
-		t.Data = string(z.Expression())
+	case StartExpressionToken:
+		t.Data = "{"
+	case EndExpressionToken:
+		t.Data = "}"
 	case TextToken, CommentToken, DoctypeToken:
 		t.Data = string(z.Text())
 	case StartTagToken, SelfClosingTagToken, EndTagToken:

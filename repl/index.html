@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hello World - Go</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    html {
+      margin: 0;
+      padding: 0;
+    }
+      body {
+        background: #FFF;
+      }
+      body {
+        margin: 0;
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        grid-template-rows: repeat(auto-fit, minmax(20%, 1fr));
+      }
+      pre {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      .CodeMirror {
+        height: 100%;
+      }
+      .CodeMirror-code,
+      .language-html {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px !important;
+      }
+      pre[class*="language-"] {
+        margin: 0 !important;
+      }
+    </style>
+    <link href="./prism-theme.css" rel="stylesheet" />
+      <link href="./cm-theme.css" rel="stylesheet" />
+  </head>
+  <body>
+
+    <div id="editor"></div>
+
+    <pre><code id="output" class="language-html"></code></pre>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css">
+    </link>
+
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.js">
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/addon/hint/show-hint.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/addon/hint/xml-hint.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/addon/hint/html-hint.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/xml/xml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/javascript/javascript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/css/css.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/htmlmixed/htmlmixed.js"></script>
+
+    <script type="module" src="./shim.js"></script>
+    <script type="module" src="./editor.js"></script>
+    <script src="./wasm_exec.js"></script>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

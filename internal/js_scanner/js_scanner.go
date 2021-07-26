@@ -23,6 +23,7 @@ var importStatements []*ImportStatement
 func FindImportStatements(_source []byte) []*ImportStatement {
 	source = _source
 	importStatements = make([]*ImportStatement, 0)
+	pos = 0
 	for ; pos < len(source)-1; pos++ {
 		c := readCommentWhitespace(true)
 		switch true {

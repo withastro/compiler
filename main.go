@@ -1,82 +1,46 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"encoding/base32"
 	"strings"
+	"syscall/js"
 
-	esbuild "github.com/evanw/esbuild/pkg/api"
 	tycho "github.com/snowpackjs/tycho/internal"
+	"github.com/snowpackjs/tycho/internal/transform"
+	"github.com/snowpackjs/tycho/internal/xxhash"
 )
 
 func main() {
-	s := `---
-// Component Imports
-import Counter from '../components/Counter.jsx'
-import Block from '../components/Block.jsx'
+	js.Global().Set("BuildPage", js.FuncOf(BuildPage))
+	<-make(chan bool)
+}
 
-const result = await fetch('https://google.com/').then(res => res.text());
-const Test = 'div';
-
-// Full Astro Component Syntax:
-// https://docs.astro.build/core-concepts/astro-components/
----
-
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
-    <style>
-      :global(:root) {
-        font-family: system-ui;
-        padding: 2em 0;
-      }
-      :global(.counter) {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        place-items: center;
-        font-size: 2em;
-        margin-top: 2em;
-      }
-      :global(.children) {
-        display: grid;
-        place-items: center;
-        margin-bottom: 2em;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <Test>Hello world!</Test>
-      <Counter client:visible>
-        <h1>Hello React!</h1>
-      </Counter>
-    </main>
-  </body>
-</html>
-`
-
-	doc, err := tycho.Parse(strings.NewReader(s))
-
-	if err != nil {
-		log.Fatal(err)
+func jsString(j js.Value) string {
+	if j.IsUndefined() || j.IsNull() {
+		return ""
 	}
+	return j.String()
+}
+
+func BuildPage(this js.Value, args []js.Value) interface{} {
+	source := jsString(args[0])
+	doc, _ := tycho.Parse(strings.NewReader(source))
+	hash := hashFromSource(source)
+
+	transform.Transform(doc, transform.TransformOptions{
+		Scope: hash,
+	})
 
 	w := new(strings.Builder)
 	tycho.Render(w, doc)
 	js := w.String()
 
-	res := esbuild.Transform(js, esbuild.TransformOptions{
-		Loader: esbuild.LoaderJS,
-	})
+	return js
+}
 
-	if len(res.Errors) != 0 {
-		fmt.Println(js)
-		fmt.Println(res.Errors[0].Text)
-	}
-	fmt.Println(string(res.Code))
-
+func hashFromSource(source string) string {
+	h := xxhash.New()
+	h.Write([]byte(source))
+	hashBytes := h.Sum(nil)
+	return base32.StdEncoding.EncodeToString(hashBytes)[:8]
 }

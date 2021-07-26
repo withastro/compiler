@@ -9,9 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/snowpackjs/tycho/internal/js_scanner"
+	a "golang.org/x/net/html/atom"
 )
 
 type writer interface {
@@ -59,40 +61,48 @@ func Render(w io.Writer, n *Node) error {
 // has been rendered. No more end tags should be rendered after that.
 var plaintextAbort = errors.New("html: internal error (plaintext abort)")
 
-var importStatements []string
-var css []string
-var renderBody string
+type RenderOptions struct {
+	isRoot       bool
+	isExpression bool
+	depth        int
+}
 
 func render(w writer, n *Node) error {
-	importStatements = make([]string, 0)
-	renderBody = string("")
-
-	err := render1(w, n, true)
+	err := render1(w, n, RenderOptions{
+		isRoot:       true,
+		isExpression: false,
+		depth:        0,
+	})
 	if err == plaintextAbort {
 		err = nil
 	}
 	return err
 }
 
-func render1(w writer, n *Node, options ...bool) error {
-	// Handle root level node a little differently
-	isRoot := false
-	if len(options) > 0 {
-		isRoot = options[0]
-	}
-
+func render1(w writer, n *Node, opts RenderOptions) error {
+	depth := opts.depth
 	// Render non-element nodes; these are the easy cases.
 	switch n.Type {
 	case ErrorNode:
 		return errors.New("html: cannot render an ErrorNode node")
 	case TextNode:
-		if _, err := w.WriteString(",`" + n.Data + "`"); err != nil {
+		backticks := regexp.MustCompile("`")
+		dollarOpen := regexp.MustCompile(`\${`)
+		text := n.Data
+		text = strings.Replace(text, "\\", "\\\\", -1)
+		text = backticks.ReplaceAllString(text, "\\`")
+		text = dollarOpen.ReplaceAllString(text, "\\${")
+		if _, err := w.WriteString(",`" + text + "`"); err != nil {
 			return err
 		}
 		return nil
 	case DocumentNode:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := render1(w, c, true); err != nil {
+			if err := render1(w, c, RenderOptions{
+				isRoot:       true,
+				isExpression: false,
+				depth:        depth + 1,
+			}); err != nil {
 				return err
 			}
 		}
@@ -101,6 +111,8 @@ func render1(w writer, n *Node, options ...bool) error {
 		// No-op.
 	case FrontmatterNode:
 		imports := js_scanner.FindImportStatements([]byte(n.Data))
+		importStatements := make([]string, len(imports))
+		renderBody := make([]string, 0)
 		var prevImport *js_scanner.ImportStatement
 		for i, currImport := range imports {
 			var nextImport *js_scanner.ImportStatement
@@ -108,31 +120,40 @@ func render1(w writer, n *Node, options ...bool) error {
 				nextImport = imports[i+1]
 			}
 			// Extract import statement
-			text := n.Data[currImport.StatementStart:currImport.StatementEnd]
-			addImportStatement(text)
+			text := n.Data[currImport.StatementStart:currImport.StatementEnd] + ";\n"
+			importStatements = append(importStatements, text)
 
 			if i == 0 {
-				renderBody += strings.TrimSpace(n.Data[0:currImport.StatementStart]) + "\n"
+				renderBody = append(renderBody, strings.TrimSpace(n.Data[0:currImport.StatementStart])+"\n")
 			}
 			if prevImport != nil {
-				renderBody += strings.TrimSpace(n.Data[prevImport.StatementEnd:currImport.StatementStart]) + "\n"
+				renderBody = append(renderBody, strings.TrimSpace(n.Data[prevImport.StatementEnd:currImport.StatementStart])+"\n")
 			}
 			if nextImport != nil {
-				renderBody += strings.TrimSpace(n.Data[currImport.StatementEnd:nextImport.StatementStart]) + "\n"
+				renderBody = append(renderBody, strings.TrimSpace(n.Data[currImport.StatementEnd:nextImport.StatementStart])+"\n")
 			}
 			if i == len(imports)-1 {
-				renderBody += strings.TrimSpace(n.Data[currImport.StatementEnd:]) + "\n"
+				renderBody = append(renderBody, strings.TrimSpace(n.Data[currImport.StatementEnd:])+"\n")
 			}
 			prevImport = currImport
 		}
-		return nil
-	case ExpressionNode:
-		if err := w.WriteByte(','); err != nil {
+
+		if len(imports) == 0 {
+			renderBody = append(renderBody, n.Data)
+		}
+
+		if _, err := w.WriteString(strings.Join(importStatements, "\n")); err != nil {
 			return err
 		}
-		if _, err := w.WriteString(n.Data); err != nil {
+
+		if _, err := w.WriteString("async function __render(props, ...children) {\n"); err != nil {
 			return err
 		}
+
+		if _, err := w.WriteString(strings.Join(renderBody, "")); err != nil {
+			return err
+		}
+
 		return nil
 	case CommentNode:
 		if _, err := w.WriteString(",`<!--"); err != nil {
@@ -194,35 +215,50 @@ func render1(w writer, n *Node, options ...bool) error {
 		return errors.New("html: unknown node type")
 	}
 
-	isComponent := n.Component || n.CustomElement
+	// Tip! Comment this block out to debug expressions
+	if n.Expression {
+		if n.FirstChild != nil {
+			if _, err := w.WriteString(","); err != nil {
+				return err
+			}
+		}
 
-	if isRoot {
-		// TODO: write this at the end, not now!
-		if _, err := w.WriteString(strings.Join(importStatements, "\n") + "\n"); err != nil {
-			return err
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if c.Type == TextNode {
+				if _, err := w.WriteString(c.Data); err != nil {
+					return err
+				}
+			} else {
+				if err := render1(w, c, RenderOptions{
+					isRoot:       false,
+					isExpression: true,
+					depth:        depth + 1,
+				}); err != nil {
+					return err
+				}
+			}
 		}
-		if _, err := w.WriteString("async function __render(props, ...children) {\n"); err != nil {
-			return err
-		}
-		if _, err := w.WriteString(renderBody); err != nil {
-			return err
-		}
+
+		return nil
+	}
+
+	isComponent := (n.Component || n.CustomElement) && n.Data != "Fragment"
+
+	if opts.isRoot {
 		if _, err := w.WriteString("  return "); err != nil {
 			return err
 		}
-	} else {
+	} else if !opts.isExpression {
 		if err := w.WriteByte(','); err != nil {
 			return err
 		}
 	}
 
 	if isComponent {
-		addImportStatement("import { __astro_component } from 'astro/dist/internal/__astro_component.js';")
 		if _, err := w.WriteString("h(__astro_component,{ Component: "); err != nil {
 			return err
 		}
 	} else {
-		// Render the <xxx> opening tag.
 		if _, err := w.WriteString("h("); err != nil {
 			return err
 		}
@@ -237,6 +273,7 @@ func render1(w writer, n *Node, options ...bool) error {
 			return err
 		}
 	}
+
 	if err := w.WriteByte(','); err != nil {
 		return err
 	}
@@ -279,6 +316,7 @@ func render1(w writer, n *Node, options ...bool) error {
 			return err
 		}
 	}
+
 	if voidElements[n.Data] {
 		if n.FirstChild != nil {
 			return fmt.Errorf("html: void element <%s> has child nodes", n.Data)
@@ -312,7 +350,10 @@ func render1(w writer, n *Node, options ...bool) error {
 					return err
 				}
 			} else {
-				if err := render1(w, c); err != nil {
+				if err := render1(w, c, RenderOptions{
+					isRoot: false,
+					depth:  depth + 1,
+				}); err != nil {
 					return err
 				}
 			}
@@ -324,9 +365,19 @@ func render1(w writer, n *Node, options ...bool) error {
 		}
 	default:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := render1(w, c); err != nil {
+			if err := render1(w, c, RenderOptions{
+				isRoot:       false,
+				isExpression: opts.isExpression,
+				depth:        depth + 1,
+			}); err != nil {
 				return err
 			}
+		}
+	}
+
+	if n.DataAtom == a.Html {
+		if _, err := w.WriteString(`,'\n'`); err != nil {
+			return err
 		}
 	}
 
@@ -334,7 +385,7 @@ func render1(w writer, n *Node, options ...bool) error {
 		return err
 	}
 
-	if isRoot {
+	if opts.isRoot {
 		if _, err := w.WriteString("\n}\n"); err != nil {
 			return err
 		}
@@ -384,15 +435,4 @@ var voidElements = map[string]bool{
 	"source": true,
 	"track":  true,
 	"wbr":    true,
-}
-
-func addImportStatement(statement string) {
-	exists := false
-	for _, i := range importStatements {
-		exists = i == statement
-		if exists {
-			return
-		}
-	}
-	importStatements = append(importStatements, statement)
 }

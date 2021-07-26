@@ -47,6 +47,7 @@ var scopeMarker = Node{Type: scopeMarkerNode}
 type Node struct {
 	CustomElement bool
 	Component     bool
+	Expression    bool
 
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
 

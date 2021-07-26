@@ -23,6 +23,9 @@ type parser struct {
 	// Self-closing tags like <hr/> are treated as start tags, except that
 	// hasSelfClosingToken is set while they are being processed.
 	hasSelfClosingToken bool
+	// flag to signal that frontmatter has been added
+	// if we don't have frontmatter and we enter a tag, we add empty frontmatter
+	hasFrontmatter bool
 	// doc is the document root element.
 	doc *Node
 	// The stack of open elements (section 12.2.4.2) and active formatting
@@ -310,6 +313,14 @@ func (p *parser) addText(text string) {
 		return
 	}
 
+	if strings.HasPrefix(strings.TrimSpace(text), "}") {
+		p.addChild(&Node{
+			Type: TextNode,
+			Data: text,
+		})
+		return
+	}
+
 	t := p.top()
 	if n := t.LastChild; n != nil && n.Type == TextNode {
 		n.Data += text
@@ -321,13 +332,8 @@ func (p *parser) addText(text string) {
 	})
 }
 
-// addText adds text to the preceding node if it is a text node, or else it
-// calls addChild with a new text node.
 func (p *parser) addFrontmatter(text string) {
-	if text == "" {
-		return
-	}
-
+	p.hasFrontmatter = true
 	p.doc.InsertBefore(&Node{
 		Type: FrontmatterNode,
 		Data: text,
@@ -335,10 +341,15 @@ func (p *parser) addFrontmatter(text string) {
 }
 
 // addExpression adds a child expression based on the current token.
-func (p *parser) addExpression(text string) {
+func (p *parser) addExpression() {
 	p.addChild(&Node{
-		Type: ExpressionNode,
-		Data: text,
+		Type:          ElementNode,
+		DataAtom:      a.Template,
+		Data:          "astro:expression",
+		Attr:          make([]Attribute, 0),
+		Expression:    true,
+		Component:     false,
+		CustomElement: false,
 	})
 }
 
@@ -540,24 +551,42 @@ const whitespace = " \t\r\n\f"
 func initialIM(p *parser) bool {
 	switch p.tok.Type {
 	case TextToken:
-
 		p.tok.Data = strings.TrimLeft(p.tok.Data, whitespace)
 		if len(p.tok.Data) == 0 {
 			// It was all whitespace, so ignore it.
 			return true
 		}
+		if len(p.tok.Data) >= 3 && p.tok.Data[0:3] == "---" {
+			text := strings.TrimSpace(p.tok.Data)
+			suffix := text[len(text)-3:]
+			if suffix == "---" {
+				// This is a frontmatter node, so add it.
+				p.addFrontmatter(text[3:len(text)-3] + "\n")
+				return true
+			}
+			// This is an incomplete frontmatter node, so ignore it
+			return true
+		}
 	case CommentToken:
-		p.doc.AppendChild(&Node{
-			Type: CommentNode,
-			Data: p.tok.Data,
-		})
+		if !p.hasFrontmatter {
+			p.doc.AppendChild(&Node{
+				Type: CommentNode,
+				Data: p.tok.Data,
+			})
+		}
 		return true
 	case DoctypeToken:
 		n, quirks := parseDoctype(p.tok.Data)
 		p.doc.AppendChild(n)
 		p.quirks = quirks
 		p.im = beforeHTMLIM
+		if !p.hasFrontmatter {
+			p.addFrontmatter("")
+		}
 		return true
+	}
+	if !p.hasFrontmatter {
+		p.addFrontmatter("")
 	}
 	p.quirks = true
 	p.im = beforeHTMLIM
@@ -574,17 +603,6 @@ func beforeHTMLIM(p *parser) bool {
 		p.tok.Data = strings.TrimLeft(p.tok.Data, whitespace)
 		if len(p.tok.Data) == 0 {
 			// It was all whitespace, so ignore it.
-			return true
-		}
-		if len(p.tok.Data) >= 3 && p.tok.Data[0:3] == "---" {
-			text := strings.TrimSpace(p.tok.Data)
-			suffix := text[len(text)-3:]
-			if suffix == "---" {
-				// This is a frontmatter node, so add it.
-				p.addFrontmatter(text[3:len(text)-3] + "\n")
-				return true
-			}
-			// This is an incomplete frontmatter node, so ignore it
 			return true
 		}
 	case StartTagToken:
@@ -649,6 +667,12 @@ func beforeHeadIM(p *parser) bool {
 		return true
 	case DoctypeToken:
 		// Ignore the token.
+		return true
+	case StartExpressionToken:
+		p.addExpression()
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
 		return true
 	}
 
@@ -765,6 +789,14 @@ func inHeadIM(p *parser) bool {
 	case DoctypeToken:
 		// Ignore the token.
 		return true
+	case StartExpressionToken:
+		p.addExpression()
+		p.setOriginalIM()
+		p.im = textIM
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		return true
 	}
 
 	p.parseImpliedToken(EndTagToken, a.Head, a.Head.String())
@@ -873,6 +905,13 @@ func afterHeadIM(p *parser) bool {
 	case DoctypeToken:
 		// Ignore the token.
 		return true
+	case StartExpressionToken:
+		p.addExpression()
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		// Ignore the token.
+		return true
 	}
 
 	p.parseImpliedToken(StartTagToken, a.Body, a.Body.String())
@@ -902,12 +941,6 @@ func inBodyIM(p *parser) bool {
 	switch p.tok.Type {
 	case TextToken:
 		d := p.tok.Data
-		if len(d) > 3 && d[0:3] == "---" {
-			d = strings.TrimSpace(d)
-			d = d[3 : len(d)-3]
-			p.addFrontmatter(d)
-			return true
-		}
 		switch n := p.oe.top(); n.DataAtom {
 		case a.Pre, a.Listing:
 			if n.FirstChild == nil {
@@ -930,15 +963,6 @@ func inBodyIM(p *parser) bool {
 			// There were non-whitespace characters inserted.
 			p.framesetOK = false
 		}
-	case ExpressionToken:
-		d := p.tok.Data
-		d = strings.Replace(d, "\x00", "", -1)
-		d = strings.TrimSpace(d)
-		if d == "" {
-			return true
-		}
-		p.addExpression(d)
-		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
 		case a.Html:
@@ -1244,6 +1268,13 @@ func inBodyIM(p *parser) bool {
 			Type: CommentNode,
 			Data: p.tok.Data,
 		})
+	case StartExpressionToken:
+		p.reconstructActiveFormattingElements()
+		p.addExpression()
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		return true
 	case ErrorToken:
 		// TODO: remove this divergence from the HTML5 spec.
 		if len(p.templateStack) > 0 {
@@ -1462,6 +1493,11 @@ func textIM(p *parser) bool {
 		return true
 	case EndTagToken:
 		p.oe.pop()
+	case EndExpressionToken:
+		p.oe.pop()
+		p.im = p.originalIM
+		p.originalIM = nil
+		return p.tok.Type == EndExpressionToken
 	}
 	p.im = p.originalIM
 	p.originalIM = nil
@@ -2207,6 +2243,7 @@ func ignoreTheRemainingTokens(p *parser) bool {
 
 const whitespaceOrNUL = whitespace + "\x00"
 
+// TODO: handle expressions in SVG
 // Section 12.2.6.5
 func parseForeignContent(p *parser) bool {
 	switch p.tok.Type {

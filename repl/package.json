@@ -1,0 +1,14 @@
+{
+    "name": "@astrojs/repl",
+    "type": "module",
+    "volta": {
+        "node": "16.5.0"
+    },
+    "scripts": {
+        "start": "npm run serve",
+        "serve": "serve"
+    },
+    "dependencies": {
+        "serve": "^12.0.0"
+    }
+}
