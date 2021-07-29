@@ -25,7 +25,7 @@ type parser struct {
 	hasSelfClosingToken bool
 	// flag to signal that frontmatter has been added
 	// if we don't have frontmatter and we enter a tag, we add empty frontmatter
-	hasFrontmatter bool
+	frontmatterState FrontmatterState
 	// doc is the document root element.
 	doc *Node
 	// The stack of open elements (section 12.2.4.2) and active formatting
@@ -332,12 +332,24 @@ func (p *parser) addText(text string) {
 	})
 }
 
-func (p *parser) addFrontmatter(text string) {
-	p.hasFrontmatter = true
-	p.doc.InsertBefore(&Node{
-		Type: FrontmatterNode,
-		Data: text,
-	}, p.doc.FirstChild)
+func (p *parser) addFrontmatter(empty bool) {
+	if p.frontmatterState == FrontmatterInitial {
+		if p.doc.FirstChild != nil {
+			p.doc.InsertBefore(&Node{
+				Type: FrontmatterNode,
+			}, p.doc.FirstChild)
+		} else {
+			p.doc.AppendChild(&Node{
+				Type: FrontmatterNode,
+			})
+		}
+		if empty {
+			p.frontmatterState = FrontmatterClosed
+		} else {
+			p.frontmatterState = FrontmatterOpen
+			p.oe = append(p.oe, p.doc.FirstChild)
+		}
+	}
 }
 
 // addExpression adds a child expression based on the current token.
@@ -549,44 +561,58 @@ const whitespace = " \t\r\n\f"
 
 // Section 12.2.6.4.1.
 func initialIM(p *parser) bool {
+	if p.frontmatterState == FrontmatterOpen {
+		switch p.tok.Type {
+		case FrontmatterFenceToken:
+			p.frontmatterState = FrontmatterClosed
+			for range p.oe {
+				p.oe.pop()
+			}
+			return true
+		case TextToken:
+			p.addText(p.tok.Data)
+			return true
+		case StartTagToken:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
+		case EndTagToken:
+			p.oe.pop()
+			return true
+		default:
+			// Ignore the token.
+			return false
+		}
+	}
 	switch p.tok.Type {
+	case FrontmatterFenceToken:
+		p.addFrontmatter(false)
+		return true
 	case TextToken:
 		p.tok.Data = strings.TrimLeft(p.tok.Data, whitespace)
 		if len(p.tok.Data) == 0 {
 			// It was all whitespace, so ignore it.
 			return true
 		}
-		if len(p.tok.Data) >= 3 && p.tok.Data[0:3] == "---" {
-			text := strings.TrimSpace(p.tok.Data)
-			suffix := text[len(text)-3:]
-			if suffix == "---" {
-				// This is a frontmatter node, so add it.
-				p.addFrontmatter(text[3:len(text)-3] + "\n")
-				return true
-			}
-			// This is an incomplete frontmatter node, so ignore it
-			return true
-		}
+		p.addText(p.tok.Data)
 	case CommentToken:
-		if !p.hasFrontmatter {
-			p.doc.AppendChild(&Node{
-				Type: CommentNode,
-				Data: p.tok.Data,
-			})
-		}
+		p.doc.AppendChild(&Node{
+			Type: CommentNode,
+			Data: p.tok.Data,
+		})
 		return true
 	case DoctypeToken:
 		n, quirks := parseDoctype(p.tok.Data)
 		p.doc.AppendChild(n)
 		p.quirks = quirks
 		p.im = beforeHTMLIM
-		if !p.hasFrontmatter {
-			p.addFrontmatter("")
-		}
 		return true
 	}
-	if !p.hasFrontmatter {
-		p.addFrontmatter("")
+	if p.frontmatterState == FrontmatterInitial {
+		p.addFrontmatter(true)
 	}
 	p.quirks = true
 	p.im = beforeHTMLIM
@@ -2466,9 +2492,10 @@ func ParseWithOptions(r io.Reader, opts ...ParseOption) (*Node, error) {
 		doc: &Node{
 			Type: DocumentNode,
 		},
-		scripting:  true,
-		framesetOK: true,
-		im:         initialIM,
+		scripting:        true,
+		framesetOK:       true,
+		im:               initialIM,
+		frontmatterState: FrontmatterInitial,
 	}
 
 	for _, f := range opts {
@@ -2500,9 +2527,10 @@ func ParseFragmentWithOptions(r io.Reader, context *Node, opts ...ParseOption) (
 		doc: &Node{
 			Type: DocumentNode,
 		},
-		scripting: true,
-		fragment:  true,
-		context:   context,
+		scripting:        true,
+		fragment:         true,
+		context:          context,
+		frontmatterState: FrontmatterInitial,
 	}
 	if context != nil && context.Namespace != "" {
 		p.tokenizer = NewTokenizer(r)

@@ -96,6 +96,75 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 			return err
 		}
 		return nil
+	case FrontmatterNode:
+		frontmatter := new(strings.Builder)
+		importStatements := new(strings.Builder)
+		renderBody := new(strings.Builder)
+
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if c.Type == TextNode {
+				if _, err := frontmatter.WriteString(c.Data); err != nil {
+					return err
+				}
+			} else {
+				if err := render1(frontmatter, c, RenderOptions{
+					isRoot:       false,
+					isExpression: true,
+					depth:        depth + 1,
+				}); err != nil {
+					return err
+				}
+			}
+		}
+
+		data := frontmatter.String()
+		fmt.Print(data)
+		imports := js_scanner.FindImportStatements([]byte(data))
+		var prevImport *js_scanner.ImportStatement
+		for i, currImport := range imports {
+			var nextImport *js_scanner.ImportStatement
+			if i < len(imports)-1 {
+				nextImport = imports[i+1]
+			}
+			// Extract import statement
+			text := data[currImport.StatementStart:currImport.StatementEnd] + ";\n"
+			fmt.Println(text)
+			importStatements.WriteString(text)
+
+			if i == 0 {
+				renderBody.WriteString(strings.TrimSpace(data[0:currImport.StatementStart]) + "\n")
+			}
+			if prevImport != nil {
+				renderBody.WriteString(strings.TrimSpace(data[prevImport.StatementEnd:currImport.StatementStart]) + "\n")
+			}
+			if nextImport != nil {
+				renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:nextImport.StatementStart]) + "\n")
+			}
+			if i == len(imports)-1 {
+				renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:]) + "\n")
+			}
+
+			renderBody.WriteString("\n")
+			prevImport = currImport
+		}
+
+		if len(imports) == 0 {
+			renderBody.WriteString(data)
+		}
+
+		if _, err := w.WriteString(strings.TrimSpace(importStatements.String())); err != nil {
+			return err
+		}
+
+		if _, err := w.WriteString("\nasync function __render(props, ...children) {\n"); err != nil {
+			return err
+		}
+
+		if _, err := w.WriteString("// ---\n" + strings.TrimSpace(renderBody.String()) + "\n// ---"); err != nil {
+			return err
+		}
+
+		return nil
 	case DocumentNode:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if err := render1(w, c, RenderOptions{
@@ -109,52 +178,6 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 		return nil
 	case ElementNode:
 		// No-op.
-	case FrontmatterNode:
-		imports := js_scanner.FindImportStatements([]byte(n.Data))
-		importStatements := make([]string, len(imports))
-		renderBody := make([]string, 0)
-		var prevImport *js_scanner.ImportStatement
-		for i, currImport := range imports {
-			var nextImport *js_scanner.ImportStatement
-			if i < len(imports)-1 {
-				nextImport = imports[i+1]
-			}
-			// Extract import statement
-			text := n.Data[currImport.StatementStart:currImport.StatementEnd] + ";\n"
-			importStatements = append(importStatements, text)
-
-			if i == 0 {
-				renderBody = append(renderBody, strings.TrimSpace(n.Data[0:currImport.StatementStart])+"\n")
-			}
-			if prevImport != nil {
-				renderBody = append(renderBody, strings.TrimSpace(n.Data[prevImport.StatementEnd:currImport.StatementStart])+"\n")
-			}
-			if nextImport != nil {
-				renderBody = append(renderBody, strings.TrimSpace(n.Data[currImport.StatementEnd:nextImport.StatementStart])+"\n")
-			}
-			if i == len(imports)-1 {
-				renderBody = append(renderBody, strings.TrimSpace(n.Data[currImport.StatementEnd:])+"\n")
-			}
-			prevImport = currImport
-		}
-
-		if len(imports) == 0 {
-			renderBody = append(renderBody, n.Data)
-		}
-
-		if _, err := w.WriteString(strings.Join(importStatements, "\n")); err != nil {
-			return err
-		}
-
-		if _, err := w.WriteString("async function __render(props, ...children) {\n"); err != nil {
-			return err
-		}
-
-		if _, err := w.WriteString(strings.Join(renderBody, "")); err != nil {
-			return err
-		}
-
-		return nil
 	case CommentNode:
 		if _, err := w.WriteString(",`<!--"); err != nil {
 			return err
@@ -245,7 +268,7 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 	isComponent := (n.Component || n.CustomElement) && n.Data != "Fragment"
 
 	if opts.isRoot {
-		if _, err := w.WriteString("  return "); err != nil {
+		if _, err := w.WriteString("\nreturn "); err != nil {
 			return err
 		}
 	} else if !opts.isExpression {

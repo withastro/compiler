@@ -867,6 +867,41 @@ func (z *Tokenizer) readStartTag() TokenType {
 	return StartTagToken
 }
 
+// readUnclosedTag reads up until an unclosed tag is implicitly closed.
+// Without this function, the tokenizer could get stuck in infinite loops if a
+// user is in the middle of typing
+func (z *Tokenizer) readUnclosedTag() {
+	buf := z.buf[z.data.start:]
+	close := 1
+	if z.fm == FrontmatterOpen {
+		close = strings.Index(string(buf), "---")
+		buf = buf[0:close]
+	}
+	close = bytes.Index(buf, []byte{'>'})
+	buf = buf[0:close]
+	if close == -1 {
+		// We can't find a closing tag...
+		z.data.start = z.raw.end - 1
+		for i := 0; i < len(buf); i++ {
+			c := z.readByte()
+			if z.err != nil {
+				z.data.end = z.raw.end
+				z.err = z.readErr
+				return
+			}
+			switch c {
+			case ' ', '\n', '\r', '\t', '\f':
+				// Safely read up until a whitespace character
+				z.data.end = z.raw.end - 1
+				z.err = z.readErr
+				return
+			}
+		}
+		z.err = z.readErr
+		return
+	}
+}
+
 // readTag reads the next tag token and its attributes. If saveAttr, those
 // attributes are saved in z.attr, otherwise z.attr is set to an empty slice.
 // The opening "<a" or "</a" has already been consumed, where 'a' means anything
@@ -1035,6 +1070,9 @@ func (z *Tokenizer) Next() TokenType {
 	}
 	z.textIsRaw = false
 	z.convertNUL = false
+	if z.fm != FrontmatterClosed {
+		goto frontmatter_loop
+	}
 
 loop:
 	for {
@@ -1043,33 +1081,6 @@ loop:
 			break loop
 		}
 		var tokenType TokenType
-
-		// if c == '-' && z.fm != FrontmatterClosed {
-		// 	z.dashCount++
-		// 	if z.dashCount == 3 {
-		// 		if z.fm == FrontmatterInitial {
-		// 			z.dashCount = 0
-		// 			z.fm = FrontmatterOpen
-		// 			z.data.end = z.raw.end
-		// 			z.tt = FrontmatterFenceToken
-		// 			z.openBraceIsExpressionStart = false
-		// 			return z.tt
-		// 		}
-		// 		if z.fm == FrontmatterOpen {
-		// 			z.dashCount = 0
-		// 			z.fm = FrontmatterClosed
-		// 			z.data.end = z.raw.end
-		// 			z.tt = FrontmatterFenceToken
-		// 			return z.tt
-		// 		}
-		// 		z.raw.end--
-		// 		continue
-		// 	}
-		// }
-
-		// if c != '-' && z.dashCount > 0 {
-		// 	z.dashCount = 0
-		// }
 
 		if c == '{' || c == '}' {
 			if x := z.raw.end - len("{"); z.raw.start < x {
@@ -1082,6 +1093,10 @@ loop:
 			goto expression_loop
 		}
 
+		if c == '-' && z.fm != FrontmatterClosed {
+			z.raw.end--
+			goto frontmatter_loop
+		}
 		if c != '<' {
 			continue loop
 		}
@@ -1119,6 +1134,13 @@ loop:
 			z.tt = TextToken
 			return z.tt
 		}
+
+		// If necessary, implicity close an unclosed tag to bail out before
+		// an infinite loop occurs. Helpful for IDEs which compile as user types.
+		if z.readUnclosedTag(); z.err != nil {
+			break loop
+		}
+
 		switch tokenType {
 		case StartTagToken:
 			z.tt = z.readStartTag()
@@ -1146,7 +1168,6 @@ loop:
 				return z.tt
 			}
 			z.raw.end--
-			z.readUntilCloseAngle()
 			z.tt = CommentToken
 			return z.tt
 		case CommentToken:
@@ -1169,6 +1190,63 @@ loop:
 	}
 	z.tt = ErrorToken
 	return z.tt
+
+frontmatter_loop:
+	for {
+		if z.fm == FrontmatterClosed {
+			goto loop
+		}
+
+		c := z.readByte()
+		if z.err != nil {
+			break frontmatter_loop
+		}
+
+		if c == '-' {
+			z.dashCount++
+		}
+
+		if z.dashCount == 3 {
+			switch z.fm {
+			case FrontmatterInitial:
+				z.fm = FrontmatterOpen
+				z.dashCount = 0
+				z.data.end = z.raw.end
+				z.tt = FrontmatterFenceToken
+				z.openBraceIsExpressionStart = false
+				return z.tt
+			case FrontmatterOpen:
+				if z.raw.start < z.raw.end-len("---") {
+					z.data.end = z.raw.end - len("---")
+					z.openBraceIsExpressionStart = false
+					z.tt = TextToken
+					return z.tt
+				}
+				z.fm = FrontmatterClosed
+				z.dashCount = 0
+				z.data.end = z.raw.end
+				z.tt = FrontmatterFenceToken
+				z.openBraceIsExpressionStart = false
+				return z.tt
+			}
+		}
+
+		if c == '-' {
+			continue frontmatter_loop
+		}
+
+		s := z.buf[z.raw.start : z.raw.start+1][0]
+
+		if s == '<' || s == '{' || s == '}' || c == '<' || c == '{' || c == '}' {
+			z.dashCount = 0
+			z.raw.end--
+			goto loop
+		}
+
+		z.dashCount = 0
+		continue frontmatter_loop
+	}
+	z.data.end = z.raw.end
 
 raw_with_expression_loop:
 	for {
@@ -1244,17 +1322,20 @@ expression_loop:
 				z.tt = StartExpressionToken
 				return z.tt
 			} else {
-				z.expressionStack[len(z.expressionStack)-1]++
+				if len(z.expressionStack) > 0 {
+					z.expressionStack[len(z.expressionStack)-1]++
+				}
 				z.data.end = z.raw.end
 				z.tt = TextToken
 				return z.tt
 			}
 		case '}':
-			z.expressionStack[len(z.expressionStack)-1]--
 			if len(z.expressionStack) == 0 {
-				z.err = errors.New("matched }")
-				return ErrorToken
+				z.data.end = z.raw.end
+				z.tt = TextToken
+				return z.tt
 			}
+			z.expressionStack[len(z.expressionStack)-1]--
 			if z.expressionStack[len(z.expressionStack)-1] == -1 {
 				z.expressionStack = z.expressionStack[0 : len(z.expressionStack)-1]
 				z.data.end = z.raw.end
@@ -1426,6 +1507,7 @@ func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
 	z := &Tokenizer{
 		r:   r,
 		buf: make([]byte, 0, 4096),
+		fm:  FrontmatterInitial,
 	}
 	if contextTag != "" {
 		switch s := strings.ToLower(contextTag); s {
