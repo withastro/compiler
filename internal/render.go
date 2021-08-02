@@ -118,7 +118,7 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 		}
 
 		data := frontmatter.String()
-		fmt.Print(data)
+
 		imports := js_scanner.FindImportStatements([]byte(data))
 		var prevImport *js_scanner.ImportStatement
 		for i, currImport := range imports {
@@ -128,7 +128,6 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 			}
 			// Extract import statement
 			text := data[currImport.StatementStart:currImport.StatementEnd] + ";\n"
-			fmt.Println(text)
 			importStatements.WriteString(text)
 
 			if i == 0 {

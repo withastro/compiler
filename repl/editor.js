@@ -1,6 +1,5 @@
 const defaultValue = `---
 const text = "Hello world!";
-const items = [0, 1, 2];
 ---
 
 <html>
@@ -8,9 +7,7 @@ const items = [0, 1, 2];
     <title>Astro</title>
   </head>
   <body>
-    <div>
-      {text}
-    </div>
+    <h1>{text}</h1>
   </body>
 </html>
 `;
@@ -27,7 +24,7 @@ editor.setSize("100%", "100%");
 
 editor.on('changes', async () => {
     const value = editor.getValue();
-    if (globalThis.BuildPage) {
+    if (globalThis.BuildDocument) {
         await renderResult(value);
     }
 });
@@ -36,27 +33,43 @@ setTimeout(() => {
   renderResult(defaultValue);
 }, 250)
 
-const out = document.querySelector('#output');
+const resultRendered = document.querySelector('#output');
+const resultHtml = document.querySelector('#html');
+const resultJs = document.querySelector('#js');
+const resultTitle = document.querySelector('.meta .title');
 
 async function renderResult(source) {
   console.clear();
   source = source.trim();
   const start = performance.now();
-  let output = await globalThis.BuildPage(source);
+  let output;
+  try {
+    output = await globalThis.BuildDocument(source);
+  } catch (e) {
+    // console.error(e);
+  }
+  if (!output) {
+    return;
+  }
   const endCompile = performance.now();
   console.log(`Compiled in ${Math.floor(endCompile - start)}ms`);
-  let prelude = ['window'].map(key => `const ${key} = undefined;`).join('');
-  const dataUri = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(prelude + output);
+  const js = Prism.highlight(output.trim(), Prism.languages.javascript, 'javascript');
+  resultJs.innerHTML = js;
+  const dataUri = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(output);
   let result;
   try {
     const ns = await import(dataUri);
     result = await ns.default.__render();
+    if (result) {
+      resultRendered.srcdoc = result;
+      resultRendered.addEventListener('load', () => {
+        resultTitle.textContent = resultRendered.contentWindow.document.title;
+      })
+      const html = Prism.highlight(result, Prism.languages.html, 'html');
+      resultHtml.innerHTML = html;
+    }
   } catch (e) {
     console.log(e);
-  }
-  if (result) {
-    const html = Prism.highlight(result, Prism.languages.html, 'html');
-    out.innerHTML = html;
   }
 }
 

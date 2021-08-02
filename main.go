@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	js.Global().Set("BuildPage", js.FuncOf(BuildPage))
+	js.Global().Set("BuildDocument", js.FuncOf(BuildDocument))
+	// js.Global().Set("Build", js.FuncOf(Build))
 	<-make(chan bool)
 }
 
@@ -22,7 +23,7 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
-func BuildPage(this js.Value, args []js.Value) interface{} {
+func BuildDocument(this js.Value, args []js.Value) interface{} {
 	source := jsString(args[0])
 	doc, _ := tycho.Parse(strings.NewReader(source))
 	hash := hashFromSource(source)
@@ -37,6 +38,22 @@ func BuildPage(this js.Value, args []js.Value) interface{} {
 
 	return js
 }
+
+// func Build(this js.Value, args []js.Value) interface{} {
+// 	source := jsString(args[0])
+// 	doc, _ := tycho.Parse(strings.NewReader(source))
+// 	hash := hashFromSource(source)
+
+// 	transform.Transform(doc, transform.TransformOptions{
+// 		Scope: hash,
+// 	})
+
+// 	w := new(strings.Builder)
+// 	tycho.Render(w, doc)
+// 	js := w.String()
+
+// 	return js
+// }
 
 func hashFromSource(source string) string {
 	h := xxhash.New()
