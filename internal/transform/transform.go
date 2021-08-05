@@ -3,7 +3,7 @@ package transform
 import (
 	"fmt"
 
-	tycho "github.com/snowpackjs/tycho/internal"
+	tycho "github.com/snowpackjs/astro/internal"
 	a "golang.org/x/net/html/atom"
 )
 

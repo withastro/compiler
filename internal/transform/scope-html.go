@@ -1,7 +1,7 @@
 package transform
 
 import (
-	tycho "github.com/snowpackjs/tycho/internal"
+	tycho "github.com/snowpackjs/astro/internal"
 )
 
 func ScopeElement(n *tycho.Node, opts TransformOptions) {

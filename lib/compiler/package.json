@@ -5,6 +5,22 @@
     "scripts": {
         "build": "tsc -p ."
     },
+    "files": [
+        "./astro.wasm",
+        "./browser/**/*.js",
+        "./browser/**/*.d.ts",
+        "./node/**/*.js",
+        "./node/**/*.d.ts",
+        "./shared/**/*.js",
+        "./shared/**/*.d.ts"
+    ],
+    "exports": {
+        ".": {
+            "import": "./node/index.js",
+            "default": "./browser/index.js"
+        },
+        "./astro.wasm": "./astro.wasm"
+    },
     "dependencies": {
         "typescript": "^4.3.5"
     },

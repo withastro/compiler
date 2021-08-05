@@ -5,7 +5,7 @@ import (
 
 	// "strings"
 
-	tycho "github.com/snowpackjs/tycho/internal"
+	tycho "github.com/snowpackjs/astro/internal"
 	"github.com/tdewolff/parse/css"
 	a "golang.org/x/net/html/atom"
 )

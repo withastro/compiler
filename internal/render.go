@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/snowpackjs/tycho/internal/js_scanner"
+	"github.com/snowpackjs/astro/internal/js_scanner"
 	a "golang.org/x/net/html/atom"
 )
 

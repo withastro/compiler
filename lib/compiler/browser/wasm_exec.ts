@@ -86,6 +86,8 @@ const decoder = new TextDecoder("utf-8");
 var logLine = [];
 
 export default class Go {
+  importObject: Record<string, any>;
+
   constructor() {
     this._callbackTimeouts = new Map();
     this._nextCallbackTimeoutID = 1;
@@ -485,7 +487,7 @@ export default class Go {
     }
   }
 
-  _resume() {
+  private _resume() {
     if (this.exited) {
       throw new Error("Go program has already exited");
     }
@@ -495,7 +497,7 @@ export default class Go {
     }
   }
 
-  _makeFuncWrapper(id) {
+  private _makeFuncWrapper(id) {
     const go = this;
     return function () {
       const event = { id: id, this: this, args: arguments };
