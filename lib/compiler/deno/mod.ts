@@ -1,37 +1,20 @@
 import './lib.deno.ns';
 import type * as types from "../shared/types";
-import Go from "./wasm_exec.js";
+import Go from "./wasm_exec";
 
-export const transform: typeof types.transform = (input, options) => {
-  return ensureServiceIsRunning().transform(input, options);
+export const transform: typeof types.transform = async (input, options) => {
+  return ensureServiceIsRunning().then(service => service.transform(input, options));
 };
 
 interface Service {
   transform: typeof types.transform;
 }
 
-let initializePromise: Promise<void> | undefined;
 let longLivedService: Service | undefined;
 
-export const initialize: typeof types.initialize = (options) => {
-  let wasmURL = options.wasmURL;
-  let useWorker = options.worker !== false;
-  if (!wasmURL) throw new Error('Must provide the "wasmURL" option');
-  wasmURL += "";
-  if (initializePromise)
-    throw new Error('Cannot call "initialize" more than once');
-  initializePromise = startRunningService(wasmURL, useWorker);
-  initializePromise.catch(() => {
-    // Let the caller try again if this fails
-    initializePromise = void 0;
-  });
-  return initializePromise;
-};
-
-let ensureServiceIsRunning = (): Service => {
-  if (longLivedService) return longLivedService;
-  if (initializePromise) throw new Error('You need to wait for the promise returned from "initialize" to be resolved before calling this');
-  throw new Error('You need to call "initialize" before calling this');
+let ensureServiceIsRunning = (): Promise<Service> => {
+  if (longLivedService) return Promise.resolve(longLivedService);
+  return startRunningService();
 }
 
 const instantiateWASM = async (
@@ -40,34 +23,24 @@ const instantiateWASM = async (
 ): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
   let response = undefined;
 
-  if (WebAssembly.instantiateStreaming) {
-    response = await WebAssembly.instantiateStreaming(
-      fetch(wasmURL),
-      importObject
-    );
-  } else {
-    const fetchAndInstantiateTask = async () => {
-      const wasmArrayBuffer = await fetch(wasmURL).then((response) =>
-        response.arrayBuffer()
-      );
-      return WebAssembly.instantiate(wasmArrayBuffer, importObject);
-    };
-    response = await fetchAndInstantiateTask();
-  }
+  const fetchAndInstantiateTask = async () => {
+      const wasmArrayBuffer = await fetch(wasmURL).then((response) => response.arrayBuffer());
+      return WebAssembly.instantiate(new Uint8Array(wasmArrayBuffer), importObject);
+  };
+  response = await fetchAndInstantiateTask();
 
   return response;
 };
 
-const startRunningService = async (wasmURL: string, useWorker: boolean) => {
+const startRunningService = async () => {
   const go = new Go();
-  const wasm = await instantiateWASM(wasmURL, go.importObject);
+  const wasm = await instantiateWASM(new URL('../astro.wasm', import.meta.url).toString(), go.importObject);
   go.run(wasm.instance);
 
   const apiKeys = new Set([
     'transform'
   ]);
   const service: any = Object.create(null);
-  
 
   for (const key of apiKeys.values()) {
     const globalKey = `__astro_${key}`;
@@ -78,4 +51,5 @@ const startRunningService = async (wasmURL: string, useWorker: boolean) => {
   longLivedService = {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {})))
   };
+  return longLivedService;
 };
