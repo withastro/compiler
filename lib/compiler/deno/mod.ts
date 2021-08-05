@@ -1,6 +1,6 @@
 import './lib.deno.ns';
-import type * as types from "../shared/types";
-import Go from "./wasm_exec";
+import type * as types from "./types.ts";
+import Go from "./wasm_exec.ts";
 
 export const transform: typeof types.transform = async (input, options) => {
   return ensureServiceIsRunning().then(service => service.transform(input, options));
@@ -34,7 +34,7 @@ const instantiateWASM = async (
 
 const startRunningService = async () => {
   const go = new Go();
-  const wasm = await instantiateWASM(new URL('../astro.wasm', import.meta.url).toString(), go.importObject);
+  const wasm = await instantiateWASM(new URL('./astro.wasm', import.meta.url).toString(), go.importObject);
   go.run(wasm.instance);
 
   const apiKeys = new Set([
