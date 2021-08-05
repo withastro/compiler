@@ -22,11 +22,10 @@ const instantiateWASM = async (
 ): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
   let response = undefined;
 
-  const fetchAndInstantiateTask = async () => {
-      const wasmArrayBuffer = await fetch(wasmURL).then((response) => response.arrayBuffer());
-      return WebAssembly.instantiate(new Uint8Array(wasmArrayBuffer), importObject);
-  };
-  response = await fetchAndInstantiateTask();
+  response = await WebAssembly.instantiateStreaming(
+    fetch(wasmURL),
+    importObject
+  );
 
   return response;
 };
