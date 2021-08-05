@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/base32"
@@ -11,8 +11,9 @@ import (
 )
 
 func main() {
-	js.Global().Set("BuildDocument", js.FuncOf(BuildDocument))
-	// js.Global().Set("Build", js.FuncOf(Build))
+	astro := make(map[string]js.Func)
+	astro["buildDocument"] = js.FuncOf(BuildDocument)
+	js.Global().Set("__astro", js.ValueOf(astro))
 	<-make(chan bool)
 }
 

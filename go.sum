@@ -1,3 +1,5 @@
+github.com/MathieuTurcotte/sourcemap v0.0.0-20130811190905-74cf380b45c1 h1:kXLv68mdg/0S7WSJnDgbZqocTCBN400XEPQL5J2zhWs=
+github.com/MathieuTurcotte/sourcemap v0.0.0-20130811190905-74cf380b45c1/go.mod h1:0r1H9hZCEemUuCnZUIQ09aqURRwGVol5tWxbxVQmWvk=
 github.com/evanw/esbuild v0.12.15 h1:DLFv1+mK4QBgU7Y5z6F97CXZRao7u3xRQo/XQNPmA+o=
 github.com/evanw/esbuild v0.12.15/go.mod h1:y2AFBAGVelPqPodpdtxWWqe6n2jYf5FrsJbligmRmuw=
 github.com/tdewolff/parse v2.3.4+incompatible h1:x05/cnGwIMf4ceLuDMBOdQ1qGniMoxpP46ghf0Qzh38=

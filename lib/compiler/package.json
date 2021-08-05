@@ -1,0 +1,10 @@
+{
+    "name": "@astrojs/compiler",
+    "version": "0.1.0-canary.0",
+    "scripts": {
+        "build": "tsc -p ."
+    },
+    "dependencies": {
+        "typescript": "^4.3.5"
+    }
+}

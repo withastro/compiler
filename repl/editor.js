@@ -23,6 +23,7 @@ const editor = CodeMirror(document.querySelector('#editor'), {
 editor.setSize("100%", "100%");
 
 editor.on('changes', async () => {
+  console.log(globalThis.__astro);
     const value = editor.getValue();
     if (globalThis.BuildDocument) {
         await renderResult(value);
@@ -39,7 +40,7 @@ const resultJs = document.querySelector('#js');
 const resultTitle = document.querySelector('.meta .title');
 
 async function renderResult(source) {
-  console.clear();
+  // console.clear();
   source = source.trim();
   const start = performance.now();
   let output;

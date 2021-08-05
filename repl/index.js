@@ -9,10 +9,14 @@ const runWasmAdd = async () => {
   const importObject = go.importObject;
 
   // Instantiate our wasm module
-  const wasmModule = await wasmBrowserInstantiate("./tycho.wasm", importObject);
+  const wasmModule = await wasmBrowserInstantiate("./astro.wasm", importObject);
 
   // Allow the wasm_exec go instance, bootstrap and execute our wasm module
   go.run(wasmModule.instance);
+
+  globalThis.BuildDocument = wasmModule.instance.exports.BuildDocument;
+  
+  return wasmModule.instance.exports;
 };
 
 runWasmAdd();

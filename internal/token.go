@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/snowpackjs/tycho/internal/location"
 	"golang.org/x/net/html/atom"
 )
 
@@ -119,6 +120,12 @@ type Token struct {
 	DataAtom atom.Atom
 	Data     string
 	Attr     []Attribute
+	Loc      location.Loc
+}
+
+func (t Token) Range() location.Range {
+	r := location.Range{Loc: t.Loc, Len: len(t.Data)}
+	return r
 }
 
 // tagString returns a string representation of a tag Token's Data and Attr.
