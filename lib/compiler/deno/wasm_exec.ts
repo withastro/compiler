@@ -6,7 +6,6 @@
 // This file has been modified for use by the TinyGo compiler.
 // This file has been further modified for use by Astro.
 
-import { Reflect } from "https://deno.land/x/reflect_metadata@v0.1.12/mod.ts";
 import fs from "https://deno.land/std@0.103.0/node/fs.ts";
 import { randomBytes } from "https://deno.land/std@0.103.0/node/crypto.ts";
 import { TextEncoder, TextDecoder } from "https://deno.land/std@0.103.0/node/util.ts";
