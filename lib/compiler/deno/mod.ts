@@ -20,20 +20,18 @@ const instantiateWASM = async (
   wasmURL: string,
   importObject: Record<string, any>
 ): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
-  let response = undefined;
-
-  response = await WebAssembly.instantiateStreaming(
+  return await WebAssembly.instantiateStreaming(
     fetch(wasmURL),
     importObject
   );
-
-  return response;
 };
 
 const startRunningService = async () => {
   const go = new Go();
   const wasm = await instantiateWASM(new URL('./astro.wasm', import.meta.url).toString(), go.importObject);
   go.run(wasm.instance);
+
+  console.log(wasm.instance.exports)
 
   const apiKeys = new Set([
     'transform'
