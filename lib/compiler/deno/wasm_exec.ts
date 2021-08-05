@@ -7,22 +7,35 @@
 // This file has been further modified for use by Astro.
 
 import fs from "https://deno.land/std@0.103.0/node/fs.ts";
-import { randomBytes } from "https://deno.land/std@0.103.0/node/crypto.ts";
-import { TextEncoder, TextDecoder } from "https://deno.land/std@0.103.0/node/util.ts";
+
+const enosys = () => {
+	const err = new Error("not implemented");
+	err.code = "ENOSYS";
+	return err;
+};
+
+const process = {
+	getuid() { return -1; },
+	getgid() { return -1; },
+	geteuid() { return -1; },
+	getegid() { return -1; },
+	getgroups() { throw enosys(); },
+	pid: -1,
+	ppid: -1,
+	umask() { throw enosys(); },
+	cwd() { return Deno.cwd(); },
+	chdir() { throw enosys(); },
+}
 
 Object.defineProperties(globalThis, {
   fs: {
     value: fs,
     enumerable: true,
   },
-  crypto: {
-    value: {
-      getRandomValues(b) {
-        randomBytes(b.length);
-      },
-    },
+  process: {
+    value: process,
     enumerable: true,
-  }
+  },
 });
 
 const encoder = new TextEncoder("utf-8");

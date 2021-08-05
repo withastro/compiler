@@ -76,8 +76,8 @@ Object.defineProperties(globalThis, {
     enumerable: true,
   },
   process: {
-	value: process,
-	enumerable: true
+    value: process,
+    enumerable: true
   }
 });
 
