@@ -1,12 +1,13 @@
 {
     "name": "@astrojs/compiler",
     "type": "module",
-    "version": "0.1.0-canary.1",
+    "version": "0.1.0-canary.2",
     "scripts": {
         "build": "tsc -p ."
     },
     "exports": {
         ".": {
+            "browser": "./browser/index.js",
             "import": "./node/index.js",
             "default": "./browser/index.js"
         },
