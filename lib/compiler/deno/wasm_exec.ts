@@ -22,16 +22,7 @@ Object.defineProperties(globalThis, {
       },
     },
     enumerable: true,
-  },
-  performance: {
-    value: {
-      now() {
-        const [sec, nsec] = process.hrtime();
-        return sec * 1000 + nsec / 1000000;
-      },
-    },
-    enumerable: true,
-  },
+  }
 });
 
 const encoder = new TextEncoder("utf-8");
@@ -188,13 +179,7 @@ export default class Go {
           return 0;
         },
         proc_exit: (code) => {
-          if (globalThis.process) {
-            // Node.js
-            process.exit(code);
-          } else {
-            // Can't exit in a browser.
-            throw "trying to exit with code " + code;
-          }
+          Deno.exit(code)
         },
       },
       env: {
