@@ -43,9 +43,11 @@ const startRunningService = async () => {
 
   for (const key of apiKeys.values()) {
     const globalKey = `__astro_${key}`;
+    console.log((globalThis as any)[globalKey])
     service[key] = (globalThis as any)[globalKey];
     delete (globalThis as any)[globalKey];
   }
+  console.log(service)
 
   longLivedService = {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {})))
