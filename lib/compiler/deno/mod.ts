@@ -1,4 +1,3 @@
-import './lib.deno.ns';
 import type * as types from "./types.ts";
 import Go from "./wasm_exec.ts";
 
