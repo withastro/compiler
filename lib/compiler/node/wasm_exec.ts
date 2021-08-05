@@ -18,7 +18,7 @@ Object.defineProperties(globalThis, {
   crypto: {
     value: {
       getRandomValues(b) {
-        randomBytes(b.length);
+        crypto.randomFillSync(b);
       },
     },
     enumerable: true,

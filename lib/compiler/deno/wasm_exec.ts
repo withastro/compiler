@@ -7,7 +7,7 @@
 // This file has been further modified for use by Astro.
 
 import fs from "https://deno.land/std@0.103.0/node/fs.ts";
-import { randomFillSync } from "https://deno.land/std@0.103.0/node/crypto.ts";
+import { randomBytes } from "https://deno.land/std@0.103.0/node/crypto.ts";
 import { TextEncoder, TextDecoder } from "https://deno.land/std@0.103.0/node/util.ts";
 
 Object.defineProperties(globalThis, {
@@ -18,7 +18,7 @@ Object.defineProperties(globalThis, {
   crypto: {
     value: {
       getRandomValues(b) {
-        randomFillSync(b);
+        randomBytes(b.length);
       },
     },
     enumerable: true,
