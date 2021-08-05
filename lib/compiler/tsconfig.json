@@ -9,6 +9,11 @@
     "esModuleInterop": true
   },
   "include": [
-    "node"
+    "browser",
+    "node",
+    "shared",
   ],
+  "exclude": [
+    "node_modules"
+  ]
 }

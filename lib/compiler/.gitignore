@@ -1,3 +1,5 @@
+browser/**/*.js
+browser/**/*.d.ts
 node/**/*.js
 node/**/*.d.ts
 shared/**/*.js
