@@ -159,8 +159,11 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 			return err
 		}
 
-		if _, err := w.WriteString("// ---\n" + strings.TrimSpace(renderBody.String()) + "\n// ---"); err != nil {
-			return err
+		body := strings.TrimSpace(renderBody.String())
+		if body != "" {
+			if _, err := w.WriteString("// ---\n" + body + "\n// ---"); err != nil {
+				return err
+			}
 		}
 
 		return nil
