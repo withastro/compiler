@@ -1,5 +1,7 @@
 import type * as types from "./types.ts";
-import Go from "./wasm_exec.ts";
+import "./wasm_exec.js";
+
+const Go = (globalThis as any).Go;
 
 export const transform: typeof types.transform = async (input, options) => {
   return ensureServiceIsRunning().then(service => service.transform(input, options));
