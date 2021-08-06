@@ -1,7 +1,7 @@
 {
     "name": "@astrojs/compiler",
     "type": "module",
-    "version": "0.1.0-canary.10",
+    "version": "0.1.0-canary.23",
     "scripts": {
         "build": "tsc -p ."
     },
@@ -11,6 +11,7 @@
             "import": "./node/index.js",
             "default": "./browser/index.js"
         },
+        "./internal": "./shared/shim.js",
         "./astro.wasm": "./astro.wasm"
     },
     "dependencies": {

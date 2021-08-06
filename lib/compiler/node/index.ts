@@ -7,6 +7,11 @@ export const transform: typeof types.transform = async (input, options) => {
   return ensureServiceIsRunning().then(service => service.transform(input, options));
 };
 
+export const compile = async (template: string): Promise<string> => {
+  const { default: mod } = await import(`data:text/typescript;charset=utf-8;base64,${btoa(template)}`)
+  return mod.__render()
+}
+
 interface Service {
   transform: typeof types.transform;
 }
