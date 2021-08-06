@@ -1,6 +1,5 @@
 {
-    "go.toolsEnvVars": {
-        "GOROOT": "/Users/nmoo/Library/Caches/tinygo/goroot-go1.16.6-d3ca3aa1d5cfc616ae7aefb54609ec76fd8a84fd179650a848c622c3a9faeea3",
-        "GOFLAGS": "-tags=js,wasm,tinygo,gc.conservative,scheduler.coroutines"
-    }
+  "go.toolsEnvVars": {
+    "GOFLAGS": "-tags=js,wasm,tinygo,gc.conservative,scheduler.coroutines"
+  }
 }
