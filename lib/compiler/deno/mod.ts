@@ -33,8 +33,6 @@ const startRunningService = async () => {
   const wasm = await instantiateWASM(new URL('./astro.wasm', import.meta.url).toString(), go.importObject);
   go.run(wasm.instance);
 
-  console.log(wasm.instance.exports)
-
   const apiKeys = new Set([
     'transform'
   ]);
