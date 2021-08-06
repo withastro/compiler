@@ -2,19 +2,19 @@ export type Platform = 'browser' | 'node' | 'neutral';
 export type SourceMap = any;
 
 export interface TransformOptions {
-
+  internalURL?: string;
 }
 
-export interface TransformResult {
-	code: string;
-	map: SourceMap;
-  warnings: any[]
-}
+// export interface TransformResult {
+// 	code: string;
+// 	map: SourceMap;
+//   warnings: any[]
+// }
 
-export interface TransformResults {
-  js: TransformResult;
-  css?: TransformResult;
-}
+// export interface TransformResults {
+//   js: TransformResult;
+//   css?: TransformResult;
+// }
 
 // This function transforms a single JavaScript file. It can be used to minify
 // JavaScript, convert TypeScript/JSX to JavaScript, or convert newer JavaScript
@@ -23,7 +23,7 @@ export interface TransformResults {
 //
 // Works in node: yes
 // Works in browser: yes
-export declare function transform(input: string, options?: TransformOptions): Promise<TransformResults>;
+export declare function transform(input: string, options?: TransformOptions): Promise<string>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before

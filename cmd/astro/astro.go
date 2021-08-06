@@ -24,6 +24,7 @@ func jsString(j js.Value) string {
 
 func Transform(this js.Value, args []js.Value) interface{} {
 	source := jsString(args[0])
+	options := js.Value(args[1])
 	doc, _ := tycho.Parse(strings.NewReader(source))
 	hash := hashFromSource(source)
 
@@ -34,8 +35,12 @@ func Transform(this js.Value, args []js.Value) interface{} {
 	w := new(strings.Builder)
 	tycho.Render(w, doc)
 	js := w.String()
+	internalURL := jsString(options.Get("internalURL"))
+	if internalURL == "" {
+		internalURL = "astro/internal"
+	}
 
-	return js
+	return "import \"" + internalURL + "\"\n" + js
 }
 
 func hashFromSource(source string) string {
