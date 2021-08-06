@@ -155,7 +155,7 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 			return err
 		}
 
-		if _, err := w.WriteString("\nasync function __render(props, ...children) {\n"); err != nil {
+		if _, err := w.WriteString("\n//@ts-ignore\nasync function __render(props, ...children) {\n"); err != nil {
 			return err
 		}
 
