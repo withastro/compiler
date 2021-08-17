@@ -4,7 +4,8 @@ import "./wasm_exec.js";
 const Go = (globalThis as any).Go;
 
 export const transform: typeof types.transform = async (input, options) => {
-  return ensureServiceIsRunning().then(service => service.transform(input, { internalURL: new URL('./shim.ts', import.meta.url).toString(), ...options }));
+  const service = await ensureServiceIsRunning();
+  return await service.transform(input, { internalURL: new URL('./shim.ts',import.meta.url).toString(), ...options });
 };
 
 export const compile = async (template: string): Promise<string> => {
@@ -18,7 +19,7 @@ interface Service {
 
 let longLivedService: Service | undefined;
 
-let ensureServiceIsRunning = (): Promise<Service> => {
+const ensureServiceIsRunning = (): Promise<Service> => {
   if (longLivedService) return Promise.resolve(longLivedService);
   return startRunningService();
 }

@@ -1,6 +1,4 @@
-import { transform } from "./mod.ts";
+// import { transform, compile } from "https://deno.land/x/astro_compiler@v0.1.0-canary.24/mod.ts";
 
-;(async () => {
-    const res = await transform('<h1>Hello world!</h1>');
-    console.log(res)
-})()
+
+console.log(escape('<div>ahh & ooh</div>' + '<div />'));
