@@ -28,10 +28,15 @@ const instantiateWASM = async (
   wasmURL: string,
   importObject: Record<string, any>
 ): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
-  return await WebAssembly.instantiateStreaming(
-    fetch(wasmURL),
-    importObject
-  );
+  if (wasmURL.startsWith('file://')) {
+    const bytes = await Deno.readFile("./astro.wasm");
+    return await WebAssembly.instantiate(bytes, importObject)
+  } else {
+      return await WebAssembly.instantiateStreaming(
+      fetch(wasmURL),
+      importObject
+    );
+  }
 };
 
 const startRunningService = async () => {
