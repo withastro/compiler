@@ -321,14 +321,51 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 			}
 		}
 
-		if err := writeQuoted(w, a.Key); err != nil {
-			return err
-		}
-		if _, err := w.WriteString(`:`); err != nil {
-			return err
-		}
-		if err := writeQuoted(w, a.Val); err != nil {
-			return err
+		switch a.Type {
+		case QuotedAttribute:
+			if err := writeQuoted(w, a.Key); err != nil {
+				return err
+			}
+			if _, err := w.WriteString(`:`); err != nil {
+				return err
+			}
+			if err := writeQuoted(w, a.Val); err != nil {
+				return err
+			}
+		case ExpressionAttribute:
+			if err := writeQuoted(w, a.Key); err != nil {
+				return err
+			}
+			if _, err := w.WriteString(`:`); err != nil {
+				return err
+			}
+			if _, err := w.WriteString("(" + a.Val + ")"); err != nil {
+				return err
+			}
+		case SpreadAttribute:
+			if _, err := w.WriteString(`...(` + strings.TrimSpace(a.Key) + `)`); err != nil {
+				return err
+			}
+		case ShorthandAttribute:
+			if err := writeQuoted(w, strings.TrimSpace(a.Key)); err != nil {
+				return err
+			}
+			if _, err := w.WriteString(`:`); err != nil {
+				return err
+			}
+			if _, err := w.WriteString("(" + strings.TrimSpace(a.Key) + ")"); err != nil {
+				return err
+			}
+		case TemplateLiteralAttribute:
+			if err := writeQuoted(w, a.Key); err != nil {
+				return err
+			}
+			if _, err := w.WriteString(`:` + "`"); err != nil {
+				return err
+			}
+			if _, err := w.WriteString(a.Val + "`"); err != nil {
+				return err
+			}
 		}
 		if i != len(n.Attr)-1 {
 			if err := w.WriteByte(','); err != nil {

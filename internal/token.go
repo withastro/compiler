@@ -17,15 +17,6 @@ import (
 // A TokenType is the type of a Token.
 type TokenType uint32
 
-// A TokenType is the type of a Token.
-type FrontmatterState uint32
-
-const (
-	FrontmatterInitial FrontmatterState = iota
-	FrontmatterOpen
-	FrontmatterClosed
-)
-
 const (
 	// ErrorToken means that an error occurred during tokenization.
 	ErrorToken TokenType = iota
@@ -50,6 +41,26 @@ const (
 	StartExpressionToken
 	// An EndExpressionToken looks like }
 	EndExpressionToken
+)
+
+// FrontmatterState tracks the open/closed state of Frontmatter.
+type FrontmatterState uint32
+
+const (
+	FrontmatterInitial FrontmatterState = iota
+	FrontmatterOpen
+	FrontmatterClosed
+)
+
+// AttributeType is the type of an Attribute
+type AttributeType uint32
+
+const (
+	QuotedAttribute AttributeType = iota
+	ExpressionAttribute
+	SpreadAttribute
+	ShorthandAttribute
+	TemplateLiteralAttribute
 )
 
 // ErrBufferExceeded means that the buffering limit was exceeded.
@@ -101,7 +112,11 @@ func (fm FrontmatterState) String() string {
 //
 // Namespace is only used by the parser, not the tokenizer.
 type Attribute struct {
-	Namespace, Key, Val string
+	Namespace string
+	Key       string
+	Val       string
+	Tokenizer *Tokenizer
+	Type      AttributeType
 }
 
 type Expression struct {
@@ -135,15 +150,37 @@ func (t Token) tagString() string {
 	buf := bytes.NewBufferString(t.Data)
 	for _, a := range t.Attr {
 		buf.WriteByte(' ')
-		if a.Key[0] == '{' {
-			buf.WriteString(a.Key)
-		} else {
+
+		switch a.Type {
+		case QuotedAttribute:
 			buf.WriteString(a.Key)
 			buf.WriteString(`="`)
 			escape(buf, a.Val)
 			buf.WriteByte('"')
+		case ExpressionAttribute:
+			buf.WriteString(a.Key)
+			buf.WriteString(`={`)
+			buf.WriteString(a.Val)
+			buf.WriteByte('}')
+		case TemplateLiteralAttribute:
+			buf.WriteString(a.Key)
+			buf.WriteByte('=')
+			buf.WriteByte('{')
+			buf.WriteByte('`')
+			escape(buf, a.Val)
+			buf.WriteByte('`')
+			buf.WriteByte('}')
+		case ShorthandAttribute:
+			buf.WriteByte('{')
+			buf.WriteString(a.Key)
+			buf.WriteByte('}')
+		case SpreadAttribute:
+			buf.WriteString("{...")
+			buf.WriteString(a.Key)
+			buf.WriteByte('}')
+		default:
+			buf.WriteString(a.Key)
 		}
-
 	}
 	return buf.String()
 }
@@ -207,8 +244,12 @@ type Tokenizer struct {
 	// pendingAttr is the attribute key and value currently being tokenized.
 	// When complete, pendingAttr is pushed onto attr. nAttrReturned is
 	// incremented on each call to TagAttr.
-	pendingAttr   [2]span
-	attr          [][2]span
+	pendingAttr         [2]span
+	pendingAttrType     AttributeType
+	attr                [][2]span
+	attrTypes           []AttributeType
+	attrExpressionStack int
+
 	nAttrReturned int
 	dashCount     int
 	// expressionStack is an array of counters tracking opening and closing
@@ -913,7 +954,10 @@ func (z *Tokenizer) readUnclosedTag() {
 // The opening "<a" or "</a" has already been consumed, where 'a' means anything
 // in [A-Za-z].
 func (z *Tokenizer) readTag(saveAttr bool) {
+	z.pendingAttrType = QuotedAttribute
 	z.attr = z.attr[:0]
+	z.attrTypes = z.attrTypes[:0]
+	z.attrExpressionStack = 0
 	z.nAttrReturned = 0
 	// Read the tag name and attribute key/value pairs.
 	z.readTagName()
@@ -931,6 +975,7 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 		// Save pendingAttr if saveAttr and that attribute has a non-empty key.
 		if saveAttr && z.pendingAttr[0].start != z.pendingAttr[0].end {
 			z.attr = append(z.attr, z.pendingAttr)
+			z.attrTypes = append(z.attrTypes, z.pendingAttrType)
 		}
 		if z.skipWhiteSpace(); z.err != nil {
 			break
@@ -965,6 +1010,7 @@ func (z *Tokenizer) readTagName() {
 // Precondition: z.err == nil.
 func (z *Tokenizer) readTagAttrKey() {
 	z.pendingAttr[0].start = z.raw.end
+	z.pendingAttrType = QuotedAttribute
 	for {
 		c := z.readByte()
 		if z.err != nil {
@@ -972,8 +1018,25 @@ func (z *Tokenizer) readTagAttrKey() {
 			return
 		}
 		switch c {
+		case '{':
+			z.pendingAttr[0].start = z.raw.end
+			z.pendingAttrType = ShorthandAttribute
+			z.attrExpressionStack = 1
+			z.readTagAttrExpression()
+			pendingAttr := z.buf[z.pendingAttr[0].start:]
+			if len(pendingAttr) > 3 {
+				if strings.TrimSpace(string(pendingAttr))[0:3] == "..." {
+					z.pendingAttr[0].start += strings.Index(string(pendingAttr), "...") + 3
+					z.pendingAttrType = SpreadAttribute
+				}
+			}
+			z.pendingAttr[0].end = z.raw.end
 		case ' ', '\n', '\r', '\t', '\f', '/':
-			z.pendingAttr[0].end = z.raw.end - 1
+			if z.pendingAttrType == SpreadAttribute || z.pendingAttrType == ShorthandAttribute {
+				z.pendingAttr[0].end = z.raw.end - 2
+			} else {
+				z.pendingAttr[0].end = z.raw.end - 1
+			}
 			return
 		case '=', '>':
 			z.raw.end--
@@ -1013,6 +1076,21 @@ func (z *Tokenizer) readTagAttrVal() {
 
 	case '\'', '"':
 		z.pendingAttr[1].start = z.raw.end
+		z.pendingAttrType = QuotedAttribute
+		for {
+			c := z.readByte()
+			if z.err != nil {
+				z.pendingAttr[1].end = z.raw.end
+				return
+			}
+			if c == quote {
+				z.pendingAttr[1].end = z.raw.end - 1
+				return
+			}
+		}
+	case '`':
+		z.pendingAttr[1].start = z.raw.end
+		z.pendingAttrType = TemplateLiteralAttribute
 		for {
 			c := z.readByte()
 			if z.err != nil {
@@ -1025,8 +1103,17 @@ func (z *Tokenizer) readTagAttrVal() {
 			}
 		}
 
+	case '{':
+		z.pendingAttr[1].start = z.raw.end
+		z.pendingAttrType = ExpressionAttribute
+		z.attrExpressionStack = 1
+		z.readTagAttrExpression()
+		z.pendingAttr[1].end = z.raw.end - 1
+		return
+
 	default:
 		z.pendingAttr[1].start = z.raw.end - 1
+		z.pendingAttrType = QuotedAttribute
 		for {
 			c := z.readByte()
 			if z.err != nil {
@@ -1040,6 +1127,27 @@ func (z *Tokenizer) readTagAttrVal() {
 			case '>':
 				z.raw.end--
 				z.pendingAttr[1].end = z.raw.end
+				return
+			}
+		}
+	}
+}
+
+func (z *Tokenizer) readTagAttrExpression() {
+	if z.err != nil {
+		return
+	}
+	for {
+		c := z.readByte()
+		if z.err != nil {
+			return
+		}
+		switch c {
+		case '{':
+			z.attrExpressionStack++
+		case '}':
+			z.attrExpressionStack--
+			if z.attrExpressionStack == 0 {
 				return
 			}
 		}
@@ -1131,7 +1239,7 @@ loop:
 			continue
 		}
 
-		// We have a non-text token, but we might have accumulated some text
+		// We have a` non-text token, but we might have accumulated some text
 		// before that. If so, we return the text first, and return the non-
 		// text token on the subsequent call to Next.
 		if x := z.raw.end - len("<a"); z.raw.start < x {
@@ -1448,18 +1556,19 @@ func (z *Tokenizer) TagName() (name []byte, hasAttr bool) {
 // TagAttr returns the lower-cased key and unescaped value of the next unparsed
 // attribute for the current tag token and whether there are more attributes.
 // The contents of the returned slices may change on the next call to Next.
-func (z *Tokenizer) TagAttr() (key, val []byte, moreAttr bool) {
+func (z *Tokenizer) TagAttr() (key, val []byte, attrType AttributeType, moreAttr bool) {
 	if z.nAttrReturned < len(z.attr) {
 		switch z.tt {
 		case StartTagToken, SelfClosingTagToken:
 			x := z.attr[z.nAttrReturned]
+			attrType := z.attrTypes[z.nAttrReturned]
 			z.nAttrReturned++
 			key = z.buf[x[0].start:x[0].end]
 			val = z.buf[x[1].start:x[1].end]
-			return key, unescape(convertNewlines(val), true), z.nAttrReturned < len(z.attr)
+			return key, unescape(convertNewlines(val), true), attrType, z.nAttrReturned < len(z.attr)
 		}
 	}
-	return nil, nil, false
+	return nil, nil, QuotedAttribute, false
 }
 
 // Token returns the current Token. The result's Data and Attr values remain
@@ -1477,8 +1586,10 @@ func (z *Tokenizer) Token() Token {
 		name, moreAttr := z.TagName()
 		for moreAttr {
 			var key, val []byte
-			key, val, moreAttr = z.TagAttr()
-			t.Attr = append(t.Attr, Attribute{"", atom.String(key), string(val)})
+			var attrType AttributeType
+			var attrTokenizer *Tokenizer = nil
+			key, val, attrType, moreAttr = z.TagAttr()
+			t.Attr = append(t.Attr, Attribute{"", atom.String(key), string(val), attrTokenizer, attrType})
 		}
 		if a := atom.Lookup(name); a != 0 {
 			t.DataAtom, t.Data = a, a.String()
@@ -1520,6 +1631,17 @@ func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
 		case "iframe", "noembed", "noframes", "noscript", "plaintext", "script", "style", "title", "textarea", "xmp":
 			z.rawTag = s
 		}
+	}
+	return z
+}
+
+// NewTokenizer returns a new HTML Tokenizer for the given Reader.
+// The input is assumed to be UTF-8 encoded.
+func NewAttributeTokenizer(r io.Reader) *Tokenizer {
+	z := &Tokenizer{
+		r:   r,
+		buf: make([]byte, 0, 4096),
+		fm:  FrontmatterClosed,
 	}
 	return z
 }
