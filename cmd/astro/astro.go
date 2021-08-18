@@ -1,15 +1,40 @@
 package main
 
-// func main() {
-// 	source := `---
-// 	Hello world!
-// 	---
-// 	<html client:only { self } { ...spread } {...{ hello: "world" }} data-expr={yo} data-obj={JSON.stringify({ hello: "world" })} client:data-quote="{nice}" data-tagged=` + "`" + `tagged ${literal}` + "`" + `><head></head></html>`
+import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"strings"
 
-// 	doc, _ := tycho.Parse(strings.NewReader(source))
-// 	w := new(strings.Builder)
-// 	tycho.Render(w, doc)
-// 	fmt.Println(w.String())
+	astro "github.com/snowpackjs/astro/internal"
+)
+
+func main() {
+	source := `---
+import Component from './Component.jsx'
+---
+<html>
+    <head>
+		<title>Hello world!</title>
+    </head>
+    <body>
+		<main>
+			<Component {a} {...b} c={c} />
+		</main>
+    </body>
+</html>
+`
+
+	doc, _ := astro.Parse(strings.NewReader(source))
+	result := astro.Render(source, doc)
+
+	content, _ := json.Marshal(source)
+	sourcemap := `{ "version": 3, "sources": ["file.astro"], "names": [], "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "sourcesContent": [` + string(content) + `] }`
+	b64 := base64.StdEncoding.EncodeToString([]byte(sourcemap))
+	output := string(result.Output) + string('\n') + `//# sourceMappingURL=data:application/json;base64,` + b64 + string('\n')
+	fmt.Print(output)
+}
+
 // 	// z := tycho.NewTokenizer(strings.NewReader(source))
 
 // 	// for {

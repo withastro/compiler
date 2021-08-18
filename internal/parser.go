@@ -10,6 +10,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/snowpackjs/astro/internal/loc"
 	a "golang.org/x/net/html/atom"
 )
 
@@ -28,6 +29,8 @@ type parser struct {
 	frontmatterState FrontmatterState
 	// doc is the document root element.
 	doc *Node
+	// fm is the document's frontmatter node
+	fm *Node
 	// The stack of open elements (section 12.2.4.2) and active formatting
 	// elements (section 12.2.4.3).
 	oe, afe nodeStack
@@ -198,6 +201,18 @@ func (p *parser) parseGenericRawTextElement() {
 	p.im = textIM
 }
 
+func (p *parser) generateLoc() []loc.Loc {
+	// fmt.Println("GenerateLoc", p.tok.Type.String(), p.tok.Loc.Start)
+	locs := make([]loc.Loc, 0, 2)
+	locs = append(locs, p.tok.Loc)
+	return locs
+}
+
+func (p *parser) addLoc() {
+	n := p.oe.top()
+	n.Loc = append(n.Loc, p.tok.Loc)
+}
+
 // generateImpliedEndTags pops nodes off the stack of open elements as long as
 // the top node has a tag name of dd, dt, li, optgroup, option, p, rb, rp, rt or rtc.
 // If exceptions are specified, nodes with that name will not be popped off.
@@ -309,17 +324,20 @@ func (p *parser) addText(text string) {
 		p.fosterParent(&Node{
 			Type: TextNode,
 			Data: text,
+			Loc:  p.generateLoc(),
 		})
 		return
 	}
 
-	if strings.HasPrefix(strings.TrimSpace(text), "}") {
-		p.addChild(&Node{
-			Type: TextNode,
-			Data: text,
-		})
-		return
-	}
+	// TODO: is this still used?
+	// if strings.HasPrefix(strings.TrimSpace(text), "}") {
+	// 	p.addChild(&Node{
+	// 		Type: TextNode,
+	// 		Data: text,
+	// 		Loc:  p.generateLoc(),
+	// 	})
+	// 	return
+	// }
 
 	t := p.top()
 	if n := t.LastChild; n != nil && n.Type == TextNode {
@@ -329,25 +347,30 @@ func (p *parser) addText(text string) {
 	p.addChild(&Node{
 		Type: TextNode,
 		Data: text,
+		Loc:  p.generateLoc(),
 	})
 }
 
 func (p *parser) addFrontmatter(empty bool) {
 	if p.frontmatterState == FrontmatterInitial {
 		if p.doc.FirstChild != nil {
-			p.doc.InsertBefore(&Node{
+			p.fm = &Node{
 				Type: FrontmatterNode,
-			}, p.doc.FirstChild)
+				Loc:  p.generateLoc(),
+			}
+			p.doc.InsertBefore(p.fm, p.doc.FirstChild)
 		} else {
-			p.doc.AppendChild(&Node{
+			p.fm = &Node{
 				Type: FrontmatterNode,
-			})
+				Loc:  p.generateLoc(),
+			}
+			p.doc.AppendChild(p.fm)
 		}
 		if empty {
 			p.frontmatterState = FrontmatterClosed
 		} else {
 			p.frontmatterState = FrontmatterOpen
-			p.oe = append(p.oe, p.doc.FirstChild)
+			p.oe = append(p.oe, p.fm)
 		}
 	}
 }
@@ -362,6 +385,7 @@ func (p *parser) addExpression() {
 		Expression:    true,
 		Component:     false,
 		CustomElement: false,
+		Loc:           p.generateLoc(),
 	})
 }
 
@@ -376,6 +400,7 @@ func (p *parser) addElement() {
 		Attr:          p.tok.Attr,
 		Component:     isComponent,
 		CustomElement: isCustomElement,
+		Loc:           p.generateLoc(),
 	})
 }
 
@@ -565,6 +590,7 @@ func initialIM(p *parser) bool {
 		switch p.tok.Type {
 		case FrontmatterFenceToken:
 			p.frontmatterState = FrontmatterClosed
+			p.fm.Loc = append(p.fm.Loc, p.tok.Loc)
 			for range p.oe {
 				p.oe.pop()
 			}
@@ -580,6 +606,7 @@ func initialIM(p *parser) bool {
 			}
 			return true
 		case EndTagToken:
+			p.addLoc()
 			p.oe.pop()
 			return true
 		default:
@@ -602,6 +629,7 @@ func initialIM(p *parser) bool {
 		p.doc.AppendChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	case DoctypeToken:
@@ -650,6 +678,7 @@ func beforeHTMLIM(p *parser) bool {
 		p.doc.AppendChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	}
@@ -689,6 +718,7 @@ func beforeHeadIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	case DoctypeToken:
@@ -698,6 +728,7 @@ func beforeHeadIM(p *parser) bool {
 		p.addExpression()
 		return true
 	case EndExpressionToken:
+		p.addLoc()
 		p.oe.pop()
 		return true
 	}
@@ -778,11 +809,13 @@ func inHeadIM(p *parser) bool {
 	case EndTagToken:
 		switch p.tok.DataAtom {
 		case a.Head:
+			p.addLoc()
 			p.oe.pop()
 			p.im = afterHeadIM
 			return true
 		case a.Body, a.Html, a.Br:
 			p.parseImpliedToken(EndTagToken, a.Head, a.Head.String())
+			p.addLoc()
 			return false
 		case a.Template:
 			if !p.oe.contains(a.Template) {
@@ -804,12 +837,14 @@ func inHeadIM(p *parser) bool {
 			return true
 		default:
 			// Ignore the token.
+			p.addLoc()
 			return true
 		}
 	case CommentToken:
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	case DoctypeToken:
@@ -821,6 +856,7 @@ func inHeadIM(p *parser) bool {
 		p.im = textIM
 		return true
 	case EndExpressionToken:
+		p.addLoc()
 		p.oe.pop()
 		return true
 	}
@@ -856,6 +892,7 @@ func inHeadNoscriptIM(p *parser) bool {
 		case a.Noscript, a.Br:
 		default:
 			// Ignore the token.
+			p.addLoc()
 			return true
 		}
 	case TextToken:
@@ -920,12 +957,14 @@ func afterHeadIM(p *parser) bool {
 			return inHeadIM(p)
 		default:
 			// Ignore the token.
+			p.addLoc()
 			return true
 		}
 	case CommentToken:
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	case DoctypeToken:
@@ -935,6 +974,7 @@ func afterHeadIM(p *parser) bool {
 		p.addExpression()
 		return true
 	case EndExpressionToken:
+		p.addLoc()
 		p.oe.pop()
 		// Ignore the token.
 		return true
@@ -1191,16 +1231,28 @@ func inBodyIM(p *parser) bool {
 			}
 			p.reconstructActiveFormattingElements()
 			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 		case a.Rb, a.Rtc:
 			if p.elementInScope(defaultScope, a.Ruby) {
 				p.generateImpliedEndTags()
 			}
 			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 		case a.Rp, a.Rt:
 			if p.elementInScope(defaultScope, a.Ruby) {
 				p.generateImpliedEndTags("rtc")
 			}
 			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 		case a.Math, a.Svg:
 			p.reconstructActiveFormattingElements()
 			if p.tok.DataAtom == a.Math {
@@ -1226,19 +1278,26 @@ func inBodyIM(p *parser) bool {
 				p.acknowledgeSelfClosingTag()
 			}
 		}
+		if p.hasSelfClosingToken {
+			p.oe.pop()
+			p.acknowledgeSelfClosingTag()
+		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
 		case a.Body:
+			p.addLoc()
 			if p.elementInScope(defaultScope, a.Body) {
 				p.im = afterBodyIM
 			}
 		case a.Html:
+			p.addLoc()
 			if p.elementInScope(defaultScope, a.Body) {
 				p.parseImpliedToken(EndTagToken, a.Body, a.Body.String())
 				return false
 			}
 			return true
 		case a.Address, a.Article, a.Aside, a.Blockquote, a.Button, a.Center, a.Details, a.Dialog, a.Dir, a.Div, a.Dl, a.Fieldset, a.Figcaption, a.Figure, a.Footer, a.Header, a.Hgroup, a.Listing, a.Main, a.Menu, a.Nav, a.Ol, a.Pre, a.Section, a.Summary, a.Ul:
+			p.addLoc()
 			p.popUntil(defaultScope, p.tok.DataAtom)
 		case a.Form:
 			if p.oe.contains(a.Template) {
@@ -1252,6 +1311,7 @@ func inBodyIM(p *parser) bool {
 					// Ignore the token.
 					return true
 				}
+				p.addLoc()
 				p.popUntil(defaultScope, a.Form)
 			} else {
 				node := p.form
@@ -1268,16 +1328,22 @@ func inBodyIM(p *parser) bool {
 			if !p.elementInScope(buttonScope, a.P) {
 				p.parseImpliedToken(StartTagToken, a.P, a.P.String())
 			}
+			p.addLoc()
 			p.popUntil(buttonScope, a.P)
 		case a.Li:
+			p.addLoc()
 			p.popUntil(listItemScope, a.Li)
 		case a.Dd, a.Dt:
+			p.addLoc()
 			p.popUntil(defaultScope, p.tok.DataAtom)
 		case a.H1, a.H2, a.H3, a.H4, a.H5, a.H6:
+			p.addLoc()
 			p.popUntil(defaultScope, a.H1, a.H2, a.H3, a.H4, a.H5, a.H6)
 		case a.A, a.B, a.Big, a.Code, a.Em, a.Font, a.I, a.Nobr, a.S, a.Small, a.Strike, a.Strong, a.Tt, a.U:
+			p.addLoc()
 			p.inBodyEndTagFormatting(p.tok.DataAtom, p.tok.Data)
 		case a.Applet, a.Marquee, a.Object:
+			p.addLoc()
 			if p.popUntil(defaultScope, p.tok.DataAtom) {
 				p.clearActiveFormattingElements()
 			}
@@ -1293,12 +1359,14 @@ func inBodyIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 	case StartExpressionToken:
 		p.reconstructActiveFormattingElements()
 		p.addExpression()
 		return true
 	case EndExpressionToken:
+		p.addLoc()
 		p.oe.pop()
 		return true
 	case ErrorToken:
@@ -1488,9 +1556,11 @@ func (p *parser) inBodyEndTagOther(tagAtom a.Atom, tagName string) {
 		if (p.oe[i].DataAtom == tagAtom) &&
 			((tagAtom != 0) || (p.oe[i].Data == tagName)) {
 			p.oe = p.oe[:i]
+			p.addLoc()
 			break
 		}
 		if isSpecialElement(p.oe[i]) {
+			p.addLoc()
 			break
 		}
 	}
@@ -1518,8 +1588,10 @@ func textIM(p *parser) bool {
 		p.addText(d)
 		return true
 	case EndTagToken:
+		p.addLoc()
 		p.oe.pop()
 	case EndExpressionToken:
+		p.addLoc()
 		p.oe.pop()
 		p.im = p.originalIM
 		p.originalIM = nil
@@ -1622,6 +1694,7 @@ func inTableIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	case DoctypeToken:
@@ -1698,6 +1771,7 @@ func inColumnGroupIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	case DoctypeToken:
@@ -1785,6 +1859,7 @@ func inTableBodyIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	}
@@ -1967,6 +2042,7 @@ func inSelectIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 	case DoctypeToken:
 		// Ignore the token.
@@ -2102,6 +2178,7 @@ func afterBodyIM(p *parser) bool {
 		p.oe[0].AppendChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	}
@@ -2116,6 +2193,7 @@ func inFramesetIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 	case TextToken:
 		// Ignore all text but whitespace.
@@ -2166,6 +2244,7 @@ func afterFramesetIM(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 	case TextToken:
 		// Ignore all text but whitespace.
@@ -2218,6 +2297,7 @@ func afterAfterBodyIM(p *parser) bool {
 		p.doc.AppendChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 		return true
 	case DoctypeToken:
@@ -2234,6 +2314,7 @@ func afterAfterFramesetIM(p *parser) bool {
 		p.doc.AppendChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 	case TextToken:
 		// Ignore all text but whitespace.
@@ -2283,6 +2364,7 @@ func parseForeignContent(p *parser) bool {
 		p.addChild(&Node{
 			Type: CommentNode,
 			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
 		})
 	case StartTagToken:
 		if !p.fragment {

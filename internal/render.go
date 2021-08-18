@@ -5,16 +5,39 @@
 package astro
 
 import (
-	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"regexp"
 	"strings"
 
-	"github.com/snowpackjs/astro/internal/js_scanner"
+	"github.com/snowpackjs/astro/internal/loc"
+	"github.com/snowpackjs/astro/internal/sourcemap"
 	a "golang.org/x/net/html/atom"
 )
+
+type PrintResult struct {
+	Output         []byte
+	SourceMapChunk sourcemap.Chunk
+}
+
+type printer struct {
+	output  []byte
+	builder sourcemap.ChunkBuilder
+}
+
+func (p *printer) print(text string) {
+	p.output = append(p.output, text...)
+}
+
+// This is the same as "print(string(bytes))" without any unnecessary temporary
+// allocations
+func (p *printer) printBytes(bytes []byte) {
+	p.output = append(p.output, bytes...)
+}
+
+func (p *printer) addSourceMapping(location loc.Loc) {
+	p.builder.AddSourceMapping(location, p.output)
+}
 
 type writer interface {
 	io.Writer
@@ -46,15 +69,13 @@ type writer interface {
 // text node would become a tree containing <html>, <head> and <body> elements.
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
-func Render(w io.Writer, n *Node) error {
-	if x, ok := w.(writer); ok {
-		return render(x, n)
+func Render(sourcetext string, n *Node) PrintResult {
+	sources := make([]string, 1)
+	sources[0] = "test.astro"
+	p := &printer{
+		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
-	buf := bufio.NewWriter(w)
-	if err := render(buf, n); err != nil {
-		return err
-	}
-	return buf.Flush()
+	return render(p, n)
 }
 
 // plaintextAbort is returned from render1 when a <plaintext> element
@@ -67,24 +88,23 @@ type RenderOptions struct {
 	depth        int
 }
 
-func render(w writer, n *Node) error {
-	err := render1(w, n, RenderOptions{
+func render(p *printer, n *Node) PrintResult {
+	render1(p, n, RenderOptions{
 		isRoot:       true,
 		isExpression: false,
 		depth:        0,
 	})
-	if err == plaintextAbort {
-		err = nil
+
+	return PrintResult{
+		Output:         p.output,
+		SourceMapChunk: p.builder.GenerateChunk(p.output),
 	}
-	return err
 }
 
-func render1(w writer, n *Node, opts RenderOptions) error {
+func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 	// Render non-element nodes; these are the easy cases.
 	switch n.Type {
-	case ErrorNode:
-		return errors.New("html: cannot render an ErrorNode node")
 	case TextNode:
 		backticks := regexp.MustCompile("`")
 		dollarOpen := regexp.MustCompile(`\${`)
@@ -92,308 +112,244 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 		text = strings.Replace(text, "\\", "\\\\", -1)
 		text = backticks.ReplaceAllString(text, "\\`")
 		text = dollarOpen.ReplaceAllString(text, "\\${")
-		if _, err := w.WriteString(",`" + text + "`"); err != nil {
-			return err
-		}
-		return nil
+		p.print(",")
+		p.addSourceMapping(n.Loc[0])
+		p.print("`" + text + "`")
+		return
 	case FrontmatterNode:
-		frontmatter := new(strings.Builder)
-		importStatements := new(strings.Builder)
-		renderBody := new(strings.Builder)
+		// p.addSourceMapping(loc.Loc{Start: 0})
+		p.print("//@ts-ignore\nasync function __render(props, ...children) {\n")
+		p.addSourceMapping(n.Loc[0])
+		p.print("// ---")
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				if _, err := frontmatter.WriteString(c.Data); err != nil {
-					return err
-				}
+				p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + 1})
+				p.print(c.Data)
 			} else {
-				if err := render1(frontmatter, c, RenderOptions{
+				render1(p, c, RenderOptions{
 					isRoot:       false,
 					isExpression: true,
 					depth:        depth + 1,
-				}); err != nil {
-					return err
-				}
+				})
 			}
 		}
+		p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
+		p.print("// ---")
 
-		data := frontmatter.String()
+		// p.addSourceMapping(loc.Loc{Start: 0})
 
-		imports := js_scanner.FindImportStatements([]byte(data))
-		var prevImport *js_scanner.ImportStatement
-		for i, currImport := range imports {
-			var nextImport *js_scanner.ImportStatement
-			if i < len(imports)-1 {
-				nextImport = imports[i+1]
-			}
-			// Extract import statement
-			text := data[currImport.StatementStart:currImport.StatementEnd] + ";\n"
-			importStatements.WriteString(text)
+		// data := frontmatter.String()
 
-			if i == 0 {
-				renderBody.WriteString(strings.TrimSpace(data[0:currImport.StatementStart]) + "\n")
-			}
-			if prevImport != nil {
-				renderBody.WriteString(strings.TrimSpace(data[prevImport.StatementEnd:currImport.StatementStart]) + "\n")
-			}
-			if nextImport != nil {
-				renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:nextImport.StatementStart]) + "\n")
-			}
-			if i == len(imports)-1 {
-				renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:]) + "\n")
-			}
+		// imports := js_scanner.FindImportStatements([]byte(data))
+		// var prevImport *js_scanner.ImportStatement
+		// for i, currImport := range imports {
+		// 	var nextImport *js_scanner.ImportStatement
+		// 	if i < len(imports)-1 {
+		// 		nextImport = imports[i+1]
+		// 	}
+		// 	// Extract import statement
+		// 	text := data[currImport.StatementStart:currImport.StatementEnd] + ";\n"
+		// 	importStatements.WriteString(text)
 
-			renderBody.WriteString("\n")
-			prevImport = currImport
-		}
+		// 	if i == 0 {
+		// 		renderBody.WriteString(strings.TrimSpace(data[0:currImport.StatementStart]) + "\n")
+		// 	}
+		// 	if prevImport != nil {
+		// 		renderBody.WriteString(strings.TrimSpace(data[prevImport.StatementEnd:currImport.StatementStart]) + "\n")
+		// 	}
+		// 	if nextImport != nil {
+		// 		renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:nextImport.StatementStart]) + "\n")
+		// 	}
+		// 	if i == len(imports)-1 {
+		// 		renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:]) + "\n")
+		// 	}
 
-		if len(imports) == 0 {
-			renderBody.WriteString(data)
-		}
+		// 	renderBody.WriteString("\n")
+		// 	prevImport = currImport
+		// }
 
-		if _, err := w.WriteString(strings.TrimSpace(importStatements.String())); err != nil {
-			return err
-		}
+		// if len(imports) == 0 {
+		// 	renderBody.WriteString(data)
+		// }
 
-		if _, err := w.WriteString("\n//@ts-ignore\nasync function __render(props, ...children) {\n"); err != nil {
-			return err
-		}
+		// p.print(strings.TrimSpace(importStatements.String()))
 
-		body := strings.TrimSpace(renderBody.String())
-		if body != "" {
-			if _, err := w.WriteString("// ---\n" + body + "\n// ---"); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		// body := strings.TrimSpace(renderBody.String())
+		// if body != "" {
+		// 	p.print("// ---\n")
+		// 	p.print(body)
+		// 	p.print("\n// ---")
+		// }
+		return
 	case DocumentNode:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := render1(w, c, RenderOptions{
+			render1(p, c, RenderOptions{
 				isRoot:       true,
 				isExpression: false,
 				depth:        depth + 1,
-			}); err != nil {
-				return err
-			}
+			})
 		}
-		return nil
+		return
 	case ElementNode:
 		// No-op.
 	case CommentNode:
-		if _, err := w.WriteString(",`<!--"); err != nil {
-			return err
-		}
-		if _, err := w.WriteString(n.Data); err != nil {
-			return err
-		}
-		if _, err := w.WriteString("-->`"); err != nil {
-			return err
-		}
-		return nil
+		p.print(",")
+		p.addSourceMapping(n.Loc[0])
+		p.print("`<!--")
+		p.print(n.Data)
+		p.print("-->`")
+		return
 	case DoctypeNode:
-		if _, err := w.WriteString("<!DOCTYPE "); err != nil {
-			return err
-		}
-		if _, err := w.WriteString(n.Data); err != nil {
-			return err
-		}
-		if n.Attr != nil {
-			var p, s string
-			for _, a := range n.Attr {
-				switch a.Key {
-				case "public":
-					p = a.Val
-				case "system":
-					s = a.Val
-				}
-			}
-			if p != "" {
-				if _, err := w.WriteString(" PUBLIC "); err != nil {
-					return err
-				}
-				if err := writeQuoted(w, p); err != nil {
-					return err
-				}
-				if s != "" {
-					if err := w.WriteByte(' '); err != nil {
-						return err
-					}
-					if err := writeQuoted(w, s); err != nil {
-						return err
-					}
-				}
-			} else if s != "" {
-				if _, err := w.WriteString(" SYSTEM "); err != nil {
-					return err
-				}
-				if err := writeQuoted(w, s); err != nil {
-					return err
-				}
-			}
-		}
-		return w.WriteByte(',')
+		p.print("<!DOCTYPE ")
+		p.print(n.Data)
+		// if n.Attr != nil {
+		// 	var p, s string
+		// 	for _, a := range n.Attr {
+		// 		switch a.Key {
+		// 		case "public":
+		// 			p = a.Val
+		// 		case "system":
+		// 			s = a.Val
+		// 		}
+		// 	}
+		// 	if p != "" {
+		// 		if _, err := w.WriteString(" PUBLIC "); err != nil {
+		// 			return err
+		// 		}
+		// 		if err := writeQuoted(w, p); err != nil {
+		// 			return err
+		// 		}
+		// 		if s != "" {
+		// 			if err := w.WriteByte(' '); err != nil {
+		// 				return err
+		// 			}
+		// 			if err := writeQuoted(w, s); err != nil {
+		// 				return err
+		// 			}
+		// 		}
+		// 	} else if s != "" {
+		// 		if _, err := w.WriteString(" SYSTEM "); err != nil {
+		// 			return err
+		// 		}
+		// 		if err := writeQuoted(w, s); err != nil {
+		// 			return err
+		// 		}
+		// 	}
+		// }
+		p.printBytes([]byte{','})
+		return
 	case RawNode:
-		_, err := w.WriteString(n.Data)
-		return err
-	default:
-		return errors.New("html: unknown node type")
+		p.print(n.Data)
+		return
 	}
 
 	// Tip! Comment this block out to debug expressions
 	if n.Expression {
 		if n.FirstChild != nil {
-			if _, err := w.WriteString(","); err != nil {
-				return err
-			}
+			p.print(",")
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				if _, err := w.WriteString(c.Data); err != nil {
-					return err
-				}
+				p.addSourceMapping(c.Loc[0])
+				p.print(c.Data)
 			} else {
-				if err := render1(w, c, RenderOptions{
+				render1(p, c, RenderOptions{
 					isRoot:       false,
 					isExpression: true,
 					depth:        depth + 1,
-				}); err != nil {
-					return err
-				}
+				})
 			}
 		}
-
-		return nil
+		p.addSourceMapping(n.Loc[1])
 	}
 
 	isComponent := (n.Component || n.CustomElement) && n.Data != "Fragment"
 
 	if opts.isRoot {
-		if _, err := w.WriteString("\nreturn "); err != nil {
-			return err
-		}
+		p.print("\nreturn ")
 	} else if !opts.isExpression {
-		if err := w.WriteByte(','); err != nil {
-			return err
-		}
+		p.print(",")
 	}
 
+	p.addSourceMapping(n.Loc[0])
 	if isComponent {
-		if _, err := w.WriteString("h(__astro_component,{ Component: "); err != nil {
-			return err
-		}
+		p.print("h(__astro_component,{ Component: ")
 	} else {
-		if _, err := w.WriteString("h("); err != nil {
-			return err
-		}
+		p.print("h(")
 	}
 
+	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
 	if n.Component {
-		if _, err := w.WriteString(n.Data); err != nil {
-			return err
-		}
+		p.print(n.Data)
 	} else {
-		if _, err := w.WriteString(`"` + n.Data + `"`); err != nil {
-			return err
-		}
+		p.print(`"` + n.Data + `"`)
 	}
+	p.print(",")
 
-	if err := w.WriteByte(','); err != nil {
-		return err
-	}
+	p.addSourceMapping(n.Loc[0])
 	if len(n.Attr) == 0 && !isComponent {
-		if _, err := w.WriteString("null"); err != nil {
-			return err
-		}
+		p.print("null")
 	} else if !isComponent {
-		if _, err := w.WriteString("{"); err != nil {
-			return err
-		}
+		p.print("{")
 	}
 	for i, a := range n.Attr {
 		if a.Namespace != "" {
-			if _, err := w.WriteString(a.Namespace); err != nil {
-				return err
-			}
-			if err := w.WriteByte(':'); err != nil {
-				return err
-			}
+			p.print(a.Namespace)
+			p.print(":")
 		}
 
 		switch a.Type {
 		case QuotedAttribute:
-			if err := writeQuoted(w, a.Key); err != nil {
-				return err
-			}
-			if _, err := w.WriteString(`:`); err != nil {
-				return err
-			}
-			if err := writeQuoted(w, a.Val); err != nil {
-				return err
-			}
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + a.Key + `"`)
+			p.print(":")
+			p.addSourceMapping(a.ValLoc)
+			p.print(`"` + a.Val + `"`)
 		case ExpressionAttribute:
-			if err := writeQuoted(w, a.Key); err != nil {
-				return err
-			}
-			if _, err := w.WriteString(`:`); err != nil {
-				return err
-			}
-			if _, err := w.WriteString("(" + a.Val + ")"); err != nil {
-				return err
-			}
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + a.Key + `"`)
+			p.print(":")
+			p.addSourceMapping(a.ValLoc)
+			p.print(`(` + a.Val + `)`)
 		case SpreadAttribute:
-			if _, err := w.WriteString(`...(` + strings.TrimSpace(a.Key) + `)`); err != nil {
-				return err
-			}
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
+			p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
 		case ShorthandAttribute:
-			if err := writeQuoted(w, strings.TrimSpace(a.Key)); err != nil {
-				return err
-			}
-			if _, err := w.WriteString(`:`); err != nil {
-				return err
-			}
-			if _, err := w.WriteString("(" + strings.TrimSpace(a.Key) + ")"); err != nil {
-				return err
-			}
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+			p.print(":")
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`(` + strings.TrimSpace(a.Key) + `)`)
 		case TemplateLiteralAttribute:
-			if err := writeQuoted(w, a.Key); err != nil {
-				return err
-			}
-			if _, err := w.WriteString(`:` + "`"); err != nil {
-				return err
-			}
-			if _, err := w.WriteString(a.Val + "`"); err != nil {
-				return err
-			}
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+			p.print(":")
+			p.print("`" + strings.TrimSpace(a.Key) + "`")
 		}
+		p.addSourceMapping(n.Loc[0])
 		if i != len(n.Attr)-1 {
-			if err := w.WriteByte(','); err != nil {
-				return err
-			}
+			p.print(",")
 		}
 	}
 	if len(n.Attr) != 0 || isComponent {
-		if _, err := w.WriteString("}"); err != nil {
-			return err
-		}
+		p.print("}")
 	}
 
 	if voidElements[n.Data] {
 		if n.FirstChild != nil {
-			return fmt.Errorf("html: void element <%s> has child nodes", n.Data)
+			// return fmt.Errorf("html: void element <%s> has child nodes", n.Data)
 		}
-		_, err := w.WriteString(")")
-		return err
+		p.addSourceMapping(n.Loc[0])
+		p.print(")")
 	}
 
 	// Add initial newline where there is danger of a newline beging ignored.
 	if c := n.FirstChild; c != nil && c.Type == TextNode && strings.HasPrefix(c.Data, "\n") {
 		switch n.Data {
 		case "pre", "listing", "textarea":
-			if err := w.WriteByte('\n'); err != nil {
-				return err
-			}
+			p.print("\n")
 		}
 	}
 
@@ -402,81 +358,46 @@ func render1(w writer, n *Node, opts RenderOptions) error {
 	case "iframe", "noembed", "noframes", "noscript", "plaintext", "script", "style", "xmp":
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				if _, err := w.WriteString(",`"); err != nil {
-					return err
-				}
-				if _, err := w.WriteString(c.Data); err != nil {
-					return err
-				}
-				if err := w.WriteByte('`'); err != nil {
-					return err
-				}
+				p.print(",`")
+				p.print(c.Data)
+				p.print("`")
 			} else {
-				if err := render1(w, c, RenderOptions{
+				render1(p, c, RenderOptions{
 					isRoot: false,
 					depth:  depth + 1,
-				}); err != nil {
-					return err
-				}
+				})
 			}
 		}
-		if n.Data == "plaintext" {
-			// Don't render anything else. <plaintext> must be the
-			// last element in the file, with no closing tag.
-			return plaintextAbort
-		}
+		// if n.Data == "plaintext" {
+		// 	// Don't render anything else. <plaintext> must be the
+		// 	// last element in the file, with no closing tag.
+		// 	return
+		// }
 	default:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := render1(w, c, RenderOptions{
+			render1(p, c, RenderOptions{
 				isRoot:       false,
 				isExpression: opts.isExpression,
 				depth:        depth + 1,
-			}); err != nil {
-				return err
-			}
+			})
 		}
 	}
 
 	if n.DataAtom == a.Html {
-		if _, err := w.WriteString(`,'\n'`); err != nil {
-			return err
-		}
+		p.print(`,'\n'`)
 	}
-
-	if _, err := w.WriteString(")"); err != nil {
-		return err
+	if len(n.Loc) == 2 {
+		p.addSourceMapping(n.Loc[1])
+	} else {
+		p.addSourceMapping(n.Loc[0])
 	}
+	p.print(`)`)
 
 	if opts.isRoot {
-		if _, err := w.WriteString("\n}\n"); err != nil {
-			return err
-		}
-		if _, err := w.WriteString("\n\nexport default { isAstroComponent: true, __render }\n"); err != nil {
-			return err
-		}
+		p.addSourceMapping(n.Loc[0])
+		p.print("\n}\n")
+		p.print("\n\nexport default { isAstroComponent: true, __render }\n")
 	}
-	return nil
-}
-
-// writeQuoted writes s to w surrounded by quotes. Normally it will use double
-// quotes, but if s contains a double quote, it will use single quotes.
-// It is used for writing the identifiers in a doctype declaration.
-// In valid HTML, they can't contain both types of quotes.
-func writeQuoted(w writer, s string) error {
-	var q byte = '"'
-	if strings.Contains(s, `"`) {
-		q = '\''
-	}
-	if err := w.WriteByte(q); err != nil {
-		return err
-	}
-	if _, err := w.WriteString(s); err != nil {
-		return err
-	}
-	if err := w.WriteByte(q); err != nil {
-		return err
-	}
-	return nil
 }
 
 // Section 12.1.2, "Elements", gives this list of void elements. Void elements

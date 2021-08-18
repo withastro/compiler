@@ -5,6 +5,7 @@
 package astro
 
 import (
+	"github.com/snowpackjs/astro/internal/loc"
 	"golang.org/x/net/html/atom"
 )
 
@@ -56,6 +57,7 @@ type Node struct {
 	Data      string
 	Namespace string
 	Attr      []Attribute
+	Loc       []loc.Loc
 }
 
 // InsertBefore inserts newChild as a child of n, immediately before oldChild
