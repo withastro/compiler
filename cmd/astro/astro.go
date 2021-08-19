@@ -12,11 +12,17 @@ import (
 
 func main() {
 	source := `---
-console.log("Hello world!");
-const items = [0, 1, 2];
+const name = "world";
 ---
 
-<div>Hey!</div>
+<div {name}>
+	Hello {name}!
+	<span>{ahhh.split('').map(c => {
+		return (
+			<h1>{c}</h1>
+		)
+	})}</span>
+</div>
 `
 
 	doc, _ := astro.Parse(strings.NewReader(source))

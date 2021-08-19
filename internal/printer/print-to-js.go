@@ -91,15 +91,19 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	// Render non-element nodes; these are the easy cases.
 	switch n.Type {
 	case TextNode:
+		if strings.TrimSpace(n.Data) == "" {
+			p.addSourceMapping(n.Loc[0])
+			p.print(n.Data)
+			return
+		}
 		backticks := regexp.MustCompile("`")
 		dollarOpen := regexp.MustCompile(`\${`)
 		text := n.Data
 		text = strings.Replace(text, "\\", "\\\\", -1)
 		text = backticks.ReplaceAllString(text, "\\`")
 		text = dollarOpen.ReplaceAllString(text, "\\${")
-		p.print(",")
 		p.addSourceMapping(n.Loc[0])
-		p.print("`" + text + "`")
+		p.print(text)
 		return
 	case FrontmatterNode:
 		importStatements := make([]ExtractedStatement, 0)
@@ -163,12 +167,17 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(statement.Content)
 				}
 				p.addSourceMapping(loc.Loc{Start: 0})
-				p.print("//@ts-ignore\nasync function __render(props, ...children) {\n")
+				p.print("//@ts-ignore\nconst Component = $$createComponent(async ($$result, $$props, $$slots) => {\n")
 				p.addSourceMapping(n.Loc[0])
 				p.print("// ---")
-				for _, statement := range frontmatterStatements {
-					p.addSourceMapping(statement.Loc)
-					p.print(statement.Content)
+				if len(frontmatterStatements) == 0 {
+					p.addSourceMapping(c.Loc[0])
+					p.print(c.Data)
+				} else {
+					for _, statement := range frontmatterStatements {
+						p.addSourceMapping(statement.Loc)
+						p.print(statement.Content)
+					}
 				}
 			} else {
 				render1(p, c, RenderOptions{
@@ -246,7 +255,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	// Tip! Comment this block out to debug expressions
 	if n.Expression {
 		if n.FirstChild != nil {
-			p.print(",(")
+			p.print("${")
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -256,10 +265,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			} else {
 				p.addSourceMapping(c.Loc[0])
 				if (c.PrevSibling == nil || c.PrevSibling != nil && c.PrevSibling.Type == TextNode) && c.NextSibling != nil && c.NextSibling.Type != TextNode {
-					p.print("h(Fragment,null,")
-				}
-				if c.PrevSibling != nil && c.PrevSibling.Type != TextNode {
-					p.print(",")
+					p.print("`")
 				}
 				render1(p, c, RenderOptions{
 					isRoot:       false,
@@ -267,97 +273,144 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					depth:        depth + 1,
 				})
 				if c.NextSibling == nil || (c.NextSibling != nil && c.NextSibling.Type == TextNode) {
-					p.print(")")
+					p.print("`")
 				}
 			}
 		}
-		p.print(")")
 		p.addSourceMapping(n.Loc[1])
+		p.print("}")
 		return
 	}
 
 	isComponent := (n.Component || n.CustomElement) && n.Data != "Fragment"
 
 	if opts.isRoot {
-		p.print("\nreturn h(Fragment,null,")
-	} else if !opts.isExpression {
-		p.print(",")
+		p.print("\n  return `")
 	}
 
 	p.addSourceMapping(n.Loc[0])
 	if isComponent {
-		p.print("h(render_component(")
+		p.print("${render_component(")
 	} else {
-		p.print("h(")
+		p.print("<")
 	}
 
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
-	if n.Component {
-		p.print(n.Data)
-	} else if n.Fragment {
+	if n.Fragment {
 		p.print("Fragment")
 	} else {
-		p.print(`"` + n.Data + `"`)
+		p.print(n.Data)
 	}
-	p.print(",")
 
 	p.addSourceMapping(n.Loc[0])
-	if len(n.Attr) == 0 {
-		p.print("null")
-	} else {
-		p.print("{")
-	}
-	for i, a := range n.Attr {
-		if a.Namespace != "" {
-			p.print(a.Namespace)
-			p.print(":")
+	if n.Component {
+		if len(n.Attr) != 0 {
+			p.print(", {")
+		} else {
+			p.print(", null")
 		}
+		for _, a := range n.Attr {
+			if a.Namespace != "" {
+				p.print(a.Namespace)
+				p.print(":")
+			}
 
-		switch a.Type {
-		case QuotedAttribute:
-			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + a.Key + `"`)
-			p.print(":")
-			p.addSourceMapping(a.ValLoc)
-			p.print(`"` + a.Val + `"`)
-		case ExpressionAttribute:
-			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + a.Key + `"`)
-			p.print(":")
-			p.addSourceMapping(a.ValLoc)
-			p.print(`(` + a.Val + `)`)
-		case SpreadAttribute:
-			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
-			p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
-		case ShorthandAttribute:
-			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
-			p.print(":")
-			p.addSourceMapping(a.KeyLoc)
-			p.print(`(` + strings.TrimSpace(a.Key) + `)`)
-		case TemplateLiteralAttribute:
-			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
-			p.print(":")
-			p.print("`" + strings.TrimSpace(a.Key) + "`")
+			switch a.Type {
+			case QuotedAttribute:
+				p.addSourceMapping(a.KeyLoc)
+				p.print(a.Key)
+				p.print("=")
+				p.addSourceMapping(a.ValLoc)
+				p.print(`"` + a.Val + `"`)
+			case ExpressionAttribute:
+				// TODO
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`"` + a.Key + `"`)
+				p.print(":")
+				p.addSourceMapping(a.ValLoc)
+				p.print(`(` + a.Val + `)`)
+			case SpreadAttribute:
+				// TODO
+				p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
+				p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
+			case ShorthandAttribute:
+				// TODO
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+				p.print(":")
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`(` + strings.TrimSpace(a.Key) + `)`)
+			case TemplateLiteralAttribute:
+				// TODO
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+				p.print(":")
+				p.print("`" + strings.TrimSpace(a.Key) + "`")
+			}
+			p.addSourceMapping(n.Loc[0])
+			// if i != len(n.Attr)-1 {
+			// 	p.print("")
+			// }
 		}
-		p.addSourceMapping(n.Loc[0])
-		if i != len(n.Attr)-1 {
-			p.print(",")
-		}
-	}
-	if len(n.Attr) != 0 {
+		// p.addSourceMapping(n.Loc[0])
 		p.print("}")
-	}
+	} else {
+		if len(n.Attr) != 0 {
+			p.print(" ")
+		}
+		for _, a := range n.Attr {
+			if a.Namespace != "" {
+				p.print(a.Namespace)
+				p.print(":")
+			}
 
-	if voidElements[n.Data] {
-		//nolint
-		if n.FirstChild != nil {
-			// return fmt.Errorf("html: void element <%s> has child nodes", n.Data)
+			switch a.Type {
+			case QuotedAttribute:
+				p.addSourceMapping(a.KeyLoc)
+				p.print(a.Key)
+				p.print("=")
+				p.addSourceMapping(a.ValLoc)
+				p.print(`"` + a.Val + `"`)
+			case ExpressionAttribute:
+				// TODO
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`"` + a.Key + `"`)
+				p.print(":")
+				p.addSourceMapping(a.ValLoc)
+				p.print(`(` + a.Val + `)`)
+			case SpreadAttribute:
+				// TODO
+				p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
+				p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
+			case ShorthandAttribute:
+				// TODO
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+				p.print(":")
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`(` + strings.TrimSpace(a.Key) + `)`)
+			case TemplateLiteralAttribute:
+				// TODO
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+				p.print(":")
+				p.print("`" + strings.TrimSpace(a.Key) + "`")
+			}
+			p.addSourceMapping(n.Loc[0])
 		}
 		p.addSourceMapping(n.Loc[0])
-		p.print(")")
+		p.print(">")
 	}
+
+	// if voidElements[n.Data] {
+	// 	if n.FirstChild != nil {
+	// 		// return fmt.Errorf("html: void element <%s> has child nodes", n.Data)
+	// 	}
+	// 	p.addSourceMapping(n.Loc[0])
+	// 	p.print(">")
+	// } else {
+
+	// }
 
 	// Add initial newline where there is danger of a newline beging ignored.
 	if c := n.FirstChild; c != nil && c.Type == TextNode && strings.HasPrefix(c.Data, "\n") {
@@ -372,9 +425,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case "iframe", "noembed", "noframes", "noscript", "plaintext", "script", "style", "xmp":
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				p.print(",`")
 				p.print(c.Data)
-				p.print("`")
 			} else {
 				render1(p, c, RenderOptions{
 					isRoot: false,
@@ -388,6 +439,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		// 	return
 		// }
 	default:
+		if n.Component {
+			p.print(",`")
+		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			render1(p, c, RenderOptions{
 				isRoot:       false,
@@ -395,25 +449,29 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				depth:        depth + 1,
 			})
 		}
+		if n.Component {
+			p.print("`")
+		}
 	}
 
 	if n.DataAtom == a.Html {
-		p.print(`,'\n'`)
+		p.print("\n")
 	}
 	if len(n.Loc) == 2 {
 		p.addSourceMapping(n.Loc[1])
 	} else {
 		p.addSourceMapping(n.Loc[0])
 	}
-	p.print(`)`)
 	if isComponent {
-		p.print(`)`)
+		p.print(")}")
+	} else {
+		p.print(`</` + n.Data + `>`)
 	}
 
 	if opts.isRoot {
 		p.addSourceMapping(loc.Loc{Start: 0})
-		p.print(")\n}\n")
-		p.print("\n\nexport default { isAstroComponent: true, __render }\n")
+		p.print("`\n});")
+		p.print("\n\nexport default Component;\n")
 	}
 }
 
