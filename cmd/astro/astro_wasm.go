@@ -33,7 +33,7 @@ func Transform(this js.Value, args []js.Value) interface{} {
 	})
 
 	w := new(strings.Builder)
-	tycho.Render(w, doc)
+	tycho.Render(source, doc)
 	js := w.String()
 	internalURL := jsString(options.Get("internalURL"))
 	if internalURL == "" {

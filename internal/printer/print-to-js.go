@@ -2,28 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package astro
+package printer
 
 import (
 	"errors"
-	"io"
 	"regexp"
 	"strings"
 
+	. "github.com/snowpackjs/astro/internal"
+	"github.com/snowpackjs/astro/internal/js_scanner"
 	"github.com/snowpackjs/astro/internal/loc"
 	"github.com/snowpackjs/astro/internal/sourcemap"
 	a "golang.org/x/net/html/atom"
 )
-
-type PrintResult struct {
-	Output         []byte
-	SourceMapChunk sourcemap.Chunk
-}
-
-type printer struct {
-	output  []byte
-	builder sourcemap.ChunkBuilder
-}
 
 func (p *printer) print(text string) {
 	p.output = append(p.output, text...)
@@ -37,12 +28,6 @@ func (p *printer) printBytes(bytes []byte) {
 
 func (p *printer) addSourceMapping(location loc.Loc) {
 	p.builder.AddSourceMapping(location, p.output)
-}
-
-type writer interface {
-	io.Writer
-	io.ByteWriter
-	WriteString(string) (int, error)
 }
 
 // Render renders the parse tree n to the given writer.
@@ -69,13 +54,13 @@ type writer interface {
 // text node would become a tree containing <html>, <head> and <body> elements.
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
-func Render(sourcetext string, n *Node) PrintResult {
+func PrintToJS(sourcetext string, n *Node) PrintResult {
 	sources := make([]string, 1)
 	sources[0] = "test.astro"
 	p := &printer{
 		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
-	return render(p, n)
+	return printToJs(p, n)
 }
 
 // plaintextAbort is returned from render1 when a <plaintext> element
@@ -88,7 +73,12 @@ type RenderOptions struct {
 	depth        int
 }
 
-func render(p *printer, n *Node) PrintResult {
+type ExtractedStatement struct {
+	Content string
+	Loc     loc.Loc
+}
+
+func printToJs(p *printer, n *Node) PrintResult {
 	render1(p, n, RenderOptions{
 		isRoot:       true,
 		isExpression: false,
@@ -117,15 +107,74 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print("`" + text + "`")
 		return
 	case FrontmatterNode:
-		// p.addSourceMapping(loc.Loc{Start: 0})
-		p.print("//@ts-ignore\nasync function __render(props, ...children) {\n")
-		p.addSourceMapping(n.Loc[0])
-		p.print("// ---")
+		importStatements := make([]ExtractedStatement, 0)
+		frontmatterStatements := make([]ExtractedStatement, 0)
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + 1})
-				p.print(c.Data)
+				offset := c.Loc[0].Start - n.Loc[0].Start
+				imports := js_scanner.FindImportStatements([]byte(c.Data))
+				var prevImport *js_scanner.ImportStatement
+				for i, currImport := range imports {
+					var nextImport *js_scanner.ImportStatement
+					if i < len(imports)-1 {
+						nextImport = imports[i+1]
+					}
+					// Extract import statement
+					importStatements = append(importStatements, ExtractedStatement{
+						Loc:     loc.Loc{Start: offset + currImport.StatementStart},
+						Content: c.Data[currImport.StatementStart:currImport.StatementEnd] + "\n",
+					})
+					if i == 0 {
+						content := c.Data[0:currImport.StatementStart]
+						if strings.TrimSpace(content) != "" {
+							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
+								Loc:     loc.Loc{Start: offset + 1},
+								Content: content,
+							})
+						}
+					}
+					if prevImport != nil {
+						content := c.Data[prevImport.StatementEnd:currImport.StatementStart]
+						if strings.TrimSpace(content) != "" {
+							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
+								Loc:     loc.Loc{Start: offset + prevImport.StatementEnd + 1},
+								Content: content,
+							})
+						}
+					}
+					if nextImport != nil {
+						content := c.Data[currImport.StatementEnd:nextImport.StatementStart]
+						if strings.TrimSpace(content) != "" {
+							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
+								Loc:     loc.Loc{Start: offset + currImport.StatementEnd + 1},
+								Content: content,
+							})
+						}
+					}
+					if i == len(imports)-1 {
+						content := c.Data[currImport.StatementEnd:]
+						if strings.TrimSpace(content) != "" {
+							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
+								Loc:     loc.Loc{Start: offset + currImport.StatementEnd + 1},
+								Content: content,
+							})
+						}
+					}
+					prevImport = currImport
+				}
+				for _, statement := range importStatements {
+					p.addSourceMapping(statement.Loc)
+					p.print(statement.Content)
+				}
+				p.addSourceMapping(loc.Loc{Start: 0})
+				p.print("//@ts-ignore\nasync function __render(props, ...children) {\n")
+				p.addSourceMapping(n.Loc[0])
+				p.print("// ---")
+				for _, statement := range frontmatterStatements {
+					p.addSourceMapping(statement.Loc)
+					p.print(statement.Content)
+				}
 			} else {
 				render1(p, c, RenderOptions{
 					isRoot:       false,
@@ -136,51 +185,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
 		p.print("// ---")
-
-		// p.addSourceMapping(loc.Loc{Start: 0})
-
-		// data := frontmatter.String()
-
-		// imports := js_scanner.FindImportStatements([]byte(data))
-		// var prevImport *js_scanner.ImportStatement
-		// for i, currImport := range imports {
-		// 	var nextImport *js_scanner.ImportStatement
-		// 	if i < len(imports)-1 {
-		// 		nextImport = imports[i+1]
-		// 	}
-		// 	// Extract import statement
-		// 	text := data[currImport.StatementStart:currImport.StatementEnd] + ";\n"
-		// 	importStatements.WriteString(text)
-
-		// 	if i == 0 {
-		// 		renderBody.WriteString(strings.TrimSpace(data[0:currImport.StatementStart]) + "\n")
-		// 	}
-		// 	if prevImport != nil {
-		// 		renderBody.WriteString(strings.TrimSpace(data[prevImport.StatementEnd:currImport.StatementStart]) + "\n")
-		// 	}
-		// 	if nextImport != nil {
-		// 		renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:nextImport.StatementStart]) + "\n")
-		// 	}
-		// 	if i == len(imports)-1 {
-		// 		renderBody.WriteString(strings.TrimSpace(data[currImport.StatementEnd:]) + "\n")
-		// 	}
-
-		// 	renderBody.WriteString("\n")
-		// 	prevImport = currImport
-		// }
-
-		// if len(imports) == 0 {
-		// 	renderBody.WriteString(data)
-		// }
-
-		// p.print(strings.TrimSpace(importStatements.String()))
-
-		// body := strings.TrimSpace(renderBody.String())
-		// if body != "" {
-		// 	p.print("// ---\n")
-		// 	p.print(body)
-		// 	p.print("\n// ---")
-		// }
 		return
 	case DocumentNode:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -247,7 +251,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	// Tip! Comment this block out to debug expressions
 	if n.Expression {
 		if n.FirstChild != nil {
-			p.print(",")
+			p.print(",(")
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -255,27 +259,39 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.addSourceMapping(c.Loc[0])
 				p.print(c.Data)
 			} else {
+				p.addSourceMapping(c.Loc[0])
+				if (c.PrevSibling == nil || c.PrevSibling != nil && c.PrevSibling.Type == TextNode) && c.NextSibling != nil && c.NextSibling.Type != TextNode {
+					p.print("h(Fragment,null,")
+				}
+				if c.PrevSibling != nil && c.PrevSibling.Type != TextNode {
+					p.print(",")
+				}
 				render1(p, c, RenderOptions{
 					isRoot:       false,
 					isExpression: true,
 					depth:        depth + 1,
 				})
+				if c.NextSibling == nil || (c.NextSibling != nil && c.NextSibling.Type == TextNode) {
+					p.print(")")
+				}
 			}
 		}
+		p.print(")")
 		p.addSourceMapping(n.Loc[1])
+		return
 	}
 
 	isComponent := (n.Component || n.CustomElement) && n.Data != "Fragment"
 
 	if opts.isRoot {
-		p.print("\nreturn ")
+		p.print("\nreturn h(Fragment,null,")
 	} else if !opts.isExpression {
 		p.print(",")
 	}
 
 	p.addSourceMapping(n.Loc[0])
 	if isComponent {
-		p.print("h(__astro_component,{ Component: ")
+		p.print("h(render_component(")
 	} else {
 		p.print("h(")
 	}
@@ -283,15 +299,17 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
 	if n.Component {
 		p.print(n.Data)
+	} else if n.Fragment {
+		p.print("Fragment")
 	} else {
 		p.print(`"` + n.Data + `"`)
 	}
 	p.print(",")
 
 	p.addSourceMapping(n.Loc[0])
-	if len(n.Attr) == 0 && !isComponent {
+	if len(n.Attr) == 0 {
 		p.print("null")
-	} else if !isComponent {
+	} else {
 		p.print("{")
 	}
 	for i, a := range n.Attr {
@@ -333,7 +351,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			p.print(",")
 		}
 	}
-	if len(n.Attr) != 0 || isComponent {
+	if len(n.Attr) != 0 {
 		p.print("}")
 	}
 
@@ -392,10 +410,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.addSourceMapping(n.Loc[0])
 	}
 	p.print(`)`)
+	if isComponent {
+		p.print(`)`)
+	}
 
 	if opts.isRoot {
-		p.addSourceMapping(n.Loc[0])
-		p.print("\n}\n")
+		p.addSourceMapping(loc.Loc{Start: 0})
+		p.print(")\n}\n")
 		p.print("\n\nexport default { isAstroComponent: true, __render }\n")
 	}
 }

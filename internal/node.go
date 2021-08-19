@@ -46,6 +46,7 @@ var scopeMarker = Node{Type: scopeMarkerNode}
 // Similarly, "math" is short for "http://www.w3.org/1998/Math/MathML", and
 // "svg" is short for "http://www.w3.org/2000/svg".
 type Node struct {
+	Fragment      bool
 	CustomElement bool
 	Component     bool
 	Expression    bool

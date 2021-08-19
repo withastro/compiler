@@ -7,26 +7,20 @@ import (
 	"strings"
 
 	astro "github.com/snowpackjs/astro/internal"
+	printer "github.com/snowpackjs/astro/internal/printer"
 )
 
 func main() {
 	source := `---
-import Component from './Component.jsx'
+console.log("Hello world!");
+const items = [0, 1, 2];
 ---
-<html>
-    <head>
-		<title>Hello world!</title>
-    </head>
-    <body>
-		<main>
-			<Component {a} {...b} c={c} />
-		</main>
-    </body>
-</html>
+
+<div>Hey!</div>
 `
 
 	doc, _ := astro.Parse(strings.NewReader(source))
-	result := astro.Render(source, doc)
+	result := printer.PrintToJS(source, doc)
 
 	content, _ := json.Marshal(source)
 	sourcemap := `{ "version": 3, "sources": ["file.astro"], "names": [], "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "sourcesContent": [` + string(content) + `] }`

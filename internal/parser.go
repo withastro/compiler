@@ -202,7 +202,6 @@ func (p *parser) parseGenericRawTextElement() {
 }
 
 func (p *parser) generateLoc() []loc.Loc {
-	// fmt.Println("GenerateLoc", p.tok.Type.String(), p.tok.Loc.Start)
 	locs := make([]loc.Loc, 0, 2)
 	locs = append(locs, p.tok.Loc)
 	return locs
@@ -329,15 +328,10 @@ func (p *parser) addText(text string) {
 		return
 	}
 
-	// TODO: is this still used?
-	// if strings.HasPrefix(strings.TrimSpace(text), "}") {
-	// 	p.addChild(&Node{
-	// 		Type: TextNode,
-	// 		Data: text,
-	// 		Loc:  p.generateLoc(),
-	// 	})
-	// 	return
-	// }
+	// Inside of expressions we can skip whitespace
+	if p.top().Expression && strings.TrimSpace(text) == "" {
+		return
+	}
 
 	t := p.top()
 	if n := t.LastChild; n != nil && n.Type == TextNode {
@@ -389,17 +383,28 @@ func (p *parser) addExpression() {
 	})
 }
 
+func isFragment(data string) bool {
+	return len(data) == 0
+}
+
+func isComponent(data string) bool {
+	return !isFragment(data) && data[0] > 'A' && data[0] < 'Z'
+}
+
+func isCustomElement(data string) bool {
+	return strings.Contains(data, "-")
+}
+
 // addElement adds a child element based on the current token.
 func (p *parser) addElement() {
-	isComponent := p.tok.Data[0] > 'A' && p.tok.Data[0] < 'Z'
-	isCustomElement := strings.Contains(p.tok.Data, "-")
 	p.addChild(&Node{
 		Type:          ElementNode,
 		DataAtom:      p.tok.DataAtom,
 		Data:          p.tok.Data,
 		Attr:          p.tok.Attr,
-		Component:     isComponent,
-		CustomElement: isCustomElement,
+		Fragment:      isFragment(p.tok.Data),
+		Component:     isComponent(p.tok.Data),
+		CustomElement: isCustomElement(p.tok.Data),
 		Loc:           p.generateLoc(),
 	})
 }
@@ -665,6 +670,11 @@ func beforeHTMLIM(p *parser) bool {
 			p.im = beforeHeadIM
 			return true
 		}
+		if isComponent(p.tok.Data) == true {
+			p.addElement()
+			p.im = inBodyIM
+			return true
+		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
 		case a.Head, a.Body, a.Html, a.Br:
@@ -732,7 +742,6 @@ func beforeHeadIM(p *parser) bool {
 		p.oe.pop()
 		return true
 	}
-
 	p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
 	return false
 }
@@ -1555,8 +1564,11 @@ func (p *parser) inBodyEndTagOther(tagAtom a.Atom, tagName string) {
 		// The if condition here is equivalent to (p.oe[i].Data == tagName).
 		if (p.oe[i].DataAtom == tagAtom) &&
 			((tagAtom != 0) || (p.oe[i].Data == tagName)) {
-			p.oe = p.oe[:i]
 			p.addLoc()
+			// If we only have a single element, just ignore it
+			if len(p.oe) > 1 {
+				p.oe = p.oe[:i]
+			}
 			break
 		}
 		if isSpecialElement(p.oe[i]) {

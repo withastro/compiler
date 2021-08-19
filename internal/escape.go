@@ -6,9 +6,16 @@ package astro
 
 import (
 	"bytes"
+	"io"
 	"strings"
 	"unicode/utf8"
 )
+
+type writer interface {
+	io.Writer
+	io.ByteWriter
+	WriteString(string) (int, error)
+}
 
 // These replacements permit compatibility with old numeric entities that
 // assumed Windows-1252 encoding.

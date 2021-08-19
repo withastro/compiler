@@ -1231,13 +1231,17 @@ loop:
 			// We use CommentToken to mean any of "<!--actual comments-->",
 			// "<!DOCTYPE declarations>" and "<?xml processing instructions?>".
 			tokenType = CommentToken
+		case c == '>':
+			// Empty <> Fragment start tag
+			tokenType = StartTagToken
+			return z.tt
 		default:
 			// Reconsume the current character.
 			z.raw.End--
 			continue
 		}
 
-		// We have a` non-text token, but we might have accumulated some text
+		// We have a non-text token, but we might have accumulated some text
 		// before that. If so, we return the text first, and return the non-
 		// text token on the subsequent call to Next.
 		if x := z.raw.End - len("<a"); z.raw.Start < x {
@@ -1264,10 +1268,7 @@ loop:
 			}
 			if c == '>' {
 				// TODO: </> should be overloaded as a shorthand for Fragment!
-				// "</>" does not generate a token at all. Generate an empty comment
-				// to allow passthrough clients to pick up the data using Raw.
-				// Reset the tokenizer state and start again.
-				z.tt = CommentToken
+				z.tt = EndTagToken
 				return z.tt
 			}
 			if 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' {
