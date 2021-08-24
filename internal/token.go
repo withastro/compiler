@@ -1564,12 +1564,12 @@ func (z *Tokenizer) TagAttr() (key []byte, keyLoc loc.Loc, val []byte, valLoc lo
 			z.nAttrReturned++
 			key = z.buf[x[0].Start:x[0].End]
 			val = z.buf[x[1].Start:x[1].End]
-			keyLoc := loc.Loc{x[0].Start}
-			valLoc := loc.Loc{x[1].Start}
+			keyLoc := loc.Loc{Start: x[0].Start}
+			valLoc := loc.Loc{Start: x[1].Start}
 			return key, keyLoc, unescape(convertNewlines(val), true), valLoc, attrType, z.nAttrReturned < len(z.attr)
 		}
 	}
-	return nil, loc.Loc{0}, nil, loc.Loc{0}, QuotedAttribute, false
+	return nil, loc.Loc{Start: 0}, nil, loc.Loc{Start: 0}, QuotedAttribute, false
 }
 
 // Token returns the current Token. The result's Data and Attr values remain

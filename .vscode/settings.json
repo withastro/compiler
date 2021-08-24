@@ -1,4 +1,8 @@
 {
+  "go.lintTool":"golangci-lint",
+  "go.lintFlags": [
+    "--fast"
+  ],
   "go.toolsEnvVars": {
     "GOFLAGS": "-tags=js,wasm,tinygo,gc.conservative,scheduler.coroutines"
   }

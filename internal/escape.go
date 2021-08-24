@@ -190,16 +190,6 @@ func unescape(b []byte, attribute bool) []byte {
 	return b
 }
 
-// lower lower-cases the A-Z bytes in b in-place, so that "aBc" becomes "abc".
-func lower(b []byte) []byte {
-	for i, c := range b {
-		if 'A' <= c && c <= 'Z' {
-			b[i] = c + 'a' - 'A'
-		}
-	}
-	return b
-}
-
 const escapedChars = "&'<>\"\r"
 
 func escape(w writer, s string) error {
@@ -242,7 +232,7 @@ func escape(w writer, s string) error {
 // UnescapeString(EscapeString(s)) == s always holds, but the converse isn't
 // always true.
 func EscapeString(s string) string {
-	if strings.IndexAny(s, escapedChars) == -1 {
+	if !strings.ContainsAny(s, escapedChars) {
 		return s
 	}
 	var buf bytes.Buffer

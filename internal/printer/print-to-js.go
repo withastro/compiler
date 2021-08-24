@@ -5,7 +5,6 @@
 package printer
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
@@ -62,10 +61,6 @@ func PrintToJS(sourcetext string, n *Node) PrintResult {
 	}
 	return printToJs(p, n)
 }
-
-// plaintextAbort is returned from render1 when a <plaintext> element
-// has been rendered. No more end tags should be rendered after that.
-var plaintextAbort = errors.New("html: internal error (plaintext abort)")
 
 type RenderOptions struct {
 	isRoot       bool
