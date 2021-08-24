@@ -1,4 +1,4 @@
-package main
+package astro_wasm
 
 import (
 	"encoding/base32"
