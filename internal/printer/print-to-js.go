@@ -290,7 +290,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	p.addSourceMapping(n.Loc[0])
 	if isComponent {
-		p.print("${render_component(")
+		p.print("${renderComponent(")
 	} else {
 		p.print("<")
 	}
@@ -309,39 +309,38 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		} else {
 			p.print(", null")
 		}
-		for _, a := range n.Attr {
-			if a.Namespace != "" {
-				p.print(a.Namespace)
-				p.print(":")
+		for i, a := range n.Attr {
+			if i != 0 {
+				p.print(",")
 			}
-
 			switch a.Type {
 			case QuotedAttribute:
 				p.addSourceMapping(a.KeyLoc)
-				p.print(a.Key)
-				p.print("=")
+				p.print(`"` + a.Key + `"`)
+				p.print(":")
 				p.addSourceMapping(a.ValLoc)
 				p.print(`"` + a.Val + `"`)
+			case EmptyAttribute:
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`"` + a.Key + `"`)
+				p.print(":")
+				p.print("true")
 			case ExpressionAttribute:
-				// TODO
 				p.addSourceMapping(a.KeyLoc)
 				p.print(`"` + a.Key + `"`)
 				p.print(":")
 				p.addSourceMapping(a.ValLoc)
 				p.print(`(` + a.Val + `)`)
 			case SpreadAttribute:
-				// TODO
 				p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
 				p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
 			case ShorthandAttribute:
-				// TODO
 				p.addSourceMapping(a.KeyLoc)
 				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
 				p.print(":")
 				p.addSourceMapping(a.KeyLoc)
 				p.print(`(` + strings.TrimSpace(a.Key) + `)`)
 			case TemplateLiteralAttribute:
-				// TODO
 				p.addSourceMapping(a.KeyLoc)
 				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
 				p.print(":")
@@ -355,9 +354,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		// p.addSourceMapping(n.Loc[0])
 		p.print("}")
 	} else {
-		if len(n.Attr) != 0 {
-			p.print(" ")
-		}
 		for _, a := range n.Attr {
 			if a.Namespace != "" {
 				p.print(a.Namespace)
@@ -366,35 +362,39 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 			switch a.Type {
 			case QuotedAttribute:
+				p.print(" ")
 				p.addSourceMapping(a.KeyLoc)
 				p.print(a.Key)
 				p.print("=")
 				p.addSourceMapping(a.ValLoc)
 				p.print(`"` + a.Val + `"`)
+			case EmptyAttribute:
+				p.print(" ")
+				p.addSourceMapping(a.KeyLoc)
+				p.print(a.Key)
 			case ExpressionAttribute:
-				// TODO
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + a.Key + `"`)
-				p.print(":")
+				p.print("${addAttribute(")
 				p.addSourceMapping(a.ValLoc)
-				p.print(`(` + a.Val + `)`)
+				p.print(strings.TrimSpace(a.Val))
+				p.addSourceMapping(a.KeyLoc)
+				p.print(`, "` + strings.TrimSpace(a.Key) + `")}`)
 			case SpreadAttribute:
-				// TODO
+				p.print("${spreadAttributes(")
 				p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
-				p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
+				p.print(strings.TrimSpace(a.Key))
+				p.print(`, "` + strings.TrimSpace(a.Key) + `")}`)
 			case ShorthandAttribute:
-				// TODO
+				p.print("${addAttribute(")
 				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
-				p.print(":")
+				p.print(strings.TrimSpace(a.Key))
 				p.addSourceMapping(a.KeyLoc)
-				p.print(`(` + strings.TrimSpace(a.Key) + `)`)
+				p.print(`, "` + strings.TrimSpace(a.Key) + `")}`)
 			case TemplateLiteralAttribute:
-				// TODO
+				p.print("${addAttribute(`")
+				p.addSourceMapping(a.ValLoc)
+				p.print(strings.TrimSpace(a.Val))
 				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
-				p.print(":")
-				p.print("`" + strings.TrimSpace(a.Key) + "`")
+				p.print("`" + `, "` + strings.TrimSpace(a.Key) + `")}`)
 			}
 			p.addSourceMapping(n.Loc[0])
 		}
