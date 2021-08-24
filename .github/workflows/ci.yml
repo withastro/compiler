@@ -29,7 +29,7 @@ jobs:
           /usr/local/tinygo/bin/tinygo build -o astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
 
       - name: Test
-        run: GOOS=js GOARCH=wasm go test ./internal
+        run: go test -v ./internal
 
   lint:
     runs-on: ubuntu-latest
