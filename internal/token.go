@@ -912,7 +912,7 @@ func (z *Tokenizer) readStartTag() TokenType {
 // user is in the middle of typing
 func (z *Tokenizer) readUnclosedTag() {
 	buf := z.buf[z.data.Start:]
-	close := 1
+	var close int
 	if z.fm == FrontmatterOpen {
 		close = strings.Index(string(buf), "---")
 		buf = buf[0:close]
@@ -1233,7 +1233,7 @@ loop:
 			tokenType = CommentToken
 		case c == '>':
 			// Empty <> Fragment start tag
-			tokenType = StartTagToken
+			z.tt = StartTagToken
 			return z.tt
 		default:
 			// Reconsume the current character.
@@ -1326,7 +1326,7 @@ frontmatter_loop:
 				z.dashCount = 0
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
-				z.openBraceIsExpressionStart = false
+				z.openBraceIsExpressionStart = true
 				return z.tt
 			case FrontmatterOpen:
 				if z.raw.Start < z.raw.End-len("---") {
@@ -1339,7 +1339,7 @@ frontmatter_loop:
 				z.dashCount = 0
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
-				z.openBraceIsExpressionStart = false
+				z.openBraceIsExpressionStart = true
 				return z.tt
 			}
 		}
@@ -1564,12 +1564,12 @@ func (z *Tokenizer) TagAttr() (key []byte, keyLoc loc.Loc, val []byte, valLoc lo
 			z.nAttrReturned++
 			key = z.buf[x[0].Start:x[0].End]
 			val = z.buf[x[1].Start:x[1].End]
-			keyLoc := loc.Loc{x[0].Start}
-			valLoc := loc.Loc{x[1].Start}
+			keyLoc := loc.Loc{Start: x[0].Start}
+			valLoc := loc.Loc{Start: x[1].Start}
 			return key, keyLoc, unescape(convertNewlines(val), true), valLoc, attrType, z.nAttrReturned < len(z.attr)
 		}
 	}
-	return nil, loc.Loc{0}, nil, loc.Loc{0}, QuotedAttribute, false
+	return nil, loc.Loc{Start: 0}, nil, loc.Loc{Start: 0}, QuotedAttribute, false
 }
 
 // Token returns the current Token. The result's Data and Attr values remain
@@ -1625,9 +1625,10 @@ func NewTokenizer(r io.Reader) *Tokenizer {
 // The input is assumed to be UTF-8 encoded.
 func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
 	z := &Tokenizer{
-		r:   r,
-		buf: make([]byte, 0, 4096),
-		fm:  FrontmatterInitial,
+		r:                          r,
+		buf:                        make([]byte, 0, 4096),
+		fm:                         FrontmatterInitial,
+		openBraceIsExpressionStart: true,
 	}
 	if contextTag != "" {
 		switch s := strings.ToLower(contextTag); s {

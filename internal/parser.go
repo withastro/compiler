@@ -670,7 +670,7 @@ func beforeHTMLIM(p *parser) bool {
 			p.im = beforeHeadIM
 			return true
 		}
-		if isComponent(p.tok.Data) == true {
+		if isComponent(p.tok.Data) {
 			p.addElement()
 			p.im = inBodyIM
 			return true
@@ -918,10 +918,7 @@ func inHeadNoscriptIM(p *parser) bool {
 		panic("html: the new current node will be a head element.")
 	}
 	p.im = inHeadIM
-	if p.tok.DataAtom == a.Noscript {
-		return true
-	}
-	return false
+	return p.tok.DataAtom == a.Noscript
 }
 
 // Section 12.2.6.4.6.

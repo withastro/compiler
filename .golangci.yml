@@ -1,0 +1,17 @@
+run:
+  skip-files:
+    - xxhash.go
+
+issues:
+  exclude-rules:
+    - path: token.go
+      linters:
+        - errcheck
+    - path: escape.go
+      linters:
+        - errcheck
+
+    - linters:
+        - typecheck
+      text: "syscall/js"
+
