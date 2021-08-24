@@ -1,3 +1,7 @@
+run:
+  skip-files:
+    - xxhash.go
+
 issues:
   exclude-rules:
     - path: token.go
@@ -6,11 +10,6 @@ issues:
     - path: escape.go
       linters:
         - errcheck
-
-    - path: xxhash.go
-      linters:
-        - deadcode
-        - unused
 
     - linters:
         - typecheck
