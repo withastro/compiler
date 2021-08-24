@@ -351,6 +351,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 
 	if voidElements[n.Data] {
+		//nolint
 		if n.FirstChild != nil {
 			// return fmt.Errorf("html: void element <%s> has child nodes", n.Data)
 		}

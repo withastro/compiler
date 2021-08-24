@@ -1,12 +1,17 @@
 issues:
   exclude-rules:
-    # Exclude some linters from running on tests files.
     - path: token.go
       linters:
         - errcheck
+    - path: escape.go
+      linters:
+        - errcheck
+
     - path: xxhash.go
       linters:
         - deadcode
+        - unused
+
     - linters:
         - typecheck
       text: "syscall/js"
