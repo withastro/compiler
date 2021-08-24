@@ -8,39 +8,44 @@ import (
 
 func TestTokenizer(t *testing.T) {
 	tests := []struct {
-		name string
+		name  string
 		input string
-		want []TokenType
+		want  []TokenType
 	}{
 		{
-		  "doctype",
+			"doctype",
 			`<!DOCTYPE html>`,
-			[] TokenType { DoctypeToken },
+			[]TokenType{DoctypeToken},
 		},
 		{
-		  "start tag",
+			"start tag",
 			`<html>`,
-			[] TokenType { StartTagToken },
+			[]TokenType{StartTagToken},
 		},
 		{
-		  "end tag",
+			"end tag",
 			`</html>`,
-			[] TokenType { EndTagToken },
+			[]TokenType{EndTagToken},
 		},
 		{
-		  "self-closing tag",
+			"self-closing tag",
 			`<meta charset="utf-8" />`,
-			[] TokenType { SelfClosingTagToken },
+			[]TokenType{SelfClosingTagToken},
 		},
 		{
-		  "text",
+			"text",
 			` `,
-			[] TokenType { TextToken },
+			[]TokenType{TextToken},
 		},
 		{
 			"comment",
 			`<!-- comment -->`,
-			[] TokenType { CommentToken },
+			[]TokenType{CommentToken},
+		},
+		{
+			"expression",
+			`{ value }`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
 		},
 	}
 	for _, tt := range tests {
@@ -50,12 +55,12 @@ func TestTokenizer(t *testing.T) {
 			var next TokenType
 			for {
 				next = parser.Next()
-				if (next == ErrorToken) {
+				if next == ErrorToken {
 					break
 				}
 				tokens = append(tokens, next)
 			}
-			if (!reflect.DeepEqual(tokens, tt.want)) {
+			if !reflect.DeepEqual(tokens, tt.want) {
 				t.Errorf("NewTokenizer() = %v, want %v", tokens, tt.want)
 			}
 		})
