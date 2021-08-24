@@ -8,7 +8,6 @@ on:
 
 jobs:
   build-wasm:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -23,7 +22,7 @@ jobs:
           wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.18.0/tinygo_0.18.0_amd64.deb
           sudo dpkg -i /tmp/tinygo_0.18.0_amd64.deb
 
-      - name: Build
+      - name: Build WASM
         run: |
           mkdir -p /home/runner/go/src/github.com/snowpackjs/astro
           cp -R . /home/runner/go/src/github.com/snowpackjs/astro/
