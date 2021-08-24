@@ -6,12 +6,14 @@ import (
 	"testing"
 )
 
-func TestTokenizer(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		want  []TokenType
-	}{
+type TestCase struct {
+	name  string
+	input string
+	want  []TokenType
+}
+
+func TestBasic(t *testing.T) {
+	Basic := []TestCase{
 		{
 			"doctype",
 			`<!DOCTYPE html>`,
@@ -43,12 +45,18 @@ func TestTokenizer(t *testing.T) {
 			[]TokenType{CommentToken},
 		},
 		{
-			"expression",
+			"top-level expression",
 			`{ value }`,
 			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
 		},
+		{
+			"expression inside element",
+			`<div>{ value }</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
+		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range Basic {
 		t.Run(tt.name, func(t *testing.T) {
 			tokens := make([]TokenType, 0)
 			parser := NewTokenizer(strings.NewReader(tt.input))

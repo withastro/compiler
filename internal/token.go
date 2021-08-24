@@ -1326,7 +1326,7 @@ frontmatter_loop:
 				z.dashCount = 0
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
-				z.openBraceIsExpressionStart = false
+				z.openBraceIsExpressionStart = true
 				return z.tt
 			case FrontmatterOpen:
 				if z.raw.Start < z.raw.End-len("---") {
@@ -1339,7 +1339,7 @@ frontmatter_loop:
 				z.dashCount = 0
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
-				z.openBraceIsExpressionStart = false
+				z.openBraceIsExpressionStart = true
 				return z.tt
 			}
 		}
@@ -1625,9 +1625,10 @@ func NewTokenizer(r io.Reader) *Tokenizer {
 // The input is assumed to be UTF-8 encoded.
 func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
 	z := &Tokenizer{
-		r:   r,
-		buf: make([]byte, 0, 4096),
-		fm:  FrontmatterInitial,
+		r:                          r,
+		buf:                        make([]byte, 0, 4096),
+		fm:                         FrontmatterInitial,
+		openBraceIsExpressionStart: true,
 	}
 	if contextTag != "" {
 		switch s := strings.ToLower(contextTag); s {
