@@ -17,8 +17,16 @@ jobs:
         with:
           go-version: 1.16
 
+      - name: Get tinygo runtime
+        run: |
+          wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.18.0/tinygo_0.18.0_amd64.deb
+          sudo dpkg -i /tmp/tinygo_0.18.0_amd64.deb
+
       - name: Build
-        run: GOOS=js GOARCH=wasm go build ./cmd/astro
+        run: |
+          mkdir -p /home/runner/go/src/github.com/snowpackjs/astro
+          cp -R . /home/runner/go/src/github.com/snowpackjs/astro/
+          /usr/local/tinygo/bin/tinygo build -o astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
 
       - name: Test
         run: GOOS=js GOARCH=wasm go test ./internal
