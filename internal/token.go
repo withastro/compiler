@@ -912,7 +912,7 @@ func (z *Tokenizer) readStartTag() TokenType {
 // user is in the middle of typing
 func (z *Tokenizer) readUnclosedTag() {
 	buf := z.buf[z.data.Start:]
-	close := 1
+	var close int
 	if z.fm == FrontmatterOpen {
 		close = strings.Index(string(buf), "---")
 		buf = buf[0:close]
@@ -1233,7 +1233,7 @@ loop:
 			tokenType = CommentToken
 		case c == '>':
 			// Empty <> Fragment start tag
-			tokenType = StartTagToken
+			z.tt = StartTagToken
 			return z.tt
 		default:
 			// Reconsume the current character.
