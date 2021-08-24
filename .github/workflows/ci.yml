@@ -30,6 +30,8 @@ jobs:
 
       - name: Test
         run: go test -v ./internal
+        env:
+          GOPATH: /home/runner/work/astro-compiler-next/go
 
   lint:
     runs-on: ubuntu-latest
