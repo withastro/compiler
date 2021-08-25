@@ -1259,9 +1259,17 @@ loop:
 
 		switch tokenType {
 		case StartTagToken:
+			// If we see an element before "---", ignore any future "---"
+			if z.fm == FrontmatterInitial {
+				z.fm = FrontmatterClosed
+			}
 			z.tt = z.readStartTag()
 			return z.tt
 		case EndTagToken:
+			// If we see an element before "---", ignore any future "---"
+			if z.fm == FrontmatterInitial {
+				z.fm = FrontmatterClosed
+			}
 			c = z.readByte()
 			if z.err != nil {
 				break loop
