@@ -54,8 +54,6 @@ func (p *printer) addSourceMapping(location loc.Loc) {
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
 func PrintToJS(sourcetext string, n *Node) PrintResult {
-	sources := make([]string, 1)
-	sources[0] = "test.astro"
 	p := &printer{
 		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
@@ -170,14 +168,14 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.print("//@ts-ignore\nconst Component = $$createComponent(async ($$result, $$props, $$slots) => {\n")
 				p.addSourceMapping(n.Loc[0])
 				p.print("// ---")
-				if len(frontmatterStatements) == 0 {
-					p.addSourceMapping(c.Loc[0])
-					p.print(c.Data)
-				} else {
+				if len(frontmatterStatements) > 0 {
 					for _, statement := range frontmatterStatements {
 						p.addSourceMapping(statement.Loc)
 						p.print(statement.Content)
 					}
+				} else {
+					p.addSourceMapping(c.Loc[0])
+					p.print(c.Data)
 				}
 			} else {
 				render1(p, c, RenderOptions{
@@ -185,10 +183,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					isExpression: true,
 					depth:        depth + 1,
 				})
+				p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
 			}
 		}
-		p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
-		p.print("// ---")
 		return
 	case DocumentNode:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
