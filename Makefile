@@ -10,7 +10,7 @@ astro: cmd/astro/*.go pkg/*/*.go internal/*/*.go go.mod
 	CGO_ENABLED=0 go build $(GO_FLAGS) ./cmd/astro
 
 astro-wasm: cmd/astro/*.go pkg/*/*.go internal/*/*.go go.mod
-	tinygo build -no-debug -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro/astro_wasm.go
+	tinygo build -no-debug -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
 	cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
 publish-node: 
