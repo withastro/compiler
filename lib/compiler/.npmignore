@@ -1,8 +1,9 @@
 **/*.ts
-
+deno/**/*
 !browser/**/*.js
 !browser/**/*.d.ts
 !node/**/*.js
 !node/**/*.d.ts
 !shared/**/*.js
 !shared/**/*.d.ts
+
