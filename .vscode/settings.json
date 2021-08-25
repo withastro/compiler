@@ -4,6 +4,6 @@
     "--fast"
   ],
   "go.toolsEnvVars": {
-    "GOFLAGS": "-tags=js,wasm,tinygo,gc.conservative,scheduler.coroutines"
+    "GOFLAGS": "-tags=gc.conservative,scheduler.coroutines",
   }
 }
