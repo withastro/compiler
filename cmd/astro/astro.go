@@ -12,11 +12,21 @@ import (
 
 func main() {
 	source := `---
-console.log("Hello world!");
+import Component from '../components/Component.vue';
+const name = "world";
 const items = [0, 1, 2];
 ---
 
-<div>Hey!</div>
+<html>
+  <head>
+    <title>Hello</title>
+  </head>
+  <body>
+	<main>
+		<Component client:load />
+    </main>
+  </body>
+</html>
 `
 
 	doc, _ := astro.Parse(strings.NewReader(source))

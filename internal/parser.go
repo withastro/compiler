@@ -2637,6 +2637,7 @@ func ParseFragmentWithOptions(r io.Reader, context *Node, opts ...ParseOption) (
 		Type:     ElementNode,
 		DataAtom: a.Html,
 		Data:     a.Html.String(),
+		Loc:      p.generateLoc(),
 	}
 	p.doc.AppendChild(root)
 	p.oe = nodeStack{root}

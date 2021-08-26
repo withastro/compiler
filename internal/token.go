@@ -58,6 +58,7 @@ type AttributeType uint32
 
 const (
 	QuotedAttribute AttributeType = iota
+	EmptyAttribute
 	ExpressionAttribute
 	SpreadAttribute
 	ShorthandAttribute
@@ -156,6 +157,8 @@ func (t Token) tagString() string {
 			buf.WriteString(`="`)
 			escape(buf, a.Val)
 			buf.WriteByte('"')
+		case EmptyAttribute:
+			buf.WriteString(a.Key)
 		case ExpressionAttribute:
 			buf.WriteString(a.Key)
 			buf.WriteString(`={`)
@@ -1023,7 +1026,7 @@ func (z *Tokenizer) readTagAttrKey() {
 					z.pendingAttrType = SpreadAttribute
 				}
 			}
-			z.pendingAttr[0].End = z.raw.End
+			continue
 		case ' ', '\n', '\r', '\t', '\f', '/':
 			if z.pendingAttrType == SpreadAttribute || z.pendingAttrType == ShorthandAttribute {
 				z.pendingAttr[0].End = z.raw.End - 2
@@ -1033,7 +1036,11 @@ func (z *Tokenizer) readTagAttrKey() {
 			return
 		case '=', '>':
 			z.raw.End--
-			z.pendingAttr[0].End = z.raw.End
+			if z.pendingAttrType == SpreadAttribute || z.pendingAttrType == ShorthandAttribute {
+				z.pendingAttr[0].End = z.raw.End - 1
+			} else {
+				z.pendingAttr[0].End = z.raw.End
+			}
 			return
 		}
 	}
@@ -1043,6 +1050,7 @@ func (z *Tokenizer) readTagAttrKey() {
 func (z *Tokenizer) readTagAttrVal() {
 	z.pendingAttr[1].Start = z.raw.End
 	z.pendingAttr[1].End = z.raw.End
+
 	if z.skipWhiteSpace(); z.err != nil {
 		return
 	}
@@ -1051,6 +1059,10 @@ func (z *Tokenizer) readTagAttrVal() {
 		return
 	}
 	if c != '=' {
+		if z.pendingAttrType == QuotedAttribute {
+			z.pendingAttrType = EmptyAttribute
+		}
+
 		z.raw.End--
 		return
 	}
@@ -1107,6 +1119,7 @@ func (z *Tokenizer) readTagAttrVal() {
 	default:
 		z.pendingAttr[1].Start = z.raw.End - 1
 		z.pendingAttrType = QuotedAttribute
+
 		for {
 			c := z.readByte()
 			if z.err != nil {
