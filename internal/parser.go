@@ -2295,11 +2295,8 @@ func afterAfterBodyIM(p *parser) bool {
 		s := strings.TrimLeft(p.tok.Data, whitespace)
 		if len(s) == 0 {
 			// It was all whitespace.
-			return inBodyIM(p)
+			return true
 		}
-		// fmt.Println("TEXT TOKEN AFTER BODY", p.oe.top())
-		// p.addText(p.tok.Data)
-		// return true
 	case StartTagToken:
 		if p.tok.DataAtom == a.Html {
 			return inBodyIM(p)
