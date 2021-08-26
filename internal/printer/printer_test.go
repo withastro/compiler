@@ -57,19 +57,19 @@ const href = '/about';
 		{
 			"component",
 			`---
-import VueComponent from '../components/Vue';
-const name = "head";
+import VueComponent from '../components/Vue.vue';
 ---
 <html>
   <head>
-  <title>Hello world</title>
+    <title>Hello world</title>
   </head>
   <body>
     <VueComponent />
   </body>
 </html>`,
 			want{
-				imports:     `import VueComponent from '../components/Vue';`,
+				imports:     `import VueComponent from '../components/Vue.vue';
+`,
 				frontmatter: "",
 				code: `<html>
   <head>
@@ -77,9 +77,7 @@ const name = "head";
   </head>
   <body>
     ${renderComponent(VueComponent, null, render` + BACKTICK + BACKTICK + `)}
-
-</body></html>
-`,
+  </body></html>`,
 			},
 		},
 		{
@@ -104,9 +102,7 @@ const name = "world";
   </head>
   <body>
     <div></div>
-  
-</body></html>
-`,
+  </body></html>`,
 			},
 		},
 		{
@@ -127,12 +123,10 @@ const name = "world";
 			want{
 				imports:     "",
 				frontmatter: "",
-				code: `<html><head><style data-astro-id="RV7KTNA5">.title.astro-RV7KTNA5 {font-family:fantasy;font-size:28px;}.body.astro-RV7KTNA5 {font-size:1em;}</style>
+				code: `<html><head><style data-astro-id="W37SZOV4">.title.astro-W37SZOV4 {font-family:fantasy;font-size:28px;}.body.astro-W37SZOV4 {font-size:1em;}</style>
 
-</head><body><h1 class="title astro-RV7KTNA5">Page Title</h1>
-<p class="body astro-RV7KTNA5">I’m a page</p>
-</body></html>
-`,
+</head><body><h1 class="title astro-W37SZOV4">Page Title</h1>
+<p class="body astro-W37SZOV4">I’m a page</p></body></html>`,
 			},
 		},
 		{
@@ -165,14 +159,12 @@ const name = "world";
 <body>
   <!-- your content here... -->
   <script src="js/scripts.js"></script>
-</body>
+  </body>
 </html>`,
 			want{
 				imports:     "",
 				frontmatter: "",
-				code: `<!DOCTYPE html>
-
-<html lang="en">
+				code: `<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -198,8 +190,7 @@ const name = "world";
 <body>
   <!-- your content here... -->
   <script src="js/scripts.js"></script>
-
-</body></html>`,
+  </body></html>`,
 			},
 		},
 	}
@@ -219,7 +210,12 @@ const name = "world";
 
 			toMatch := fmt.Sprintf("%s%s", tt.want.imports, PRELUDE)
 			if tt.want.frontmatter != "" {
-				toMatch = toMatch + fmt.Sprintf("// ---%s// ---\n", tt.want.frontmatter)
+				toMatch = toMatch + fmt.Sprintf(`
+// ---
+
+%s
+// ---
+`, strings.TrimSpace(tt.want.frontmatter))
 			} else {
 				toMatch = toMatch + "\n"
 			}
@@ -229,9 +225,6 @@ const name = "world";
 			// compare to expected string, show diff if mismatch
 			if diff := ANSIDiff(toMatch, output); diff != "" {
 				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
-				fmt.Println("===", tt.name)
-				fmt.Println(output)
-				fmt.Println("===")
 			}
 		})
 	}
