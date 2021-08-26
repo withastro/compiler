@@ -700,11 +700,8 @@ func beforeHTMLIM(p *parser) bool {
 func beforeHeadIM(p *parser) bool {
 	switch p.tok.Type {
 	case TextToken:
-		p.tok.Data = strings.TrimLeft(p.tok.Data, whitespace)
-		if len(p.tok.Data) == 0 {
-			// It was all whitespace, so ignore it.
-			return true
-		}
+		p.addText(p.tok.Data)
+		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
 		case a.Head:
@@ -847,6 +844,7 @@ func inHeadIM(p *parser) bool {
 		default:
 			// Ignore the token.
 			p.addLoc()
+			p.oe.pop()
 			return true
 		}
 	case CommentToken:
@@ -865,6 +863,7 @@ func inHeadIM(p *parser) bool {
 		p.im = textIM
 		return true
 	case EndExpressionToken:
+		fmt.Println("END EXPRESSION INSIDE HEAD", p.oe.top().Data)
 		p.addLoc()
 		p.oe.pop()
 		return true
@@ -2298,6 +2297,9 @@ func afterAfterBodyIM(p *parser) bool {
 			// It was all whitespace.
 			return inBodyIM(p)
 		}
+		// fmt.Println("TEXT TOKEN AFTER BODY", p.oe.top())
+		// p.addText(p.tok.Data)
+		// return true
 	case StartTagToken:
 		if p.tok.DataAtom == a.Html {
 			return inBodyIM(p)

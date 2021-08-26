@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/google/go-cmp/cmp"
 	tycho "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/test_utils"
 	"github.com/snowpackjs/astro/internal/transform"
@@ -58,10 +58,11 @@ const href = '/about';
 			"component",
 			`---
 import VueComponent from '../components/Vue';
+const name = "head";
 ---
 <html>
   <head>
-	<title>Hello world</title>
+  <title>Hello world</title>
   </head>
   <body>
     <VueComponent />
@@ -76,8 +77,35 @@ import VueComponent from '../components/Vue';
   </head>
   <body>
     ${renderComponent(VueComponent, null, render` + BACKTICK + BACKTICK + `)}
+
+</body></html>
+`,
+			},
+		},
+		{
+			"head expression",
+			`---
+const name = "world";
+---
+<html>
+  <head>
+    <title>Hello {name}</title>
+  </head>
+  <body>
+    <div></div>
   </body>
-</html>
+</html>`,
+			want{
+				imports:     "",
+				frontmatter: `const name = "world";`,
+				code: `<html>
+  <head>
+    <title>Hello ${name}</title>
+  </head>
+  <body>
+    <div></div>
+  
+</body></html>
 `,
 			},
 		},
@@ -85,13 +113,13 @@ import VueComponent from '../components/Vue';
 			"styles (no frontmatter)",
 			`<style>
   .title {
-		font-family: fantasy;
-		font-size: 28px;
-	}
+    font-family: fantasy;
+    font-size: 28px;
+  }
 
-	.body {
+  .body {
     font-size: 1em;
-	}
+  }
 </style>
 
 <h1 class="title">Page Title</h1>
@@ -102,8 +130,9 @@ import VueComponent from '../components/Vue';
 				code: `<html><head><style data-astro-id="RV7KTNA5">.title.astro-RV7KTNA5 {font-family:fantasy;font-size:28px;}.body.astro-RV7KTNA5 {font-size:1em;}</style>
 
 </head><body><h1 class="title astro-RV7KTNA5">Page Title</h1>
-<p class="body astro-RV7KTNA5">I’m a page</p></body>
-</html>`,
+<p class="body astro-RV7KTNA5">I’m a page</p>
+</body></html>
+`,
 			},
 		},
 		{
@@ -169,13 +198,11 @@ import VueComponent from '../components/Vue';
 <body>
   <!-- your content here... -->
   <script src="js/scripts.js"></script>
-</body>
-</html>`,
+
+</body></html>`,
 			},
 		},
 	}
-
-	dmp := diffmatchpatch.New() // differ
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -192,16 +219,40 @@ import VueComponent from '../components/Vue';
 
 			toMatch := fmt.Sprintf("%s%s", tt.want.imports, PRELUDE)
 			if tt.want.frontmatter != "" {
-				toMatch = toMatch + fmt.Sprintf("// ---\n%s\n// ---\n\n", tt.want.frontmatter)
+				toMatch = toMatch + fmt.Sprintf("// ---%s// ---\n", tt.want.frontmatter)
+			} else {
+				toMatch = toMatch + "\n"
 			}
 			toMatch = toMatch + fmt.Sprintf("%s%s", RETURN, tt.want.code)
 			toMatch = toMatch + SUFFIX
 
 			// compare to expected string, show diff if mismatch
-			if output != toMatch {
-				diffs := dmp.DiffMain(toMatch, output, false)
-				t.Error(dmp.DiffPrettyText(diffs))
+			if diff := ANSIDiff(toMatch, output); diff != "" {
+				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+				fmt.Println("===", tt.name)
+				fmt.Println(output)
+				fmt.Println("===")
 			}
 		})
 	}
+}
+
+func ANSIDiff(x, y interface{}, opts ...cmp.Option) string {
+	escapeCode := func(code int) string {
+		return fmt.Sprintf("\x1b[%dm", code)
+	}
+	diff := cmp.Diff(x, y, opts...)
+	if diff == "" {
+		return ""
+	}
+	ss := strings.Split(diff, "\n")
+	for i, s := range ss {
+		switch {
+		case strings.HasPrefix(s, "-"):
+			ss[i] = escapeCode(31) + s + escapeCode(0)
+		case strings.HasPrefix(s, "+"):
+			ss[i] = escapeCode(32) + s + escapeCode(0)
+		}
+	}
+	return strings.Join(ss, "\n")
 }

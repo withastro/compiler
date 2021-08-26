@@ -7,23 +7,22 @@ import (
 	"strings"
 
 	astro "github.com/snowpackjs/astro/internal"
-	printer "github.com/snowpackjs/astro/internal/printer"
+	"github.com/snowpackjs/astro/internal/printer"
 )
 
 func main() {
 	source := `---
 import Component from '../components/Component.vue';
 const name = "world";
-const items = [0, 1, 2];
 ---
 
 <html>
   <head>
-    <title>Hello</title>
+    <title>Hello {name}</title>
   </head>
   <body>
-	<main>
-		<Component client:load />
+    <main>
+      <Component client:load />
     </main>
   </body>
 </html>

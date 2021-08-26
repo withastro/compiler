@@ -151,18 +151,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 				if len(frontmatterStatements) > 0 || len(importStatements) == 0 {
 					p.addSourceMapping(n.Loc[0])
-					p.print("// ---")
+					p.println("// ---")
 					if len(frontmatterStatements) > 0 {
 						for _, statement := range frontmatterStatements {
 							p.addSourceMapping(statement.Loc)
-							p.print(statement.Content)
+							p.print(strings.TrimLeft(statement.Content, " \t\r\n"))
 						}
 					} else if len(importStatements) == 0 {
 						p.addSourceMapping(c.Loc[0])
 						p.print(c.Data)
 					}
 					p.addSourceMapping(loc.Loc{Start: 0})
-					p.print("// ---")
+					p.println("// ---")
 				}
 				p.printReturnOpen()
 			} else {
@@ -277,6 +277,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
+
+	// fmt.Println("OPEN", n.Data)
+
 	if n.Fragment {
 		p.print("Fragment")
 	} else {
