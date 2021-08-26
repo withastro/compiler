@@ -1,8 +1,6 @@
 package transform
 
 import (
-	"fmt"
-
 	tycho "github.com/snowpackjs/astro/internal"
 	a "golang.org/x/net/html/atom"
 )
@@ -23,7 +21,7 @@ func Transform(doc *tycho.Node, opts TransformOptions) {
 	}
 
 	if len(scripts) > 0 {
-		fmt.Println("Found scripts!")
+		// fmt.Println("Found scripts!")
 	}
 }
 
