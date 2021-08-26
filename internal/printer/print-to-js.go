@@ -75,6 +75,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
+		// TODO: allow customization of internals import loc (for non-Node environments)
+		p.printInternalImports("astro/internal")
+
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			render1(p, c, RenderOptions{
 				isRoot:       true,
@@ -91,6 +94,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
+				p.printInternalImports("astro/internal")
 				offset := c.Loc[0].Start - n.Loc[0].Start
 				imports := js_scanner.FindImportStatements([]byte(c.Data))
 				var prevImport *js_scanner.ImportStatement
@@ -271,7 +275,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	p.addSourceMapping(n.Loc[0])
 	if isComponent {
-		p.print("${renderComponent(")
+		p.print(fmt.Sprintf("${%s(", RENDER_COMPONENT))
 	} else {
 		p.print("<")
 	}
@@ -340,47 +344,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 	} else {
 		for _, a := range n.Attr {
-			if a.Namespace != "" {
-				p.print(a.Namespace)
-				p.print(":")
-			}
-
-			switch a.Type {
-			case QuotedAttribute:
-				p.print(" ")
-				p.addSourceMapping(a.KeyLoc)
-				p.print(a.Key)
-				p.print("=")
-				p.addSourceMapping(a.ValLoc)
-				p.print(`"` + a.Val + `"`)
-			case EmptyAttribute:
-				p.print(" ")
-				p.addSourceMapping(a.KeyLoc)
-				p.print(a.Key)
-			case ExpressionAttribute:
-				p.print("${addAttribute(")
-				p.addSourceMapping(a.ValLoc)
-				p.print(strings.TrimSpace(a.Val))
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`, "` + strings.TrimSpace(a.Key) + `")}`)
-			case SpreadAttribute:
-				p.print("${spreadAttributes(")
-				p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
-				p.print(strings.TrimSpace(a.Key))
-				p.print(`, "` + strings.TrimSpace(a.Key) + `")}`)
-			case ShorthandAttribute:
-				p.print("${addAttribute(")
-				p.addSourceMapping(a.KeyLoc)
-				p.print(strings.TrimSpace(a.Key))
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`, "` + strings.TrimSpace(a.Key) + `")}`)
-			case TemplateLiteralAttribute:
-				p.print("${addAttribute(`")
-				p.addSourceMapping(a.ValLoc)
-				p.print(strings.TrimSpace(a.Val))
-				p.addSourceMapping(a.KeyLoc)
-				p.print("`" + `, "` + strings.TrimSpace(a.Key) + `")}`)
-			}
+			p.printAttribute(a)
 			p.addSourceMapping(n.Loc[0])
 		}
 		p.addSourceMapping(n.Loc[0])

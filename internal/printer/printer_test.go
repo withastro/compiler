@@ -11,8 +11,15 @@ import (
 	"github.com/snowpackjs/astro/internal/transform"
 )
 
-var PRELUDE = `//@ts-ignore
-const Component = $$createComponent(async ($$result, $$props, $$slots) => {`
+var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
+	TEMPLATE_TAG,
+	CREATE_COMPONENT,
+	RENDER_COMPONENT,
+	ADD_ATTRIBUTE,
+	SPREAD_ATTRIBUTES,
+}, ",\n  "), "astro/internal")
+var PRELUDE = fmt.Sprintf(`//@ts-ignore
+const Component = %s(async ($$result, $$props, $$slots) => {`, CREATE_COMPONENT)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
@@ -51,7 +58,7 @@ const href = '/about';
 			want{
 				imports:     "",
 				frontmatter: "const href = '/about';",
-				code:        `<html><head></head><body><a${addAttribute(href, "href")}>About</a></body></html>`,
+				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
 			},
 		},
 		{
@@ -68,7 +75,7 @@ import VueComponent from '../components/Vue.vue';
   </body>
 </html>`,
 			want{
-				imports:     `import VueComponent from '../components/Vue.vue';
+				imports: `import VueComponent from '../components/Vue.vue';
 `,
 				frontmatter: "",
 				code: `<html>
@@ -76,7 +83,7 @@ import VueComponent from '../components/Vue.vue';
     <title>Hello world</title>
   </head>
   <body>
-    ${renderComponent(VueComponent, null, render` + BACKTICK + BACKTICK + `)}
+    ${` + RENDER_COMPONENT + `(VueComponent, null, ` + TEMPLATE_TAG + BACKTICK + BACKTICK + `)}
   </body></html>`,
 			},
 		},
@@ -208,7 +215,8 @@ const name = "world";
 			result := PrintToJS(code, doc)
 			output := string(result.Output)
 
-			toMatch := fmt.Sprintf("%s%s", tt.want.imports, PRELUDE)
+			toMatch := INTERNAL_IMPORTS
+			toMatch = toMatch + fmt.Sprintf("%s%s", tt.want.imports, PRELUDE)
 			if tt.want.frontmatter != "" {
 				toMatch = toMatch + fmt.Sprintf(`
 // ---

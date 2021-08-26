@@ -2,7 +2,9 @@ package printer
 
 import (
 	"fmt"
+	"strings"
 
+	astro "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/loc"
 	"github.com/snowpackjs/astro/internal/sourcemap"
 )
@@ -13,12 +15,17 @@ type PrintResult struct {
 }
 
 type printer struct {
-	output         []byte
-	builder        sourcemap.ChunkBuilder
-	hasFuncPrelude bool
+	output             []byte
+	builder            sourcemap.ChunkBuilder
+	hasFuncPrelude     bool
+	hasInternalImports bool
 }
 
-var TEMPLATE_TAG = "render"
+var TEMPLATE_TAG = "$$render"
+var CREATE_COMPONENT = "$$createComponent"
+var RENDER_COMPONENT = "$$renderComponent"
+var ADD_ATTRIBUTE = "$$addAttribute"
+var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var BACKTICK = "`"
 
 func (p *printer) print(text string) {
@@ -33,6 +40,20 @@ func (p *printer) println(text string) {
 // allocations
 func (p *printer) printBytes(bytes []byte) {
 	p.output = append(p.output, bytes...)
+}
+
+func (p *printer) printInternalImports(importSpecifier string) {
+	if p.hasInternalImports {
+		return
+	}
+	p.print(fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
+		TEMPLATE_TAG,
+		CREATE_COMPONENT,
+		RENDER_COMPONENT,
+		ADD_ATTRIBUTE,
+		SPREAD_ATTRIBUTES,
+	}, ",\n  "), importSpecifier))
+	p.hasInternalImports = true
 }
 
 func (p *printer) printReturnOpen() {
@@ -63,7 +84,7 @@ func (p *printer) printFuncPrelude(componentName string) {
 	}
 	p.addNilSourceMapping()
 	p.println("//@ts-ignore")
-	p.println(fmt.Sprintf("const %s = $$createComponent(async ($$result, $$props, $$slots) => {", componentName))
+	p.println(fmt.Sprintf("const %s = %s(async ($$result, $$props, $$slots) => {", componentName, CREATE_COMPONENT))
 	p.hasFuncPrelude = true
 }
 
@@ -71,6 +92,50 @@ func (p *printer) printFuncSuffix(componentName string) {
 	p.addNilSourceMapping()
 	p.println("});")
 	p.println(fmt.Sprintf("export default %s;", componentName))
+}
+
+func (p *printer) printAttribute(attr astro.Attribute) {
+	if attr.Namespace != "" {
+		p.print(attr.Namespace)
+		p.print(":")
+	}
+
+	switch attr.Type {
+	case astro.QuotedAttribute:
+		p.print(" ")
+		p.addSourceMapping(attr.KeyLoc)
+		p.print(attr.Key)
+		p.print("=")
+		p.addSourceMapping(attr.ValLoc)
+		p.print(`"` + attr.Val + `"`)
+	case astro.EmptyAttribute:
+		p.print(" ")
+		p.addSourceMapping(attr.KeyLoc)
+		p.print(attr.Key)
+	case astro.ExpressionAttribute:
+		p.print(fmt.Sprintf("${%s(", ADD_ATTRIBUTE))
+		p.addSourceMapping(attr.ValLoc)
+		p.print(strings.TrimSpace(attr.Val))
+		p.addSourceMapping(attr.KeyLoc)
+		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
+	case astro.SpreadAttribute:
+		p.print(fmt.Sprintf("${%s(", SPREAD_ATTRIBUTES))
+		p.addSourceMapping(loc.Loc{Start: attr.KeyLoc.Start - 3})
+		p.print(strings.TrimSpace(attr.Key))
+		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
+	case astro.ShorthandAttribute:
+		p.print(fmt.Sprintf("${%s(", ADD_ATTRIBUTE))
+		p.addSourceMapping(attr.KeyLoc)
+		p.print(strings.TrimSpace(attr.Key))
+		p.addSourceMapping(attr.KeyLoc)
+		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
+	case astro.TemplateLiteralAttribute:
+		p.print(fmt.Sprintf("${%s(`", ADD_ATTRIBUTE))
+		p.addSourceMapping(attr.ValLoc)
+		p.print(strings.TrimSpace(attr.Val))
+		p.addSourceMapping(attr.KeyLoc)
+		p.print("`" + `, "` + strings.TrimSpace(attr.Key) + `")}`)
+	}
 }
 
 func (p *printer) addSourceMapping(location loc.Loc) {
