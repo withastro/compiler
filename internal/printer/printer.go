@@ -36,12 +36,6 @@ func (p *printer) println(text string) {
 	p.output = append(p.output, (text + "\n")...)
 }
 
-// This is the same as "print(string(bytes))" without any unnecessary temporary
-// allocations
-func (p *printer) printBytes(bytes []byte) {
-	p.output = append(p.output, bytes...)
-}
-
 func (p *printer) printInternalImports(importSpecifier string) {
 	if p.hasInternalImports {
 		return
@@ -75,7 +69,7 @@ func (p *printer) printTemplateLiteralOpen() {
 
 func (p *printer) printTemplateLiteralClose() {
 	p.addNilSourceMapping()
-	p.print(fmt.Sprintf("%s", BACKTICK))
+	p.print(BACKTICK)
 }
 
 func (p *printer) printFuncPrelude(componentName string) {
