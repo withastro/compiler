@@ -1,16 +1,14 @@
 package main
 
 import (
-	"encoding/base32"
 	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"syscall/js"
 
-	tycho "github.com/snowpackjs/astro/internal"
+	astro "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/printer"
 	"github.com/snowpackjs/astro/internal/transform"
-	"github.com/snowpackjs/astro/internal/xxhash"
 )
 
 func main() {
@@ -28,8 +26,8 @@ func jsString(j js.Value) string {
 func Transform(this js.Value, args []js.Value) interface{} {
 	source := jsString(args[0])
 	// options := js.Value(args[1])
-	doc, _ := tycho.Parse(strings.NewReader(source))
-	hash := hashFromSource(source)
+	doc, _ := astro.Parse(strings.NewReader(source))
+	hash := astro.HashFromSource(source)
 
 	transform.Transform(doc, transform.TransformOptions{
 		Scope: hash,
@@ -47,11 +45,4 @@ func Transform(this js.Value, args []js.Value) interface{} {
 	// }
 
 	return output
-}
-
-func hashFromSource(source string) string {
-	h := xxhash.New()
-	h.Write([]byte(source))
-	hashBytes := h.Sum(nil)
-	return base32.StdEncoding.EncodeToString(hashBytes)[:8]
 }

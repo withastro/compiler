@@ -130,7 +130,6 @@ func readImportStatement() {
 	}
 
 	c := readCommentWhitespace(true)
-
 	for ; pos < len(source)-1; pos++ {
 		if c == '"' || c == '\'' || c == '{' || c == '*' {
 			if c == '\'' || c == '"' {
@@ -240,6 +239,9 @@ func readImportString(statement_start int, c byte) {
 		readDoubleQuoteString()
 	}
 	pos++
+	if source[pos] == ';' {
+		pos++
+	}
 	addImport(statement_start, startPos, pos, StandardImport)
 
 	// TODO: handle assert
