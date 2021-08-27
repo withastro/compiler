@@ -53,6 +53,9 @@ type Node struct {
 
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
 
+	// These are only accessible from the document root Node
+	Styles, Scripts []*Node
+
 	Type      NodeType
 	DataAtom  atom.Atom
 	Data      string

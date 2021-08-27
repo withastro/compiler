@@ -13,6 +13,7 @@ import (
 	"github.com/snowpackjs/astro/internal/js_scanner"
 	"github.com/snowpackjs/astro/internal/loc"
 	"github.com/snowpackjs/astro/internal/sourcemap"
+	"github.com/snowpackjs/astro/internal/transform"
 )
 
 // Render renders the parse tree n to the given writer.
@@ -39,8 +40,9 @@ import (
 // text node would become a tree containing <html>, <head> and <body> elements.
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
-func PrintToJS(sourcetext string, n *Node) PrintResult {
+func PrintToJS(sourcetext string, n *Node, opts transform.TransformOptions) PrintResult {
 	p := &printer{
+		opts:    opts,
 		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
 	return printToJs(p, n)
@@ -75,8 +77,17 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
-		// TODO: allow customization of internals import loc (for non-Node environments)
-		p.printInternalImports("astro/internal")
+		p.printInternalImports(p.opts.InternalURL)
+
+		if c := n.FirstChild; c == nil || c != nil && c.Type != FrontmatterNode {
+			if len(n.Styles) > 0 {
+				p.println("export const CSS = [")
+				for _, style := range n.Styles {
+					p.println(fmt.Sprintf("  %s%s%s,", BACKTICK, style.FirstChild.Data, BACKTICK))
+				}
+				p.println("];")
+			}
+		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			render1(p, c, RenderOptions{
@@ -94,7 +105,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				p.printInternalImports("astro/internal")
+				p.printInternalImports(p.opts.InternalURL)
+
 				offset := c.Loc[0].Start - n.Loc[0].Start
 				imports := js_scanner.FindImportStatements([]byte(c.Data))
 				var prevImport *js_scanner.ImportStatement
@@ -150,6 +162,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.addSourceMapping(statement.Loc)
 					p.print(statement.Content)
 				}
+
 				// TODO: use the proper component name
 				p.printFuncPrelude("Component")
 
@@ -168,6 +181,41 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.addSourceMapping(loc.Loc{Start: 0})
 					p.println("// ---")
 				}
+
+				if len(n.Parent.Styles) > 0 {
+					p.println("const CSS = [")
+					for _, style := range n.Parent.Styles {
+						p.addNilSourceMapping()
+						p.print(fmt.Sprintf("  %s", BACKTICK))
+						var dataAstroId Attribute
+						var defineVars Attribute
+
+						for _, attr := range style.Attr {
+							switch attr.Key {
+							case "data-astro-id":
+								dataAstroId = attr
+							case "define:vars":
+								defineVars = attr
+							}
+						}
+
+						if defineVars.Key != "" && dataAstroId.Key != "" {
+							p.print(fmt.Sprintf("${%s(\"astro-%s\", ", DEFINE_STYLE_VARS, dataAstroId.Val))
+							p.addSourceMapping(defineVars.ValLoc)
+							p.print(defineVars.Val)
+							p.println(")}")
+						}
+
+						p.addSourceMapping(style.Loc[0])
+						p.print(style.FirstChild.Data)
+						p.addNilSourceMapping()
+						p.println(fmt.Sprintf("%s,", BACKTICK))
+					}
+					p.println("];")
+					p.addNilSourceMapping()
+					p.println(fmt.Sprintf("%s.css.add(...CSS)", RESULT))
+				}
+
 				p.printReturnOpen()
 			} else {
 				render1(p, c, RenderOptions{
