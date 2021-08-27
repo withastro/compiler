@@ -135,6 +135,17 @@ func TestFrontmatter(t *testing.T) {
 			`,
 			[]TokenType{FrontmatterFenceToken, TextToken, SelfClosingTagToken, TextToken, FrontmatterFenceToken},
 		},
+		{
+			"brackets within frontmatter treated as text",
+			`
+			---
+			const someProps = {
+				count: 0,
+			}
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
+		},
 	}
 
 	runTokenTypeTest(t, Frontmatter)
@@ -188,6 +199,26 @@ func TestExpressions(t *testing.T) {
 				}}</div>
 			}}`,
 			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken},
+		},
+		{
+			"left bracket within string",
+			`{'{'}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+		},
+		{
+			"right bracket within string",
+			`{'}'}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+		},
+		{
+			"expression within string",
+			`{'{() => <Component />}'}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+		},
+		{
+			"expression with nested strings",
+			"{`${`${`${foo}`}`}`}",
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
 		},
 	}
 
