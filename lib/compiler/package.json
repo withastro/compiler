@@ -1,9 +1,10 @@
 {
     "name": "@astrojs/compiler",
     "type": "module",
-    "version": "0.1.0-canary.27",
+    "version": "0.1.0-canary.28",
     "scripts": {
-        "build": "tsc -p ."
+        "build": "tsc -p .",
+        "prepublish": "npm run build"
     },
     "exports": {
         ".": {
