@@ -7,6 +7,7 @@ import (
 
 type TransformOptions struct {
 	Scope       string
+	Filename    string
 	InternalURL string
 }
 

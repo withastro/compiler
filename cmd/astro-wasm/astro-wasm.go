@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"syscall/js"
 
@@ -25,6 +23,11 @@ func jsString(j js.Value) string {
 }
 
 func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
+	filename := jsString(options.Get("filename"))
+	if filename == "" {
+		filename = "file.astro"
+	}
+
 	internalURL := jsString(options.Get("internalURL"))
 	if internalURL == "" {
 		internalURL = "astro/internal"
@@ -32,8 +35,23 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 
 	return transform.TransformOptions{
 		Scope:       hash,
+		Filename:    filename,
 		InternalURL: internalURL,
 	}
+}
+
+type TransformResult struct {
+	Code string       `json:"code"`
+	Map  RawSourceMap `json:"map"`
+}
+
+type RawSourceMap struct {
+	file           string   `json:"file"`
+	mappings       string   `json:"mappings"`
+	names          []string `json:"names"`
+	sources        []string `json:"sources"`
+	sourcesContent []string `json:"sourcesContent"`
+	version        int      `json:"version"`
 }
 
 func Transform(this js.Value, args []js.Value) interface{} {
@@ -42,15 +60,23 @@ func Transform(this js.Value, args []js.Value) interface{} {
 	doc, _ := astro.Parse(strings.NewReader(source))
 	hash := astro.HashFromSource(source)
 	transformOptions := makeTransformOptions(js.Value(args[1]), hash)
-	fmt.Println(transformOptions.InternalURL)
 
 	transform.Transform(doc, transformOptions)
 
 	result := printer.PrintToJS(source, doc, transformOptions)
-	content, _ := json.Marshal(source)
-	sourcemap := `{ "version": 3, "sources": ["file.astro"], "names": [], "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "sourcesContent": [` + string(content) + `] }`
-	b64 := base64.StdEncoding.EncodeToString([]byte(sourcemap))
-	output := string(result.Output) + string('\n') + `//# sourceMappingURL=data:application/json;base64,` + b64 + string('\n')
+	sourcesContent, _ := json.Marshal(source)
 
-	return output
+	code := result.Output
+
+	return TransformResult{
+		Code: string(code),
+		Map: RawSourceMap{
+			file:           transformOptions.Filename,
+			mappings:       string(result.SourceMapChunk.Buffer),
+			names:          make([]string, 0),
+			sources:        []string{transformOptions.Filename},
+			sourcesContent: []string{string(sourcesContent)},
+			version:        3,
+		},
+	}
 }

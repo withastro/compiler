@@ -26,7 +26,7 @@ const color = "red";
     <main>
       <Component client:load />
     </main>
-	<style 4scope hoist define:vars={{ color }}>
+	<style scope hoist define:vars={{ color }}>
 		main {
 			color: var(--color);
 		}
