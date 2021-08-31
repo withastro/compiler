@@ -12,14 +12,14 @@ import (
 )
 
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
-	TEMPLATE_TAG,
-	CREATE_COMPONENT,
-	RENDER_COMPONENT,
-	ADD_ATTRIBUTE,
-	SPREAD_ATTRIBUTES,
-	DEFINE_STYLE_VARS,
-	DEFINE_SCRIPT_VARS,
-}, ",\n  "), "astro/internal")
+	"render as " + TEMPLATE_TAG,
+	"createComponent as " + CREATE_COMPONENT,
+	"renderComponent as " + RENDER_COMPONENT,
+	"addAttribute as " + ADD_ATTRIBUTE,
+	"spreadAttributes as " + SPREAD_ATTRIBUTES,
+	"defineStyleVars as " + DEFINE_STYLE_VARS,
+	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+}, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const Component = %s(async ($$result, $$props, $$slots) => {`, CREATE_COMPONENT)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)

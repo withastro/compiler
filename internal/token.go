@@ -790,8 +790,6 @@ func (z *Tokenizer) readUntilCloseAngle() {
 
 // readString reads until a JavaScript string is closed.
 func (z *Tokenizer) readString(c byte) {
-	z.data.Start = z.raw.End
-
 	switch c {
 	case '\'':
 		z.readSingleQuoteString()
@@ -800,7 +798,6 @@ func (z *Tokenizer) readString(c byte) {
 	case '`':
 		z.readTemplateLiteralString()
 	}
-	z.data.End = z.raw.End
 	return
 }
 
