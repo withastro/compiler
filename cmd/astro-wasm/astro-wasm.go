@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"syscall/js"
@@ -23,26 +22,54 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
+func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
+	filename := jsString(options.Get("filename"))
+	if filename == "" {
+		filename = "file.astro"
+	}
+
+	internalURL := jsString(options.Get("internalURL"))
+	if internalURL == "" {
+		internalURL = "astro/internal"
+	}
+
+	return transform.TransformOptions{
+		Scope:       hash,
+		Filename:    filename,
+		InternalURL: internalURL,
+	}
+}
+
+type TransformResult struct {
+	Code string `json:"code"`
+	Map  string `json:"map"`
+}
+
+type RawSourceMap struct {
+	File           string   `json:"file"`
+	Mappings       string   `json:"mappings"`
+	Names          []string `json:"names"`
+	Sources        []string `json:"sources"`
+	SourcesContent []string `json:"sourcesContent"`
+	Version        int      `json:"version"`
+}
+
 func Transform(this js.Value, args []js.Value) interface{} {
 	source := jsString(args[0])
-	// options := js.Value(args[1])
+
 	doc, _ := astro.Parse(strings.NewReader(source))
 	hash := astro.HashFromSource(source)
+	transformOptions := makeTransformOptions(js.Value(args[1]), hash)
 
-	transform.Transform(doc, transform.TransformOptions{
-		Scope: hash,
-	})
+	transform.Transform(doc, transformOptions)
 
-	result := printer.PrintToJS(source, doc)
-	content, _ := json.Marshal(source)
-	sourcemap := `{ "version": 3, "sources": ["file.astro"], "names": [], "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "sourcesContent": [` + string(content) + `] }`
-	b64 := base64.StdEncoding.EncodeToString([]byte(sourcemap))
-	output := string(result.Output) + string('\n') + `//# sourceMappingURL=data:application/json;base64,` + b64 + string('\n')
+	result := printer.PrintToJS(source, doc, transformOptions)
+	sourcesContent, _ := json.Marshal(source)
 
-	// internalURL := jsString(options.Get("internalURL"))
-	// if internalURL == "" {
-	// 	internalURL = "@astrojs/compiler/internal"
-	// }
+	code := result.Output
+	finalCode, _ := json.Marshal(string(code))
+	sourcemap := `{ "file": "` + transformOptions.Filename + `", "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "names": [], "sources": ["` + transformOptions.Filename + `"], "sourcesContent": [` + string(sourcesContent) + `], "version": 3 }`
+	transformResult := `{ "map": ` + sourcemap + `, "code":` + string(finalCode) + `}`
 
-	return output
+	return transformResult
 }

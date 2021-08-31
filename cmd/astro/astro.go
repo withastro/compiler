@@ -8,12 +8,14 @@ import (
 
 	astro "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/printer"
+	"github.com/snowpackjs/astro/internal/transform"
 )
 
 func main() {
-	source := `---
+	source := `
+---
 import Component from '../components/Component.vue';
-const name = "world";
+const color = "red";
 ---
 
 <html>
@@ -24,12 +26,23 @@ const name = "world";
     <main>
       <Component client:load />
     </main>
+	<style scope hoist define:vars={{ color }}>
+		main {
+			color: var(--color);
+		}
+	</style>
   </body>
 </html>
 `
 
 	doc, _ := astro.Parse(strings.NewReader(source))
-	result := printer.PrintToJS(source, doc)
+	hash := astro.HashFromSource(source)
+
+	transform.Transform(doc, transform.TransformOptions{
+		Scope: hash,
+	})
+
+	result := printer.PrintToJS(source, doc, transform.TransformOptions{})
 
 	content, _ := json.Marshal(source)
 	sourcemap := `{ "version": 3, "sources": ["file.astro"], "names": [], "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "sourcesContent": [` + string(content) + `] }`

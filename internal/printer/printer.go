@@ -7,6 +7,7 @@ import (
 	astro "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/loc"
 	"github.com/snowpackjs/astro/internal/sourcemap"
+	"github.com/snowpackjs/astro/internal/transform"
 )
 
 type PrintResult struct {
@@ -15,6 +16,7 @@ type PrintResult struct {
 }
 
 type printer struct {
+	opts               transform.TransformOptions
 	output             []byte
 	builder            sourcemap.ChunkBuilder
 	hasFuncPrelude     bool
@@ -26,6 +28,9 @@ var CREATE_COMPONENT = "$$createComponent"
 var RENDER_COMPONENT = "$$renderComponent"
 var ADD_ATTRIBUTE = "$$addAttribute"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
+var DEFINE_STYLE_VARS = "$$defineStyleVars"
+var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
+var RESULT = "$$result"
 var BACKTICK = "`"
 
 func (p *printer) print(text string) {
@@ -41,11 +46,13 @@ func (p *printer) printInternalImports(importSpecifier string) {
 		return
 	}
 	p.print(fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
-		TEMPLATE_TAG,
-		CREATE_COMPONENT,
-		RENDER_COMPONENT,
-		ADD_ATTRIBUTE,
-		SPREAD_ATTRIBUTES,
+		"render as " + TEMPLATE_TAG,
+		"createComponent as " + CREATE_COMPONENT,
+		"renderComponent as " + RENDER_COMPONENT,
+		"addAttribute as " + ADD_ATTRIBUTE,
+		"spreadAttributes as " + SPREAD_ATTRIBUTES,
+		"defineStyleVars as " + DEFINE_STYLE_VARS,
+		"defineScriptVars as " + DEFINE_SCRIPT_VARS,
 	}, ",\n  "), importSpecifier))
 	p.hasInternalImports = true
 }
@@ -78,7 +85,7 @@ func (p *printer) printFuncPrelude(componentName string) {
 	}
 	p.addNilSourceMapping()
 	p.println("//@ts-ignore")
-	p.println(fmt.Sprintf("const %s = %s(async ($$result, $$props, $$slots) => {", componentName, CREATE_COMPONENT))
+	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, $$slots) => {", componentName, CREATE_COMPONENT, RESULT))
 	p.hasFuncPrelude = true
 }
 
