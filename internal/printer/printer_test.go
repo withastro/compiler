@@ -43,7 +43,7 @@ func TestPrinter(t *testing.T) {
 		want   want
 	}{
 		{
-			name: "basic (no frontmatter)",
+			name:   "basic (no frontmatter)",
 			source: `<button>Click</button>`,
 			want: want{
 				imports:     "",
@@ -252,7 +252,7 @@ const someProps = {
 			want: want{
 				imports:     "",
 				frontmatter: "",
-				code:        `<!DOCTYPE html>
+				code: `<!DOCTYPE html>
 	<html>
 		<head>
 			<meta charset="utf-8" />
@@ -280,7 +280,7 @@ const someProps = {
 			hash := tycho.HashFromSource(code)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{
-				Scope: "astro-XXXX",
+				Scope:       "astro-XXXX",
 				InternalURL: "http://localhost:3000/",
 			})
 			output := string(result.Output)

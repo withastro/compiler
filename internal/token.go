@@ -411,7 +411,7 @@ func (z *Tokenizer) skipWhiteSpace() {
 	for {
 		c := z.readByte()
 		if z.err != nil {
-			fmt.Printf("Unexpected character in skipWhiteSpace: %v\n", string(c))
+			fmt.Printf("Unexpected character in skipWhiteSpace: \"%v\"\n", string(c))
 			return
 		}
 		switch c {
@@ -580,7 +580,7 @@ scriptDataEscaped:
 	goto scriptDataEscaped
 
 scriptDataEscapedDash:
-  fmt.Printf("Unexpected character in scriptDataEscapedDash: %v\n", string(c))
+	fmt.Printf("Unexpected character in scriptDataEscapedDash: %v\n", string(c))
 	c = z.readByte()
 	if z.err != nil {
 		return
@@ -625,7 +625,7 @@ scriptDataEscapedLessThanSign:
 	goto scriptData
 
 scriptDataEscapedEndTagOpen:
-  if z.err != nil {
+	if z.err != nil {
 		fmt.Printf("Unexpected character in scriptDataEscapedEndTagOpen: %v\n", string(c))
 		return
 	}
@@ -784,6 +784,75 @@ func (z *Tokenizer) readUntilCloseAngle() {
 		if c == '>' {
 			z.data.End = z.raw.End - len(">")
 			return
+		}
+	}
+}
+
+// readString reads until a JavaScript string is closed.
+func (z *Tokenizer) readString(c byte) {
+	z.data.Start = z.raw.End
+
+	switch c {
+	case '\'':
+		z.readSingleQuoteString()
+	case '"':
+		z.readDoubleQuoteString()
+	case '`':
+		z.readTemplateLiteralString()
+	}
+	z.data.End = z.raw.End
+	return
+}
+
+func (z *Tokenizer) readSingleQuoteString() {
+	for {
+		c := z.readByte()
+		if c == '\'' {
+			z.data.End = z.raw.End - 1
+			return
+		}
+		if c == '\\' {
+			z.raw.End++
+			c = z.buf[z.data.Start:z.data.End][0]
+			if c == '\r' || c == '\n' {
+				z.raw.End++
+			}
+		} else if c == '\r' || c == '\n' {
+			break
+		}
+	}
+}
+
+func (z *Tokenizer) readDoubleQuoteString() {
+	for {
+		c := z.readByte()
+		if c == '"' {
+			z.data.End = z.raw.End - 1
+			return
+		}
+		if c == '\\' {
+			z.raw.End++
+			c = z.buf[z.data.Start:z.data.End][0]
+			if c == '\r' || c == '\n' {
+				z.raw.End++
+			}
+		} else if c == '\r' || c == '\n' {
+			break
+		}
+	}
+}
+
+// Note that we DO NOT have to handle `${}` here because our expression
+// behavior already handles `{}`. Technically incorrect, but it works.
+func (z *Tokenizer) readTemplateLiteralString() {
+	for {
+		c := z.readByte()
+		if c == '`' {
+			z.data.End = z.raw.End - 1
+			return
+		}
+		if c == '\\' {
+			z.raw.End++
 		}
 	}
 }
@@ -948,10 +1017,14 @@ func (z *Tokenizer) readUnclosedTag() {
 	var close int
 	if z.fm == FrontmatterOpen {
 		close = strings.Index(string(buf), "---")
-		buf = buf[0:close]
+		if close != -1 {
+			buf = buf[0:close]
+		}
 	}
 	close = bytes.Index(buf, []byte{'>'})
-	buf = buf[0:close]
+	if close != -1 {
+		buf = buf[0:close]
+	}
 	if close == -1 {
 		// We can't find a closing tag...
 		z.data.Start = z.raw.End - 1
@@ -962,6 +1035,7 @@ func (z *Tokenizer) readUnclosedTag() {
 				z.err = z.readErr
 				return
 			}
+
 			switch c {
 			case ' ', '\n', '\r', '\t', '\f':
 				// Safely read up until a whitespace character
@@ -1200,6 +1274,17 @@ func (z *Tokenizer) Next() TokenType {
 	z.data.Start = z.raw.End
 	z.data.End = z.raw.End
 
+	// This handles expressions nested inside of Frontmatter elements
+	// but preserves `{}` as text outside of elements
+	if z.fm == FrontmatterOpen {
+		tt := z.Token().Type
+		switch tt {
+		case StartTagToken, EndTagToken:
+		default:
+			z.openBraceIsExpressionStart = false
+		}
+	}
+
 	if z.err != nil {
 		z.tt = ErrorToken
 		return z.tt
@@ -1236,6 +1321,13 @@ loop:
 			break loop
 		}
 		var tokenType TokenType
+
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.data.End = z.raw.End
+			z.tt = TextToken
+			return z.tt
+		}
 
 		if c == '{' || c == '}' {
 			if x := z.raw.End - len("{"); z.raw.Start < x {
@@ -1345,6 +1437,7 @@ loop:
 			return z.tt
 		}
 	}
+
 	if z.raw.Start < z.raw.End {
 		// We're scanning Text, so open braces should be ignored
 		z.openBraceIsExpressionStart = false
@@ -1407,6 +1500,13 @@ frontmatter_loop:
 			goto loop
 		}
 
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.data.End = z.raw.End
+			z.tt = TextToken
+			return z.tt
+		}
+
 		z.dashCount = 0
 		continue frontmatter_loop
 	}
@@ -1456,6 +1556,13 @@ expression_loop:
 			break expression_loop
 		}
 
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.data.End = z.raw.End
+			z.tt = TextToken
+			return z.tt
+		}
+
 		if c == '<' {
 			z.raw.End--
 			z.data.End = z.raw.End
@@ -1467,9 +1574,6 @@ expression_loop:
 		}
 
 		if c != '{' && c != '}' {
-			if z.fm == FrontmatterOpen {
-				z.openBraceIsExpressionStart = false
-			}
 			continue expression_loop
 		}
 

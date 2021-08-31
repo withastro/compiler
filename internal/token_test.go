@@ -143,7 +143,7 @@ func TestFrontmatter(t *testing.T) {
 			const a = <div>{contents}</div>;
 			---
 			`,
-			[]TokenType{FrontmatterFenceToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, FrontmatterFenceToken},
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, FrontmatterFenceToken},
 		},
 		{
 			"brackets within frontmatter treated as text",
@@ -161,25 +161,36 @@ func TestFrontmatter(t *testing.T) {
 			`
 			---
 			const contents = "foo";
-			const a = <div>{contents}</div>;
+			const a = <ul>{contents}</ul>
 			const someProps = {
 				count: 0,
 			}
 			---
 			`,
-			[]TokenType{FrontmatterFenceToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, FrontmatterFenceToken},
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
 		},
 		{
-			"less-than isn’t a tag",
+			"less than isn’t a tag",
 			`
 			---
 			const a = 2;
 			const div = 4
-			const isBigger = a<div;
+			const isBigger = a < div;
 			---
 			`,
 			[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
 		},
+		// {
+		// 	"less than with no space isn’t a tag",
+		// 	`
+		// 	---
+		// 	const a = 2;
+		// 	const div = 4
+		// 	const isBigger = a <div
+		// 	---
+		// 	`,
+		// 	[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
+		// },
 	}
 
 	runTokenTypeTest(t, Frontmatter)
@@ -201,6 +212,11 @@ func TestExpressions(t *testing.T) {
 			"tag expression",
 			`{<div />}`,
 			[]TokenType{StartExpressionToken, SelfClosingTagToken, EndExpressionToken},
+		},
+		{
+			"string expression",
+			`{"<div {attr} />"}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
 		},
 		{
 			"function expression",
@@ -236,7 +252,7 @@ func TestExpressions(t *testing.T) {
 		},
 		{
 			"left bracket within string",
-			`{'{'}`,
+			`{"{"}`,
 			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
 		},
 		{
@@ -252,7 +268,7 @@ func TestExpressions(t *testing.T) {
 		{
 			"expression with nested strings",
 			"{`${`${`${foo}`}`}`}",
-			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken},
 		},
 	}
 
