@@ -7,6 +7,7 @@ package astro
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -257,6 +258,10 @@ type Tokenizer struct {
 	// token: one that treats "<p>" as text instead of an element.
 	// rawTag's contents are lower-cased.
 	rawTag string
+	// stringStartChar is the character that opened the last string: ', ", or `
+	stringStartChar byte
+	// stringIsOpen will be true while in the context of a string
+	stringIsOpen bool
 	// textIsRaw is whether the current text token's data is not escaped.
 	textIsRaw bool
 	// convertNUL is whether NUL bytes in the current token's data should
@@ -406,6 +411,7 @@ func (z *Tokenizer) skipWhiteSpace() {
 	for {
 		c := z.readByte()
 		if z.err != nil {
+			fmt.Printf("Unexpected character in skipWhiteSpace: %v\n", string(c))
 			return
 		}
 		switch c {
@@ -431,6 +437,7 @@ loop:
 	for {
 		c := z.readByte()
 		if z.err != nil {
+			fmt.Printf("Unexpected character in loop: %v\n", string(c))
 			break loop
 		}
 		if c != '<' {
@@ -477,6 +484,7 @@ func (z *Tokenizer) readRawEndTag() bool {
 	}
 	c := z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in readRawEndTag: %v\n", string(c))
 		return false
 	}
 	switch c {
@@ -500,6 +508,7 @@ func (z *Tokenizer) readScript() {
 scriptData:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptData: %v\n", string(c))
 		return
 	}
 	if c == '<' {
@@ -510,6 +519,7 @@ scriptData:
 scriptDataLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataLessThanSign: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -522,7 +532,11 @@ scriptDataLessThanSign:
 	goto scriptData
 
 scriptDataEndTagOpen:
-	if z.readRawEndTag() || z.err != nil {
+	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEndTagOpen: %v\n", string(c))
+		return
+	}
+	if z.readRawEndTag() {
 		return
 	}
 	goto scriptData
@@ -530,6 +544,7 @@ scriptDataEndTagOpen:
 scriptDataEscapeStart:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapeStart: %v\n", string(c))
 		return
 	}
 	if c == '-' {
@@ -541,6 +556,7 @@ scriptDataEscapeStart:
 scriptDataEscapeStartDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapeStartDash: %v\n", string(c))
 		return
 	}
 	if c == '-' {
@@ -552,6 +568,7 @@ scriptDataEscapeStartDash:
 scriptDataEscaped:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscaped: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -563,6 +580,7 @@ scriptDataEscaped:
 	goto scriptDataEscaped
 
 scriptDataEscapedDash:
+  fmt.Printf("Unexpected character in scriptDataEscapedDash: %v\n", string(c))
 	c = z.readByte()
 	if z.err != nil {
 		return
@@ -578,6 +596,7 @@ scriptDataEscapedDash:
 scriptDataEscapedDashDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapedDashDash: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -593,6 +612,7 @@ scriptDataEscapedDashDash:
 scriptDataEscapedLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapedLessThanSign: %v\n", string(c))
 		return
 	}
 	if c == '/' {
@@ -605,6 +625,10 @@ scriptDataEscapedLessThanSign:
 	goto scriptData
 
 scriptDataEscapedEndTagOpen:
+  if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapedEndTagOpen: %v\n", string(c))
+		return
+	}
 	if z.readRawEndTag() || z.err != nil {
 		return
 	}
@@ -615,6 +639,7 @@ scriptDataDoubleEscapeStart:
 	for i := 0; i < len("script"); i++ {
 		c = z.readByte()
 		if z.err != nil {
+			fmt.Printf("Unexpected character in scriptDataDoubleEscapeStart: %v\n", string(c))
 			return
 		}
 		if c != "script"[i] && c != "SCRIPT"[i] {
@@ -636,6 +661,7 @@ scriptDataDoubleEscapeStart:
 scriptDataDoubleEscaped:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscaped: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -649,6 +675,7 @@ scriptDataDoubleEscaped:
 scriptDataDoubleEscapedDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapedDash: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -662,6 +689,7 @@ scriptDataDoubleEscapedDash:
 scriptDataDoubleEscapedDashDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapedDashDash: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -677,6 +705,7 @@ scriptDataDoubleEscapedDashDash:
 scriptDataDoubleEscapedLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapedLessThanSign: %v\n", string(c))
 		return
 	}
 	if c == '/' {
@@ -691,6 +720,7 @@ scriptDataDoubleEscapeEnd:
 		goto scriptDataEscaped
 	}
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapeEnd: %v\n", string(c))
 		return
 	}
 	goto scriptDataDoubleEscaped
@@ -1347,7 +1377,7 @@ frontmatter_loop:
 				z.dashCount = 0
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
-				z.openBraceIsExpressionStart = true
+				z.openBraceIsExpressionStart = false
 				return z.tt
 			case FrontmatterOpen:
 				if z.raw.Start < z.raw.End-len("---") {
@@ -1437,6 +1467,9 @@ expression_loop:
 		}
 
 		if c != '{' && c != '}' {
+			if z.fm == FrontmatterOpen {
+				z.openBraceIsExpressionStart = false
+			}
 			continue expression_loop
 		}
 

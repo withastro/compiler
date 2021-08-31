@@ -136,12 +136,46 @@ func TestFrontmatter(t *testing.T) {
 			[]TokenType{FrontmatterFenceToken, TextToken, SelfClosingTagToken, TextToken, FrontmatterFenceToken},
 		},
 		{
+			"elements can have expression as child in frontmatter",
+			`
+			---
+			const contents = "foo";
+			const a = <div>{contents}</div>;
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, FrontmatterFenceToken},
+		},
+		{
 			"brackets within frontmatter treated as text",
 			`
 			---
 			const someProps = {
 				count: 0,
 			}
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
+		},
+		{
+			"brackets within tags treated as expressions while brackets in frontmatter treated as text",
+			`
+			---
+			const contents = "foo";
+			const a = <div>{contents}</div>;
+			const someProps = {
+				count: 0,
+			}
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, FrontmatterFenceToken},
+		},
+		{
+			"less-than isn’t a tag",
+			`
+			---
+			const a = 2;
+			const div = 4
+			const isBigger = a<div;
 			---
 			`,
 			[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
