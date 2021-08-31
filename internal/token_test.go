@@ -135,6 +135,62 @@ func TestFrontmatter(t *testing.T) {
 			`,
 			[]TokenType{FrontmatterFenceToken, TextToken, SelfClosingTagToken, TextToken, FrontmatterFenceToken},
 		},
+		{
+			"elements can have expression as child in frontmatter",
+			`
+			---
+			const contents = "foo";
+			const a = <div>{contents}</div>;
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, FrontmatterFenceToken},
+		},
+		{
+			"brackets within frontmatter treated as text",
+			`
+			---
+			const someProps = {
+				count: 0,
+			}
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
+		},
+		{
+			"brackets within tags treated as expressions while brackets in frontmatter treated as text",
+			`
+			---
+			const contents = "foo";
+			const a = <ul>{contents}</ul>
+			const someProps = {
+				count: 0,
+			}
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
+		},
+		{
+			"less than isn’t a tag",
+			`
+			---
+			const a = 2;
+			const div = 4
+			const isBigger = a < div;
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
+		},
+		// {
+		// 	"less than with no space isn’t a tag",
+		// 	`
+		// 	---
+		// 	const a = 2;
+		// 	const div = 4
+		// 	const isBigger = a <div
+		// 	---
+		// 	`,
+		// 	[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
+		// },
 	}
 
 	runTokenTypeTest(t, Frontmatter)
@@ -156,6 +212,11 @@ func TestExpressions(t *testing.T) {
 			"tag expression",
 			`{<div />}`,
 			[]TokenType{StartExpressionToken, SelfClosingTagToken, EndExpressionToken},
+		},
+		{
+			"string expression",
+			`{"<div {attr} />"}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
 		},
 		{
 			"function expression",
@@ -188,6 +249,26 @@ func TestExpressions(t *testing.T) {
 				}}</div>
 			}}`,
 			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken},
+		},
+		{
+			"left bracket within string",
+			`{"{"}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+		},
+		{
+			"right bracket within string",
+			`{'}'}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+		},
+		{
+			"expression within string",
+			`{'{() => <Component />}'}`,
+			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+		},
+		{
+			"expression with nested strings",
+			"{`${`${`${foo}`}`}`}",
+			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken},
 		},
 	}
 

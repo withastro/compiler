@@ -7,6 +7,7 @@ package astro
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -257,6 +258,10 @@ type Tokenizer struct {
 	// token: one that treats "<p>" as text instead of an element.
 	// rawTag's contents are lower-cased.
 	rawTag string
+	// stringStartChar is the character that opened the last string: ', ", or `
+	stringStartChar byte
+	// stringIsOpen will be true while in the context of a string
+	stringIsOpen bool
 	// textIsRaw is whether the current text token's data is not escaped.
 	textIsRaw bool
 	// convertNUL is whether NUL bytes in the current token's data should
@@ -406,6 +411,7 @@ func (z *Tokenizer) skipWhiteSpace() {
 	for {
 		c := z.readByte()
 		if z.err != nil {
+			fmt.Printf("Unexpected character in skipWhiteSpace: \"%v\"\n", string(c))
 			return
 		}
 		switch c {
@@ -431,6 +437,7 @@ loop:
 	for {
 		c := z.readByte()
 		if z.err != nil {
+			fmt.Printf("Unexpected character in loop: %v\n", string(c))
 			break loop
 		}
 		if c != '<' {
@@ -477,6 +484,7 @@ func (z *Tokenizer) readRawEndTag() bool {
 	}
 	c := z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in readRawEndTag: %v\n", string(c))
 		return false
 	}
 	switch c {
@@ -500,6 +508,7 @@ func (z *Tokenizer) readScript() {
 scriptData:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptData: %v\n", string(c))
 		return
 	}
 	if c == '<' {
@@ -510,6 +519,7 @@ scriptData:
 scriptDataLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataLessThanSign: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -522,7 +532,11 @@ scriptDataLessThanSign:
 	goto scriptData
 
 scriptDataEndTagOpen:
-	if z.readRawEndTag() || z.err != nil {
+	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEndTagOpen: %v\n", string(c))
+		return
+	}
+	if z.readRawEndTag() {
 		return
 	}
 	goto scriptData
@@ -530,6 +544,7 @@ scriptDataEndTagOpen:
 scriptDataEscapeStart:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapeStart: %v\n", string(c))
 		return
 	}
 	if c == '-' {
@@ -541,6 +556,7 @@ scriptDataEscapeStart:
 scriptDataEscapeStartDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapeStartDash: %v\n", string(c))
 		return
 	}
 	if c == '-' {
@@ -552,6 +568,7 @@ scriptDataEscapeStartDash:
 scriptDataEscaped:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscaped: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -563,6 +580,7 @@ scriptDataEscaped:
 	goto scriptDataEscaped
 
 scriptDataEscapedDash:
+	fmt.Printf("Unexpected character in scriptDataEscapedDash: %v\n", string(c))
 	c = z.readByte()
 	if z.err != nil {
 		return
@@ -578,6 +596,7 @@ scriptDataEscapedDash:
 scriptDataEscapedDashDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapedDashDash: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -593,6 +612,7 @@ scriptDataEscapedDashDash:
 scriptDataEscapedLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapedLessThanSign: %v\n", string(c))
 		return
 	}
 	if c == '/' {
@@ -605,6 +625,10 @@ scriptDataEscapedLessThanSign:
 	goto scriptData
 
 scriptDataEscapedEndTagOpen:
+	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataEscapedEndTagOpen: %v\n", string(c))
+		return
+	}
 	if z.readRawEndTag() || z.err != nil {
 		return
 	}
@@ -615,6 +639,7 @@ scriptDataDoubleEscapeStart:
 	for i := 0; i < len("script"); i++ {
 		c = z.readByte()
 		if z.err != nil {
+			fmt.Printf("Unexpected character in scriptDataDoubleEscapeStart: %v\n", string(c))
 			return
 		}
 		if c != "script"[i] && c != "SCRIPT"[i] {
@@ -636,6 +661,7 @@ scriptDataDoubleEscapeStart:
 scriptDataDoubleEscaped:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscaped: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -649,6 +675,7 @@ scriptDataDoubleEscaped:
 scriptDataDoubleEscapedDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapedDash: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -662,6 +689,7 @@ scriptDataDoubleEscapedDash:
 scriptDataDoubleEscapedDashDash:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapedDashDash: %v\n", string(c))
 		return
 	}
 	switch c {
@@ -677,6 +705,7 @@ scriptDataDoubleEscapedDashDash:
 scriptDataDoubleEscapedLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapedLessThanSign: %v\n", string(c))
 		return
 	}
 	if c == '/' {
@@ -691,6 +720,7 @@ scriptDataDoubleEscapeEnd:
 		goto scriptDataEscaped
 	}
 	if z.err != nil {
+		fmt.Printf("Unexpected character in scriptDataDoubleEscapeEnd: %v\n", string(c))
 		return
 	}
 	goto scriptDataDoubleEscaped
@@ -754,6 +784,72 @@ func (z *Tokenizer) readUntilCloseAngle() {
 		if c == '>' {
 			z.data.End = z.raw.End - len(">")
 			return
+		}
+	}
+}
+
+// readString reads until a JavaScript string is closed.
+func (z *Tokenizer) readString(c byte) {
+	switch c {
+	case '\'':
+		z.readSingleQuoteString()
+	case '"':
+		z.readDoubleQuoteString()
+	case '`':
+		z.readTemplateLiteralString()
+	}
+	return
+}
+
+func (z *Tokenizer) readSingleQuoteString() {
+	for {
+		c := z.readByte()
+		if c == '\'' {
+			z.data.End = z.raw.End - 1
+			return
+		}
+		if c == '\\' {
+			z.raw.End++
+			c = z.buf[z.data.Start:z.data.End][0]
+			if c == '\r' || c == '\n' {
+				z.raw.End++
+			}
+		} else if c == '\r' || c == '\n' {
+			break
+		}
+	}
+}
+
+func (z *Tokenizer) readDoubleQuoteString() {
+	for {
+		c := z.readByte()
+		if c == '"' {
+			z.data.End = z.raw.End - 1
+			return
+		}
+		if c == '\\' {
+			z.raw.End++
+			c = z.buf[z.data.Start:z.data.End][0]
+			if c == '\r' || c == '\n' {
+				z.raw.End++
+			}
+		} else if c == '\r' || c == '\n' {
+			break
+		}
+	}
+}
+
+// Note that we DO NOT have to handle `${}` here because our expression
+// behavior already handles `{}`. Technically incorrect, but it works.
+func (z *Tokenizer) readTemplateLiteralString() {
+	for {
+		c := z.readByte()
+		if c == '`' {
+			z.data.End = z.raw.End - 1
+			return
+		}
+		if c == '\\' {
+			z.raw.End++
 		}
 	}
 }
@@ -918,10 +1014,14 @@ func (z *Tokenizer) readUnclosedTag() {
 	var close int
 	if z.fm == FrontmatterOpen {
 		close = strings.Index(string(buf), "---")
-		buf = buf[0:close]
+		if close != -1 {
+			buf = buf[0:close]
+		}
 	}
 	close = bytes.Index(buf, []byte{'>'})
-	buf = buf[0:close]
+	if close != -1 {
+		buf = buf[0:close]
+	}
 	if close == -1 {
 		// We can't find a closing tag...
 		z.data.Start = z.raw.End - 1
@@ -932,6 +1032,7 @@ func (z *Tokenizer) readUnclosedTag() {
 				z.err = z.readErr
 				return
 			}
+
 			switch c {
 			case ' ', '\n', '\r', '\t', '\f':
 				// Safely read up until a whitespace character
@@ -1170,6 +1271,17 @@ func (z *Tokenizer) Next() TokenType {
 	z.data.Start = z.raw.End
 	z.data.End = z.raw.End
 
+	// This handles expressions nested inside of Frontmatter elements
+	// but preserves `{}` as text outside of elements
+	if z.fm == FrontmatterOpen {
+		tt := z.Token().Type
+		switch tt {
+		case StartTagToken, EndTagToken:
+		default:
+			z.openBraceIsExpressionStart = false
+		}
+	}
+
 	if z.err != nil {
 		z.tt = ErrorToken
 		return z.tt
@@ -1206,6 +1318,13 @@ loop:
 			break loop
 		}
 		var tokenType TokenType
+
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.data.End = z.raw.End
+			z.tt = TextToken
+			return z.tt
+		}
 
 		if c == '{' || c == '}' {
 			if x := z.raw.End - len("{"); z.raw.Start < x {
@@ -1315,6 +1434,7 @@ loop:
 			return z.tt
 		}
 	}
+
 	if z.raw.Start < z.raw.End {
 		// We're scanning Text, so open braces should be ignored
 		z.openBraceIsExpressionStart = false
@@ -1347,7 +1467,7 @@ frontmatter_loop:
 				z.dashCount = 0
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
-				z.openBraceIsExpressionStart = true
+				z.openBraceIsExpressionStart = false
 				return z.tt
 			case FrontmatterOpen:
 				if z.raw.Start < z.raw.End-len("---") {
@@ -1375,6 +1495,13 @@ frontmatter_loop:
 			z.dashCount = 0
 			z.raw.End--
 			goto loop
+		}
+
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.data.End = z.raw.End
+			z.tt = TextToken
+			return z.tt
 		}
 
 		z.dashCount = 0
@@ -1424,6 +1551,13 @@ expression_loop:
 
 		if z.err != nil {
 			break expression_loop
+		}
+
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.data.End = z.raw.End
+			z.tt = TextToken
+			return z.tt
 		}
 
 		if c == '<' {

@@ -12,14 +12,14 @@ import (
 )
 
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
-	TEMPLATE_TAG,
-	CREATE_COMPONENT,
-	RENDER_COMPONENT,
-	ADD_ATTRIBUTE,
-	SPREAD_ATTRIBUTES,
-	DEFINE_STYLE_VARS,
-	DEFINE_SCRIPT_VARS,
-}, ",\n  "), "astro/internal")
+	"render as " + TEMPLATE_TAG,
+	"createComponent as " + CREATE_COMPONENT,
+	"renderComponent as " + RENDER_COMPONENT,
+	"addAttribute as " + ADD_ATTRIBUTE,
+	"spreadAttributes as " + SPREAD_ATTRIBUTES,
+	"defineStyleVars as " + DEFINE_STYLE_VARS,
+	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+}, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const Component = %s(async ($$result, $$props, $$slots) => {`, CREATE_COMPONENT)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
@@ -43,29 +43,29 @@ func TestPrinter(t *testing.T) {
 		want   want
 	}{
 		{
-			"basic (no frontmatter)",
-			`<button>Click</button>`,
-			want{
+			name:   "basic (no frontmatter)",
+			source: `<button>Click</button>`,
+			want: want{
 				imports:     "",
 				frontmatter: "",
 				code:        `<html><head></head><body><button>Click</button></body></html>`,
 			},
 		},
 		{
-			"basic (frontmatter)",
-			`---
+			name: "basic (frontmatter)",
+			source: `---
 const href = '/about';
 ---
 <a href={href}>About</a>`,
-			want{
+			want: want{
 				imports:     "",
 				frontmatter: "const href = '/about';",
 				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
 			},
 		},
 		{
-			"component",
-			`---
+			name: "component",
+			source: `---
 import VueComponent from '../components/Vue.vue';
 ---
 <html>
@@ -76,7 +76,7 @@ import VueComponent from '../components/Vue.vue';
     <VueComponent />
   </body>
 </html>`,
-			want{
+			want: want{
 				imports: `import VueComponent from '../components/Vue.vue';
 `,
 				frontmatter: "",
@@ -90,8 +90,8 @@ import VueComponent from '../components/Vue.vue';
 			},
 		},
 		{
-			"head expression",
-			`---
+			name: "head expression",
+			source: `---
 const name = "world";
 ---
 <html>
@@ -102,7 +102,7 @@ const name = "world";
     <div></div>
   </body>
 </html>`,
-			want{
+			want: want{
 				imports:     "",
 				frontmatter: `const name = "world";`,
 				code: `<html>
@@ -115,8 +115,8 @@ const name = "world";
 			},
 		},
 		{
-			"styles (no frontmatter)",
-			`<style>
+			name: "styles (no frontmatter)",
+			source: `<style>
   .title {
     font-family: fantasy;
     font-size: 28px;
@@ -129,7 +129,7 @@ const name = "world";
 
 <h1 class="title">Page Title</h1>
 <p class="body">I’m a page</p>`,
-			want{
+			want: want{
 				imports:     "",
 				frontmatter: "",
 				code: `<html><head><style data-astro-id="W37SZOV4">.title.astro-W37SZOV4 {font-family:fantasy;font-size:28px;}.body.astro-W37SZOV4 {font-size:1em;}</style>
@@ -139,8 +139,8 @@ const name = "world";
 			},
 		},
 		{
-			"html5 boilerplate",
-			`<!doctype html>
+			name: "html5 boilerplate",
+			source: `<!doctype html>
 
 <html lang="en">
 <head>
@@ -170,7 +170,7 @@ const name = "world";
   <script src="js/scripts.js"></script>
   </body>
 </html>`,
-			want{
+			want: want{
 				imports:     "",
 				frontmatter: "",
 				code: `<!DOCTYPE html><html lang="en">
@@ -202,6 +202,71 @@ const name = "world";
   </body></html>`,
 			},
 		},
+		{
+			name: "React framework example",
+			source: `---
+// Component Imports
+import Counter from '../components/Counter.jsx'
+const someProps = {
+  count: 0,
+}
+
+// Full Astro Component Syntax:
+// https://docs.astro.build/core-concepts/astro-components/
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width"
+    />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      :global(:root) {
+        font-family: system-ui;
+        padding: 2em 0;
+      }
+      :global(.counter) {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        place-items: center;
+        font-size: 2em;
+        margin-top: 2em;
+      }
+      :global(.children) {
+        display: grid;
+        place-items: center;
+        margin-bottom: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <Counter {...someProps} client:visible>
+        <h1>Hello React!</h1>
+      </Counter>
+    </main>
+  </body>
+</html>`,
+			want: want{
+				imports:     "",
+				frontmatter: "",
+				code: `<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width" />
+			<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		</head>
+		<body>
+			<main>
+				<h1>Hello React!</h1>
+			</main>
+		</body>
+	</html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -214,7 +279,10 @@ const name = "world";
 			}
 			hash := tycho.HashFromSource(code)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
-			result := PrintToJS(code, doc)
+			result := PrintToJS(code, doc, transform.TransformOptions{
+				Scope:       "astro-XXXX",
+				InternalURL: "http://localhost:3000/",
+			})
 			output := string(result.Output)
 
 			toMatch := INTERNAL_IMPORTS
