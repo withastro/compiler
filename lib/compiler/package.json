@@ -6,6 +6,7 @@
         "build": "tsc -p .",
         "prepublish": "npm run build"
     },
+    "main": "./node/index.js",
     "exports": {
         ".": {
             "browser": "./browser/index.js",

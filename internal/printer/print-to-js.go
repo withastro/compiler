@@ -81,7 +81,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		if c := n.FirstChild; c == nil || c != nil && c.Type != FrontmatterNode {
 			if len(n.Styles) > 0 {
-				p.println("export const CSS = [")
+				p.println("export const STYLES = [")
 				for _, style := range n.Styles {
 					p.println(fmt.Sprintf("  %s%s%s,", BACKTICK, style.FirstChild.Data, BACKTICK))
 				}
@@ -183,7 +183,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				}
 
 				if len(n.Parent.Styles) > 0 {
-					p.println("const CSS = [")
+					p.println("const STYLES = [")
 					for _, style := range n.Parent.Styles {
 						p.addNilSourceMapping()
 						p.print(fmt.Sprintf("  %s", BACKTICK))
@@ -213,7 +213,38 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 					p.println("];")
 					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("%s.css.add(...CSS)", RESULT))
+					p.println(fmt.Sprintf("%s.styles.add(...STYLES)", RESULT))
+				}
+
+				if len(n.Parent.Scripts) > 0 {
+					p.println("const SCRIPTS = [")
+					for _, script := range n.Parent.Scripts {
+						p.addNilSourceMapping()
+						p.print(fmt.Sprintf("  %s", BACKTICK))
+						var defineVars Attribute
+
+						for _, attr := range script.Attr {
+							switch attr.Key {
+							case "define:vars":
+								defineVars = attr
+							}
+						}
+
+						if defineVars.Key != "" {
+							p.print(fmt.Sprintf("${%s(", DEFINE_SCRIPT_VARS))
+							p.addSourceMapping(defineVars.ValLoc)
+							p.print(defineVars.Val)
+							p.println(")}")
+						}
+
+						p.addSourceMapping(script.Loc[0])
+						p.print(script.FirstChild.Data)
+						p.addNilSourceMapping()
+						p.println(fmt.Sprintf("%s,", BACKTICK))
+					}
+					p.println("];")
+					p.addNilSourceMapping()
+					p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS)", RESULT))
 				}
 
 				p.printReturnOpen()

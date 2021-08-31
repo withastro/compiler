@@ -35,6 +35,11 @@ func extractScriptsAndStyles(doc *tycho.Node) ([]*tycho.Node, []*tycho.Node) {
 		if n.Type == tycho.ElementNode {
 			switch n.DataAtom {
 			case a.Script:
+				// for _, attr := range n.Attr {
+				// 	if attr.Key == "hoist" {
+				// 		doc.Scripts = append(doc.Scripts, n)
+				// 	}
+				// }
 				doc.Scripts = append(doc.Scripts, n)
 				// Remove local script node
 				n.Parent.RemoveChild(n)

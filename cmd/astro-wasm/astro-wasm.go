@@ -41,17 +41,17 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 }
 
 type TransformResult struct {
-	Code string       `json:"code"`
-	Map  RawSourceMap `json:"map"`
+	Code string `json:"code"`
+	Map  string `json:"map"`
 }
 
 type RawSourceMap struct {
-	file           string   `json:"file"`
-	mappings       string   `json:"mappings"`
-	names          []string `json:"names"`
-	sources        []string `json:"sources"`
-	sourcesContent []string `json:"sourcesContent"`
-	version        int      `json:"version"`
+	File           string   `json:"file"`
+	Mappings       string   `json:"mappings"`
+	Names          []string `json:"names"`
+	Sources        []string `json:"sources"`
+	SourcesContent []string `json:"sourcesContent"`
+	Version        int      `json:"version"`
 }
 
 func Transform(this js.Value, args []js.Value) interface{} {
@@ -67,16 +67,9 @@ func Transform(this js.Value, args []js.Value) interface{} {
 	sourcesContent, _ := json.Marshal(source)
 
 	code := result.Output
+	finalCode, _ := json.Marshal(string(code))
+	sourcemap := `{ "file": "` + transformOptions.Filename + `", "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "names": [], "sources": ["` + transformOptions.Filename + `"], "sourcesContent": [` + string(sourcesContent) + `], "version": 3 }`
+	transformResult := `{ "map": ` + sourcemap + `, "code":` + string(finalCode) + `}`
 
-	return TransformResult{
-		Code: string(code),
-		Map: RawSourceMap{
-			file:           transformOptions.Filename,
-			mappings:       string(result.SourceMapChunk.Buffer),
-			names:          make([]string, 0),
-			sources:        []string{transformOptions.Filename},
-			sourcesContent: []string{string(sourcesContent)},
-			version:        3,
-		},
-	}
+	return transformResult
 }

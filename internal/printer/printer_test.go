@@ -17,6 +17,8 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	RENDER_COMPONENT,
 	ADD_ATTRIBUTE,
 	SPREAD_ATTRIBUTES,
+	DEFINE_STYLE_VARS,
+	DEFINE_SCRIPT_VARS,
 }, ",\n  "), "astro/internal")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const Component = %s(async ($$result, $$props, $$slots) => {`, CREATE_COMPONENT)
