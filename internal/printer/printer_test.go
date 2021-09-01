@@ -256,7 +256,7 @@ const name = "world";
 
 <body>
   <!-- your content here... -->
-
+  <script src="js/scripts.js"></script>
   </body></html>`,
 			},
 		},
@@ -332,6 +332,27 @@ const someProps = {
       ` + "`" + `)}
     </main>
   </body></html>`,
+			},
+		},
+		{
+			name: "script in <head>",
+			source: `---
+import Widget from '../components/Widget.astro';
+import Widget2 from '../components/Widget2.astro';
+---
+<html lang="en">
+  <head>
+    <script type="module" src="/regular_script.js"></script>
+  </head>`,
+			want: want{
+				imports: "",
+				frontmatter: []string{`import Widget from '../components/Widget.astro';
+import Widget2 from '../components/Widget2.astro';`},
+				styles: []string{},
+				code: `<html lang="en">
+  <head>
+    <script type="module" src="/regular_script.js"></script>
+  </head><body></body></html>`,
 			},
 		},
 	}
