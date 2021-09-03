@@ -259,9 +259,9 @@ type Tokenizer struct {
 	// rawTag's contents are lower-cased.
 	rawTag string
 	// stringStartChar is the character that opened the last string: ', ", or `
-	stringStartChar byte
+	// stringStartChar byte
 	// stringIsOpen will be true while in the context of a string
-	stringIsOpen bool
+	// stringIsOpen bool
 	// textIsRaw is whether the current text token's data is not escaped.
 	textIsRaw bool
 	// convertNUL is whether NUL bytes in the current token's data should
@@ -798,7 +798,6 @@ func (z *Tokenizer) readString(c byte) {
 	case '`':
 		z.readTemplateLiteralString()
 	}
-	return
 }
 
 func (z *Tokenizer) readSingleQuoteString() {
