@@ -107,6 +107,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
 
+				// TODO: skip all this fancy scanning!
+				// We selectively move statements **back** into the
+				// function body in a post-compile step
 				offset := c.Loc[0].Start - n.Loc[0].Start
 				imports := js_scanner.FindImportStatements([]byte(c.Data))
 				var prevImport *js_scanner.ImportStatement
@@ -163,9 +166,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(statement.Content)
 				}
 
-				// TODO: use the proper component name
-				p.printFuncPrelude("Component")
-
 				if len(frontmatterStatements) > 0 || len(importStatements) == 0 {
 					p.addSourceMapping(n.Loc[0])
 					p.println("// ---")
@@ -181,6 +181,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.addSourceMapping(loc.Loc{Start: 0})
 					p.println("// ---")
 				}
+
+				// TODO: use the proper component name
+				p.printFuncPrelude("$$Component")
 
 				if len(n.Parent.Styles) > 0 {
 					p.println("const STYLES = [")
@@ -261,7 +264,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	} else if !p.hasFuncPrelude {
 		// Render func prelude. Will only run for the first non-frontmatter node
 		// TODO: use the proper component name
-		p.printFuncPrelude("Component")
+		p.printFuncPrelude("$$Component")
 		p.printReturnOpen()
 	}
 	switch n.Type {
@@ -354,7 +357,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	p.addSourceMapping(n.Loc[0])
 	if isComponent {
-		p.print(fmt.Sprintf("${%s(", RENDER_COMPONENT))
+		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, n.Data))
 	} else {
 		p.print("<")
 	}
@@ -494,7 +497,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if opts.isRoot {
 		p.printReturnClose()
 		// TODO: use proper component name
-		p.printFuncSuffix("Component")
+		p.printFuncSuffix("$$Component")
 	}
 }
 

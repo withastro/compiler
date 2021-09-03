@@ -86,6 +86,7 @@ func (p *printer) printFuncPrelude(componentName string) {
 	p.addNilSourceMapping()
 	p.println("//@ts-ignore")
 	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, $$slots) => {", componentName, CREATE_COMPONENT, RESULT))
+	p.println(fmt.Sprintf("const Astro = %s.createAstro($$props);", RESULT))
 	p.hasFuncPrelude = true
 }
 

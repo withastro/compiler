@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"syscall/js"
@@ -23,7 +24,7 @@ func jsString(j js.Value) string {
 }
 
 func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
-	filename := jsString(options.Get("filename"))
+	filename := jsString(options.Get("sourcefile"))
 	if filename == "" {
 		filename = "file.astro"
 	}
@@ -67,9 +68,9 @@ func Transform(this js.Value, args []js.Value) interface{} {
 	sourcesContent, _ := json.Marshal(source)
 
 	code := result.Output
-	finalCode, _ := json.Marshal(string(code))
 	sourcemap := `{ "file": "` + transformOptions.Filename + `", "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "names": [], "sources": ["` + transformOptions.Filename + `"], "sourcesContent": [` + string(sourcesContent) + `], "version": 3 }`
-	transformResult := `{ "map": ` + sourcemap + `, "code":` + string(finalCode) + `}`
+	inlineSourcemap := `//@ sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemap))
+	transformResult := string(code) + "\n" + inlineSourcemap
 
 	return transformResult
 }
