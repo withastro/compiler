@@ -25,17 +25,18 @@ const Component = %s(async ($$result, $$props, $$slots) => {`, CREATE_COMPONENT)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
-export default Component;
-`
+export default Component;`
+var STYLE_PRELUDE = "const STYLES = [\n"
+var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES)\n"
 
 func TestPrinter(t *testing.T) {
 	type want struct {
 		imports     string
 		frontmatter string
+		styles      []string
 		code        string
 		// TODO: add scripts & styles for testing later?
 		// scripts []string
-		// styles []string
 	}
 	tests := []struct {
 		name   string
@@ -48,6 +49,7 @@ func TestPrinter(t *testing.T) {
 			want: want{
 				imports:     "",
 				frontmatter: "",
+				styles:      []string{},
 				code:        `<html><head></head><body><button>Click</button></body></html>`,
 			},
 		},
@@ -60,6 +62,7 @@ const href = '/about';
 			want: want{
 				imports:     "",
 				frontmatter: "const href = '/about';",
+				styles:      []string{},
 				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
 			},
 		},
@@ -77,9 +80,9 @@ import VueComponent from '../components/Vue.vue';
   </body>
 </html>`,
 			want: want{
-				imports: `import VueComponent from '../components/Vue.vue';
-`,
+				imports:     "import VueComponent from '../components/Vue.vue';\n",
 				frontmatter: "",
+				styles:      []string{},
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -105,6 +108,7 @@ const name = "world";
 			want: want{
 				imports:     "",
 				frontmatter: `const name = "world";`,
+				styles:      []string{},
 				code: `<html>
   <head>
     <title>Hello ${name}</title>
@@ -132,7 +136,8 @@ const name = "world";
 			want: want{
 				imports:     "",
 				frontmatter: "",
-				code: `<html><head><style data-astro-id="W37SZOV4">.title.astro-W37SZOV4 {font-family:fantasy;font-size:28px;}.body.astro-W37SZOV4 {font-size:1em;}</style>
+				styles:      []string{},
+				code: `<html><head>
 
 </head><body><h1 class="title astro-W37SZOV4">Page Title</h1>
 <p class="body astro-W37SZOV4">I’m a page</p></body></html>`,
@@ -173,6 +178,7 @@ const name = "world";
 			want: want{
 				imports:     "",
 				frontmatter: "",
+				styles:      []string{},
 				code: `<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="utf-8">
@@ -198,7 +204,7 @@ const name = "world";
 
 <body>
   <!-- your content here... -->
-  <script src="js/scripts.js"></script>
+
   </body></html>`,
 			},
 		},
@@ -250,21 +256,29 @@ const someProps = {
   </body>
 </html>`,
 			want: want{
-				imports:     "",
-				frontmatter: "",
-				code: `<!DOCTYPE html>
-	<html>
-		<head>
-			<meta charset="utf-8" />
-			<meta name="viewport" content="width=device-width" />
-			<link rel="icon" type="image/x-icon" href="/favicon.ico" />
-		</head>
-		<body>
-			<main>
-				<h1>Hello React!</h1>
-			</main>
-		</body>
-	</html>`,
+				imports: "import Counter from '../components/Counter.jsx'\n",
+				frontmatter: `// Component Imports
+const someProps = {
+  count: 0,
+}
+
+// Full Astro Component Syntax:
+// https://docs.astro.build/core-concepts/astro-components/`,
+				styles: []string{":global(:root.astro-HMNNHVCQ ){font-family:system-ui;padding:2em 0;}:global(.counter.astro-HMNNHVCQ ){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}:global(.children.astro-HMNNHVCQ ){display:grid;place-items:center;margin-bottom:2em;}"},
+				code: `<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+  </head>
+  <body>
+    <main class="astro-HMNNHVCQ">
+      ${$$renderComponent(Counter, {...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"}, $$render` + "`" + `
+        <h1 class="astro-HMNNHVCQ">Hello React!</h1>
+      ` + "`" + `)}
+    </main>
+  </body></html>`,
 			},
 		},
 	}
@@ -283,19 +297,32 @@ const someProps = {
 				Scope:       "astro-XXXX",
 				InternalURL: "http://localhost:3000/",
 			})
-			output := string(result.Output)
+			output := strings.TrimSpace(test_utils.Dedent(string(result.Output)))
 
 			toMatch := INTERNAL_IMPORTS
 			toMatch = toMatch + fmt.Sprintf("%s%s", tt.want.imports, PRELUDE)
 			if tt.want.frontmatter != "" {
+				// format want
 				toMatch = toMatch + fmt.Sprintf(`
 // ---
-
 %s
 // ---
 `, strings.TrimSpace(tt.want.frontmatter))
+				// format output
+				formatted := make([]string, 0)
+				for _, part := range strings.Split(output, "// ---") {
+					formatted = append(formatted, strings.TrimSpace(part))
+				}
+				output = strings.Join(formatted, "\n// ---\n")
 			} else {
 				toMatch = toMatch + "\n"
+			}
+			if len(tt.want.styles) > 0 {
+				toMatch = toMatch + STYLE_PRELUDE
+				for _, style := range tt.want.styles {
+					toMatch = toMatch + "  `" + style + "`,\n"
+				}
+				toMatch = toMatch + STYLE_SUFFIX
 			}
 			toMatch = toMatch + fmt.Sprintf("%s%s", RETURN, tt.want.code)
 			toMatch = toMatch + SUFFIX
