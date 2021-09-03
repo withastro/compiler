@@ -1,5 +1,7 @@
 package js_scanner
 
+import "fmt"
+
 // An ImportType is the type of import.
 type ImportType uint32
 
@@ -20,17 +22,27 @@ var source []byte
 var pos int
 var importStatements []*ImportStatement
 
-func FindImportStatements(_source []byte) []*ImportStatement {
+// TODO: ignore `await` inside of function bodies
+func FindRenderBody(_source []byte) int {
 	source = _source
-	importStatements = make([]*ImportStatement, 0)
 	pos = 0
+	lastBr := 0
 	for ; pos < len(source)-1; pos++ {
-		c := readCommentWhitespace(true)
+		c := readCommentWhitespace(false)
 		switch true {
-		case c == 'i':
-			if isKeywordStart() && str_eq6('i', 'm', 'p', 'o', 'r', 't') {
-				readImportStatement()
-				continue
+		case isBr(c) || c == ';':
+			// Track the last position of a linebreak of ;
+			// This is a rough proxy for "end of previous statement"
+			lastBr = pos
+		case c == 'A':
+			// If we access the Astro global, we're in the function body
+			if isKeywordStart() && str_eq5('A', 's', 't', 'r', 'o') {
+				return lastBr + 1
+			}
+		case c == 'a':
+			// If we have to await something, we're in the function body
+			if isKeywordStart() && str_eq5('a', 'w', 'a', 'i', 't') {
+				return lastBr + 1
 			}
 		case c == '/':
 			if str_eq2('/', '/') {
@@ -42,7 +54,56 @@ func FindImportStatements(_source []byte) []*ImportStatement {
 			}
 		}
 	}
-	return importStatements
+	return -1
+}
+
+func HasExports(_source []byte) bool {
+	source = _source
+	pos = 0
+	for ; pos < len(source)-1; pos++ {
+		c := readCommentWhitespace(true)
+		switch true {
+		case c == 'e':
+			if isKeywordStart() && str_eq6('e', 'x', 'p', 'o', 'r', 't') {
+				return true
+			}
+		case c == '/':
+			if str_eq2('/', '/') {
+				readLineComment()
+				continue
+			} else if str_eq2('/', '*') {
+				readBlockComment(true)
+				continue
+			}
+		}
+	}
+	return false
+}
+
+func AccessesPrivateVars(_source []byte) bool {
+	source = _source
+	fmt.Println(string(source))
+	pos = 0
+	for ; pos < len(source)-1; pos++ {
+		c := readCommentWhitespace(true)
+		fmt.Println(string(c))
+		switch true {
+		// case c == '$':
+		// 	fmt.Println(str_eq2('$', '$'))
+		// 	if isKeywordStart() && str_eq2('$', '$') {
+		// 		return true
+		// 	}
+		case c == '/':
+			if str_eq2('/', '/') {
+				readLineComment()
+				continue
+			} else if str_eq2('/', '*') {
+				readBlockComment(true)
+				continue
+			}
+		}
+	}
+	return false
 }
 
 func addImport(statement_start int, start int, end int, Type ImportType) {
@@ -88,6 +149,10 @@ func str_eq2(c1 byte, c2 byte) bool {
 
 func str_eq4(c1 byte, c2 byte, c3 byte, c4 byte) bool {
 	return len(source[pos:]) >= 4 && source[pos+3] == c4 && source[pos+2] == c3 && source[pos+1] == c2 && source[pos] == c1
+}
+
+func str_eq5(c1 byte, c2 byte, c3 byte, c4 byte, c5 byte) bool {
+	return len(source[pos:]) >= 5 && source[pos+4] == c5 && source[pos+3] == c4 && source[pos+2] == c3 && source[pos+1] == c2 && source[pos] == c1
 }
 
 func str_eq6(c1 byte, c2 byte, c3 byte, c4 byte, c5 byte, c6 byte) bool {

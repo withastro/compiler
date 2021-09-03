@@ -5,6 +5,7 @@
 package printer
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -100,90 +101,42 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 	// Render frontmatter (will be the first node, if it exists)
 	if n.Type == FrontmatterNode {
-		importStatements := make([]ExtractedStatement, 0)
-		frontmatterStatements := make([]ExtractedStatement, 0)
-
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
 
-				// TODO: skip all this fancy scanning!
-				// We selectively move statements **back** into the
-				// function body in a post-compile step
-				offset := c.Loc[0].Start - n.Loc[0].Start
-				imports := js_scanner.FindImportStatements([]byte(c.Data))
-				var prevImport *js_scanner.ImportStatement
-				for i, currImport := range imports {
-					var nextImport *js_scanner.ImportStatement
-					if i < len(imports)-1 {
-						nextImport = imports[i+1]
+				// This scanner returns a position where we should slice the frontmatter.
+				// If it encounters any `await`ed code or code that accesses the `Astro` global,
+				// `renderBodyStart` will be the index where we should split the frontmatter.
+				// If we don't encounter any of those, `renderBodyStart` will be `-1`
+				renderBodyStart := js_scanner.FindRenderBody([]byte(c.Data))
+				p.addSourceMapping(n.Loc[0])
+				if renderBodyStart == -1 {
+					p.addSourceMapping(c.Loc[0])
+					if js_scanner.AccessesPrivateVars([]byte(c.Data)) {
+						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					}
-					// Extract import statement
-					importStatements = append(importStatements, ExtractedStatement{
-						Loc:     loc.Loc{Start: offset + currImport.StatementStart},
-						Content: c.Data[currImport.StatementStart:currImport.StatementEnd] + "\n",
-					})
-					if i == 0 {
-						content := c.Data[0:currImport.StatementStart]
-						if strings.TrimSpace(content) != "" {
-							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
-								Loc:     loc.Loc{Start: offset + 1},
-								Content: content,
-							})
-						}
-					}
-					if prevImport != nil {
-						content := c.Data[prevImport.StatementEnd:currImport.StatementStart]
-						if strings.TrimSpace(content) != "" {
-							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
-								Loc:     loc.Loc{Start: offset + prevImport.StatementEnd + 1},
-								Content: content,
-							})
-						}
-					}
-					if nextImport != nil {
-						content := c.Data[currImport.StatementEnd:nextImport.StatementStart]
-						if strings.TrimSpace(content) != "" {
-							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
-								Loc:     loc.Loc{Start: offset + currImport.StatementEnd + 1},
-								Content: content,
-							})
-						}
-					}
-					if i == len(imports)-1 {
-						content := c.Data[currImport.StatementEnd:]
-						if strings.TrimSpace(content) != "" {
-							frontmatterStatements = append(frontmatterStatements, ExtractedStatement{
-								Loc:     loc.Loc{Start: offset + currImport.StatementEnd + 1},
-								Content: content,
-							})
-						}
-					}
-					prevImport = currImport
-				}
-				for _, statement := range importStatements {
-					p.addSourceMapping(statement.Loc)
-					p.print(statement.Content)
-				}
+					p.print(strings.Trim(c.Data, " \t\r\n"))
+					// TODO: use the proper component name
+					p.printFuncPrelude("$$Component")
+				} else {
+					importStatements := c.Data[0:renderBodyStart]
+					renderBody := c.Data[renderBodyStart:]
 
-				if len(frontmatterStatements) > 0 || len(importStatements) == 0 {
-					p.addSourceMapping(n.Loc[0])
-					p.println("// ---")
-					if len(frontmatterStatements) > 0 {
-						for _, statement := range frontmatterStatements {
-							p.addSourceMapping(statement.Loc)
-							p.print(strings.TrimLeft(statement.Content, " \t\r\n"))
-						}
-					} else if len(importStatements) == 0 {
-						p.addSourceMapping(c.Loc[0])
-						p.print(c.Data)
+					if js_scanner.HasExports([]byte(renderBody)) {
+						panic(errors.New("Export statements must be placed at the top of .astro files!"))
 					}
-					p.addSourceMapping(loc.Loc{Start: 0})
-					p.println("// ---")
+					// fmt.Println(js_scanner.AccessesPrivateVars([]byte(renderBody)))
+					//  {
+					// 	panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
+					// }
+					p.addSourceMapping(c.Loc[0])
+					p.println(strings.Trim(importStatements, " \t\r\n"))
+					// TODO: use the proper component name
+					p.printFuncPrelude("$$Component")
+					p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
+					p.print(renderBody)
 				}
-
-				// TODO: use the proper component name
-				p.printFuncPrelude("$$Component")
 
 				if len(n.Parent.Styles) > 0 {
 					p.println("const STYLES = [")

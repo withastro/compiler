@@ -15,7 +15,13 @@ func main() {
 	source := `
 ---
 import Component from '../components/Component.vue';
-const color = "red";
+export const color = 'red';
+export interface Props {
+	prop: typeof color
+}
+export const data = [{ hello: "world" }];
+
+const something = await Astro.fetchContent('../*.md');
 ---
 
 <html>
@@ -24,9 +30,9 @@ const color = "red";
   </head>
   <body>
     <main>
-      <Component client:load />
+      <Component {...{ "client:load": false }} />
     </main>
-	<style scope hoist define:vars={{ color }}>
+	<style define:vars={{ color }}>
 		main {
 			color: var(--color);
 		}
