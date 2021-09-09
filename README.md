@@ -40,18 +40,12 @@ import { transform } from "@astrojs/compiler";
 
 const filePath = new URL("./pages/index.astro", import.meta.url);
 const src = await fs.promises.readFile(filePath);
-const result = await transform(src, { sourcefile: filePath.href });
+const result = await transform(src, { sourcefile: filePath.href, sourcemap: 'both' });
 
 console.log(result);
 // {
-//   js: {
-//     code: …
-//     map: …
-//   },
-//   css: {
-//     code: …
-//     map: …
-//   },
+//   code: …
+//   map: …
 // }
 ```
 
