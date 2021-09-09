@@ -30,6 +30,12 @@ make astro-wasm
 
 This will generate `./lib/compiler/astro.wasm` which can then be loaded in any web application.
 
+From the `lib/compiler` directory, run:
+
+```
+npm run build
+```
+
 ## JS API
 
 WIP
