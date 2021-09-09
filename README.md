@@ -1,114 +1,63 @@
-# [Experimental] Tycho – a new Go-based Compiler for Astro
+# Astro Compiler
 
-### **Note** This is a highly experimental compiler which doesn't really work yet! Consider this a proof-of-concept that is NOT indicative of the future direction of Astro.
+A [Go][go]-based compiler for `.astro` files.
 
-## `.astro` => `.js`
+## Setup
 
-Astro's current compiler is stateful and coupled to Snowpack. There's a great opportunity here to improve Astro's separation of concerns and make `.astro` a more general format that can be plugged into different build tools (which may be a non-goal, TBD).
+### Go
 
-This **experimental** compiler for `.astro` files generates a `.js` module that can be run at server-time. Currently, it is kinda working!
+The [Go][go] language is needed to work with this repo. On Macs, installing via [Homebrew][homebrew] is recommended: `brew install go`. For Windows & Linux, you can [follow Go’s installation guide][go] if you don’t have your own preferred method of package installation.
 
-### Todo
-- [ ] Make the generated code run in Node 😅
-- [ ] Support fragments (non-Page components)
-- [ ] Extract styles
-- [ ] Compile TS to JS
-- [ ] Handle markup in embedded expressions
-- [ ] import Astro's `h` function
-- [ ] Figure out what to do with top-level `await`, `exports`
-- [ ] Link generated template to `__render` function with slots
-- [ ] Attach JS variables to `$$data` namespace
+#### GOPATH
 
+By default, Go will set `$GOPATH` to a new `./go/` directory in your home folder. For best support with VS Code and tooling, it’s recommended to place Go projects like this one in here. So for this project, that would mean cloning it to `~/go/src/github.com/snowpackjs/astro-compiler-next`. You can change this path, but it does require some understanding. Read [Understanding the GOPATH] to learn more.
 
-You can demo it by running
+#### VS Code
 
-```shell
-go run .
+If you use VS Code as your primary editor, installing the [Go extension][go-vscode] is highly recommended.
+
+### TinyGo
+
+[TinyGo][tinygo] is needed to compile the WASM, and is an improvement over Go’s default WASM compiler. TinyGo has [installation guides for every OS][tinygo-install].
+
+## Building
+
+From the root directory, run:
+
+```
+make astro-wasm
 ```
 
-## Input
-```astro
----
-// Component Imports
-import Counter from '../components/Counter.jsx'
+This will generate `./lib/compiler/astro.wasm` which can then be loaded in any web application.
 
-// Full Astro Component Syntax:
-// https://docs.astro.build/core-concepts/astro-components/
----
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
-    <style>
-      :global(:root) {
-        font-family: system-ui;
-        padding: 2em 0;
-      }
-      :global(.counter) {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        place-items: center;
-        font-size: 2em;
-        margin-top: 2em;
-      }
-      :global(.children) {
-        display: grid;
-        place-items: center;
-        margin-bottom: 2em;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <Counter client:visible>
-        <h1>Hello React!</h1>
-      </Counter>
-    </main>
-  </body>
-</html>
+From the `lib/compiler` directory, run:
+
+```
+npm run build
 ```
 
-## Output 
+## JS API
+
+WIP
+
 ```js
+import fs from "fs";
+import { transform } from "@astrojs/compiler";
 
-// Component Imports
-import Counter from '../components/Counter.jsx'
+const filePath = new URL("./pages/index.astro", import.meta.url);
+const src = await fs.promises.readFile(filePath);
+const result = await transform(src, { sourcefile: filePath.href, sourcemap: 'both' });
 
-// Full Astro Component Syntax:
-// https://docs.astro.build/core-concepts/astro-components/
-
-const __renderTemplate = ($$data) => (h("html",{"lang":"en"},h("head",null,`
-    `,h("meta",{"charset":"utf-8"}),`
-    `,h("meta",{"name":"viewport","content":"width=device-width, initial-scale=1, viewport-fit=cover"}),`
-    `,h("style",null,`
-      :global(:root) {
-        font-family: system-ui;
-        padding: 2em 0;
-      }
-      :global(.counter) {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        place-items: center;
-        font-size: 2em;
-        margin-top: 2em;
-      }
-      :global(.children) {
-        display: grid;
-        place-items: center;
-        margin-bottom: 2em;
-      }
-    `),`
-  `),`
-  `,h("body",null,`
-    `,h("main",null,`
-      `,h(__astro_component,null,h(Counter,{"client:visible":""},`
-        `,h("h1",null,`Hello React!`),`
-      `),`
-    `),`
-  
-
-`))
+console.log(result);
+// {
+//   code: …
+//   map: …
+// }
 ```
+
+[homebrew]: https://brew.sh/
+[go]: https://golang.org/
+[go-vscode]: https://marketplace.visualstudio.com/items?itemName=golang.go
+[gopath]: https://www.digitalocean.com/community/tutorials/understanding-the-gopath
+[tinygo]: https://tinygo.org/
+[tinygo-install]: https://tinygo.org/getting-started/install/

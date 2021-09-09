@@ -264,7 +264,7 @@ const someProps = {
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`,
-				styles: []string{":global(:root.astro-HMNNHVCQ ){font-family:system-ui;padding:2em 0;}:global(.counter.astro-HMNNHVCQ ){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}:global(.children.astro-HMNNHVCQ ){display:grid;place-items:center;margin-bottom:2em;}"},
+				styles: []string{":root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}"},
 				code: `<html lang="en">
   <head>
     <meta charset="utf-8">

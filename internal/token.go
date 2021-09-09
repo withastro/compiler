@@ -437,7 +437,7 @@ loop:
 	for {
 		c := z.readByte()
 		if z.err != nil {
-			fmt.Printf("Unexpected character in loop: %v\n", string(c))
+			fmt.Printf("Unexpected character in loop: \"%v\"\n", string(c))
 			break loop
 		}
 		if c != '<' {
