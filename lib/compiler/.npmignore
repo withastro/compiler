@@ -1,5 +1,6 @@
 **/*.ts
 deno/**/*
+deno/**/README.md
 !browser/**/*.js
 !browser/**/*.d.ts
 !node/**/*.js

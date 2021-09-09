@@ -1,1 +1,0 @@
-export { escape } from './escape'

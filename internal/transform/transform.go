@@ -9,6 +9,7 @@ type TransformOptions struct {
 	Scope       string
 	Filename    string
 	InternalURL string
+	SourceMap   string
 }
 
 func Transform(doc *tycho.Node, opts TransformOptions) {

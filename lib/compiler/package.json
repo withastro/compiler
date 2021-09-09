@@ -7,13 +7,13 @@
         "prepublish": "npm run build"
     },
     "main": "./node/index.js",
+    "types": "./shared/types.d.ts",
     "exports": {
         ".": {
             "browser": "./browser/index.js",
             "import": "./node/index.js",
             "default": "./browser/index.js"
         },
-        "./internal": "./shared/shim.js",
         "./astro.wasm": "./astro.wasm"
     },
     "dependencies": {

@@ -1,7 +1,5 @@
 package js_scanner
 
-import "fmt"
-
 // An ImportType is the type of import.
 type ImportType uint32
 
@@ -80,13 +78,12 @@ func HasExports(_source []byte) bool {
 	return false
 }
 
+// TODO: check for access to $$vars
 func AccessesPrivateVars(_source []byte) bool {
 	source = _source
-	fmt.Println(string(source))
 	pos = 0
 	for ; pos < len(source)-1; pos++ {
 		c := readCommentWhitespace(true)
-		fmt.Println(string(c))
 		switch true {
 		// case c == '$':
 		// 	fmt.Println(str_eq2('$', '$'))
