@@ -288,7 +288,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.print(c.Data)
 			} else {
 				p.addSourceMapping(c.Loc[0])
-				if (c.PrevSibling == nil || c.PrevSibling != nil && c.PrevSibling.Type == TextNode) && c.NextSibling != nil && c.NextSibling.Type != TextNode {
+				if (c.PrevSibling == nil || (c.PrevSibling != nil && c.PrevSibling.Type == TextNode)) && c.NextSibling != nil {
+					// TODO: where is this used?
+					// c.NextSibling.Type != TextNode
 					p.printTemplateLiteralOpen()
 				}
 				render1(p, c, RenderOptions{

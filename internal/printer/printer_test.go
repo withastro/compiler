@@ -96,6 +96,55 @@ import VueComponent from '../components/Vue.vue';
 			},
 		},
 		{
+			name: "map basic",
+			source: `---
+const items = [0, 1, 2];
+---
+<ul>
+	{items.map(item => {
+		return <li>{item}</li>;
+	})}
+</ul>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{"const items = [0, 1, 2];"},
+				styles:      []string{},
+				code: fmt.Sprintf(`<html><head></head><body><ul>
+	${items.map(item => {
+		return $$render%s<li>${item}</li>%s;
+	})}
+</ul></body></html>`, BACKTICK, BACKTICK),
+			},
+		},
+		{
+			name: "map nested",
+			source: `---
+const groups = [[0, 1, 2], [3, 4, 5]];
+---
+<div>
+	{groups.map(items => {
+		return <ul>{
+			items.map(item => {
+				return <li>{item}</li>;
+			})
+		}</ul>
+	})}
+</div>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{"const groups = [[0, 1, 2], [3, 4, 5]];"},
+				styles:      []string{},
+				code: fmt.Sprintf(`<html><head></head><body><div>
+	${groups.map(items => {
+		return %s<ul>${
+			items.map(item => {
+				return %s<li>${item}</li>%s;
+			})
+		}</ul>%s})}
+</div></body></html>`, "$$render"+BACKTICK, "$$render"+BACKTICK, BACKTICK, BACKTICK),
+			},
+		},
+		{
 			name: "head expression",
 			source: `---
 const name = "world";
