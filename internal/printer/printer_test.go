@@ -21,18 +21,19 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
-const Component = %s(async ($$result, $$props, $$slots) => {`, CREATE_COMPONENT)
+const $$Component = %s(async ($$result, $$props, $$slots) => {
+const Astro = $$result.createAstro($$props);`, CREATE_COMPONENT)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
-export default Component;`
+export default $$Component;`
 var STYLE_PRELUDE = "const STYLES = [\n"
 var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES)\n"
 
 func TestPrinter(t *testing.T) {
 	type want struct {
 		imports     string
-		frontmatter string
+		frontmatter []string
 		styles      []string
 		code        string
 		// TODO: add scripts & styles for testing later?
@@ -48,7 +49,7 @@ func TestPrinter(t *testing.T) {
 			source: `<button>Click</button>`,
 			want: want{
 				imports:     "",
-				frontmatter: "",
+				frontmatter: []string{},
 				styles:      []string{},
 				code:        `<html><head></head><body><button>Click</button></body></html>`,
 			},
@@ -61,7 +62,7 @@ const href = '/about';
 <a href={href}>About</a>`,
 			want: want{
 				imports:     "",
-				frontmatter: "const href = '/about';",
+				frontmatter: []string{"const href = '/about';"},
 				styles:      []string{},
 				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
 			},
@@ -80,15 +81,17 @@ import VueComponent from '../components/Vue.vue';
   </body>
 </html>`,
 			want: want{
-				imports:     "import VueComponent from '../components/Vue.vue';\n",
-				frontmatter: "",
-				styles:      []string{},
+				imports: "",
+				frontmatter: []string{
+					"import VueComponent from '../components/Vue.vue';",
+				},
+				styles: []string{},
 				code: `<html>
   <head>
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `(VueComponent, null, ` + TEMPLATE_TAG + BACKTICK + BACKTICK + `)}
+    ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent, null, ` + TEMPLATE_TAG + BACKTICK + BACKTICK + `)}
   </body></html>`,
 			},
 		},
@@ -107,7 +110,7 @@ const name = "world";
 </html>`,
 			want: want{
 				imports:     "",
-				frontmatter: `const name = "world";`,
+				frontmatter: []string{`const name = "world";`},
 				styles:      []string{},
 				code: `<html>
   <head>
@@ -135,7 +138,7 @@ const name = "world";
 <p class="body">I’m a page</p>`,
 			want: want{
 				imports:     "",
-				frontmatter: "",
+				frontmatter: []string{},
 				styles:      []string{},
 				code: `<html><head>
 
@@ -177,7 +180,7 @@ const name = "world";
 </html>`,
 			want: want{
 				imports:     "",
-				frontmatter: "",
+				frontmatter: []string{},
 				styles:      []string{},
 				code: `<!DOCTYPE html><html lang="en">
 <head>
@@ -256,14 +259,15 @@ const someProps = {
   </body>
 </html>`,
 			want: want{
-				imports: "import Counter from '../components/Counter.jsx'\n",
-				frontmatter: `// Component Imports
+				imports: "",
+				frontmatter: []string{`// Component Imports
+import Counter from '../components/Counter.jsx'
 const someProps = {
   count: 0,
 }
 
 // Full Astro Component Syntax:
-// https://docs.astro.build/core-concepts/astro-components/`,
+// https://docs.astro.build/core-concepts/astro-components/`},
 				styles: []string{":root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}"},
 				code: `<html lang="en">
   <head>
@@ -274,7 +278,7 @@ const someProps = {
   </head>
   <body>
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent(Counter, {...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"}, $$render` + "`" + `
+      ${$$renderComponent($$result,'Counter',Counter, {...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"}, $$render` + "`" + `
         <h1 class="astro-HMNNHVCQ">Hello React!</h1>
       ` + "`" + `)}
     </main>
@@ -300,23 +304,15 @@ const someProps = {
 			output := strings.TrimSpace(test_utils.Dedent(string(result.Output)))
 
 			toMatch := INTERNAL_IMPORTS
-			toMatch = toMatch + fmt.Sprintf("%s%s", tt.want.imports, PRELUDE)
-			if tt.want.frontmatter != "" {
-				// format want
-				toMatch = toMatch + fmt.Sprintf(`
-// ---
-%s
-// ---
-`, strings.TrimSpace(tt.want.frontmatter))
-				// format output
-				formatted := make([]string, 0)
-				for _, part := range strings.Split(output, "// ---") {
-					formatted = append(formatted, strings.TrimSpace(part))
-				}
-				output = strings.Join(formatted, "\n// ---\n")
-			} else {
-				toMatch = toMatch + "\n"
+			if len(tt.want.frontmatter) > 0 {
+				toMatch = toMatch + fmt.Sprintf(strings.TrimSpace(tt.want.frontmatter[0]))
 			}
+			toMatch = toMatch + "\n" + PRELUDE
+			if len(tt.want.frontmatter) > 1 {
+				// format want
+				toMatch = toMatch + fmt.Sprintf(strings.TrimSpace(tt.want.frontmatter[0]))
+			}
+			toMatch = toMatch + "\n"
 			if len(tt.want.styles) > 0 {
 				toMatch = toMatch + STYLE_PRELUDE
 				for _, style := range tt.want.styles {
