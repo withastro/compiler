@@ -270,6 +270,11 @@ func TestExpressions(t *testing.T) {
 			"{`${`${`${foo}`}`}`}",
 			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken},
 		},
+		{
+			"element with multiple expressions",
+			"<div>Hello {first} {last}</div>",
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Expressions)
