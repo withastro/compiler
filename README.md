@@ -36,6 +36,11 @@ From the `lib/compiler` directory, run:
 npm run build
 ```
 
+## Testing
+
+- Run all tests: `go test -v ./internal/...` (the `...` is basically a “glob”)
+- Run a specific folder of tests: `go test -v ./internal/printer`
+
 ## JS API
 
 WIP
@@ -46,7 +51,10 @@ import { transform } from "@astrojs/compiler";
 
 const filePath = new URL("./pages/index.astro", import.meta.url);
 const src = await fs.promises.readFile(filePath);
-const result = await transform(src, { sourcefile: filePath.href, sourcemap: 'both' });
+const result = await transform(src, {
+  sourcefile: filePath.href,
+  sourcemap: "both",
+});
 
 console.log(result);
 // {
