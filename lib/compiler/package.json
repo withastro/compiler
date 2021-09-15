@@ -1,28 +1,28 @@
 {
-    "name": "@astrojs/compiler",
-    "type": "module",
-    "version": "0.1.0-canary.35",
-    "scripts": {
-        "build": "tsc -p .",
-        "prepublish": "npm run build"
+  "name": "@astrojs/compiler",
+  "type": "module",
+  "version": "0.1.0-canary.36",
+  "scripts": {
+    "build": "tsc -p .",
+    "prepublish": "npm run build"
+  },
+  "main": "./node/index.js",
+  "types": "./shared/types.d.ts",
+  "exports": {
+    ".": {
+      "browser": "./browser/index.js",
+      "import": "./node/index.js",
+      "default": "./browser/index.js"
     },
-    "main": "./node/index.js",
-    "types": "./shared/types.d.ts",
-    "exports": {
-        ".": {
-            "browser": "./browser/index.js",
-            "import": "./node/index.js",
-            "default": "./browser/index.js"
-        },
-        "./astro.wasm": "./astro.wasm"
-    },
-    "dependencies": {
-        "typescript": "^4.3.5"
-    },
-    "devDependencies": {
-        "@types/node": "^16.4.12"
-    },
-    "volta": {
-        "node": "16.6.2"
-    }
+    "./astro.wasm": "./astro.wasm"
+  },
+  "dependencies": {
+    "typescript": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^16.4.12"
+  },
+  "volta": {
+    "node": "16.6.2"
+  }
 }
