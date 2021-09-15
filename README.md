@@ -10,7 +10,7 @@ The [Go][go] language is needed to work with this repo. On Macs, installing via 
 
 #### GOPATH
 
-By default, Go will set `$GOPATH` to a new `./go/` directory in your home folder. For best support with VS Code and tooling, it’s recommended to place Go projects like this one in here. So for this project, that would mean cloning it to `~/go/src/github.com/snowpackjs/astro-compiler-next`. You can change this path, but it does require some understanding. Read [Understanding the GOPATH] to learn more.
+By default, Go will set `$GOPATH` to a new `./go/` directory in your home folder. For best support with VS Code and tooling, it’s recommended to place Go projects like this one in here. So for this project, that would mean cloning it to `~/go/src/github.com/snowpackjs/astro-compiler-next`. You can change this path, but it does require some understanding. Read [Understanding the GOPATH][gopath] to learn more.
 
 #### VS Code
 
