@@ -227,11 +227,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			p.print(n.Data)
 			return
 		}
-		backticks := regexp.MustCompile("`")
 		dollarOpen := regexp.MustCompile(`\${`)
 		text := n.Data
 		text = strings.Replace(text, "\\", "\\\\", -1)
-		text = backticks.ReplaceAllString(text, "\\`")
+		text = escapeBackticks(text)
 		text = dollarOpen.ReplaceAllString(text, "\\${")
 		p.addSourceMapping(n.Loc[0])
 		p.print(text)
@@ -241,7 +240,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case CommentNode:
 		p.addSourceMapping(n.Loc[0])
 		p.print("<!--")
-		p.print(n.Data)
+		p.print(escapeBackticks(n.Data))
 		p.print("-->")
 		return
 	case DoctypeNode:
@@ -475,4 +474,10 @@ var voidElements = map[string]bool{
 	"source": true,
 	"track":  true,
 	"wbr":    true,
+}
+
+// Escape backtick characters for Text nodes
+func escapeBackticks(src string) string {
+	backticks := regexp.MustCompile("`")
+	return backticks.ReplaceAllString(src, "\\`")
 }

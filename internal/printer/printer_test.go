@@ -145,6 +145,16 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "backtick in HTML comment",
+			source: "<body><!-- `npm install astro` --></body>",
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        "<html><head></head><body><!-- \\`npm install astro\\` --></body></html>",
+			},
+		},
+		{
 			name: "head expression",
 			source: `---
 const name = "world";
