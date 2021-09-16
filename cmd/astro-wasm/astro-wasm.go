@@ -116,7 +116,7 @@ func createExternalSourceMap(source string, result printer.PrintResult, transfor
 
 func createInlineSourceMap(source string, result printer.PrintResult, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
-	inlineSourcemap := `//@ sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
+	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
 		Code: string(result.Output) + "\n" + inlineSourcemap,
 		Map:  "",
@@ -125,7 +125,7 @@ func createInlineSourceMap(source string, result printer.PrintResult, transformO
 
 func createBothSourceMap(source string, result printer.PrintResult, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
-	inlineSourcemap := `//@ sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
+	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
 		Code: string(result.Output) + "\n" + inlineSourcemap,
 		Map:  sourcemapString,
