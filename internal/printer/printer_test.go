@@ -91,7 +91,7 @@ import VueComponent from '../components/Vue.vue';
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent, null, ` + TEMPLATE_TAG + BACKTICK + BACKTICK + `)}
+    ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent, {}, ` + TEMPLATE_TAG + BACKTICK + BACKTICK + `)}
   </body></html>`,
 			},
 		},
