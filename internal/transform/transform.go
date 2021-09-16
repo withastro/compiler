@@ -6,6 +6,7 @@ import (
 )
 
 type TransformOptions struct {
+	As          string
 	Scope       string
 	Filename    string
 	InternalURL string
