@@ -331,7 +331,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if len(n.Attr) != 0 {
 			p.print(", {")
 		} else {
-			p.print(", null")
+			p.print(", {}")
 		}
 		for i, a := range n.Attr {
 			if i != 0 {
