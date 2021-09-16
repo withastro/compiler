@@ -757,6 +757,11 @@ func inHeadIM(p *parser) bool {
 			p.tok.Data = s
 		}
 	case StartTagToken:
+		// Allow components in Head
+		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
+			p.addElement()
+			return true
+		}
 		switch p.tok.DataAtom {
 		case a.Html:
 			return inBodyIM(p)
@@ -813,6 +818,10 @@ func inHeadIM(p *parser) bool {
 			return true
 		}
 	case EndTagToken:
+		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
+			p.addElement()
+			return true
+		}
 		switch p.tok.DataAtom {
 		case a.Head:
 			p.addLoc()
@@ -863,7 +872,6 @@ func inHeadIM(p *parser) bool {
 		p.im = textIM
 		return true
 	case EndExpressionToken:
-		fmt.Println("END EXPRESSION INSIDE HEAD", p.oe.top().Data)
 		p.addLoc()
 		p.oe.pop()
 		return true

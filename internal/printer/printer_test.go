@@ -15,6 +15,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"render as " + TEMPLATE_TAG,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
+	"renderSlot as " + RENDER_SLOT,
 	"addAttribute as " + ADD_ATTRIBUTE,
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
@@ -91,7 +92,7 @@ import VueComponent from '../components/Vue.vue';
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent, {}, ` + TEMPLATE_TAG + BACKTICK + BACKTICK + `)}
+    ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent, {})}
   </body></html>`,
 			},
 		},
@@ -337,9 +338,7 @@ const someProps = {
   </head>
   <body>
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter, {...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"}, $$render` + "`" + `
-        <h1 class="astro-HMNNHVCQ">Hello React!</h1>
-      ` + "`" + `)}
+      ${$$renderComponent($$result,'Counter',Counter, {...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>`,
 			},

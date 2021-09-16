@@ -15,6 +15,7 @@ import (
 	"github.com/snowpackjs/astro/internal/loc"
 	"github.com/snowpackjs/astro/internal/sourcemap"
 	"github.com/snowpackjs/astro/internal/transform"
+	"golang.org/x/net/html/atom"
 )
 
 // Render renders the parse tree n to the given writer.
@@ -42,6 +43,14 @@ import (
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
 func PrintToJS(sourcetext string, n *Node, opts transform.TransformOptions) PrintResult {
+	p := &printer{
+		opts:    opts,
+		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+	}
+	return printToJs(p, n)
+}
+
+func PrintToJSFragment(sourcetext string, n *Node, opts transform.TransformOptions) PrintResult {
 	p := &printer{
 		opts:    opts,
 		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
@@ -228,10 +237,22 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			return
 		}
 		dollarOpen := regexp.MustCompile(`\${`)
+		parenOpen := regexp.MustCompile(`\(`)
+		parenClose := regexp.MustCompile(`\)`)
+		braceOpen := regexp.MustCompile(`\{`)
+		braceClose := regexp.MustCompile(`\}`)
+		bracketOpen := regexp.MustCompile(`\[`)
+		bracketClose := regexp.MustCompile(`\]`)
 		text := n.Data
 		text = strings.Replace(text, "\\", "\\\\", -1)
 		text = escapeBackticks(text)
 		text = dollarOpen.ReplaceAllString(text, "\\${")
+		text = parenOpen.ReplaceAllString(text, "&lpar;")
+		text = parenClose.ReplaceAllString(text, "&rpar;")
+		text = braceOpen.ReplaceAllString(text, "&lbrace;")
+		text = braceClose.ReplaceAllString(text, "&rbrace;")
+		text = bracketOpen.ReplaceAllString(text, "&lbrack;")
+		text = bracketClose.ReplaceAllString(text, "&rbrack;")
 		p.addSourceMapping(n.Loc[0])
 		p.print(text)
 		return
@@ -308,10 +329,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 
 	isComponent := (n.Component || n.CustomElement) && n.Data != "Fragment"
+	isSlot := n.DataAtom == atom.Slot
 
 	p.addSourceMapping(n.Loc[0])
 	if isComponent {
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, n.Data))
+	} else if isSlot {
+		p.print(fmt.Sprintf("${%s(%s,%s[", RENDER_SLOT, RESULT, SLOTS))
 	} else {
 		p.print("<")
 	}
@@ -322,7 +346,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	if n.Fragment {
 		p.print("Fragment")
-	} else {
+	} else if !isSlot {
 		p.print(n.Data)
 	}
 
@@ -378,10 +402,42 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if len(n.Attr) != 0 {
 			p.print("}")
 		}
+	} else if isSlot {
+		if len(n.Attr) == 0 {
+			p.print(`"default"`)
+		} else {
+			slotted := false
+			for _, a := range n.Attr {
+				if a.Key != "name" {
+					continue
+				}
+				switch a.Type {
+				case QuotedAttribute:
+					p.addSourceMapping(a.ValLoc)
+					p.print(`"` + a.Val + `"`)
+					slotted = true
+				default:
+					panic("slot[name] must does must be a static string")
+				}
+				// if i != len(n.Attr)-1 {
+				// 	p.print("")
+				// }
+			}
+			if !slotted {
+				p.print(`"default"`)
+			}
+		}
+		p.print(`]`)
 	} else {
 		for _, a := range n.Attr {
-			p.printAttribute(a)
-			p.addSourceMapping(n.Loc[0])
+			if a.Key == "slot" {
+				if !((n.Parent.Component || n.Parent.CustomElement) && n.Parent.Data != "Fragment") {
+					panic(`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`)
+				}
+			} else {
+				p.printAttribute(a)
+				p.addSourceMapping(n.Loc[0])
+			}
 		}
 		p.addSourceMapping(n.Loc[0])
 		p.print(">")
@@ -421,19 +477,71 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		// 	return
 		// }
 	default:
-		if isComponent {
-			p.print(", ")
-			p.printTemplateLiteralOpen()
+		isAllWhiteSpace := false
+		if isComponent || isSlot {
+			isAllWhiteSpace = true
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				isAllWhiteSpace = c.Type == TextNode && strings.TrimSpace(c.Data) == ""
+				if !isAllWhiteSpace {
+					break
+				}
+			}
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			render1(p, c, RenderOptions{
-				isRoot:       false,
-				isExpression: opts.isExpression,
-				depth:        depth + 1,
-			})
-		}
-		if isComponent {
-			p.printTemplateLiteralClose()
+
+		if !isAllWhiteSpace {
+			switch true {
+			case isComponent:
+				p.print(`,{`)
+				slottedChildren := make(map[string][]*Node, 0)
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					slotName := "default"
+					for _, a := range c.Attr {
+						if a.Key == "slot" {
+							if a.Type == QuotedAttribute {
+								slotName = a.Val
+							} else {
+								panic(`slot attribute cannot have a dynamic value`)
+							}
+						}
+					}
+					if c.Type != TextNode || (c.Type == TextNode && strings.TrimSpace(c.Data) != "") {
+						slottedChildren[slotName] = append(slottedChildren[slotName], c)
+					}
+				}
+				for slotName, children := range slottedChildren {
+					p.print(fmt.Sprintf(`"%s": () => `, slotName))
+					p.printTemplateLiteralOpen()
+					for _, child := range children {
+						render1(p, child, RenderOptions{
+							isRoot:       false,
+							isExpression: opts.isExpression,
+							depth:        depth + 1,
+						})
+					}
+					p.printTemplateLiteralClose()
+					p.print(`,`)
+				}
+				p.print(`}`)
+			case isSlot:
+				p.print(`,`)
+				p.printTemplateLiteralOpen()
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					render1(p, c, RenderOptions{
+						isRoot:       false,
+						isExpression: opts.isExpression,
+						depth:        depth + 1,
+					})
+				}
+				p.printTemplateLiteralClose()
+			default:
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					render1(p, c, RenderOptions{
+						isRoot:       false,
+						isExpression: opts.isExpression,
+						depth:        depth + 1,
+					})
+				}
+			}
 		}
 	}
 
@@ -442,7 +550,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	} else {
 		p.addSourceMapping(n.Loc[0])
 	}
-	if isComponent {
+	if isComponent || isSlot {
 		p.print(")}")
 	} else {
 		p.print(`</` + n.Data + `>`)

@@ -13,6 +13,7 @@ func ScopeElement(n *tycho.Node, opts TransformOptions) {
 }
 
 var NeverScopedElements map[string]bool = map[string]bool{
+	"Fragment": true,
 	"base":     true,
 	"body":     true,
 	"font":     true,
