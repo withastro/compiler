@@ -504,7 +504,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							}
 						}
 					}
-					if c.Type != TextNode || (c.Type == TextNode && strings.TrimSpace(c.Data) != "") {
+					// Only slot ElementNodes or non-empty TextNodes!
+					// CommentNode and others should not be slotted
+					if c.Type == ElementNode || (c.Type == TextNode && strings.TrimSpace(c.Data) != "") {
 						slottedChildren[slotName] = append(slottedChildren[slotName], c)
 					}
 				}
