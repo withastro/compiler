@@ -65,7 +65,7 @@ export class AstroComponent {
   }
 }
 
-export function render(htmlParts: string[], ...expressions: TemplateStringsArray) {
+export function render(htmlParts: TemplateStringsArray, ...expressions: any[]) {
   return new AstroComponent(htmlParts, expressions);
 }
 
