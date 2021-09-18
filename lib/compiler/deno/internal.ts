@@ -182,6 +182,13 @@ export const renderComponent = async (result: any, displayName: string, Componen
   // return `<astro-root uid="${astroId}">${html}</astro-root>`;
 };
 
+export const renderSlot = async (result: any, slotted: string, fallback?: any) => {
+  if (slotted) {
+    return _render(slotted);
+  }
+  return fallback;
+};
+
 export const addAttribute = (value: any, key: string) => {
   if (value == null || value === false) {
     return '';
