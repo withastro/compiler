@@ -23,28 +23,6 @@ export async function renderPage(result: any, Component: AstroComponentFactory, 
   return template.replace("</head>", styles.join('\n') + scripts.join('\n') + "</head>");
 }
 
-import { valueToEstree, Value } from 'estree-util-value-to-estree';
-import * as astring from 'astring';
-const { generate, GENERATOR } = astring;
-// A more robust version alternative to `JSON.stringify` that can handle most values
-// see https://github.com/remcohaszing/estree-util-value-to-estree#readme
-const customGenerator: astring.Generator = {
-  ...GENERATOR,
-  Literal(node, state) {
-    if (node.raw != null) {
-      // escape closing script tags in strings so browsers wouldn't interpret them as
-      // closing the actual end tag in HTML
-      state.write(node.raw.replace('</script>', '<\\/script>'));
-    } else {
-      GENERATOR.Literal(node, state);
-    }
-  },
-};
-const serialize = (value: Value) =>
-  generate(valueToEstree(value), {
-    generator: customGenerator,
-  });
-
 async function _render(child: any) {
   child = await child;
   if (Array.isArray(child)) {
@@ -137,7 +115,7 @@ async function generateHydrateScript(scriptOptions: HydrateScriptOptions, metada
 
   hydrationSource += renderer.source
     ? `const [{ ${componentExport.value}: Component }, { default: hydrate }] = await Promise.all([import("${componentUrl}"), import("${renderer.source}")]);
-  return (el, children) => hydrate(el)(Component, ${serialize(props)}, children);
+  return (el, children) => hydrate(el)(Component, ${JSON.stringify(props)}, children);
 `
     : `await import("${componentUrl}");
   return () => {};
