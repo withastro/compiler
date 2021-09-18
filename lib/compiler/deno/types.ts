@@ -20,7 +20,7 @@ export interface TransformResult {
 // Works in browser: yes
 export declare function transform(input: string, options?: TransformOptions): Promise<TransformResult>;
 
-export declare function compile(input: string, options?: TransformOptions): Promise<TransformResult>;
+export declare function compile(input: TransformResult): Promise<string>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before

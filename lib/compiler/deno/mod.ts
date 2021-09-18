@@ -5,12 +5,30 @@ const Go = (globalThis as any).Go;
 
 export const transform: typeof types.transform = async (input, options) => {
   const service = await ensureServiceIsRunning();
-  return await service.transform(input, { internalURL: new URL('./shim.ts',import.meta.url).toString(), ...options });
+  return await service.transform(input, { internalURL: new URL('./internal.ts', import.meta.url).toString(), ...options });
 };
 
-export const compile = async (template: string): Promise<string> => {
-  const { default: mod } = await import(`data:text/typescript;charset=utf-8;base64,${btoa(template)}`)
-  return mod.__render()
+export const compile: typeof types.compile = async (transformResult: types.TransformResult): Promise<string> => {
+  const { renderPage } = await import(new URL('./internal.ts', import.meta.url).toString());
+
+  const result = {
+    styles: new Set(),
+    scripts: new Set(),
+    /** This function returns the `Astro` faux-global */
+    createAstro: (props: any) => {
+      return { 
+        isPage: true,
+        site: null,
+        request: { url: null, canonicalURL: null },
+        props,
+        fetchContent: () => {}
+      };
+    }
+  }
+
+  const { default: Component } = await import(`data:text/typescript;charset=utf-8;base64,${btoa(transformResult.code)}`)
+  let html = await renderPage(result, Component, {}, {});
+  return html
 }
 
 interface Service {
