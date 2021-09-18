@@ -23,7 +23,7 @@ export async function renderPage(result: any, Component: AstroComponentFactory, 
   return template.replace("</head>", styles.join('\n') + scripts.join('\n') + "</head>");
 }
 
-async function _render(child: any) {
+async function _render(child: any): Promise<any> {
   child = await child;
   if (Array.isArray(child)) {
     return (await Promise.all(child.map(value => _render(value)))).join('\n');
