@@ -93,44 +93,44 @@ function extractHydrationDirectives(inputProps: Record<string | number, any>): {
   return { hydrationDirective, props };
 }
 
-interface HydrateScriptOptions {
-  renderer: any;
-  astroId: string;
-  props: any;
-}
+// interface HydrateScriptOptions {
+//   renderer: any;
+//   astroId: string;
+//   props: any;
+// }
 
-/** For hydrated components, generate a <script type="module"> to load the component */
-async function generateHydrateScript(scriptOptions: HydrateScriptOptions, metadata: Required<AstroComponentMetadata>) {
-  const { renderer, astroId, props } = scriptOptions;
-  const { hydrate, componentUrl, componentExport } = metadata;
+// /** For hydrated components, generate a <script type="module"> to load the component */
+// async function generateHydrateScript(scriptOptions: HydrateScriptOptions, metadata: Required<AstroComponentMetadata>) {
+//   const { renderer, astroId, props } = scriptOptions;
+//   const { hydrate, componentUrl, componentExport } = metadata;
 
-  if (!componentExport) {
-    throw new Error(`Unable to resolve a componentExport for "${metadata.displayName}"! Please open an issue.`)
-  }
+//   if (!componentExport) {
+//     throw new Error(`Unable to resolve a componentExport for "${metadata.displayName}"! Please open an issue.`)
+//   }
 
-  let hydrationSource = '';
-  if (renderer.hydrationPolyfills) {
-    hydrationSource += `await Promise.all([${renderer.hydrationPolyfills.map((src: string) => `\n  import("${src}")`).join(', ')}]);\n`;
-  }
+//   let hydrationSource = '';
+//   if (renderer.hydrationPolyfills) {
+//     hydrationSource += `await Promise.all([${renderer.hydrationPolyfills.map((src: string) => `\n  import("${src}")`).join(', ')}]);\n`;
+//   }
 
-  hydrationSource += renderer.source
-    ? `const [{ ${componentExport.value}: Component }, { default: hydrate }] = await Promise.all([import("${componentUrl}"), import("${renderer.source}")]);
-  return (el, children) => hydrate(el)(Component, ${JSON.stringify(props)}, children);
-`
-    : `await import("${componentUrl}");
-  return () => {};
-`;
+//   hydrationSource += renderer.source
+//     ? `const [{ ${componentExport.value}: Component }, { default: hydrate }] = await Promise.all([import("${componentUrl}"), import("${renderer.source}")]);
+//   return (el, children) => hydrate(el)(Component, ${JSON.stringify(props)}, children);
+// `
+//     : `await import("${componentUrl}");
+//   return () => {};
+// `;
 
-  const hydrationScript = `<script type="module">
-import setup from 'astro/client/${hydrate}.js';
-setup("${astroId}", {${metadata.hydrateArgs ? `value: ${JSON.stringify(metadata.hydrateArgs)}` : ''}}, async () => {
-  ${hydrationSource}
-});
-</script>
-`;
+//   const hydrationScript = `<script type="module">
+// import setup from 'astro/client/${hydrate}.js';
+// setup("${astroId}", {${metadata.hydrateArgs ? `value: ${JSON.stringify(metadata.hydrateArgs)}` : ''}}, async () => {
+//   ${hydrationSource}
+// });
+// </script>
+// `;
 
-  return hydrationScript;
-}
+//   return hydrationScript;
+// }
 
 export const renderComponent = async (result: any, displayName: string, Component: unknown, _props: Record<string | number, any>, children: any) => {
   Component = await Component;
