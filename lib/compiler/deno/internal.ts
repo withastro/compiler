@@ -44,10 +44,10 @@ async function _render(child: any): Promise<any> {
 }
 
 export class AstroComponent {
-  private htmlParts: string[];
-  private expressions: TemplateStringsArray;
+  private htmlParts: TemplateStringsArray;
+  private expressions: any[];
   
-  constructor(htmlParts: string[], expressions: TemplateStringsArray) {
+  constructor(htmlParts: TemplateStringsArray, expressions: any[]) {
     this.htmlParts = htmlParts;
     this.expressions = expressions;
   }
