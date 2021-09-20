@@ -156,6 +156,39 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name: "slots (basic)",
+			source: `---
+import Component from 'test';
+---
+<Component>
+	<div>Default</div>
+	<div slot="named">Named</div>
+</Component>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{`import Component from 'test';`},
+				styles:      []string{},
+				code:        `${$$renderComponent($$result,'Component',Component, {},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+			},
+		},
+		{
+			name: "slots (no comments)",
+			source: `---
+import Component from 'test';
+---
+<Component>
+	<div>Default</div>
+	<!-- A comment! -->
+	<div slot="named">Named</div>
+</Component>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{`import Component from 'test';`},
+				styles:      []string{},
+				code:        `${$$renderComponent($$result,'Component',Component, {},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+			},
+		},
+		{
 			name: "head expression",
 			source: `---
 const name = "world";
