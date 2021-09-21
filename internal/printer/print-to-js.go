@@ -303,12 +303,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			p.addSourceMapping(c.Loc[0])
 			if c.Type == TextNode {
-				p.addSourceMapping(c.Loc[0])
 				p.print(c.Data)
 			} else {
-				p.addSourceMapping(c.Loc[0])
-				if (c.PrevSibling == nil || (c.PrevSibling != nil && c.PrevSibling.Type == TextNode)) && c.NextSibling != nil {
+				if c.PrevSibling == nil || (c.PrevSibling != nil && c.PrevSibling.Type == TextNode) {
 					// TODO: where is this used?
 					// c.NextSibling.Type != TextNode
 					p.printTemplateLiteralOpen()

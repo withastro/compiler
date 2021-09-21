@@ -97,6 +97,16 @@ import VueComponent from '../components/Vue.vue';
 			},
 		},
 		{
+			name:   "conditional render",
+			source: `<body>{false ? <div>#f</div> : <div>#t</div>}</body>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        "<html><head></head><body>${false ? $$render`<div>#f</div>` : $$render`<div>#t</div>`}</body></html>",
+			},
+		},
+		{
 			name: "map basic",
 			source: `---
 const items = [0, 1, 2];
