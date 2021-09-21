@@ -33,10 +33,32 @@ var NeverScopedElements map[string]bool = map[string]bool{
 func injectScopedClass(n *tycho.Node, opts TransformOptions) {
 	for i, attr := range n.Attr {
 		// If we find an existing class attribute, append the scoped class
-		if attr.Key == "class" {
-			attr.Val = attr.Val + " astro-" + opts.Scope
-			n.Attr[i] = attr
-			return
+		if attr.Key == "class" || (n.Component && attr.Key == "className") {
+			switch attr.Type {
+			case tycho.ShorthandAttribute:
+				if n.Component {
+					attr.Val = attr.Key + ` + " astro-` + opts.Scope + `"`
+					attr.Type = tycho.ExpressionAttribute
+					n.Attr[i] = attr
+					return
+				}
+			case tycho.EmptyAttribute:
+				// instead of an empty string
+				attr.Type = tycho.QuotedAttribute
+				attr.Val = "astro-" + opts.Scope
+				n.Attr[i] = attr
+				return
+			case tycho.QuotedAttribute, tycho.TemplateLiteralAttribute:
+				// as a plain string
+				attr.Val = attr.Val + " astro-" + opts.Scope
+				n.Attr[i] = attr
+				return
+			case tycho.ExpressionAttribute:
+				// as an expression
+				attr.Val = attr.Val + ` + " astro-` + opts.Scope + `"`
+				n.Attr[i] = attr
+				return
+			}
 		}
 	}
 	// If we didn't find an existing class attribute, let's add one
