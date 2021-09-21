@@ -275,6 +275,11 @@ func TestExpressions(t *testing.T) {
 			"<div>Hello {first} {last}</div>",
 			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
+		{
+			"ternary render",
+			"{false ? <div>#f</div> : <div>#t</div>}",
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken},
+		},
 	}
 
 	runTokenTypeTest(t, Expressions)
