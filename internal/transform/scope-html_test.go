@@ -49,8 +49,6 @@ func printToSource(buf bytes.Buffer, node *tycho.Node) string {
 }
 
 func TestScopeHTML(t *testing.T) {
-	// note: the tests have hashes inlined because it’s easier to read
-	// note: this must be valid CSS, hence the empty "{}"
 	tests := []struct {
 		name   string
 		source string
