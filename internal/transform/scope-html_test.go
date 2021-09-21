@@ -65,9 +65,9 @@ func TestScopeHTML(t *testing.T) {
 			want:   `<div class="test astro-XXXXXX"></div>`,
 		},
 		{
-			name:   "quoted trim",
+			name:   "quoted no trim",
 			source: `<div class="test " />`,
-			want:   `<div class="test astro-XXXXXX"></div>`,
+			want:   `<div class="test  astro-XXXXXX"></div>`,
 		},
 		{
 			name:   "expression string",

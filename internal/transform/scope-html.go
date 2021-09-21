@@ -1,8 +1,6 @@
 package transform
 
 import (
-	"strings"
-
 	tycho "github.com/snowpackjs/astro/internal"
 )
 
@@ -52,7 +50,7 @@ func injectScopedClass(n *tycho.Node, opts TransformOptions) {
 				return
 			case tycho.QuotedAttribute, tycho.TemplateLiteralAttribute:
 				// as a plain string
-				attr.Val = strings.TrimSpace(attr.Val) + " astro-" + opts.Scope
+				attr.Val = attr.Val + " astro-" + opts.Scope
 				n.Attr[i] = attr
 				return
 			case tycho.ExpressionAttribute:
