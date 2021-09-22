@@ -6,18 +6,29 @@ import (
 
 	// "strings"
 
-	tycho "github.com/snowpackjs/astro/internal"
+	astro "github.com/snowpackjs/astro/internal"
 	"github.com/tdewolff/parse/css"
 	a "golang.org/x/net/html/atom"
 )
 
 // Take a slice of DOM nodes, and scope CSS within every <style> tag
-func ScopeStyle(styles []*tycho.Node, opts TransformOptions) {
+func ScopeStyle(styles []*astro.Node, opts TransformOptions) bool {
+	didScope := false
+outer:
 	for _, n := range styles {
 		if n.DataAtom != a.Style {
 			continue
 		}
-		n.Attr = append(n.Attr, tycho.Attribute{
+		for _, attr := range n.Attr {
+			if attr.Key == "global" &&
+				(attr.Type == astro.EmptyAttribute) ||
+				(attr.Type == astro.ExpressionAttribute && attr.Val == "true") ||
+				(attr.Type == astro.QuotedAttribute && (attr.Val == "" || attr.Val == "true")) {
+				continue outer
+			}
+		}
+		didScope = true
+		n.Attr = append(n.Attr, astro.Attribute{
 			Key: "data-astro-id",
 			Val: opts.Scope,
 		})
@@ -205,6 +216,7 @@ func ScopeStyle(styles []*tycho.Node, opts TransformOptions) {
 		}
 		n.FirstChild.Data = out
 	}
+	return didScope
 }
 
 // Turn ".foo" into ".foo.astro-XXXXXX"
