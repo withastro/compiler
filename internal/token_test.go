@@ -280,6 +280,11 @@ func TestExpressions(t *testing.T) {
 			"{false ? <div>#f</div> : <div>#t</div>}",
 			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken},
 		},
+		{
+			"title",
+			"<title>test {expr} test</title>",
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Expressions)
