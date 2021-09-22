@@ -1609,9 +1609,7 @@ func textIM(p *parser) bool {
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
-		p.im = p.originalIM
-		p.originalIM = nil
-		return p.tok.Type == EndExpressionToken
+		return true
 	}
 	p.im = p.originalIM
 	p.originalIM = nil
