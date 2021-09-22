@@ -417,6 +417,16 @@ import Widget2 from '../components/Widget2.astro';`},
 				code:        `<html><head><title>a ${expr} b</title></head><body></body></html>`,
 			},
 		},
+		{
+			name:   "text after title expressions",
+			source: `<title>a {expr} b {expr} c</title>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `<html><head><title>a ${expr} b ${expr} c</title></head><body></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
