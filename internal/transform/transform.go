@@ -16,11 +16,11 @@ func Transform(doc *tycho.Node, opts TransformOptions) {
 	extractScriptsAndStyles(doc)
 
 	if len(doc.Styles) > 0 {
-		ScopeStyle(doc.Styles, opts)
-
-		walk(doc, func(n *tycho.Node) {
-			ScopeElement(n, opts)
-		})
+		if shouldScope := ScopeStyle(doc.Styles, opts); shouldScope {
+			walk(doc, func(n *tycho.Node) {
+				ScopeElement(n, opts)
+			})
+		}
 	}
 
 	if len(doc.Scripts) > 0 {
@@ -49,11 +49,6 @@ func extractScriptsAndStyles(doc *tycho.Node) ([]*tycho.Node, []*tycho.Node) {
 				// Remove local script node
 				n.Parent.RemoveChild(n)
 			case a.Style:
-				for _, attr := range n.Attr {
-					if attr.Key == "hoist" {
-						doc.Styles = append(doc.Styles, n)
-					}
-				}
 				doc.Styles = append(doc.Styles, n)
 				// Remove local style node
 				n.Parent.RemoveChild(n)
