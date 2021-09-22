@@ -1,52 +1,13 @@
 package transform
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"testing"
 
 	astro "github.com/snowpackjs/astro/internal"
-	tycho "github.com/snowpackjs/astro/internal"
 	"golang.org/x/net/html/atom"
 )
-
-func printToSource(buf bytes.Buffer, node *tycho.Node) string {
-	if node.Type == tycho.ElementNode {
-		buf.WriteString(fmt.Sprintf(`<%s`, node.Data))
-		for _, attr := range node.Attr {
-			if attr.Namespace != "" {
-				buf.WriteString(attr.Namespace)
-				buf.WriteString(":")
-			}
-
-			buf.WriteString(" ")
-			switch attr.Type {
-			case astro.QuotedAttribute:
-				buf.WriteString(attr.Key)
-				buf.WriteString("=")
-				buf.WriteString(`"` + attr.Val + `"`)
-			case astro.EmptyAttribute:
-				buf.WriteString(attr.Key)
-			case astro.ExpressionAttribute:
-				buf.WriteString(attr.Key)
-				buf.WriteString("=")
-				buf.WriteString(`{` + strings.TrimSpace(attr.Val) + `}`)
-			case astro.SpreadAttribute:
-				buf.WriteString(`{...` + strings.TrimSpace(attr.Val) + `}`)
-			case astro.ShorthandAttribute:
-				buf.WriteString(attr.Key)
-				buf.WriteString("=")
-				buf.WriteString(`{` + strings.TrimSpace(attr.Key) + `}`)
-			case astro.TemplateLiteralAttribute:
-				buf.WriteString(attr.Key)
-				buf.WriteString("=`" + strings.TrimSpace(attr.Val) + "`")
-			}
-		}
-		buf.WriteString(fmt.Sprintf(`></%s>`, node.Data))
-	}
-	return buf.String()
-}
 
 func TestScopeHTML(t *testing.T) {
 	tests := []struct {
@@ -107,12 +68,14 @@ func TestScopeHTML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodes, err := tycho.ParseFragment(strings.NewReader(tt.source), &tycho.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()})
+			nodes, err := astro.ParseFragment(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()})
 			if err != nil {
 				t.Error(err)
 			}
 			ScopeElement(nodes[0], TransformOptions{Scope: "XXXXXX"})
-			got := printToSource(*bytes.NewBuffer([]byte{}), nodes[0])
+			var b strings.Builder
+			astro.PrintToSource(&b, nodes[0])
+			got := b.String()
 			if tt.want != got {
 				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
 			}
