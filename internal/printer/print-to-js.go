@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	. "github.com/snowpackjs/astro/internal"
@@ -416,7 +417,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(`"` + a.Val + `"`)
 					slotted = true
 				default:
-					panic("slot[name] must does must be a static string")
+					panic("slot[name] must be a static string")
 				}
 				// if i != len(n.Attr)-1 {
 				// 	p.print("")
@@ -509,7 +510,14 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						slottedChildren[slotName] = append(slottedChildren[slotName], c)
 					}
 				}
-				for slotName, children := range slottedChildren {
+				// fix: sort keys for stable output
+				slottedKeys := make([]string, 0, len(slottedChildren))
+				for k := range slottedChildren {
+					slottedKeys = append(slottedKeys, k)
+				}
+				sort.Strings(slottedKeys)
+				for _, slotName := range slottedKeys {
+					children := slottedChildren[slotName]
 					p.print(fmt.Sprintf(`"%s": () => `, slotName))
 					p.printTemplateLiteralOpen()
 					for _, child := range children {
