@@ -7,7 +7,6 @@ package printer
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -90,16 +89,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL)
 
-		if c := n.FirstChild; c == nil || c != nil && c.Type != FrontmatterNode {
-			if len(n.Styles) > 0 {
-				p.println("export const STYLES = [")
-				for _, style := range n.Styles {
-					p.println(fmt.Sprintf("  %s%s%s,", BACKTICK, style.FirstChild.Data, BACKTICK))
-				}
-				p.println("];")
-			}
-		}
-
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			render1(p, c, RenderOptions{
 				isRoot:       true,
@@ -151,31 +140,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				if len(n.Parent.Styles) > 0 {
 					p.println("const STYLES = [")
 					for _, style := range n.Parent.Styles {
-						p.addNilSourceMapping()
-						p.print(fmt.Sprintf("  %s", BACKTICK))
-						var dataAstroId Attribute
-						var defineVars Attribute
-
-						for _, attr := range style.Attr {
-							switch attr.Key {
-							case "data-astro-id":
-								dataAstroId = attr
-							case "define:vars":
-								defineVars = attr
-							}
-						}
-
-						if defineVars.Key != "" && dataAstroId.Key != "" {
-							p.print(fmt.Sprintf("${%s(\"astro-%s\", ", DEFINE_STYLE_VARS, dataAstroId.Val))
-							p.addSourceMapping(defineVars.ValLoc)
-							p.print(defineVars.Val)
-							p.println(")}")
-						}
-
-						p.addSourceMapping(style.Loc[0])
-						p.print(style.FirstChild.Data)
-						p.addNilSourceMapping()
-						p.println(fmt.Sprintf("%s,", BACKTICK))
+						p.printStyleOrScript(style)
 					}
 					p.println("];")
 					p.addNilSourceMapping()
@@ -185,28 +150,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				if len(n.Parent.Scripts) > 0 {
 					p.println("const SCRIPTS = [")
 					for _, script := range n.Parent.Scripts {
-						p.addNilSourceMapping()
-						p.print(fmt.Sprintf("  %s", BACKTICK))
-						var defineVars Attribute
-
-						for _, attr := range script.Attr {
-							switch attr.Key {
-							case "define:vars":
-								defineVars = attr
-							}
-						}
-
-						if defineVars.Key != "" {
-							p.print(fmt.Sprintf("${%s(", DEFINE_SCRIPT_VARS))
-							p.addSourceMapping(defineVars.ValLoc)
-							p.print(defineVars.Val)
-							p.println(")}")
-						}
-
-						p.addSourceMapping(script.Loc[0])
-						p.print(script.FirstChild.Data)
-						p.addNilSourceMapping()
-						p.println(fmt.Sprintf("%s,", BACKTICK))
+						p.printStyleOrScript(script)
 					}
 					p.println("];")
 					p.addNilSourceMapping()
@@ -228,6 +172,27 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		// Render func prelude. Will only run for the first non-frontmatter node
 		// TODO: use the proper component name
 		p.printFuncPrelude("$$Component")
+
+		// If we haven't printed the funcPrelude but we do have Styles/Scripts, we need to print them!
+		if len(n.Styles) > 0 {
+			p.println("const STYLES = [")
+			for _, style := range n.Styles {
+				p.printStyleOrScript(style)
+			}
+			p.println("];")
+			p.addNilSourceMapping()
+			p.println(fmt.Sprintf("%s.styles.add(...STYLES)", RESULT))
+		}
+		if len(n.Scripts) > 0 {
+			p.println("const SCRIPTS = [")
+			for _, script := range n.Scripts {
+				p.printStyleOrScript(script)
+			}
+			p.println("];")
+			p.addNilSourceMapping()
+			p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS)", RESULT))
+		}
+
 		p.printReturnOpen()
 	}
 	switch n.Type {
@@ -237,23 +202,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			p.print(n.Data)
 			return
 		}
-		dollarOpen := regexp.MustCompile(`\${`)
-		parenOpen := regexp.MustCompile(`\(`)
-		parenClose := regexp.MustCompile(`\)`)
-		braceOpen := regexp.MustCompile(`\{`)
-		braceClose := regexp.MustCompile(`\}`)
-		bracketOpen := regexp.MustCompile(`\[`)
-		bracketClose := regexp.MustCompile(`\]`)
-		text := n.Data
-		text = strings.Replace(text, "\\", "\\\\", -1)
-		text = escapeBackticks(text)
-		text = dollarOpen.ReplaceAllString(text, "\\${")
-		text = parenOpen.ReplaceAllString(text, "&lpar;")
-		text = parenClose.ReplaceAllString(text, "&rpar;")
-		text = braceOpen.ReplaceAllString(text, "&lbrace;")
-		text = braceClose.ReplaceAllString(text, "&rbrace;")
-		text = bracketOpen.ReplaceAllString(text, "&lbrack;")
-		text = bracketClose.ReplaceAllString(text, "&rbrack;")
+		text := escapeText(n.Data)
 		p.addSourceMapping(n.Loc[0])
 		p.print(text)
 		return
@@ -262,7 +211,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case CommentNode:
 		p.addSourceMapping(n.Loc[0])
 		p.print("<!--")
-		p.print(escapeBackticks(n.Data))
+		p.print(escapeText(n.Data))
 		p.print("-->")
 		return
 	case DoctypeNode:
@@ -352,56 +301,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	p.addSourceMapping(n.Loc[0])
 	if isComponent {
-		if len(n.Attr) != 0 {
-			p.print(", {")
-		} else {
-			p.print(", {}")
-		}
-		for i, a := range n.Attr {
-			if i != 0 {
-				p.print(",")
-			}
-			switch a.Type {
-			case QuotedAttribute:
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + a.Key + `"`)
-				p.print(":")
-				p.addSourceMapping(a.ValLoc)
-				p.print(`"` + a.Val + `"`)
-			case EmptyAttribute:
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + a.Key + `"`)
-				p.print(":")
-				p.print("true")
-			case ExpressionAttribute:
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + a.Key + `"`)
-				p.print(":")
-				p.addSourceMapping(a.ValLoc)
-				p.print(`(` + a.Val + `)`)
-			case SpreadAttribute:
-				p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
-				p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
-			case ShorthandAttribute:
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
-				p.print(":")
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`(` + strings.TrimSpace(a.Key) + `)`)
-			case TemplateLiteralAttribute:
-				p.addSourceMapping(a.KeyLoc)
-				p.print(`"` + strings.TrimSpace(a.Key) + `"`)
-				p.print(":")
-				p.print("`" + strings.TrimSpace(a.Key) + "`")
-			}
-			p.addSourceMapping(n.Loc[0])
-			// if i != len(n.Attr)-1 {
-			// 	p.print("")
-			// }
-		}
-		if len(n.Attr) != 0 {
-			p.print("}")
-		}
+		p.print(",")
+		p.printAttributesToObject(n)
 	} else if isSlot {
 		if len(n.Attr) == 0 {
 			p.print(`"default"`)
@@ -463,7 +364,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case "iframe", "noembed", "noframes", "noscript", "plaintext", "script", "style", "xmp":
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				p.print(c.Data)
+				p.print(escapeText(c.Data))
 			} else {
 				render1(p, c, RenderOptions{
 					isRoot: false,
@@ -591,10 +492,4 @@ var voidElements = map[string]bool{
 	"source": true,
 	"track":  true,
 	"wbr":    true,
-}
-
-// Escape backtick characters for Text nodes
-func escapeBackticks(src string) string {
-	backticks := regexp.MustCompile("`")
-	return backticks.ReplaceAllString(src, "\\`")
 }
