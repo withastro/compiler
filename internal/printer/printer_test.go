@@ -30,6 +30,8 @@ var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 export default $$Component;`
 var STYLE_PRELUDE = "const STYLES = [\n"
 var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES)\n"
+var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
+var SCRIPT_SUFFIX = "];\n$$result.scripts.add(...SCRIPTS)\n"
 
 func TestPrinter(t *testing.T) {
 	type want struct {
@@ -37,8 +39,7 @@ func TestPrinter(t *testing.T) {
 		frontmatter []string
 		styles      []string
 		code        string
-		// TODO: add scripts & styles for testing later?
-		// scripts []string
+		scripts     []string
 	}
 	tests := []struct {
 		name   string
@@ -92,7 +93,7 @@ import VueComponent from '../components/Vue.vue';
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent, {})}
+    ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent,{})}
   </body></html>`,
 			},
 		},
@@ -178,7 +179,7 @@ import Component from 'test';
 				imports:     "",
 				frontmatter: []string{`import Component from 'test';`},
 				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component, {},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -195,7 +196,7 @@ import Component from 'test';
 				imports:     "",
 				frontmatter: []string{`import Component from 'test';`},
 				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component, {},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -371,7 +372,7 @@ const someProps = {
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`},
-				styles: []string{":root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}"},
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				code: `<html lang="en">
   <head>
     <meta charset="utf-8">
@@ -381,7 +382,7 @@ const someProps = {
   </head>
   <body>
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter, {...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>`,
 			},
@@ -405,6 +406,54 @@ import Widget2 from '../components/Widget2.astro';`},
   <head>
     <script type="module" src="/regular_script.js"></script>
   </head><body></body></html>`,
+			},
+		},
+		{
+			name: "script hoist with frontmatter",
+			source: `---
+---
+<script type="module" hoist>console.log("Hello");</script>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
+				code:        `<html><head></head><body></body></html>`,
+			},
+		},
+		{
+			name: "script hoist remote",
+			source: `---
+---
+<script type="module" hoist src="url" />`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				scripts:     []string{`{props:{"type":"module","hoist":true,"src":"url"}}`},
+				code:        "<html><head></head><body></body></html>",
+			},
+		},
+		{
+			name: "script hoist without frontmatter",
+			source: `
+					<main>
+						<script type="module" hoist>console.log("Hello");</script>
+					`,
+			want: want{
+				imports: "",
+				styles:  []string{},
+				scripts: []string{},
+				code: `<html><head></head><body><main>
+
+</main></body></html>`,
+			},
+		},
+		{
+			name:   "script nohoist",
+			source: `<main><script type="module">console.log("Hello");</script>`,
+			want: want{
+				code: `<html><head></head><body><main><script type="module">console.log("Hello");</script></main></body></html>`,
 			},
 		},
 		{
@@ -458,9 +507,16 @@ import Widget2 from '../components/Widget2.astro';`},
 			if len(tt.want.styles) > 0 {
 				toMatch = toMatch + STYLE_PRELUDE
 				for _, style := range tt.want.styles {
-					toMatch = toMatch + "  `" + style + "`,\n"
+					toMatch = toMatch + style + ",\n"
 				}
 				toMatch = toMatch + STYLE_SUFFIX
+			}
+			if len(tt.want.scripts) > 0 {
+				toMatch = toMatch + SCRIPT_PRELUDE
+				for _, script := range tt.want.scripts {
+					toMatch = toMatch + script + ",\n"
+				}
+				toMatch = toMatch + SCRIPT_SUFFIX
 			}
 			toMatch = toMatch + fmt.Sprintf("%s%s", RETURN, tt.want.code)
 			toMatch = toMatch + SUFFIX

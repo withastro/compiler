@@ -19,13 +19,8 @@ outer:
 		if n.DataAtom != a.Style {
 			continue
 		}
-		for _, attr := range n.Attr {
-			if attr.Key == "global" &&
-				(attr.Type == astro.EmptyAttribute) ||
-				(attr.Type == astro.ExpressionAttribute && attr.Val == "true") ||
-				(attr.Type == astro.QuotedAttribute && (attr.Val == "" || attr.Val == "true")) {
-				continue outer
-			}
+		if hasTruthyAttr(n, "global") {
+			continue outer
 		}
 		didScope = true
 		n.Attr = append(n.Attr, astro.Attribute{

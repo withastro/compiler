@@ -99,6 +99,63 @@ func (p *printer) printFuncSuffix(componentName string) {
 	p.println(fmt.Sprintf("export default %s;", componentName))
 }
 
+func (p *printer) printAttributesToObject(n *astro.Node) {
+	p.print("{")
+	for i, a := range n.Attr {
+		if i != 0 {
+			p.print(",")
+		}
+		switch a.Type {
+		case astro.QuotedAttribute:
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + a.Key + `"`)
+			p.print(":")
+			p.addSourceMapping(a.ValLoc)
+			p.print(`"` + a.Val + `"`)
+		case astro.EmptyAttribute:
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + a.Key + `"`)
+			p.print(":")
+			p.print("true")
+		case astro.ExpressionAttribute:
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + a.Key + `"`)
+			p.print(":")
+			p.addSourceMapping(a.ValLoc)
+			p.print(`(` + a.Val + `)`)
+		case astro.SpreadAttribute:
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
+			p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
+		case astro.ShorthandAttribute:
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+			p.print(":")
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`(` + strings.TrimSpace(a.Key) + `)`)
+		case astro.TemplateLiteralAttribute:
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+			p.print(":")
+			p.print("`" + strings.TrimSpace(a.Key) + "`")
+		}
+	}
+	p.print("}")
+}
+
+func (p *printer) printStyleOrScript(n *astro.Node) {
+	p.addNilSourceMapping()
+	p.print("{props:")
+	p.printAttributesToObject(n)
+	if n.FirstChild != nil && strings.TrimSpace(n.FirstChild.Data) != "" {
+		p.print(",children:`")
+		p.addSourceMapping(n.Loc[0])
+		p.print(escapeText(strings.TrimSpace(n.FirstChild.Data)))
+		p.addNilSourceMapping()
+		p.print("`")
+	}
+	p.print("},\n")
+}
+
 func (p *printer) printAttribute(attr astro.Attribute) {
 	if attr.Namespace != "" {
 		p.print(attr.Namespace)
