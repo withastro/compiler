@@ -476,6 +476,23 @@ import Widget2 from '../components/Widget2.astro';`},
 				code:        `<html><head><title>a ${expr} b ${expr} c</title></head><body></body></html>`,
 			},
 		},
+		{
+			name: "slots (dynamic name)",
+			source: `---
+		import Component from 'test';
+		const name = 'named';
+		---
+		<Component>
+			<div slot={name}>Named</div>
+		</Component>`,
+			want: want{
+				imports: "",
+				frontmatter: []string{`import Component from 'test';
+		const name = 'named';`},
+				styles: []string{},
+				code:   `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
