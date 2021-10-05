@@ -395,20 +395,22 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.print(`,{`)
 				slottedChildren := make(map[string][]*Node, 0)
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
-					slotName := "default"
+					slotProp := `"default"`
 					for _, a := range c.Attr {
 						if a.Key == "slot" {
 							if a.Type == QuotedAttribute {
-								slotName = a.Val
+								slotProp = fmt.Sprintf(`"%s"`, a.Val)
+							} else if a.Type == ExpressionAttribute {
+								slotProp = fmt.Sprintf(`[%s]`, a.Val)
 							} else {
-								panic(`slot attribute cannot have a dynamic value`)
+								panic(`unknown slot attribute type`)
 							}
 						}
 					}
 					// Only slot ElementNodes or non-empty TextNodes!
 					// CommentNode and others should not be slotted
 					if c.Type == ElementNode || (c.Type == TextNode && strings.TrimSpace(c.Data) != "") {
-						slottedChildren[slotName] = append(slottedChildren[slotName], c)
+						slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 					}
 				}
 				// fix: sort keys for stable output
@@ -417,9 +419,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					slottedKeys = append(slottedKeys, k)
 				}
 				sort.Strings(slottedKeys)
-				for _, slotName := range slottedKeys {
-					children := slottedChildren[slotName]
-					p.print(fmt.Sprintf(`"%s": () => `, slotName))
+				for _, slotProp := range slottedKeys {
+					children := slottedChildren[slotProp]
+					p.print(fmt.Sprintf(`%s: () => `, slotProp))
 					p.printTemplateLiteralOpen()
 					for _, child := range children {
 						render1(p, child, RenderOptions{
