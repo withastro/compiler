@@ -38,6 +38,11 @@ jobs:
         with:
           node-version: 14.x
 
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-engines
+        env:
+          CI: true
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@master
