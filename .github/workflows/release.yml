@@ -51,6 +51,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Tag release on GitHub
+        if: steps.changesets.outputs.published == 'true'
+        id: push-tags
+        run: git push --follow-tags
 
       - name: Send a Discord notification if a publish happens
         if: steps.changesets.outputs.published == 'true'
