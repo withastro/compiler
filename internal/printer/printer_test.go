@@ -45,7 +45,6 @@ type testcase struct {
 	name   string
 	source string
 	only   bool
-	frag   bool
 	want   want
 }
 
