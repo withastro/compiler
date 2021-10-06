@@ -1,0 +1,57 @@
+name: Changelog
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Get tinygo runtime
+        run: |
+          wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.18.0/tinygo_0.18.0_amd64.deb
+          sudo dpkg -i /tmp/tinygo_0.18.0_amd64.deb
+
+      - name: Build WASM
+        run: |
+          mkdir -p /home/runner/go/src/github.com/snowpackjs/astro
+          cp -R . /home/runner/go/src/github.com/snowpackjs/astro/
+          tinygo build -o astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
+
+  release:
+    name: Changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@master
+        with:
+          publish: yarn publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Send a Discord notification if a publish happens
+        if: steps.changesets.outputs.published == 'true'
+        id: discord-notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@0.3.2
+        with:
+          args: 'A new release of astro-compiler-next just went out! [Release notes →](<https://github.com/snowpackjs/astro-compiler-next/releases/>)'

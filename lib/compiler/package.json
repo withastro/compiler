@@ -3,8 +3,7 @@
   "type": "module",
   "version": "0.1.0-canary.47",
   "scripts": {
-    "build": "tsc -p .",
-    "prepublish": "npm run build"
+    "build": "tsc -p ."
   },
   "main": "./node/index.js",
   "types": "./shared/types.d.ts",
