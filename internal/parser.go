@@ -732,11 +732,10 @@ func beforeHeadIM(p *parser) bool {
 		// Ignore the token.
 		return true
 	case StartExpressionToken:
+		p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
 		p.addExpression()
-		return true
-	case EndExpressionToken:
-		p.addLoc()
-		p.oe.pop()
+		p.setOriginalIM()
+		p.im = expressionIM
 		return true
 	}
 	p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
@@ -2356,6 +2355,28 @@ func afterAfterFramesetIM(p *parser) bool {
 		// Ignore the token.
 	}
 	return true
+}
+
+func expressionIM(p *parser) bool {
+	switch p.tok.Type {
+	case ErrorToken:
+		p.oe.pop()
+	case TextToken:
+		return textIM(p)
+	case StartTagToken:
+		return inBodyIM(p)
+	case EndTagToken:
+		return inBodyIM(p)
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
+		p.im = p.originalIM
+		p.originalIM = nil
+		return true
+	}
+	p.im = p.originalIM
+	p.originalIM = nil
+	return p.tok.Type == EndTagToken
 }
 
 func ignoreTheRemainingTokens(p *parser) bool {

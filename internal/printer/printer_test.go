@@ -33,19 +33,24 @@ var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES)\n"
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\n$$result.scripts.add(...SCRIPTS)\n"
 
+type want struct {
+	imports     string
+	frontmatter []string
+	styles      []string
+	code        string
+	scripts     []string
+}
+
+type testcase struct {
+	name   string
+	source string
+	only   bool
+	frag   bool
+	want   want
+}
+
 func TestPrinter(t *testing.T) {
-	type want struct {
-		imports     string
-		frontmatter []string
-		styles      []string
-		code        string
-		scripts     []string
-	}
-	tests := []struct {
-		name   string
-		source string
-		want   want
-	}{
+	tests := []testcase{
 		{
 			name:   "basic (no frontmatter)",
 			source: `<button>Click</button>`,
@@ -493,16 +498,37 @@ import Widget2 from '../components/Widget2.astro';`},
 				code:   `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
+		{
+			name:   "condition expressions at the top-level",
+			source: `{cond && <span></span>}`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        "<html><head>${cond && $$render`<span></span>`}</head><body></body></html>",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		if tt.only {
+			tests = make([]testcase, 0)
+			tests = append(tests, tt)
+			break
+		}
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
+
 			doc, err := tycho.Parse(strings.NewReader(code))
+
 			if err != nil {
 				t.Error(err)
 			}
+
 			hash := tycho.HashFromSource(code)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{
