@@ -868,7 +868,7 @@ func inHeadIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.setOriginalIM()
-		p.im = textIM
+		p.im = expressionIM
 		return true
 	case EndExpressionToken:
 		p.addLoc()

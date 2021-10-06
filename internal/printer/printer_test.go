@@ -499,12 +499,13 @@ import Widget2 from '../components/Widget2.astro';`},
 		},
 		{
 			name:   "condition expressions at the top-level",
-			source: `{cond && <span></span>}`,
+			source: `{cond && <span></span>}{cond && <strong></strong>}`,
+			only:   true,
 			want: want{
 				imports:     "",
 				frontmatter: []string{},
 				styles:      []string{},
-				code:        "<html><head>${cond && $$render`<span></span>`}</head><body></body></html>",
+				code:        "<html><head>${cond && $$render`<span></span>`}${cond && $$render`<strong></strong>`}</head><body></body></html>",
 			},
 		},
 	}
