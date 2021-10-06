@@ -393,7 +393,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			switch true {
 			case isComponent:
 				p.print(`,{`)
-				slottedChildren := make(map[string][]*Node, 0)
+				slottedChildren := make(map[string][]*Node)
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					slotProp := `"default"`
 					for _, a := range c.Attr {
