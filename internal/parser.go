@@ -591,38 +591,11 @@ const whitespace = " \t\r\n\f"
 
 // Section 12.2.6.4.1.
 func initialIM(p *parser) bool {
-	if p.frontmatterState == FrontmatterOpen {
-		switch p.tok.Type {
-		case FrontmatterFenceToken:
-			p.frontmatterState = FrontmatterClosed
-			p.fm.Loc = append(p.fm.Loc, p.tok.Loc)
-			for range p.oe {
-				p.oe.pop()
-			}
-			return true
-		case TextToken:
-			p.addText(p.tok.Data)
-			return true
-		case StartTagToken:
-			p.addElement()
-			if p.hasSelfClosingToken {
-				p.oe.pop()
-				p.acknowledgeSelfClosingTag()
-			}
-			return true
-		case EndTagToken:
-			p.addLoc()
-			p.oe.pop()
-			return true
-		default:
-			// Ignore the token.
-			return false
-		}
-	}
 	switch p.tok.Type {
 	case FrontmatterFenceToken:
-		p.addFrontmatter(false)
-		return true
+		p.setOriginalIM()
+		p.im = frontmatterIM
+		return false
 	case TextToken:
 		p.tok.Data = strings.TrimLeft(p.tok.Data, whitespace)
 		if len(p.tok.Data) == 0 {
@@ -1017,6 +990,10 @@ func copyAttributes(dst *Node, src Token) {
 // Section 12.2.6.4.7.
 func inBodyIM(p *parser) bool {
 	switch p.tok.Type {
+	case FrontmatterFenceToken:
+		p.setOriginalIM()
+		p.im = frontmatterIM
+		return false
 	case TextToken:
 		d := p.tok.Data
 		switch n := p.oe.top(); n.DataAtom {
@@ -1396,7 +1373,9 @@ func inBodyIM(p *parser) bool {
 			}
 		}
 	}
-
+	if p.frontmatterState == FrontmatterInitial {
+		p.addFrontmatter(true)
+	}
 	return true
 }
 
@@ -2357,6 +2336,48 @@ func afterAfterFramesetIM(p *parser) bool {
 	return true
 }
 
+// Handle Frontmatter content, depending on p.frontmatterState
+func frontmatterIM(p *parser) bool {
+	switch p.tok.Type {
+	case FrontmatterFenceToken:
+		if p.frontmatterState == FrontmatterInitial {
+			p.addFrontmatter(false)
+			return true
+		} else {
+			p.frontmatterState = FrontmatterClosed
+			p.fm.Loc = append(p.fm.Loc, p.tok.Loc)
+			for range p.oe {
+				// This removes any elements in the Frontmatter from the stack
+				// Note that we can't pop the root <html> element — we need it for ParseFragment
+				if p.oe.top().DataAtom != a.Html {
+					p.oe.pop()
+				}
+			}
+			p.im = p.originalIM
+			p.originalIM = nil
+			return true
+		}
+	case TextToken:
+		p.addText(p.tok.Data)
+		return true
+	case StartTagToken:
+		p.addElement()
+		if p.hasSelfClosingToken {
+			p.oe.pop()
+			p.acknowledgeSelfClosingTag()
+		}
+		return true
+	case EndTagToken:
+		p.addLoc()
+		p.oe.pop()
+		return true
+	default:
+		p.im = p.originalIM
+		p.originalIM = nil
+		return false
+	}
+}
+
 func expressionIM(p *parser) bool {
 	switch p.tok.Type {
 	case ErrorToken:
@@ -2689,11 +2710,16 @@ func ParseFragmentWithOptions(r io.Reader, context *Node, opts ...ParseOption) (
 	}
 
 	var result []*Node
+	if p.fm.FirstChild != nil {
+		p.fm.Parent.RemoveChild(p.fm)
+		result = append(result, p.fm)
+	}
 	for c := parent.FirstChild; c != nil; {
 		next := c.NextSibling
 		parent.RemoveChild(c)
 		result = append(result, c)
 		c = next
 	}
+
 	return result, nil
 }

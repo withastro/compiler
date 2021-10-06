@@ -2,7 +2,7 @@ export interface TransformOptions {
   sourcefile?: string;
   internalURL?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
-
+  as?: 'document'|'fragment';
 }
 
 export interface TransformResult {

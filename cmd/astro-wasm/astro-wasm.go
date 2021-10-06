@@ -81,7 +81,7 @@ func Transform(this js.Value, args []js.Value) interface{} {
 	if transformOptions.As == "document" {
 		docNode, _ := astro.Parse(strings.NewReader(source))
 		doc = docNode
-	} else if transformOptions.As == "component" {
+	} else if transformOptions.As == "fragment" {
 		nodes, _ := astro.ParseFragment(strings.NewReader(source), &astro.Node{
 			Type:     astro.ElementNode,
 			Data:     atom.Body.String(),
@@ -91,12 +91,8 @@ func Transform(this js.Value, args []js.Value) interface{} {
 			Type: astro.DocumentNode,
 		}
 		for i := 0; i < len(nodes); i++ {
-			node := nodes[i]
-			if node.Type == astro.FrontmatterNode {
-				doc.InsertBefore(node, doc.FirstChild)
-			} else {
-				doc.AppendChild(nodes[i])
-			}
+			n := nodes[i]
+			doc.AppendChild(n)
 		}
 	}
 
