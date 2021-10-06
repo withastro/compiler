@@ -17,3 +17,6 @@ issues:
     - linters:
         - staticcheck
       text: "SA9003"
+    - linters:
+        - typecheck
+      text: "github.com/norunners/vert"

@@ -513,12 +513,12 @@ import Widget2 from '../components/Widget2.astro';`},
 
 			toMatch := INTERNAL_IMPORTS
 			if len(tt.want.frontmatter) > 0 {
-				toMatch = toMatch + fmt.Sprintf(strings.TrimSpace(tt.want.frontmatter[0]))
+				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0]))
 			}
 			toMatch = toMatch + "\n" + PRELUDE
 			if len(tt.want.frontmatter) > 1 {
 				// format want
-				toMatch = toMatch + fmt.Sprintf(strings.TrimSpace(tt.want.frontmatter[0]))
+				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0]))
 			}
 			toMatch = toMatch + "\n"
 			if len(tt.want.styles) > 0 {
