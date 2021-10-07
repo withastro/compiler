@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.8
+
+### Patch Changes
+
+- d159658: Publish via PR
+
 ## 0.1.7
 
 ### Patch Changes
