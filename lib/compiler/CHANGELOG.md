@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.4
+
+### Patch Changes
+
+- 2f1f1b8: Pass custom element tag names to renderComponent as strings
+
 ## 0.1.3
 
 ### Patch Changes
