@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.6
+
+### Patch Changes
+
+- bd05f7c: Actually include _any_ files?
+
 ## 0.1.5
 
 ### Patch Changes
