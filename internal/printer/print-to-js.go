@@ -296,7 +296,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if n.Fragment {
 		p.print("Fragment")
 	} else if !isSlot {
-		p.print(n.Data)
+		if n.CustomElement {
+			p.print(fmt.Sprintf("'%s'", n.Data))
+		} else {
+			p.print(n.Data)
+		}
 	}
 
 	p.addSourceMapping(n.Loc[0])
