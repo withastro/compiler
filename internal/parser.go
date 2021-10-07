@@ -395,6 +395,17 @@ func isCustomElement(data string) bool {
 	return strings.Contains(data, "-")
 }
 
+func (p *parser) isInsideHead() bool {
+	n := p.oe.top()
+	for n != nil {
+		if n.DataAtom == a.Head {
+			return true
+		}
+		n = n.Parent
+	}
+	return false
+}
+
 // addElement adds a child element based on the current token.
 func (p *parser) addElement() {
 	p.addChild(&Node{
@@ -2364,14 +2375,44 @@ func expressionIM(p *parser) bool {
 	case TextToken:
 		return textIM(p)
 	case StartTagToken:
-		return inBodyIM(p)
+		if isComponent(p.tok.Data) {
+			return inBodyIM(p)
+		}
+
+		n := p.oe.top()
+		if p.isInsideHead() {
+			switch p.tok.DataAtom {
+			case a.Noframes, a.Style, a.Script, a.Title, a.Noscript, a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta:
+				return textIM(p)
+			default:
+				for {
+					if n.Expression {
+						p.oe.pop()
+						p.im = inHeadIM
+						p.parseImpliedToken(EndTagToken, a.Head, a.Head.String())
+						p.parseImpliedToken(StartTagToken, a.Body, a.Body.String())
+						n.Parent.RemoveChild(n)
+						p.addChild(n)
+						p.im = expressionIM
+						break
+					}
+
+					p.oe.pop()
+					n = p.oe.top()
+				}
+
+				p.originalIM = inBodyIM
+				return false
+			}
+		} else {
+			return inBodyIM(p)
+		}
 	case EndTagToken:
 		return inBodyIM(p)
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
-		p.im = p.originalIM
-		p.originalIM = nil
+		p.im = textIM
 		return true
 	}
 	p.im = p.originalIM

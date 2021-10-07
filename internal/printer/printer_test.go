@@ -500,12 +500,21 @@ import Widget2 from '../components/Widget2.astro';`},
 		{
 			name:   "condition expressions at the top-level",
 			source: `{cond && <span></span>}{cond && <strong></strong>}`,
-			only:   true,
 			want: want{
 				imports:     "",
 				frontmatter: []string{},
 				styles:      []string{},
-				code:        "<html><head>${cond && $$render`<span></span>`}${cond && $$render`<strong></strong>`}</head><body></body></html>",
+				code:        "<html><head></head><body>${cond && $$render`<span></span>`}${cond && $$render`<strong></strong>`}</body></html>",
+			},
+		},
+		{
+			name:   "condition expressions at the top-level with head content",
+			source: `{cond && <meta charset=utf8>}{cond && <title>My title</title>}`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        "<html><head>${cond && $$render`<meta charset=\"utf8\">`}${cond && $$render`<title>My title</title>`}</head><body></body></html>",
 			},
 		},
 	}
