@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.5
+
+### Patch Changes
+
+- c4ed69e: Includes the wasm binary in the npm package
+
 ## 0.1.4
 
 ### Patch Changes
