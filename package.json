@@ -9,6 +9,7 @@
   "scripts": {
     "build": "make astro-wasm && lerna run build --scope @astrojs/compiler",
     "build:compiler": "lerna run build --scope @astrojs/compiler",
+    "prerelease": "yarn build",
     "release": "changeset publish"
   },
   "workspaces": [
