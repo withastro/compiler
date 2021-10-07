@@ -12,6 +12,7 @@ import (
 	astro "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/printer"
 	"github.com/snowpackjs/astro/internal/transform"
+	"golang.org/x/net/html/atom"
 )
 
 func main() {
@@ -32,6 +33,11 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		filename = "<stdin>"
 	}
 
+	as := jsString(options.Get("as"))
+	if as == "" {
+		as = "document"
+	}
+
 	internalURL := jsString(options.Get("internalURL"))
 	if internalURL == "" {
 		internalURL = "astro/internal"
@@ -43,6 +49,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	}
 
 	return transform.TransformOptions{
+		As:          as,
 		Scope:       hash,
 		Filename:    filename,
 		InternalURL: internalURL,
@@ -66,10 +73,28 @@ type TransformResult struct {
 
 func Transform(this js.Value, args []js.Value) interface{} {
 	source := jsString(args[0])
-
-	doc, _ := astro.Parse(strings.NewReader(source))
 	hash := astro.HashFromSource(source)
 	transformOptions := makeTransformOptions(js.Value(args[1]), hash)
+
+	var doc *astro.Node
+
+	if transformOptions.As == "document" {
+		docNode, _ := astro.Parse(strings.NewReader(source))
+		doc = docNode
+	} else if transformOptions.As == "fragment" {
+		nodes, _ := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+			Type:     astro.ElementNode,
+			Data:     atom.Body.String(),
+			DataAtom: atom.Body,
+		})
+		doc = &astro.Node{
+			Type: astro.DocumentNode,
+		}
+		for i := 0; i < len(nodes); i++ {
+			n := nodes[i]
+			doc.AppendChild(n)
+		}
+	}
 
 	transform.Transform(doc, transformOptions)
 
