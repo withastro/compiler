@@ -26,7 +26,8 @@ jobs:
         run: |
           mkdir -p /home/runner/go/src/github.com/snowpackjs/astro
           cp -R . /home/runner/go/src/github.com/snowpackjs/astro/
-          tinygo build -o astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
+          tinygo build -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
+          cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
       - name: Set up Node.js 14.x
         uses: actions/setup-node@v2
