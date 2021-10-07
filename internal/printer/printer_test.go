@@ -517,6 +517,19 @@ import Widget2 from '../components/Widget2.astro';`},
 				code:        "<html><head>${cond && $$render`<meta charset=\"utf8\">`}${cond && $$render`<title>My title</title>`}</head><body></body></html>",
 			},
 		},
+		{
+			name: "custom elements",
+			source: `---
+import 'test';
+---
+<my-element></my-element>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{`import 'test';`},
+				styles:      []string{},
+				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
