@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.7
+
+### Patch Changes
+
+- c52e69b: Include astro.wasm in the package
+
 ## 0.1.6
 
 ### Patch Changes
