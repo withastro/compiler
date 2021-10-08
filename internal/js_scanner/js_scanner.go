@@ -77,6 +77,11 @@ func HasExports(_source []byte) bool {
 	return false
 }
 
+func HasSideEffectualImports(_source []byte) bool {
+	// TODO implementation
+	return false
+}
+
 // TODO: check for access to $$vars
 func AccessesPrivateVars(_source []byte) bool {
 	source = _source

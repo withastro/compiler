@@ -16,11 +16,12 @@ type PrintResult struct {
 }
 
 type printer struct {
-	opts               transform.TransformOptions
-	output             []byte
-	builder            sourcemap.ChunkBuilder
-	hasFuncPrelude     bool
-	hasInternalImports bool
+	opts                       transform.TransformOptions
+	output                     []byte
+	builder                    sourcemap.ChunkBuilder
+	hasFuncPrelude             bool
+	hasInternalImports         bool
+	needsCustomElementRegistry bool
 }
 
 var TEMPLATE_TAG = "$$render"

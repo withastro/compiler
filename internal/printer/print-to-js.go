@@ -122,6 +122,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					importStatements := c.Data[0:renderBodyStart]
 					renderBody := c.Data[renderBodyStart:]
 
+					// TODO this goes somewhere else
+					if false && js_scanner.HasSideEffectualImports([]byte(importStatements)) {
+						p.needsCustomElementRegistry = true
+					}
+
 					if js_scanner.HasExports([]byte(renderBody)) {
 						panic(errors.New("Export statements must be placed at the top of .astro files!"))
 					}
