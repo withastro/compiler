@@ -22,8 +22,8 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
-const $$Component = %s(async ($$result, $$props, $$slots) => {
-const Astro = $$result.createAstro($$props);`, CREATE_COMPONENT)
+const $$Component = %s(async ($$result, $$props, %s) => {
+const Astro = $$result.createAstro($$props, %s);`, CREATE_COMPONENT, SLOTS, SLOTS)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
