@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.9
+
+### Patch Changes
+
+- 7d887de: Allows the Astro runtime to create the Astro.slots object
+
 ## 0.1.8
 
 ### Patch Changes
