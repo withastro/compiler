@@ -20,6 +20,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+	"AstroElementRegistry as " + CUSTOM_ELEMENT_REGISTRY_CTR,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, $$slots) => {
@@ -32,13 +33,16 @@ var STYLE_PRELUDE = "const STYLES = [\n"
 var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES)\n"
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\n$$result.scripts.add(...SCRIPTS)\n"
+var CUSTOM_ELEMENT_REGISTRY_PRELUDE = "const $$astroElementRegistry = new $$AstroElementRegistry({\n\tcandidates: new Map(["
+var CUSTOM_ELEMENT_REGISTRY_SUFFIX = "])\n});"
 
 type want struct {
-	imports     string
-	frontmatter []string
-	styles      []string
-	code        string
-	scripts     []string
+	imports        string
+	frontmatter    []string
+	styles         []string
+	code           string
+	scripts        []string
+	customElements []string
 }
 
 type testcase struct {
@@ -519,15 +523,17 @@ import Widget2 from '../components/Widget2.astro';`},
 		},
 		{
 			name: "custom elements",
+			only: true,
 			source: `---
 import 'test';
 ---
 <my-element></my-element>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{`import 'test';`},
-				styles:      []string{},
-				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
+				imports:        "",
+				frontmatter:    []string{`import 'test';`},
+				styles:         []string{},
+				customElements: []string{"my-element"},
+				code:           `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
 		},
 	}
@@ -562,6 +568,16 @@ import 'test';
 			toMatch := INTERNAL_IMPORTS
 			if len(tt.want.frontmatter) > 0 {
 				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0]))
+			}
+			if len(tt.want.customElements) > 0 {
+				toMatch = toMatch + "\n" + CUSTOM_ELEMENT_REGISTRY_PRELUDE
+				for i, name := range tt.want.customElements {
+					if i > 0 {
+						toMatch = toMatch + ","
+					}
+					toMatch = toMatch + "'" + name + "'"
+				}
+				toMatch = toMatch + CUSTOM_ELEMENT_REGISTRY_SUFFIX
 			}
 			toMatch = toMatch + "\n" + PRELUDE
 			if len(tt.want.frontmatter) > 1 {

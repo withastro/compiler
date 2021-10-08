@@ -42,6 +42,9 @@ func extractScriptsAndStyles(doc *tycho.Node) {
 				// Remove local style node
 				n.Parent.RemoveChild(n)
 			}
+			if n.CustomElement {
+				doc.CustomElements = append(doc.CustomElements, n.Data)
+			}
 		}
 	})
 }

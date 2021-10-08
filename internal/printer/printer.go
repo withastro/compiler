@@ -16,12 +16,12 @@ type PrintResult struct {
 }
 
 type printer struct {
-	opts                       transform.TransformOptions
-	output                     []byte
-	builder                    sourcemap.ChunkBuilder
-	hasFuncPrelude             bool
-	hasInternalImports         bool
-	needsCustomElementRegistry bool
+	opts                      transform.TransformOptions
+	output                    []byte
+	builder                   sourcemap.ChunkBuilder
+	hasFuncPrelude            bool
+	hasInternalImports        bool
+	hasRenderedCustomElements bool
 }
 
 var TEMPLATE_TAG = "$$render"
@@ -34,6 +34,8 @@ var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
 var RESULT = "$$result"
 var SLOTS = "$$slots"
+var CUSTOM_ELEMENT_REGISTRY_CTR = "$$AstroElementRegistry"
+var CUSTOM_ELEMENT_REGISTRY_INST = "$$astroElementRegistry"
 var BACKTICK = "`"
 
 func (p *printer) print(text string) {
@@ -57,6 +59,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 		"spreadAttributes as " + SPREAD_ATTRIBUTES,
 		"defineStyleVars as " + DEFINE_STYLE_VARS,
 		"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+		"AstroElementRegistry as " + CUSTOM_ELEMENT_REGISTRY_CTR,
 	}, ",\n  "), importSpecifier))
 	p.hasInternalImports = true
 }

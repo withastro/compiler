@@ -116,16 +116,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					}
 					p.print(strings.Trim(c.Data, " \t\r\n"))
+					renderCustomElementsRegistry(p, n.Parent, opts, c.Data)
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 				} else {
 					importStatements := c.Data[0:renderBodyStart]
 					renderBody := c.Data[renderBodyStart:]
-
-					// TODO this goes somewhere else
-					if false && js_scanner.HasSideEffectualImports([]byte(importStatements)) {
-						p.needsCustomElementRegistry = true
-					}
 
 					if js_scanner.HasExports([]byte(renderBody)) {
 						panic(errors.New("Export statements must be placed at the top of .astro files!"))
@@ -136,6 +132,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// }
 					p.addSourceMapping(c.Loc[0])
 					p.println(strings.Trim(importStatements, " \t\r\n"))
+					renderCustomElementsRegistry(p, n, opts, importStatements)
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 					p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
@@ -481,6 +478,22 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.printReturnClose()
 		// TODO: use proper component name
 		p.printFuncSuffix("$$Component")
+	}
+}
+
+func renderCustomElementsRegistry(p *printer, n *Node, opts RenderOptions, importStatements string) {
+	if len(n.CustomElements) > 0 && js_scanner.HasSideEffectualImports([]byte(importStatements)) {
+		p.hasRenderedCustomElements = true
+
+		p.print(fmt.Sprintf("\nconst %s = new %s({\n", CUSTOM_ELEMENT_REGISTRY_INST, CUSTOM_ELEMENT_REGISTRY_CTR))
+		p.print("\tcandidates: new Map([")
+		for i, tag := range n.CustomElements {
+			if i > 0 {
+				p.print(",")
+			}
+			p.print(fmt.Sprintf("'%s'", tag))
+		}
+		p.print("])\n});")
 	}
 }
 
