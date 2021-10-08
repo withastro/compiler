@@ -564,6 +564,7 @@ import 'test';
 				InternalURL: "http://localhost:3000/",
 			})
 			output := strings.TrimSpace(test_utils.Dedent(string(result.Output)))
+			fmt.Println(output)
 
 			toMatch := INTERNAL_IMPORTS
 			if len(tt.want.frontmatter) > 0 {

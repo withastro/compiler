@@ -78,7 +78,29 @@ func HasExports(_source []byte) bool {
 }
 
 func HasSideEffectualImports(_source []byte) bool {
-	// TODO implementation
+	source = _source
+	pos = 0
+	for ; pos < len(source)-1; pos++ {
+		c := readCommentWhitespace(true)
+		switch true {
+		case c == 'i':
+			if isKeywordStart() && str_eq6('i', 'm', 'p', 'o', 'r', 't') {
+				pos += 6
+				c = readCommentWhitespace(true)
+				if c == '"' || c == '\'' {
+					return true
+				}
+			}
+		case c == '/':
+			if str_eq2('/', '/') {
+				readLineComment()
+				continue
+			} else if str_eq2('/', '*') {
+				readBlockComment(true)
+				continue
+			}
+		}
+	}
 	return false
 }
 
