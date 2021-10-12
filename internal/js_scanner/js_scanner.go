@@ -18,28 +18,77 @@ type ImportStatement struct {
 
 var source []byte
 var pos int
+var pairs map[byte]int
+var flags map[string]bool
+var templateStack int
 
-// TODO: ignore `await` inside of function bodies
 func FindRenderBody(_source []byte) int {
 	source = _source
 	pos = 0
-	lastBr := 0
+	pairs = make(map[byte]int, 0)
+	flags = make(map[string]bool, 2)
+	templateStack = 0
+	lastBr := -1
+	insideBlock := false
+
 	for ; pos < len(source)-1; pos++ {
 		c := readCommentWhitespace(false)
+		if insideBlock && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
+			insideBlock = false
+		}
 		switch true {
 		case isBr(c) || c == ';':
 			// Track the last position of a linebreak of ;
 			// This is a rough proxy for "end of previous statement"
-			lastBr = pos
+			if insideBlock {
+				insideBlock = false
+				continue
+			} else {
+				lastBr = pos
+			}
+		case c == '\'' || c == '"':
+			readStringLiteral(c)
+			continue
+		case c == '`':
+			readTemplateString()
+			continue
+		case c == '{' || c == '(' || c == '[':
+			pairs[c]++
+		case c == '}':
+			if pairs['{'] > 0 {
+				pairs['{']--
+			} else if templateStack > 0 {
+				templateStack--
+				if templateStack == 0 {
+					readTemplateString()
+				}
+			}
+			if insideBlock && pairs['{'] == 0 && pairs['('] == 0 {
+				insideBlock = false
+			}
+			continue
+		case c == ')':
+			pairs[')']--
+		case c == ']':
+			pairs['[']--
+		case c == '=':
+			if str_eq2('=', '>') {
+				insideBlock = true
+				readShorthandFn()
+				continue
+			}
 		case c == 'A':
 			// If we access the Astro global, we're in the function body
-			if isKeywordStart() && str_eq5('A', 's', 't', 'r', 'o') {
+			if !insideBlock && pairs['{'] == 0 && isKeywordStart() && str_eq5('A', 's', 't', 'r', 'o') {
 				return lastBr + 1
 			}
 		case c == 'a':
-			// If we have to await something, we're in the function body
-			if isKeywordStart() && str_eq5('a', 'w', 'a', 'i', 't') {
+			if !insideBlock && pairs['{'] == 0 && isKeywordStart() && str_eq5('a', 'w', 'a', 'i', 't') {
 				return lastBr + 1
+			}
+			if isKeywordStart() && str_eq5('a', 's', 'y', 'n', 'c') {
+				insideBlock = true
+				continue
 			}
 		case c == '/':
 			if str_eq2('/', '/') {
@@ -158,11 +207,59 @@ func readBlockComment(br bool) {
 	}
 }
 
+func readShorthandFn() {
+	for ; pos < len(source)-1; pos++ {
+		c := source[pos]
+		if c == '{' || c == '(' || c == '[' {
+			pairs[c]++
+			return
+		} else if isBr(c) {
+			return
+		}
+	}
+}
+
 func readLineComment() {
 	for ; pos < len(source)-1; pos++ {
 		c := source[pos]
 		if c == '\n' || c == '\r' {
 			return
+		}
+	}
+}
+
+func readTemplateString() {
+	for ; pos < len(source)-1; pos++ {
+		c := source[pos]
+		if c == '$' && source[pos+1] == '{' {
+			pos++
+			templateStack++
+			return
+		}
+		if c == '`' {
+			return
+		}
+		if c == '\\' {
+			pos++
+		}
+	}
+}
+
+func readStringLiteral(quote byte) {
+	for ; pos < len(source)-1; pos++ {
+		c := source[pos]
+		if c == quote {
+			return
+		}
+
+		if c == '\\' {
+			pos++
+			c = source[pos]
+			if c == '\r' && source[pos+1] == '\n' {
+				pos++
+			}
+		} else if isBr(c) {
+			break
 		}
 	}
 }
