@@ -20,6 +20,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+	"createHydrationMap as " + CREATE_HYDRATION_MAP,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, $$slots) => {
@@ -375,7 +376,9 @@ const someProps = {
 }
 
 // Full Astro Component Syntax:
-// https://docs.astro.build/core-concepts/astro-components/`},
+// https://docs.astro.build/core-concepts/astro-components/
+import * as $$module1 from '../components/Counter.jsx';
+const $$hydrationMap = $$createHydrationMap('index.astro', [{ module: $$module1, specifier: '../components/Counter.jsx' }], [Counter]);`},
 				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				code: `<html lang="en">
   <head>
@@ -386,7 +389,7 @@ const someProps = {
   </head>
   <body>
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:path":($$hydrationMap.get(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>`,
 			},
@@ -554,6 +557,7 @@ import 'test';
 			hash := tycho.HashFromSource(code)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{
+				Filename:    "index.astro",
 				Scope:       "astro-XXXX",
 				InternalURL: "http://localhost:3000/",
 			})

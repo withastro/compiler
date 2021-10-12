@@ -77,6 +77,56 @@ func HasExports(_source []byte) bool {
 	return false
 }
 
+func NextImportSpecifier(_source []byte, _pos int) (int, string) {
+	source = _source
+	pos = _pos
+	inImport := false
+	var cont bool
+	var start int
+	end := 0
+
+MainLoop:
+	for ; pos < len(source)-1; pos++ {
+		c := readCommentWhitespace(true)
+
+		if inImport {
+			if c == '"' || c == '\'' {
+				pos++
+				start = pos
+				end = readString(start, c)
+
+				// Continue the loop
+				cont = true
+				break MainLoop
+			}
+		} else {
+			switch true {
+			case c == 'i':
+				if isKeywordStart() && str_eq6('i', 'm', 'p', 'o', 'r', 't') {
+					pos += 6
+					inImport = true
+					continue
+				}
+			case c == '/':
+				if str_eq2('/', '/') {
+					readLineComment()
+					continue
+				} else if str_eq2('/', '*') {
+					readBlockComment(true)
+					continue
+				}
+			}
+		}
+	}
+
+	if cont {
+		specifier := source[start:end]
+		return pos, string(specifier)
+	} else {
+		return -1, ""
+	}
+}
+
 // TODO: check for access to $$vars
 func AccessesPrivateVars(_source []byte) bool {
 	source = _source
@@ -189,4 +239,22 @@ func readCommentWhitespace(br bool) byte {
 		}
 	}
 	return c
+}
+
+func readString(start int, quoteChar byte) int {
+	var c byte
+
+MainLoop:
+	for ; pos < len(source)-1; pos++ {
+		c = source[pos]
+		switch true {
+		case c == '\\':
+			pos++
+			continue
+		case c == quoteChar:
+			break MainLoop
+		}
+	}
+
+	return pos
 }

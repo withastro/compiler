@@ -116,6 +116,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					}
 					p.print(strings.Trim(c.Data, " \t\r\n"))
+
+					printComponentImports(p, n.Parent, []byte(c.Data))
+
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 				} else {
@@ -131,6 +134,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// }
 					p.addSourceMapping(c.Loc[0])
 					p.println(strings.Trim(importStatements, " \t\r\n"))
+
+					printComponentImports(p, n.Parent, []byte(importStatements))
+
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 					p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
@@ -477,6 +483,43 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		// TODO: use proper component name
 		p.printFuncSuffix("$$Component")
 	}
+}
+
+func printComponentImports(p *printer, doc *Node, source []byte) {
+	// Only print this for components with hydrated components
+	if len(doc.HydratedComponents) == 0 {
+		return
+	}
+
+	var specs []string
+
+	modCount := 1
+	loc, specifier := js_scanner.NextImportSpecifier(source, 0)
+	for loc != -1 {
+		p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, specifier))
+		specs = append(specs, specifier)
+		loc, specifier = js_scanner.NextImportSpecifier(source, loc)
+		modCount++
+	}
+
+	// Call createHydrationMap
+	p.print(fmt.Sprintf("\nconst $$hydrationMap = %s('%s', [", CREATE_HYDRATION_MAP, p.opts.Filename))
+	for i := 1; i < modCount; i++ {
+		if i > 1 {
+			p.print(", ")
+		}
+		p.print(fmt.Sprintf("{ module: $$module%v, specifier: '%s' }", i, specs[i-1]))
+	}
+	p.print(fmt.Sprintf("], ["))
+
+	for i, node := range doc.HydratedComponents {
+		if i > 0 {
+			p.print(", ")
+		}
+
+		p.print(node.Data)
+	}
+	p.print("]);")
 }
 
 // Section 12.1.2, "Elements", gives this list of void elements. Void elements

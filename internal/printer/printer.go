@@ -31,6 +31,8 @@ var ADD_ATTRIBUTE = "$$addAttribute"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
+var CREATE_HYDRATION_MAP = "$$createHydrationMap"
+var HYDRATION_MAP = "$$hydrationMap"
 var RESULT = "$$result"
 var SLOTS = "$$slots"
 var BACKTICK = "`"
@@ -56,6 +58,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 		"spreadAttributes as " + SPREAD_ATTRIBUTES,
 		"defineStyleVars as " + DEFINE_STYLE_VARS,
 		"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+		"createHydrationMap as " + CREATE_HYDRATION_MAP,
 	}, ",\n  "), importSpecifier))
 	p.hasInternalImports = true
 }
