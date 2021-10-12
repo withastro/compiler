@@ -510,7 +510,7 @@ func printComponentImports(p *printer, doc *Node, source []byte) {
 		}
 		p.print(fmt.Sprintf("{ module: $$module%v, specifier: '%s' }", i, specs[i-1]))
 	}
-	p.print(fmt.Sprintf("], ["))
+	p.print("], [")
 
 	for i, node := range doc.HydratedComponents {
 		if i > 0 {
