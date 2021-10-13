@@ -116,6 +116,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					}
 					p.print(strings.Trim(c.Data, " \t\r\n"))
+
+					p.printComponentImports(n.Parent, []byte(c.Data))
+
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 				} else {
@@ -131,6 +134,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// }
 					p.addSourceMapping(c.Loc[0])
 					p.println(strings.Trim(importStatements, " \t\r\n"))
+
+					p.printComponentImports(n.Parent, []byte(importStatements))
+
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 					p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
