@@ -49,12 +49,19 @@ func extractScriptsAndStyles(doc *tycho.Node) {
 					for _, attr := range n.Attr {
 						if strings.HasPrefix(attr.Key, "client:") {
 							doc.HydratedComponents = append(doc.HydratedComponents, n)
-							attr := tycho.Attribute{
-								Key:  "client:path",
-								Val:  fmt.Sprintf("$$hydrationMap.get(%s)", n.Data),
+							pathAttr := tycho.Attribute{
+								Key:  "client:component-path",
+								Val:  fmt.Sprintf("$$hydrationMap.getPath(%s)", n.Data),
 								Type: tycho.ExpressionAttribute,
 							}
-							n.Attr = append(n.Attr, attr)
+							n.Attr = append(n.Attr, pathAttr)
+
+							exportAttr := tycho.Attribute{
+								Key:  "client:component-export",
+								Val:  fmt.Sprintf("$$hydrationMap.getExport(%s)", n.Data),
+								Type: tycho.ExpressionAttribute,
+							}
+							n.Attr = append(n.Attr, exportAttr)
 							break
 						}
 					}
