@@ -389,7 +389,7 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
   </head>
   <body>
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:path":($$hydrationMap.get(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-path":($$hydrationMap.getPath(Counter)),"client:component-export":($$hydrationMap.getExport(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>`,
 			},
@@ -552,7 +552,7 @@ import * as $$module1 from 'one';
 import * as $$module2 from 'two';
 const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }], [One, Two]);`},
 				styles: []string{},
-				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:path\":($$hydrationMap.get(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:path\":($$hydrationMap.get(Two))})}`,})}",
+				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(One)),\"client:component-export\":($$hydrationMap.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(Two)),\"client:component-export\":($$hydrationMap.getExport(Two))})}`,})}",
 			},
 		},
 	}
