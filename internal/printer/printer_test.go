@@ -533,6 +533,28 @@ import 'test';
 				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
 		},
+		{
+			name: "gets all potential hydration maps",
+			source: `---
+import One from 'one';
+import Two from 'two';
+const name = 'world';
+---
+<One client:load />
+<Two client:load />
+`,
+			want: want{
+				imports: "",
+				frontmatter: []string{`import One from 'one';
+import Two from 'two';
+const name = 'world';
+import * as $$module1 from 'one';
+import * as $$module2 from 'two';
+const $$hydrationMap = $$createHydrationMap('index.astro', [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }], [One, Two]);`},
+				styles: []string{},
+				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:path\":($$hydrationMap.get(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:path\":($$hydrationMap.get(Two))})}`,})}",
+			},
+		},
 	}
 
 	for _, tt := range tests {

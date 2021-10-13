@@ -93,7 +93,8 @@ MainLoop:
 			if c == '"' || c == '\'' {
 				pos++
 				start = pos
-				end = readString(start, c)
+				readString(start, c)
+				end = pos
 
 				// Continue the loop
 				cont = true
@@ -241,7 +242,7 @@ func readCommentWhitespace(br bool) byte {
 	return c
 }
 
-func readString(start int, quoteChar byte) int {
+func readString(start int, quoteChar byte) {
 	var c byte
 
 MainLoop:
@@ -255,6 +256,4 @@ MainLoop:
 			break MainLoop
 		}
 	}
-
-	return pos
 }

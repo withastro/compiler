@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	astro "github.com/snowpackjs/astro/internal"
+	"github.com/snowpackjs/astro/internal/js_scanner"
 	"github.com/snowpackjs/astro/internal/loc"
 	"github.com/snowpackjs/astro/internal/sourcemap"
 	"github.com/snowpackjs/astro/internal/transform"
@@ -209,4 +210,41 @@ func (p *printer) addSourceMapping(location loc.Loc) {
 
 func (p *printer) addNilSourceMapping() {
 	p.builder.AddSourceMapping(loc.Loc{Start: 0}, p.output)
+}
+
+func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
+	// Only print this for components with hydrated components
+	if len(doc.HydratedComponents) == 0 {
+		return
+	}
+
+	var specs []string
+
+	modCount := 1
+	loc, specifier := js_scanner.NextImportSpecifier(source, 0)
+	for loc != -1 {
+		p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, specifier))
+		specs = append(specs, specifier)
+		loc, specifier = js_scanner.NextImportSpecifier(source, loc)
+		modCount++
+	}
+
+	// Call createHydrationMap
+	p.print(fmt.Sprintf("\nconst $$hydrationMap = %s('%s', [", CREATE_HYDRATION_MAP, p.opts.Filename))
+	for i := 1; i < modCount; i++ {
+		if i > 1 {
+			p.print(", ")
+		}
+		p.print(fmt.Sprintf("{ module: $$module%v, specifier: '%s' }", i, specs[i-1]))
+	}
+	p.print("], [")
+
+	for i, node := range doc.HydratedComponents {
+		if i > 0 {
+			p.print(", ")
+		}
+
+		p.print(node.Data)
+	}
+	p.print("]);")
 }
