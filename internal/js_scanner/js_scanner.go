@@ -133,7 +133,7 @@ func FindRenderBody(source []byte) int {
 	}
 
 	// If we haven't found anything... there's nothing to find! Split at the start.
-	return 0
+	return i
 }
 
 func HasExports(source []byte) bool {
