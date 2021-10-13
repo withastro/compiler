@@ -378,7 +378,7 @@ const someProps = {
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/
 import * as $$module1 from '../components/Counter.jsx';
-const $$hydrationMap = $$createHydrationMap('index.astro', [{ module: $$module1, specifier: '../components/Counter.jsx' }], [Counter]);`},
+const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: '../components/Counter.jsx' }], [Counter]);`},
 				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				code: `<html lang="en">
   <head>
@@ -550,7 +550,7 @@ import Two from 'two';
 const name = 'world';
 import * as $$module1 from 'one';
 import * as $$module2 from 'two';
-const $$hydrationMap = $$createHydrationMap('index.astro', [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }], [One, Two]);`},
+const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }], [One, Two]);`},
 				styles: []string{},
 				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:path\":($$hydrationMap.get(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:path\":($$hydrationMap.get(Two))})}`,})}",
 			},
@@ -579,7 +579,6 @@ const $$hydrationMap = $$createHydrationMap('index.astro', [{ module: $$module1,
 			hash := tycho.HashFromSource(code)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{
-				Filename:    "index.astro",
 				Scope:       "astro-XXXX",
 				InternalURL: "http://localhost:3000/",
 			})

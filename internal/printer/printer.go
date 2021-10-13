@@ -230,7 +230,7 @@ func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
 	}
 
 	// Call createHydrationMap
-	p.print(fmt.Sprintf("\nconst $$hydrationMap = %s('%s', [", CREATE_HYDRATION_MAP, p.opts.Filename))
+	p.print(fmt.Sprintf("\nconst $$hydrationMap = %s(import.meta.url, [", CREATE_HYDRATION_MAP))
 	for i := 1; i < modCount; i++ {
 		if i > 1 {
 			p.print(", ")
