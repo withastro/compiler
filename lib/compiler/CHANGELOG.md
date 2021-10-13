@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.10
+
+### Patch Changes
+
+- 3a336ef: Adds a hydration map to enable hydration within Astro components
+
 ## 0.1.9
 
 ### Patch Changes
