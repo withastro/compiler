@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.12
+
+### Patch Changes
+
+- 96dc356: Adds hydrationMap support for custom elements
+
 ## 0.1.11
 
 ### Patch Changes
