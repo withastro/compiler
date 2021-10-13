@@ -45,20 +45,25 @@ func extractScriptsAndStyles(doc *tycho.Node) {
 				// Remove local style node
 				n.Parent.RemoveChild(n)
 			default:
-				if n.Component {
+				if n.Component || n.CustomElement {
 					for _, attr := range n.Attr {
+						id := n.Data
+						if n.CustomElement {
+							id = fmt.Sprintf("'%s'", id)
+						}
+
 						if strings.HasPrefix(attr.Key, "client:") {
 							doc.HydratedComponents = append(doc.HydratedComponents, n)
 							pathAttr := tycho.Attribute{
 								Key:  "client:component-path",
-								Val:  fmt.Sprintf("$$hydrationMap.getPath(%s)", n.Data),
+								Val:  fmt.Sprintf("$$hydrationMap.getPath(%s)", id),
 								Type: tycho.ExpressionAttribute,
 							}
 							n.Attr = append(n.Attr, pathAttr)
 
 							exportAttr := tycho.Attribute{
 								Key:  "client:component-export",
-								Val:  fmt.Sprintf("$$hydrationMap.getExport(%s)", n.Data),
+								Val:  fmt.Sprintf("$$hydrationMap.getExport(%s)", id),
 								Type: tycho.ExpressionAttribute,
 							}
 							n.Attr = append(n.Attr, exportAttr)

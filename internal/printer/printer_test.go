@@ -538,21 +538,25 @@ import 'test';
 			source: `---
 import One from 'one';
 import Two from 'two';
+import 'custom-element';
 const name = 'world';
 ---
 <One client:load />
 <Two client:load />
+<my-element client:load />
 `,
 			want: want{
 				imports: "",
 				frontmatter: []string{`import One from 'one';
 import Two from 'two';
+import 'custom-element';
 const name = 'world';
 import * as $$module1 from 'one';
 import * as $$module2 from 'two';
-const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }], [One, Two]);`},
+import * as $$module3 from 'custom-element';
+const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], [One, Two, 'my-element']);`},
 				styles: []string{},
-				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(One)),\"client:component-export\":($$hydrationMap.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(Two)),\"client:component-export\":($$hydrationMap.getExport(Two))})}`,})}",
+				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(One)),\"client:component-export\":($$hydrationMap.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(Two)),\"client:component-export\":($$hydrationMap.getExport(Two))})}${$$renderComponent($$result,'my-element','my-element',{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath('my-element')),\"client:component-export\":($$hydrationMap.getExport('my-element'))})}`,})}",
 			},
 		},
 	}
