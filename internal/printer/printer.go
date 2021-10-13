@@ -244,7 +244,11 @@ func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
 			p.print(", ")
 		}
 
-		p.print(node.Data)
+		if node.CustomElement {
+			p.print(fmt.Sprintf("'%s'", node.Data))
+		} else {
+			p.print(node.Data)
+		}
 	}
 	p.print("]);")
 }
