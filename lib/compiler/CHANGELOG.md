@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.1.11
+
+### Patch Changes
+
+- 939283d: Adds the component export for use in hydration
+
 ## 0.1.10
 
 ### Patch Changes
