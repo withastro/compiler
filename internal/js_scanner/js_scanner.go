@@ -37,7 +37,7 @@ var pos int
 func FindRenderBody(source []byte) int {
 	l := js.NewLexer(parse.NewInputBytes(source))
 	i := 0
-	pairs := make(map[byte]int, 0)
+	pairs := make(map[byte]int)
 
 	// Let's lex the script until we find what we need!
 	for {
@@ -247,10 +247,6 @@ func isPunctuator(ch byte) bool {
 
 func str_eq2(c1 byte, c2 byte) bool {
 	return len(source[pos:]) >= 2 && source[pos+1] == c2 && source[pos] == c1
-}
-
-func str_eq5(c1 byte, c2 byte, c3 byte, c4 byte, c5 byte) bool {
-	return len(source[pos:]) >= 5 && source[pos+4] == c5 && source[pos+3] == c4 && source[pos+2] == c3 && source[pos+1] == c2 && source[pos] == c1
 }
 
 func str_eq6(c1 byte, c2 byte, c3 byte, c4 byte, c5 byte, c6 byte) bool {
