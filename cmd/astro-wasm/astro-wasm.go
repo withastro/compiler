@@ -48,12 +48,18 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		sourcemap = "both"
 	}
 
+	site := jsString(options.Get("site"))
+	if site == "" {
+		site = "https://astro.build"
+	}
+
 	return transform.TransformOptions{
 		As:          as,
 		Scope:       hash,
 		Filename:    filename,
 		InternalURL: internalURL,
 		SourceMap:   sourcemap,
+		Site:        site,
 	}
 }
 
