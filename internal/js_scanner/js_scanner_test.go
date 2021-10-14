@@ -5,14 +5,17 @@ import (
 	"testing"
 )
 
+type testcase struct {
+	name   string
+	source string
+	want   int
+	only   bool
+}
+
 func TestFindRenderBody(t *testing.T) {
 	// note: the tests have hashes inlined because it’s easier to read
 	// note: this must be valid CSS, hence the empty "{}"
-	tests := []struct {
-		name   string
-		source string
-		want   int
-	}{
+	tests := []testcase{
 		{
 			name:   "basic",
 			source: `const value = "test"`,
@@ -51,7 +54,7 @@ const b = await fetch();`,
 			want: 64,
 		},
 		{
-			name: "import assertion",
+			name: "import assertion 2",
 			source: `// comment
 import { 
 	fn
@@ -104,6 +107,18 @@ import { c } from "c";
 const d = await fetch()`,
 			want: 69,
 		},
+		{
+			name:   "assignment",
+			source: `let show = true;`,
+			want:   0,
+		},
+	}
+	for _, tt := range tests {
+		if tt.only {
+			tests = make([]testcase, 0)
+			tests = append(tests, tt)
+			break
+		}
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

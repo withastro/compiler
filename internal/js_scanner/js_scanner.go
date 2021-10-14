@@ -107,6 +107,12 @@ func FindRenderBody(source []byte) int {
 			continue
 		}
 
+		// Special case for import assertions, probably should be tracking that this is inside of an import statement.
+		if token == js.IdentifierToken && string(value) == "assert" {
+			i += len(value)
+			continue
+		}
+
 		// Track opening and closing braces
 		if js.IsPunctuator(token) {
 			if value[0] == '{' || value[0] == '(' || value[0] == '[' {
@@ -122,9 +128,9 @@ func FindRenderBody(source []byte) int {
 			}
 		}
 
-		// If there are no open pairs and we hit a reserved word (var/let/const/async/function)
+		// If there are no open pairs and we hit anything other than a comment
 		// return our index! This is the first non-exported declaration
-		if !openPairs && js.IsReservedWord(token) {
+		if !openPairs && token != js.CommentToken {
 			return i
 		}
 
