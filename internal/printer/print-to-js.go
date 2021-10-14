@@ -116,11 +116,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					}
 
+					// 1. After imports put in the top-level Astro.
 					p.printTopLevelAstro()
 
-					// The frontmatter.
+					// 2. The frontmatter.
 					p.print(strings.TrimSpace(c.Data))
 
+					// 3. The hydration map
 					p.printComponentImports(n.Parent, []byte(c.Data))
 
 					// TODO: use the proper component name
@@ -139,7 +141,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.addSourceMapping(c.Loc[0])
 					p.println(strings.TrimSpace(importStatements))
 
+					// 1. Component imports, if any exist.
 					p.printComponentImports(n.Parent, []byte(importStatements))
+					// 2. Top-level Astro global.
 					p.printTopLevelAstro()
 
 					// TODO: use the proper component name
