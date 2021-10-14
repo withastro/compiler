@@ -13,6 +13,7 @@ import (
 
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
 	"render as " + TEMPLATE_TAG,
+	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
 	"renderSlot as " + RENDER_SLOT,
@@ -24,7 +25,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, %s) => {
-const Astro = $$result.createAstro($$props, %s);%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
+const Astro = $$result.createAstro($$Astro, $$props, %s);%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
@@ -33,6 +34,7 @@ var STYLE_PRELUDE = "const STYLES = [\n"
 var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES)\n"
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\n$$result.scripts.add(...SCRIPTS)\n"
+var CREATE_ASTRO_CALL = "const $$Astro = createAstro(import.meta.url, 'https://astro.build');\nconst Astro = $$Astro;"
 
 type want struct {
 	imports     string
@@ -187,7 +189,7 @@ const items = ['red', 'yellow', 'blue'];
 </div>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{"const items = ['red', 'yellow', 'blue'];"},
+				frontmatter: []string{"", "const items = ['red', 'yellow', 'blue'];"},
 				styles:      []string{},
 				code: `<html><head></head><body><div>
   ${items.map((item) => (
@@ -614,6 +616,7 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",
+				Site:        "https://astro.build",
 				InternalURL: "http://localhost:3000/",
 			})
 			output := strings.TrimSpace(test_utils.Dedent(string(result.Output)))
@@ -622,6 +625,7 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 			if len(tt.want.frontmatter) > 0 {
 				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0])) + "\n"
 			}
+			toMatch = toMatch + CREATE_ASTRO_CALL + "\n"
 			toMatch = toMatch + "\n" + PRELUDE
 			if len(tt.want.frontmatter) > 1 {
 				// format want

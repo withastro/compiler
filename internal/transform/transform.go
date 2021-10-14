@@ -14,6 +14,7 @@ type TransformOptions struct {
 	Filename    string
 	InternalURL string
 	SourceMap   string
+	Site        string
 }
 
 func Transform(doc *tycho.Node, opts TransformOptions) {

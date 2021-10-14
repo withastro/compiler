@@ -1,4 +1,6 @@
+//go:build js && wasm
 // +build js,wasm
+
 package main
 
 import (
@@ -48,12 +50,18 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		sourcemap = "both"
 	}
 
+	site := jsString(options.get("site"))
+	if site == "" {
+		site = "https://astro.build"
+	}
+
 	return transform.TransformOptions{
 		As:          as,
 		Scope:       hash,
 		Filename:    filename,
 		InternalURL: internalURL,
 		SourceMap:   sourcemap,
+		Site:        site,
 	}
 }
 

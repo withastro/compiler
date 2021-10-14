@@ -25,6 +25,7 @@ type printer struct {
 }
 
 var TEMPLATE_TAG = "$$render"
+var CREATE_ASTRO = "$$createAstro"
 var CREATE_COMPONENT = "$$createComponent"
 var RENDER_COMPONENT = "$$renderComponent"
 var RENDER_SLOT = "$$renderSlot"
@@ -52,6 +53,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	}
 	p.print(fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
 		"render as " + TEMPLATE_TAG,
+		"createAstro as " + CREATE_ASTRO,
 		"createComponent as " + CREATE_COMPONENT,
 		"renderComponent as " + RENDER_COMPONENT,
 		"renderSlot as " + RENDER_SLOT,
@@ -93,7 +95,7 @@ func (p *printer) printFuncPrelude(componentName string) {
 	p.addNilSourceMapping()
 	p.println("\n//@ts-ignore")
 	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
-	p.println(fmt.Sprintf("const Astro = %s.createAstro($$props, %s);", RESULT, SLOTS))
+	p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
 	p.hasFuncPrelude = true
 }
 
@@ -210,6 +212,10 @@ func (p *printer) addSourceMapping(location loc.Loc) {
 
 func (p *printer) addNilSourceMapping() {
 	p.builder.AddSourceMapping(loc.Loc{Start: 0}, p.output)
+}
+
+func (p *printer) printTopLevelAstro() {
+	p.println(fmt.Sprintf("const $$Astro = createAstro(import.meta.url, '%s');\nconst Astro = $$Astro;", p.opts.Site))
 }
 
 func (p *printer) printComponentImports(doc *astro.Node, source []byte) {

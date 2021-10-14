@@ -115,6 +115,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					if js_scanner.AccessesPrivateVars([]byte(c.Data)) {
 						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					}
+
+					p.printTopLevelAstro()
+
+					// The frontmatter.
 					p.print(strings.TrimSpace(c.Data))
 
 					p.printComponentImports(n.Parent, []byte(c.Data))
@@ -136,6 +140,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.println(strings.TrimSpace(importStatements))
 
 					p.printComponentImports(n.Parent, []byte(importStatements))
+					p.printTopLevelAstro()
 
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
@@ -175,6 +180,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		return
 	} else if !p.hasFuncPrelude {
+		p.printTopLevelAstro()
+
 		// Render func prelude. Will only run for the first non-frontmatter node
 		// TODO: use the proper component name
 		p.printFuncPrelude("$$Component")
