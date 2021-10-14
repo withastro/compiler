@@ -262,20 +262,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			p.addSourceMapping(c.Loc[0])
 			if c.Type == TextNode {
 				p.print(c.Data)
-			} else {
-				if c.PrevSibling == nil || (c.PrevSibling != nil && c.PrevSibling.Type == TextNode) {
-					// TODO: where is this used?
-					// c.NextSibling.Type != TextNode
-					p.printTemplateLiteralOpen()
-				}
-				render1(p, c, RenderOptions{
-					isRoot:       false,
-					isExpression: true,
-					depth:        depth + 1,
-				})
-				if c.NextSibling == nil || (c.NextSibling != nil && c.NextSibling.Type == TextNode) {
-					p.printTemplateLiteralClose()
-				}
+				continue
+			}
+			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {
+				p.printTemplateLiteralOpen()
+			}
+			render1(p, c, RenderOptions{
+				isRoot:       false,
+				isExpression: true,
+				depth:        depth + 1,
+			})
+			if c.NextSibling == nil || c.NextSibling.Type == TextNode {
+				p.printTemplateLiteralClose()
 			}
 		}
 		p.addSourceMapping(n.Loc[1])

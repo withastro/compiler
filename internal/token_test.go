@@ -180,6 +180,24 @@ func TestFrontmatter(t *testing.T) {
 			`,
 			[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
 		},
+		{
+			"single-line comments",
+			`
+			---
+			// --- <div>
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, FrontmatterFenceToken},
+		},
+		{
+			"multi-line comments",
+			`
+			---
+			/* --- <div> */
+			---
+			`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, FrontmatterFenceToken},
+		},
 		// {
 		// 	"less than with no space isn’t a tag",
 		// 	`
@@ -251,6 +269,16 @@ func TestExpressions(t *testing.T) {
 			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken},
 		},
 		{
+			"expression map",
+			`<div>
+			  {items.map((item) => (
+          // < > < }
+          <div>{item}</div>
+        ))}
+      </div>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, TextToken, EndTagToken},
+		},
+		{
 			"left bracket within string",
 			`{"{"}`,
 			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
@@ -264,6 +292,18 @@ func TestExpressions(t *testing.T) {
 			"expression within string",
 			`{'{() => <Component />}'}`,
 			[]TokenType{StartExpressionToken, TextToken, EndExpressionToken},
+		},
+		{
+			"expression within single-line comment",
+			`{ // < > < }
+		    'text'
+		  }`,
+			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, EndExpressionToken},
+		},
+		{
+			"expression within multi-line comment",
+			`{/* < > < } */ 'text'}`,
+			[]TokenType{StartExpressionToken, TextToken, TextToken, EndExpressionToken},
 		},
 		{
 			"expression with nested strings",
