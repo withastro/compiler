@@ -591,6 +591,20 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(One)),\"client:component-export\":($$hydrationMap.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(Two)),\"client:component-export\":($$hydrationMap.getExport(Two))})}${$$renderComponent($$result,'my-element','my-element',{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath('my-element')),\"client:component-export\":($$hydrationMap.getExport('my-element'))})}`,})}",
 			},
 		},
+		{
+			name: "Moves assignments into render function",
+			only: true,
+			source: `---
+let show = true;
+---
+<div>{show && <span>shown</span>}</div>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        "<html><head></head><body><div>${show && $$render`<span>shown</span>`}</div></body></html>",
+			},
+		},
 	}
 
 	for _, tt := range tests {
