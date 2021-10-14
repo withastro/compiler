@@ -198,6 +198,14 @@ func TestFrontmatter(t *testing.T) {
 			`,
 			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, FrontmatterFenceToken},
 		},
+		{
+			"RegExp",
+			`---
+const RegExp = /---< > > { }; import thing from "thing"; /
+---
+			{html}`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, FrontmatterFenceToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken},
+		},
 		// {
 		// 	"less than with no space isn’t a tag",
 		// 	`

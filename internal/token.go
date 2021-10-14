@@ -726,9 +726,9 @@ scriptDataDoubleEscapeEnd:
 	goto scriptDataDoubleEscaped
 }
 
-// readComment reads the next comment token starting with "<!--". The opening
+// readHTMLComment reads the next comment token starting with "<!--". The opening
 // "<!--" has already been consumed.
-func (z *Tokenizer) readComment() {
+func (z *Tokenizer) readHTMLComment() {
 	z.data.Start = z.raw.End
 	defer func() {
 		if z.data.End < z.data.Start {
@@ -791,93 +791,45 @@ func (z *Tokenizer) readUntilCloseAngle() {
 // readString reads until a JavaScript string is closed.
 func (z *Tokenizer) readString(c byte) {
 	switch c {
+	// single quote (ends on newline)
 	case '\'':
-		z.readSingleQuoteString()
+		z.readUntilChar([]byte{'\'', '\r', '\n'})
+	// double quote (ends on newline)
 	case '"':
-		z.readDoubleQuoteString()
+		z.readUntilChar([]byte{'"', '\r', '\n'})
+	// template literal
 	case '`':
-		z.readTemplateLiteralString()
+		// Note that we DO NOT have to handle `${}` here because our expression
+		// behavior already handles `{}`. Technically incorrect, but it works.
+		z.readUntilChar([]byte{'`'})
 	}
 }
 
-func (z *Tokenizer) readSingleQuoteString() {
+// generic utilty to look ahead until the first char is encountered from given splice
+func (z *Tokenizer) readUntilChar(chars []byte) {
+find_next:
 	for {
 		c := z.readByte()
-		if c == '\'' {
+		// fail on error
+		if z.err != nil {
 			z.data.End = z.raw.End - 1
 			return
 		}
+		// handle escape char \
 		if c == '\\' {
 			z.raw.End++
-			c = z.buf[z.data.Start:z.data.End][0]
-			if c == '\r' || c == '\n' {
-				z.raw.End++
+			c = z.buf[z.data.Start : z.data.Start+1][0]
+			// if this is a match but it’s escaped, skip and move to the next char
+			for _, v := range chars {
+				if c == v {
+					z.raw.End++
+					continue find_next
+				}
 			}
-		} else if c == '\r' || c == '\n' {
-			break
 		}
-	}
-}
-
-func (z *Tokenizer) readDoubleQuoteString() {
-	for {
-		c := z.readByte()
-		if c == '"' {
-			z.data.End = z.raw.End - 1
-			return
-		}
-		if c == '\\' {
-			z.raw.End++
-			c = z.buf[z.data.Start:z.data.End][0]
-			if c == '\r' || c == '\n' {
-				z.raw.End++
-			}
-		} else if c == '\r' || c == '\n' {
-			break
-		}
-	}
-}
-
-// read JS "//" comment
-func (z *Tokenizer) readJSSingleLineComment() {
-	for {
-		c := z.readByte()
-		// if this is an escape character…
-		if c == '\\' {
-			c = z.readByte()
-			// …skip the following potential ending signal
-			if c == '\n' || c == '\r' {
-				z.readByte()
-			}
-			continue
-		}
-
-		// if this is a linebreak character, exit successfully
-		if c == '\n' || c == '\r' {
-			z.data.End = z.raw.End
-			return
-		}
-	}
-}
-
-// read JS "/* */" comment
-func (z *Tokenizer) readJSMultiLineComment() {
-	for {
-		c := z.readByte()
-		// if this is an escape character…
-		if c == '\\' {
-			c = z.readByte()
-			// …skip the following potential ending signal
-			if c == '*' {
-				z.readByte()
-			}
-			continue
-		}
-
-		// if this is a "*", end if followed by "/"
-		if c == '*' {
-			c = z.readByte()
-			if c == '/' {
+		// match found!
+		for _, v := range chars {
+			if c == v {
 				z.data.End = z.raw.End
 				return
 			}
@@ -885,18 +837,28 @@ func (z *Tokenizer) readJSMultiLineComment() {
 	}
 }
 
-// Note that we DO NOT have to handle `${}` here because our expression
-// behavior already handles `{}`. Technically incorrect, but it works.
-func (z *Tokenizer) readTemplateLiteralString() {
-	for {
-		c := z.readByte()
-		if c == '`' {
-			z.data.End = z.raw.End - 1
-			return
+// read RegExp expressions and comments (starting from '/' byte)
+func (z *Tokenizer) readCommentOrRegExp() {
+	c := z.readByte() // find next character after '/' to know how to handle it
+	switch c {
+	// single-line commment (ends on newline)
+	case '/':
+		z.readUntilChar([]byte{'\r', '\n'})
+	// multi-line comment
+	case '*':
+		// look for "*/"
+		for {
+			z.readUntilChar([]byte{'*'})
+			c = z.readByte()
+			if c == '/' {
+				z.data.End = z.raw.End
+				return
+			}
 		}
-		if c == '\\' {
-			z.raw.End++
-		}
+	// RegExp
+	default:
+		z.raw.End--
+		z.readUntilChar([]byte{'/', '\r', '\n'})
 	}
 }
 
@@ -914,7 +876,7 @@ func (z *Tokenizer) readMarkupDeclaration() TokenType {
 		}
 	}
 	if c[0] == '-' && c[1] == '-' {
-		z.readComment()
+		z.readHTMLComment()
 		return CommentToken
 	}
 	z.raw.End -= 2
@@ -1366,33 +1328,18 @@ loop:
 
 		var tokenType TokenType
 
-		// handle JS comments
+		// JS Comment or RegExp
 		if c == '/' {
-			c = z.readByte()
-
-			// single
-			if c == '/' {
-				z.readJSSingleLineComment()
-				z.data.End = z.raw.End
-				z.tt = TextToken
-				return z.tt
-			}
-
-			// multi
-			if c == '*' {
-				z.readJSMultiLineComment()
-				z.data.End = z.raw.End
-				z.tt = TextToken
-				return z.tt
-			}
-
-			continue loop
+			z.readCommentOrRegExp()
+			z.tt = TextToken
+			z.data.End = z.raw.End
+			return z.tt
 		}
 
 		if c == '\'' || c == '"' || c == '`' {
 			z.readString(c)
-			z.data.End = z.raw.End
 			z.tt = TextToken
+			z.data.End = z.raw.End
 			return z.tt
 		}
 
@@ -1560,29 +1507,12 @@ frontmatter_loop:
 			continue frontmatter_loop
 		}
 
-		// handle JS comments
+		// JS Comment or RegExp
 		if c == '/' {
-			c = z.readByte()
-
-			// single-line
-			if c == '/' {
-				z.readJSSingleLineComment()
-				z.dashCount = 0
-				z.data.End = z.raw.End
-				z.tt = TextToken
-				return z.tt
-			}
-
-			// multi-line
-			if c == '*' {
-				z.readJSMultiLineComment()
-				z.dashCount = 0
-				z.data.End = z.raw.End
-				z.tt = TextToken
-				return z.tt
-			}
-
-			continue frontmatter_loop
+			z.readCommentOrRegExp()
+			z.tt = TextToken
+			z.data.End = z.raw.End
+			return z.tt
 		}
 
 		s := z.buf[z.raw.Start : z.raw.Start+1][0]
@@ -1593,10 +1523,11 @@ frontmatter_loop:
 			goto loop
 		}
 
+		// handle string
 		if c == '\'' || c == '"' || c == '`' {
 			z.readString(c)
-			z.data.End = z.raw.End
 			z.tt = TextToken
+			z.data.End = z.raw.End
 			return z.tt
 		}
 
@@ -1649,33 +1580,19 @@ expression_loop:
 			break expression_loop
 		}
 
-		// handle JS comments
+		// JS Comment or RegExp
 		if c == '/' {
-			c = z.readByte()
-
-			// single-line
-			if c == '/' {
-				z.readJSSingleLineComment()
-				z.data.End = z.raw.End
-				z.tt = TextToken
-				return z.tt
-			}
-
-			// multi-line
-			if c == '*' {
-				z.readJSMultiLineComment()
-				z.data.End = z.raw.End
-				z.tt = TextToken
-				return z.tt
-			}
-
-			continue expression_loop
+			z.readCommentOrRegExp()
+			z.tt = TextToken
+			z.data.End = z.raw.End
+			return z.tt
 		}
 
+		// handle string
 		if c == '\'' || c == '"' || c == '`' {
 			z.readString(c)
-			z.data.End = z.raw.End
 			z.tt = TextToken
+			z.data.End = z.raw.End
 			return z.tt
 		}
 
