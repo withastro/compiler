@@ -172,6 +172,35 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name: "expressions with JS comments",
+			source: `---
+const items = ['red', 'yellow', 'blue'];
+---
+<div>
+  {items.map((item) => (
+    // foo < > < }
+    <div id={color}>color</div>
+  ))}
+  {items.map((item) => (
+    /* foo < > < } */ <div id={color}>color</div>
+  ))}
+</div>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{"const items = ['red', 'yellow', 'blue'];"},
+				styles:      []string{},
+				code: `<html><head></head><body><div>
+  ${items.map((item) => (
+    // foo < > < }
+$$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
+  ))}
+  ${items.map((item) => (
+    /* foo < > < } */$$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
+  ))}
+</div></body></html>`,
+			},
+		},
+		{
 			name: "slots (basic)",
 			source: `---
 import Component from 'test';

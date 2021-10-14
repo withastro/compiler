@@ -838,6 +838,53 @@ func (z *Tokenizer) readDoubleQuoteString() {
 	}
 }
 
+// read JS "//" comment
+func (z *Tokenizer) readJSSingleLineComment() {
+	for {
+		c := z.readByte()
+		// if this is an escape character…
+		if c == '\\' {
+			c = z.readByte()
+			// …skip the following potential ending signal
+			if c == '\n' || c == '\r' {
+				z.readByte()
+			}
+			continue
+		}
+
+		// if this is a linebreak character, exit successfully
+		if c == '\n' || c == '\r' {
+			z.data.End = z.raw.End
+			return
+		}
+	}
+}
+
+// read JS "/* */" comment
+func (z *Tokenizer) readJSMultiLineComment() {
+	for {
+		c := z.readByte()
+		// if this is an escape character…
+		if c == '\\' {
+			c = z.readByte()
+			// …skip the following potential ending signal
+			if c == '*' {
+				z.readByte()
+			}
+			continue
+		}
+
+		// if this is a "*", end if followed by "/"
+		if c == '*' {
+			c = z.readByte()
+			if c == '/' {
+				z.data.End = z.raw.End
+				return
+			}
+		}
+	}
+}
+
 // Note that we DO NOT have to handle `${}` here because our expression
 // behavior already handles `{}`. Technically incorrect, but it works.
 func (z *Tokenizer) readTemplateLiteralString() {
@@ -1316,7 +1363,31 @@ loop:
 		if z.err != nil {
 			break loop
 		}
+
 		var tokenType TokenType
+
+		// handle JS comments
+		if c == '/' {
+			c = z.readByte()
+
+			// single
+			if c == '/' {
+				z.readJSSingleLineComment()
+				z.data.End = z.raw.End
+				z.tt = TextToken
+				return z.tt
+			}
+
+			// multi
+			if c == '*' {
+				z.readJSMultiLineComment()
+				z.data.End = z.raw.End
+				z.tt = TextToken
+				return z.tt
+			}
+
+			continue loop
+		}
 
 		if c == '\'' || c == '"' || c == '`' {
 			z.readString(c)
@@ -1455,8 +1526,9 @@ frontmatter_loop:
 			break frontmatter_loop
 		}
 
+		// handle frontmatter fence
 		if c == '-' {
-			z.dashCount++
+			z.dashCount++ // increase dashCount with each consecutive "-"
 		}
 
 		if z.dashCount == 3 {
@@ -1488,6 +1560,31 @@ frontmatter_loop:
 			continue frontmatter_loop
 		}
 
+		// handle JS comments
+		if c == '/' {
+			c = z.readByte()
+
+			// single-line
+			if c == '/' {
+				z.readJSSingleLineComment()
+				z.dashCount = 0
+				z.data.End = z.raw.End
+				z.tt = TextToken
+				return z.tt
+			}
+
+			// multi-line
+			if c == '*' {
+				z.readJSMultiLineComment()
+				z.dashCount = 0
+				z.data.End = z.raw.End
+				z.tt = TextToken
+				return z.tt
+			}
+
+			continue frontmatter_loop
+		}
+
 		s := z.buf[z.raw.Start : z.raw.Start+1][0]
 
 		if s == '<' || s == '{' || s == '}' || c == '<' || c == '{' || c == '}' {
@@ -1514,6 +1611,7 @@ raw_with_expression_loop:
 		if z.err != nil {
 			break raw_with_expression_loop
 		}
+
 		if c == '{' || c == '}' {
 			if x := z.raw.End - len("{"); z.raw.Start < x {
 				z.raw.End = x
@@ -1547,9 +1645,31 @@ raw_with_expression_loop:
 expression_loop:
 	for {
 		c := z.readByte()
-
 		if z.err != nil {
 			break expression_loop
+		}
+
+		// handle JS comments
+		if c == '/' {
+			c = z.readByte()
+
+			// single-line
+			if c == '/' {
+				z.readJSSingleLineComment()
+				z.data.End = z.raw.End
+				z.tt = TextToken
+				return z.tt
+			}
+
+			// multi-line
+			if c == '*' {
+				z.readJSMultiLineComment()
+				z.data.End = z.raw.End
+				z.tt = TextToken
+				return z.tt
+			}
+
+			continue expression_loop
 		}
 
 		if c == '\'' || c == '"' || c == '`' {
