@@ -1,5 +1,12 @@
 package js_scanner
 
+import (
+	"io"
+
+	"github.com/tdewolff/parse/v2"
+	"github.com/tdewolff/parse/v2/js"
+)
+
 // An ImportType is the type of import.
 type ImportType uint32
 
@@ -19,64 +26,145 @@ type ImportStatement struct {
 var source []byte
 var pos int
 
-// TODO: ignore `await` inside of function bodies
-func FindRenderBody(_source []byte) int {
-	source = _source
-	pos = 0
-	lastBr := 0
-	for ; pos < len(source)-1; pos++ {
-		c := readCommentWhitespace(false)
-		switch true {
-		case isBr(c) || c == ';':
-			// Track the last position of a linebreak of ;
-			// This is a rough proxy for "end of previous statement"
-			lastBr = pos
-		case c == 'A':
-			// If we access the Astro global, we're in the function body
-			if isKeywordStart() && str_eq5('A', 's', 't', 'r', 'o') {
-				return lastBr + 1
+// This function returns the index at which we should split the frontmatter.
+// The first slice contains any top-level imports/exports, which are global.
+// The second slice contains any non-exported declarations, which are scoped to the render body
+//
+// Why use a lexical scan here?
+//   1. We can stop lexing as soon as we hit a non-exported token
+//   2. Lexing supports malformed modules, they'll throw at runtime instead of compilation
+//   3. `tdewolff/parse/v2` doesn't support TypeScript parsing yet, but we can lex it fine
+func FindRenderBody(source []byte) int {
+	l := js.NewLexer(parse.NewInputBytes(source))
+	i := 0
+	pairs := make(map[byte]int)
+
+	// Let's lex the script until we find what we need!
+	for {
+		token, value := l.Next()
+		openPairs := pairs['{'] > 0 || pairs['('] > 0 || pairs['['] > 0
+
+		if token == js.ErrorToken {
+			if l.Err() != io.EOF {
+				return -1
 			}
-		case c == 'a':
-			// If we have to await something, we're in the function body
-			if isKeywordStart() && str_eq5('a', 'w', 'a', 'i', 't') {
-				return lastBr + 1
+			break
+		}
+
+		// Common delimeters. Track their length, then skip.
+		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
+			i += len(value)
+			continue
+		}
+
+		// Imports should be consumed up until we find a specifier,
+		// then we can exit after the following line terminator or semicolon
+		if token == js.ImportToken {
+			i += len(value)
+			foundSpecifier := false
+			for {
+				next, nextValue := l.Next()
+				i += len(nextValue)
+				if next == js.StringToken {
+					foundSpecifier = true
+				}
+				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) {
+					break
+				}
 			}
-		case c == '/':
-			if str_eq2('/', '/') {
-				readLineComment()
+			continue
+		}
+
+		// Exports should be consumed until all opening braces are closed,
+		// a specifier is found, and a line terminator has been found
+		if token == js.ExportToken {
+			foundIdentifier := false
+			foundSemicolonOrLineTerminator := false
+			i += len(value)
+			for {
+				next, nextValue := l.Next()
+				i += len(nextValue)
+				if js.IsIdentifier(next) {
+					foundIdentifier = true
+				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
+					foundSemicolonOrLineTerminator = true
+				} else if js.IsPunctuator(next) {
+					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
+						pairs[nextValue[0]]++
+					} else if nextValue[0] == '}' {
+						pairs['{']--
+					} else if nextValue[0] == ')' {
+						pairs['(']--
+					} else if nextValue[0] == ']' {
+						pairs['[']--
+					}
+				}
+
+				if foundIdentifier && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
+					break
+				}
+			}
+			continue
+		}
+
+		// Track opening and closing braces
+		if js.IsPunctuator(token) {
+			if value[0] == '{' || value[0] == '(' || value[0] == '[' {
+				pairs[value[0]]++
+				i += len(value)
 				continue
-			} else if str_eq2('/', '*') {
-				readBlockComment(true)
-				continue
+			} else if value[0] == '}' {
+				pairs['{']--
+			} else if value[0] == ')' {
+				pairs['(']--
+			} else if value[0] == ']' {
+				pairs['[']--
 			}
 		}
+
+		// If there are no open pairs and we hit a reserved word (var/let/const/async/function)
+		// return our index! This is the first non-exported declaration
+		if !openPairs && js.IsReservedWord(token) {
+			return i
+		}
+
+		// Track our current position
+		i += len(value)
 	}
-	return -1
+
+	// If we haven't found anything... there's nothing to find! Split at the start.
+	return i
 }
 
-func HasExports(_source []byte) bool {
-	source = _source
-	pos = 0
-	for ; pos < len(source)-1; pos++ {
-		c := readCommentWhitespace(true)
-		switch true {
-		case c == 'e':
-			if isKeywordStart() && str_eq6('e', 'x', 'p', 'o', 'r', 't') {
-				return true
-			}
-		case c == '/':
-			if str_eq2('/', '/') {
-				readLineComment()
-				continue
-			} else if str_eq2('/', '*') {
-				readBlockComment(true)
-				continue
-			}
+func HasExports(source []byte) bool {
+	l := js.NewLexer(parse.NewInputBytes(source))
+	for {
+		token, _ := l.Next()
+		if token == js.ErrorToken {
+			// EOF or other error
+			return false
+		}
+		if token == js.ExportToken {
+			return true
 		}
 	}
-	return false
 }
 
+func AccessesPrivateVars(source []byte) bool {
+	l := js.NewLexer(parse.NewInputBytes(source))
+	for {
+		token, value := l.Next()
+		if token == js.ErrorToken {
+			// EOF or other error
+			return false
+		}
+		if js.IsIdentifier(token) && len(value) > 1 && value[0] == '$' && value[1] == '$' {
+			return true
+		}
+	}
+}
+
+// TODO: refactor to use lexer!
 func NextImportSpecifier(_source []byte, _pos int) (int, string) {
 	source = _source
 	pos = _pos
@@ -128,30 +216,8 @@ MainLoop:
 	}
 }
 
-// TODO: check for access to $$vars
-func AccessesPrivateVars(_source []byte) bool {
-	source = _source
-	pos = 0
-	for ; pos < len(source)-1; pos++ {
-		c := readCommentWhitespace(true)
-		switch true {
-		// case c == '$':
-		// 	fmt.Println(str_eq2('$', '$'))
-		// 	if isKeywordStart() && str_eq2('$', '$') {
-		// 		return true
-		// 	}
-		case c == '/':
-			if str_eq2('/', '/') {
-				readLineComment()
-				continue
-			} else if str_eq2('/', '*') {
-				readBlockComment(true)
-				continue
-			}
-		}
-	}
-	return false
-}
+// The following utilities are adapted from https://github.com/guybedford/es-module-lexer
+// Released under the MIT License (C) 2018-2021 Guy Bedford
 
 // Note: non-asii BR and whitespace checks omitted for perf / footprint
 // if there is a significant user need this can be reconsidered
@@ -181,10 +247,6 @@ func isPunctuator(ch byte) bool {
 
 func str_eq2(c1 byte, c2 byte) bool {
 	return len(source[pos:]) >= 2 && source[pos+1] == c2 && source[pos] == c1
-}
-
-func str_eq5(c1 byte, c2 byte, c3 byte, c4 byte, c5 byte) bool {
-	return len(source[pos:]) >= 5 && source[pos+4] == c5 && source[pos+3] == c4 && source[pos+2] == c3 && source[pos+1] == c2 && source[pos] == c1
 }
 
 func str_eq6(c1 byte, c2 byte, c3 byte, c4 byte, c5 byte, c6 byte) bool {

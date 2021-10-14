@@ -66,7 +66,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 
 func (p *printer) printReturnOpen() {
 	p.addNilSourceMapping()
-	p.print("return ")
+	p.print("\nreturn ")
 	p.printTemplateLiteralOpen()
 }
 
@@ -250,5 +250,5 @@ func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
 			p.print(node.Data)
 		}
 	}
-	p.print("]);")
+	p.print("]);\n")
 }

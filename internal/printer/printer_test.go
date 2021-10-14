@@ -24,7 +24,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, %s) => {
-const Astro = $$result.createAstro($$props, %s);`, CREATE_COMPONENT, SLOTS, SLOTS)
+const Astro = $$result.createAstro($$props, %s);%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
@@ -69,7 +69,7 @@ const href = '/about';
 <a href={href}>About</a>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{"const href = '/about';"},
+				frontmatter: []string{"", "const href = '/about';"},
 				styles:      []string{},
 				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
 			},
@@ -124,7 +124,7 @@ const items = [0, 1, 2];
 </ul>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{"const items = [0, 1, 2];"},
+				frontmatter: []string{"", "const items = [0, 1, 2];"},
 				styles:      []string{},
 				code: fmt.Sprintf(`<html><head></head><body><ul>
 	${items.map(item => {
@@ -149,7 +149,7 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 </div>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{"const groups = [[0, 1, 2], [3, 4, 5]];"},
+				frontmatter: []string{"", "const groups = [[0, 1, 2], [3, 4, 5]];"},
 				styles:      []string{},
 				code: fmt.Sprintf(`<html><head></head><body><div>
 	${groups.map(items => {
@@ -174,7 +174,7 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 		{
 			name: "slots (basic)",
 			source: `---
-import Component from 'test';
+import Component from "test";
 ---
 <Component>
 	<div>Default</div>
@@ -182,7 +182,7 @@ import Component from 'test';
 </Component>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{`import Component from 'test';`},
+				frontmatter: []string{`import Component from "test";`},
 				styles:      []string{},
 				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
@@ -219,7 +219,7 @@ const name = "world";
 </html>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{`const name = "world";`},
+				frontmatter: []string{``, `const name = "world";`},
 				styles:      []string{},
 				code: `<html>
   <head>
@@ -371,14 +371,15 @@ const someProps = {
 				imports: "",
 				frontmatter: []string{`// Component Imports
 import Counter from '../components/Counter.jsx'
-const someProps = {
+
+import * as $$module1 from '../components/Counter.jsx';
+const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: '../components/Counter.jsx' }], [Counter]);`,
+					`const someProps = {
   count: 0,
 }
 
 // Full Astro Component Syntax:
-// https://docs.astro.build/core-concepts/astro-components/
-import * as $$module1 from '../components/Counter.jsx';
-const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: '../components/Counter.jsx' }], [Counter]);`},
+// https://docs.astro.build/core-concepts/astro-components/`},
 				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				code: `<html lang="en">
   <head>
@@ -422,7 +423,7 @@ import Widget2 from '../components/Widget2.astro';`},
 <script type="module" hoist>console.log("Hello");</script>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{},
+				frontmatter: []string{"\n"},
 				styles:      []string{},
 				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
 				code:        `<html><head></head><body></body></html>`,
@@ -435,7 +436,7 @@ import Widget2 from '../components/Widget2.astro';`},
 <script type="module" hoist src="url" />`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{},
+				frontmatter: []string{"\n"},
 				styles:      []string{},
 				scripts:     []string{`{props:{"type":"module","hoist":true,"src":"url"}}`},
 				code:        "<html><head></head><body></body></html>",
@@ -493,11 +494,10 @@ import Widget2 from '../components/Widget2.astro';`},
 			<div slot={name}>Named</div>
 		</Component>`,
 			want: want{
-				imports: "",
-				frontmatter: []string{`import Component from 'test';
-		const name = 'named';`},
-				styles: []string{},
-				code:   `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				imports:     "",
+				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
+				styles:      []string{},
+				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -528,7 +528,7 @@ import 'test';
 <my-element></my-element>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{`import 'test';`},
+				frontmatter: []string{"import 'test';"},
 				styles:      []string{},
 				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
@@ -550,11 +550,12 @@ const name = 'world';
 				frontmatter: []string{`import One from 'one';
 import Two from 'two';
 import 'custom-element';
-const name = 'world';
+
 import * as $$module1 from 'one';
 import * as $$module2 from 'two';
 import * as $$module3 from 'custom-element';
-const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], [One, Two, 'my-element']);`},
+const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], [One, Two, 'my-element']);`,
+					`const name = 'world';`},
 				styles: []string{},
 				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(One)),\"client:component-export\":($$hydrationMap.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(Two)),\"client:component-export\":($$hydrationMap.getExport(Two))})}${$$renderComponent($$result,'my-element','my-element',{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath('my-element')),\"client:component-export\":($$hydrationMap.getExport('my-element'))})}`,})}",
 			},
@@ -590,12 +591,12 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 
 			toMatch := INTERNAL_IMPORTS
 			if len(tt.want.frontmatter) > 0 {
-				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0]))
+				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0])) + "\n"
 			}
 			toMatch = toMatch + "\n" + PRELUDE
 			if len(tt.want.frontmatter) > 1 {
 				// format want
-				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0]))
+				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[1]))
 			}
 			toMatch = toMatch + "\n"
 			if len(tt.want.styles) > 0 {
@@ -611,6 +612,9 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 					toMatch = toMatch + script + ",\n"
 				}
 				toMatch = toMatch + SCRIPT_SUFFIX
+			}
+			if len(tt.want.frontmatter) > 0 {
+				toMatch = toMatch + "\n"
 			}
 			toMatch = toMatch + fmt.Sprintf("%s%s", RETURN, tt.want.code)
 			toMatch = toMatch + SUFFIX

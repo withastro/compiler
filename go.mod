@@ -7,7 +7,7 @@ require (
 	github.com/lithammer/dedent v1.1.0
 	github.com/norunners/vert v0.0.0-20210320050952-39b24b3cdf94
 	github.com/tdewolff/parse v2.3.4+incompatible
-	github.com/tdewolff/test v1.0.6 // indirect
+	github.com/tdewolff/parse/v2 v2.5.22
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff
 )
 
