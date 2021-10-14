@@ -25,7 +25,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, %s) => {
 const Astro = $$result.createAstro($$props, %s);%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
-var RETURN = fmt.Sprintf("\nreturn %s%s", TEMPLATE_TAG, BACKTICK)
+var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
 export default $$Component;`
@@ -423,7 +423,7 @@ import Widget2 from '../components/Widget2.astro';`},
 <script type="module" hoist>console.log("Hello");</script>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{},
+				frontmatter: []string{"\n"},
 				styles:      []string{},
 				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
 				code:        `<html><head></head><body></body></html>`,
@@ -436,7 +436,7 @@ import Widget2 from '../components/Widget2.astro';`},
 <script type="module" hoist src="url" />`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{},
+				frontmatter: []string{"\n"},
 				styles:      []string{},
 				scripts:     []string{`{props:{"type":"module","hoist":true,"src":"url"}}`},
 				code:        "<html><head></head><body></body></html>",
@@ -528,7 +528,7 @@ import 'test';
 <my-element></my-element>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{`import 'test';`},
+				frontmatter: []string{"import 'test';"},
 				styles:      []string{},
 				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
@@ -591,7 +591,7 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 
 			toMatch := INTERNAL_IMPORTS
 			if len(tt.want.frontmatter) > 0 {
-				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0]))
+				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0])) + "\n"
 			}
 			toMatch = toMatch + "\n" + PRELUDE
 			if len(tt.want.frontmatter) > 1 {
@@ -612,6 +612,9 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 					toMatch = toMatch + script + ",\n"
 				}
 				toMatch = toMatch + SCRIPT_SUFFIX
+			}
+			if len(tt.want.frontmatter) > 0 {
+				toMatch = toMatch + "\n"
 			}
 			toMatch = toMatch + fmt.Sprintf("%s%s", RETURN, tt.want.code)
 			toMatch = toMatch + SUFFIX

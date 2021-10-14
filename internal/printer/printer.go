@@ -250,5 +250,5 @@ func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
 			p.print(node.Data)
 		}
 	}
-	p.print("]);")
+	p.print("]);\n")
 }
