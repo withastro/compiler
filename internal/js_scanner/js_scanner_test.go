@@ -2,13 +2,16 @@ package js_scanner
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 type testcase struct {
 	name   string
 	source string
-	want   int
+	want   string
 	only   bool
 }
 
@@ -19,59 +22,81 @@ func TestFindRenderBody(t *testing.T) {
 		{
 			name:   "basic",
 			source: `const value = "test"`,
-			want:   0,
+			want:   ``,
 		},
 		{
 			name: "import",
 			source: `import { fn } from "package";
 const b = await fetch();`,
-			want: 30,
+			want: `import { fn } from "package";
+`,
 		},
 		{
 			name: "big import",
 			source: `import {
-	a,
-	b, 
-	c,
-	d,
+  a,
+  b,
+  c,
+  d,
 } from "package"
 
 const b = await fetch();`,
-			want: 44,
+			want: `import {
+  a,
+  b,
+  c,
+  d,
+} from "package"
+
+`,
 		},
 		{
 			name: "import with comment",
 			source: `// comment
 import { fn } from "package";
 const b = await fetch();`,
-			want: 41,
+			want: `// comment
+import { fn } from "package";
+`,
 		},
 		{
 			name: "import assertion",
 			source: `// comment
 import { fn } from "package" assert { it: 'works' };
 const b = await fetch();`,
-			want: 64,
+			want: `// comment
+import { fn } from "package" assert { it: 'works' };
+`,
 		},
 		{
 			name: "import assertion 2",
 			source: `// comment
-import { 
-	fn
-} from 
-	"package" 
-	assert { 
-		it: 'works'
-	};
+import {
+  fn
+} from
+  "package"
+  assert {
+    it: 'works'
+  };
 const b = await fetch();`,
-			want: 74,
+			want: `// comment
+import {
+  fn
+} from
+  "package"
+  assert {
+    it: 'works'
+  };
+`,
 		},
 		{
 			name: "import/export",
 			source: `import { fn } from "package";
 export async fn() {}
 const b = await fetch()`,
-			want: 51,
+			want: `import { fn } from "package";
+export async fn() {}
+`,
 		},
 		{
 			name: "getStaticPaths",
@@ -80,24 +105,35 @@ export async function getStaticPaths() {
 	const content = Astro.fetchContent('**/*.md');
 }
 const b = await fetch()`,
-			want: 121,
+			want: `import { fn } from "package";
+export async function getStaticPaths() {
+	const content = Astro.fetchContent('**/*.md');
+}
+`,
 		},
 		{
 			name: "getStaticPaths with comments",
 			source: `import { fn } from "package";
 export async function getStaticPaths() {
-	const content = Astro.fetchContent('**/*.md');
+  const content = Astro.fetchContent('**/*.md');
 }
 const b = await fetch()`,
-			want: 121,
+			want: `import { fn } from "package";
+export async function getStaticPaths() {
+  const content = Astro.fetchContent('**/*.md');
+}
+`,
 		},
 		{
 			name: "getStaticPaths with semicolon",
 			source: `import { fn } from "package";
 export async function getStaticPaths() {
-	const content = Astro.fetchContent('**/*.md');
+  const content = Astro.fetchContent('**/*.md');
 }; const b = await fetch()`,
-			want: 122,
+			want: `import { fn } from "package";
+export async function getStaticPaths() {
+  const content = Astro.fetchContent('**/*.md');
+}; `,
 		},
 		{
 			name: "multiple imports",
@@ -105,12 +141,23 @@ export async function getStaticPaths() {
 import { b } from "b";
 import { c } from "c";
 const d = await fetch()`,
-			want: 69,
+			want: `import { a } from "a";
+import { b } from "b";
+import { c } from "c";
+`,
 		},
 		{
 			name:   "assignment",
 			source: `let show = true;`,
-			want:   0,
+			want:   ``,
+		},
+		{
+			name: "RegExp is not a comment",
+			source: `import { a } from "a";
+/import { b } from "b";
+import { c } from "c";`,
+			want: `import { a } from "a";
+`,
 		},
 	}
 	for _, tt := range tests {
@@ -122,11 +169,32 @@ const d = await fetch()`,
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := FindRenderBody([]byte(tt.source))
-			if tt.want != got {
-				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %v\n  got:  %v", tt.name, tt.want, got))
-				fmt.Println(tt.source[got:])
+			split := FindRenderBody([]byte(tt.source))
+			got := tt.source[:split]
+			// compare to expected string, show diff if mismatch
+			if diff := ANSIDiff(got, tt.want); diff != "" {
+				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
 			}
 		})
 	}
+}
+
+func ANSIDiff(x, y interface{}, opts ...cmp.Option) string {
+	escapeCode := func(code int) string {
+		return fmt.Sprintf("\x1b[%dm", code)
+	}
+	diff := cmp.Diff(x, y, opts...)
+	if diff == "" {
+		return ""
+	}
+	ss := strings.Split(diff, "\n")
+	for i, s := range ss {
+		switch {
+		case strings.HasPrefix(s, "-"):
+			ss[i] = escapeCode(31) + s + escapeCode(0)
+		case strings.HasPrefix(s, "+"):
+			ss[i] = escapeCode(32) + s + escapeCode(0)
+		}
+	}
+	return strings.Join(ss, "\n")
 }
