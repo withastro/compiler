@@ -1,6 +1,7 @@
 export interface TransformOptions {
-  sourcefile?: string;
   internalURL?: string;
+  site?: string;
+  sourcefile?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   as?: 'document'|'fragment';
 }
