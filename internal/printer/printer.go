@@ -215,7 +215,7 @@ func (p *printer) addNilSourceMapping() {
 }
 
 func (p *printer) printTopLevelAstro() {
-	p.println(fmt.Sprintf("const $$Astro = createAstro(import.meta.url, '%s');\nconst Astro = $$Astro;", p.opts.Site))
+	p.println(fmt.Sprintf("const $$Astro = %s(import.meta.url, '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, p.opts.Site))
 }
 
 func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
