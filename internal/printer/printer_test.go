@@ -93,9 +93,12 @@ import VueComponent from '../components/Vue.vue';
 			want: want{
 				imports: "",
 				frontmatter: []string{
-					"import VueComponent from '../components/Vue.vue';",
+					`import VueComponent from '../components/Vue.vue';
+
+import * as $$module1 from '../components/Vue.vue';`,
 				},
-				styles: []string{},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Vue.vue' }], hydratedComponents: [], hoisted: [] }`,
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -213,10 +216,14 @@ import Component from "test";
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{`import Component from "test";`},
-				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				imports: "",
+				frontmatter: []string{`import Component from "test";
+
+import * as $$module1 from 'test';
+`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -230,10 +237,14 @@ import Component from 'test';
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{`import Component from 'test';`},
-				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				imports: "",
+				frontmatter: []string{`import Component from 'test';
+
+import * as $$module1 from 'test';
+`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -440,8 +451,12 @@ import Widget2 from '../components/Widget2.astro';
 			want: want{
 				imports: "",
 				frontmatter: []string{`import Widget from '../components/Widget.astro';
-import Widget2 from '../components/Widget2.astro';`},
-				styles: []string{},
+import Widget2 from '../components/Widget2.astro';
+
+import * as $$module1 from '../components/Widget.astro';
+import * as $$module2 from '../components/Widget2.astro';`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Widget.astro' }, { module: $$module2, specifier: '../components/Widget2.astro' }], hydratedComponents: [], hoisted: [] }`,
 				code: `<html lang="en">
   <head>
     <script type="module" src="/regular_script.js"></script>
@@ -529,10 +544,14 @@ import Widget2 from '../components/Widget2.astro';`},
 			<div slot={name}>Named</div>
 		</Component>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
-				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				imports: "",
+				frontmatter: []string{`import Component from 'test';
+
+import * as $$module1 from 'test';
+`, `const name = 'named';`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -562,10 +581,13 @@ import 'test';
 ---
 <my-element></my-element>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{"import 'test';"},
-				styles:      []string{},
-				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
+				imports: "",
+				frontmatter: []string{`import 'test';
+
+import * as $$module1 from 'test';`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
 		},
 		{

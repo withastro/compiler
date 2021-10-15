@@ -219,22 +219,18 @@ func (p *printer) printTopLevelAstro() {
 }
 
 func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
-	// Only print this for components with hydrated components
-	/*if len(doc.HydratedComponents) == 0 && len(doc.Scripts) == 0 {
-		return
-	}*/
-
 	var specs []string
 
 	modCount := 1
-	if len(doc.HydratedComponents) > 0 {
-		loc, specifier := js_scanner.NextImportSpecifier(source, 0)
-		for loc != -1 {
-			p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, specifier))
-			specs = append(specs, specifier)
-			loc, specifier = js_scanner.NextImportSpecifier(source, loc)
-			modCount++
-		}
+	loc, specifier := js_scanner.NextImportSpecifier(source, 0)
+	for loc != -1 {
+		p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, specifier))
+		specs = append(specs, specifier)
+		loc, specifier = js_scanner.NextImportSpecifier(source, loc)
+		modCount++
+	}
+	// If we added imports, add a line break.
+	if modCount > 1 {
 		p.print("\n")
 	}
 
