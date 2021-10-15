@@ -122,8 +122,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// 2. The frontmatter.
 					p.print(strings.TrimSpace(c.Data))
 
-					// 3. The hydration map
-					p.printComponentImports(n.Parent, []byte(c.Data))
+					// 3. The metadata object
+					p.printComponentMetadata(n.Parent, []byte(c.Data))
 
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
@@ -142,7 +142,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.println(strings.TrimSpace(importStatements))
 
 					// 1. Component imports, if any exist.
-					p.printComponentImports(n.Parent, []byte(importStatements))
+					p.printComponentMetadata(n.Parent, []byte(importStatements))
 					// 2. Top-level Astro global.
 					p.printTopLevelAstro()
 
@@ -184,6 +184,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		return
 	} else if !p.hasFuncPrelude {
+		p.printComponentMetadata(n.Parent, []byte{})
 		p.printTopLevelAstro()
 
 		// Render func prelude. Will only run for the first non-frontmatter node

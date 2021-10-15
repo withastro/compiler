@@ -33,8 +33,8 @@ var ADD_ATTRIBUTE = "$$addAttribute"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
-var CREATE_HYDRATION_MAP = "$$createHydrationMap"
-var HYDRATION_MAP = "$$hydrationMap"
+var CREATE_METADATA = "$$createMetadata"
+var METADATA = "$$metadata"
 var RESULT = "$$result"
 var SLOTS = "$$slots"
 var BACKTICK = "`"
@@ -61,7 +61,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 		"spreadAttributes as " + SPREAD_ATTRIBUTES,
 		"defineStyleVars as " + DEFINE_STYLE_VARS,
 		"defineScriptVars as " + DEFINE_SCRIPT_VARS,
-		"createHydrationMap as " + CREATE_HYDRATION_MAP,
+		"createMetadata as " + CREATE_METADATA,
 	}, ",\n  "), importSpecifier))
 	p.hasInternalImports = true
 }
@@ -218,33 +218,40 @@ func (p *printer) printTopLevelAstro() {
 	p.println(fmt.Sprintf("const $$Astro = %s(import.meta.url, '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, p.opts.Site))
 }
 
-func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
+func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 	// Only print this for components with hydrated components
-	if len(doc.HydratedComponents) == 0 {
+	/*if len(doc.HydratedComponents) == 0 && len(doc.Scripts) == 0 {
 		return
-	}
+	}*/
 
 	var specs []string
 
 	modCount := 1
-	loc, specifier := js_scanner.NextImportSpecifier(source, 0)
-	for loc != -1 {
-		p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, specifier))
-		specs = append(specs, specifier)
-		loc, specifier = js_scanner.NextImportSpecifier(source, loc)
-		modCount++
+	if len(doc.HydratedComponents) > 0 {
+		loc, specifier := js_scanner.NextImportSpecifier(source, 0)
+		for loc != -1 {
+			p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, specifier))
+			specs = append(specs, specifier)
+			loc, specifier = js_scanner.NextImportSpecifier(source, loc)
+			modCount++
+		}
+		p.print("\n")
 	}
 
-	// Call createHydrationMap
-	p.print(fmt.Sprintf("\nconst $$hydrationMap = %s(import.meta.url, [", CREATE_HYDRATION_MAP))
+	// Call createMetadata
+	p.print(fmt.Sprintf("\nexport const $$metadata = %s(import.meta.url, { ", CREATE_METADATA))
+
+	// Add modules
+	p.print("modules: [")
 	for i := 1; i < modCount; i++ {
 		if i > 1 {
 			p.print(", ")
 		}
 		p.print(fmt.Sprintf("{ module: $$module%v, specifier: '%s' }", i, specs[i-1]))
 	}
-	p.print("], [")
+	p.print("], hydratedComponents: [")
 
+	// Hydrated Components
 	for i, node := range doc.HydratedComponents {
 		if i > 0 {
 			p.print(", ")
@@ -256,5 +263,18 @@ func (p *printer) printComponentImports(doc *astro.Node, source []byte) {
 			p.print(node.Data)
 		}
 	}
-	p.print("]);\n")
+	p.print("], hoisted: [")
+	for i, node := range doc.Scripts {
+		if i > 0 {
+			p.print(", ")
+		}
+
+		src := astro.GetAttribute(node, "src")
+		if src != nil {
+			p.print(fmt.Sprintf("{ type: 'remote', src: '%s' }", escapeSingleQuote(src.Val)))
+		} else {
+			p.print(fmt.Sprintf("{ type: 'inline', value: '%s' }", escapeSingleQuote(node.FirstChild.Data)))
+		}
+	}
+	p.print("] });\n\n")
 }

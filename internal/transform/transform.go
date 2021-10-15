@@ -57,14 +57,14 @@ func extractScriptsAndStyles(doc *tycho.Node) {
 							doc.HydratedComponents = append(doc.HydratedComponents, n)
 							pathAttr := tycho.Attribute{
 								Key:  "client:component-path",
-								Val:  fmt.Sprintf("$$hydrationMap.getPath(%s)", id),
+								Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
 								Type: tycho.ExpressionAttribute,
 							}
 							n.Attr = append(n.Attr, pathAttr)
 
 							exportAttr := tycho.Attribute{
 								Key:  "client:component-export",
-								Val:  fmt.Sprintf("$$hydrationMap.getExport(%s)", id),
+								Val:  fmt.Sprintf("$$metadata.getExport(%s)", id),
 								Type: tycho.ExpressionAttribute,
 							}
 							n.Attr = append(n.Attr, exportAttr)
