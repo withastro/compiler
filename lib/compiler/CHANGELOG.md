@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.1.15
+
+### Patch Changes
+
+- 5c02abf: Fix split so it always splits on first non-import/export
+- 93c1cd9: Bugfix: handle RegExp in Astro files
+- 94c59fa: Bugfix: tokenizer tries to parse JS comments
+- 46a5c75: Adds the top-level Astro object
+- 7ab9148: Improve JS scanning algorithm to be more fault tolerant, less error prone
+
 ## 0.1.12
 
 ### Patch Changes
