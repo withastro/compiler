@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.3.0
+
+### Minor Changes
+
+- 72bb352: Renames the hydrationMap to \$\$metadata and makes it be exported
+
 ## 0.1.15
 
 ### Patch Changes
