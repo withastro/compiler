@@ -138,6 +138,15 @@ func (n *Node) RemoveChild(c *Node) {
 	c.NextSibling = nil
 }
 
+func GetAttribute(n *Node, key string) *Attribute {
+	for _, attr := range n.Attr {
+		if attr.Key == key {
+			return &attr
+		}
+	}
+	return nil
+}
+
 // reparentChildren reparents all of src's child nodes to dst.
 func reparentChildren(dst, src *Node) {
 	for {

@@ -27,3 +27,7 @@ func escapeBackticks(src string) string {
 	backticks := regexp.MustCompile("`")
 	return backticks.ReplaceAllString(src, "\\`")
 }
+
+func escapeSingleQuote(str string) string {
+	return strings.Replace(str, "'", "\\'", -1)
+}

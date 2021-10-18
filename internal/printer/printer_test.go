@@ -21,7 +21,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
-	"createHydrationMap as " + CREATE_HYDRATION_MAP,
+	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, %s) => {
@@ -40,6 +40,7 @@ type want struct {
 	imports     string
 	frontmatter []string
 	styles      []string
+	metadata    string
 	code        string
 	scripts     []string
 }
@@ -92,9 +93,12 @@ import VueComponent from '../components/Vue.vue';
 			want: want{
 				imports: "",
 				frontmatter: []string{
-					"import VueComponent from '../components/Vue.vue';",
+					`import VueComponent from '../components/Vue.vue';
+
+import * as $$module1 from '../components/Vue.vue';`,
 				},
-				styles: []string{},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Vue.vue' }], hydratedComponents: [], hoisted: [] }`,
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -212,10 +216,14 @@ import Component from "test";
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{`import Component from "test";`},
-				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				imports: "",
+				frontmatter: []string{`import Component from "test";
+
+import * as $$module1 from 'test';
+`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -229,10 +237,14 @@ import Component from 'test';
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{`import Component from 'test';`},
-				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				imports: "",
+				frontmatter: []string{`import Component from 'test';
+
+import * as $$module1 from 'test';
+`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -403,15 +415,15 @@ const someProps = {
 				frontmatter: []string{`// Component Imports
 import Counter from '../components/Counter.jsx'
 
-import * as $$module1 from '../components/Counter.jsx';
-const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: '../components/Counter.jsx' }], [Counter]);`,
+import * as $$module1 from '../components/Counter.jsx';`,
 					`const someProps = {
   count: 0,
 }
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`},
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
+				styles:   []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Counter.jsx' }], hydratedComponents: [Counter], hoisted: [] }`,
 				code: `<html lang="en">
   <head>
     <meta charset="utf-8">
@@ -421,7 +433,7 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
   </head>
   <body>
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-path":($$hydrationMap.getPath(Counter)),"client:component-export":($$hydrationMap.getExport(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-path":($$metadata.getPath(Counter)),"client:component-export":($$metadata.getExport(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>`,
 			},
@@ -439,8 +451,12 @@ import Widget2 from '../components/Widget2.astro';
 			want: want{
 				imports: "",
 				frontmatter: []string{`import Widget from '../components/Widget.astro';
-import Widget2 from '../components/Widget2.astro';`},
-				styles: []string{},
+import Widget2 from '../components/Widget2.astro';
+
+import * as $$module1 from '../components/Widget.astro';
+import * as $$module2 from '../components/Widget2.astro';`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Widget.astro' }, { module: $$module2, specifier: '../components/Widget2.astro' }], hydratedComponents: [], hoisted: [] }`,
 				code: `<html lang="en">
   <head>
     <script type="module" src="/regular_script.js"></script>
@@ -456,6 +472,7 @@ import Widget2 from '../components/Widget2.astro';`},
 				imports:     "",
 				frontmatter: []string{"\n"},
 				styles:      []string{},
+				metadata:    `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'inline', value: 'console.log("Hello");' }] }`,
 				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
 				code:        `<html><head></head><body></body></html>`,
 			},
@@ -469,6 +486,7 @@ import Widget2 from '../components/Widget2.astro';`},
 				imports:     "",
 				frontmatter: []string{"\n"},
 				styles:      []string{},
+				metadata:    `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'remote', src: 'url' }] }`,
 				scripts:     []string{`{props:{"type":"module","hoist":true,"src":"url"}}`},
 				code:        "<html><head></head><body></body></html>",
 			},
@@ -480,9 +498,10 @@ import Widget2 from '../components/Widget2.astro';`},
 						<script type="module" hoist>console.log("Hello");</script>
 					`,
 			want: want{
-				imports: "",
-				styles:  []string{},
-				scripts: []string{},
+				imports:  "",
+				styles:   []string{},
+				scripts:  []string{},
+				metadata: `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'inline', value: 'console.log("Hello");' }] }`,
 				code: `<html><head></head><body><main>
 
 </main></body></html>`,
@@ -525,10 +544,14 @@ import Widget2 from '../components/Widget2.astro';`},
 			<div slot={name}>Named</div>
 		</Component>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
-				styles:      []string{},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				imports: "",
+				frontmatter: []string{`import Component from 'test';
+
+import * as $$module1 from 'test';
+`, `const name = 'named';`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -558,14 +581,17 @@ import 'test';
 ---
 <my-element></my-element>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{"import 'test';"},
-				styles:      []string{},
-				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
+				imports: "",
+				frontmatter: []string{`import 'test';
+
+import * as $$module1 from 'test';`},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				code:     `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
 		},
 		{
-			name: "gets all potential hydration maps",
+			name: "gets all potential hydrated components",
 			source: `---
 import One from 'one';
 import Two from 'two';
@@ -584,11 +610,11 @@ import 'custom-element';
 
 import * as $$module1 from 'one';
 import * as $$module2 from 'two';
-import * as $$module3 from 'custom-element';
-const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], [One, Two, 'my-element']);`,
+import * as $$module3 from 'custom-element';`,
 					`const name = 'world';`},
-				styles: []string{},
-				code:   "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(One)),\"client:component-export\":($$hydrationMap.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath(Two)),\"client:component-export\":($$hydrationMap.getExport(Two))})}${$$renderComponent($$result,'my-element','my-element',{\"client:load\":true,\"client:component-path\":($$hydrationMap.getPath('my-element')),\"client:component-export\":($$hydrationMap.getExport('my-element'))})}`,})}",
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], hydratedComponents: [One, Two, 'my-element'], hoisted: [] }`,
+				code:     "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$metadata.getPath(One)),\"client:component-export\":($$metadata.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$metadata.getPath(Two)),\"client:component-export\":($$metadata.getExport(Two))})}${$$renderComponent($$result,'my-element','my-element',{\"client:load\":true,\"client:component-path\":($$metadata.getPath('my-element')),\"client:component-export\":($$metadata.getExport('my-element'))})}`,})}",
 			},
 		},
 	}
@@ -625,6 +651,12 @@ const $$hydrationMap = $$createHydrationMap(import.meta.url, [{ module: $$module
 			if len(tt.want.frontmatter) > 0 {
 				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0])) + "\n"
 			}
+			// Default metadata
+			metadata := "{ modules: [], hydratedComponents: [], hoisted: [] }"
+			if len(tt.want.metadata) > 0 {
+				metadata = tt.want.metadata
+			}
+			toMatch = toMatch + fmt.Sprintf("\nexport const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
 			toMatch = toMatch + CREATE_ASTRO_CALL + "\n"
 			toMatch = toMatch + "\n" + PRELUDE
 			if len(tt.want.frontmatter) > 1 {
