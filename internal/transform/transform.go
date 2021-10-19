@@ -17,16 +17,23 @@ type TransformOptions struct {
 	Site        string
 }
 
-func Transform(doc *tycho.Node, opts TransformOptions) {
+func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	extractScriptsAndStyles(doc)
 
 	if len(doc.Styles) > 0 {
+		for _, style := range doc.Styles {
+			if hasAttr(style, "lang") {
+				Preprocess(style)
+			}
+		}
 		if shouldScope := ScopeStyle(doc.Styles, opts); shouldScope {
 			walk(doc, func(n *tycho.Node) {
 				ScopeElement(n, opts)
 			})
 		}
 	}
+
+	return doc
 }
 
 func extractScriptsAndStyles(doc *tycho.Node) {

@@ -15,9 +15,13 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+var done chan bool
+
 func main() {
-	js.Global().Set("__astro_transform", js.FuncOf(Transform))
-	<-make(chan bool)
+	done = make(chan bool, 1)
+	js.Global().Set("__astro_transform", Transform())
+
+	<-done
 }
 
 func jsString(j js.Value) string {
@@ -77,47 +81,65 @@ type TransformResult struct {
 	Map  string `js:"map"`
 }
 
-func Transform(this js.Value, args []js.Value) interface{} {
-	source := jsString(args[0])
-	hash := astro.HashFromSource(source)
-	transformOptions := makeTransformOptions(js.Value(args[1]), hash)
+func Transform() interface{} {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		source := jsString(args[0])
+		hash := astro.HashFromSource(source)
+		transformOptions := makeTransformOptions(js.Value(args[1]), hash)
 
-	var doc *astro.Node
+		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			resolve := args[0]
 
-	if transformOptions.As == "document" {
-		docNode, _ := astro.Parse(strings.NewReader(source))
-		doc = docNode
-	} else if transformOptions.As == "fragment" {
-		nodes, _ := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-			Type:     astro.ElementNode,
-			Data:     atom.Body.String(),
-			DataAtom: atom.Body,
+			go func() {
+				var doc *astro.Node
+
+				if transformOptions.As == "document" {
+					docNode, _ := astro.Parse(strings.NewReader(source))
+					doc = docNode
+				} else if transformOptions.As == "fragment" {
+					nodes, _ := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+						Type:     astro.ElementNode,
+						Data:     atom.Body.String(),
+						DataAtom: atom.Body,
+					})
+					doc = &astro.Node{
+						Type: astro.DocumentNode,
+					}
+					for i := 0; i < len(nodes); i++ {
+						n := nodes[i]
+						doc.AppendChild(n)
+					}
+				}
+
+				transform.Transform(doc, transformOptions)
+				result := printer.PrintToJS(source, doc, transformOptions)
+
+				switch transformOptions.SourceMap {
+				case "external":
+					resolve.Invoke(createExternalSourceMap(source, result, transformOptions))
+					return
+				case "both":
+					resolve.Invoke(createBothSourceMap(source, result, transformOptions))
+					return
+				case "inline":
+					resolve.Invoke(createInlineSourceMap(source, result, transformOptions))
+					return
+				}
+
+				resolve.Invoke(vert.ValueOf(TransformResult{
+					Code: string(result.Output),
+					Map:  "",
+				}))
+				return
+			}()
+
+			return nil
 		})
-		doc = &astro.Node{
-			Type: astro.DocumentNode,
-		}
-		for i := 0; i < len(nodes); i++ {
-			n := nodes[i]
-			doc.AppendChild(n)
-		}
-	}
+		defer handler.Release()
 
-	transform.Transform(doc, transformOptions)
-
-	result := printer.PrintToJS(source, doc, transformOptions)
-
-	switch transformOptions.SourceMap {
-	case "external":
-		return createExternalSourceMap(source, result, transformOptions)
-	case "both":
-		return createBothSourceMap(source, result, transformOptions)
-	case "inline":
-		return createInlineSourceMap(source, result, transformOptions)
-	}
-
-	return vert.ValueOf(TransformResult{
-		Code: string(result.Output),
-		Map:  "",
+		// Create and return the Promise object
+		promiseConstructor := js.Global().Get("Promise")
+		return promiseConstructor.New(handler)
 	})
 }
 
