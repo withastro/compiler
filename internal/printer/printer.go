@@ -68,7 +68,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 
 func (p *printer) printReturnOpen() {
 	p.addNilSourceMapping()
-	p.print("\nreturn ")
+	p.print("return ")
 	p.printTemplateLiteralOpen()
 }
 

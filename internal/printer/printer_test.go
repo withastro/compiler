@@ -276,26 +276,26 @@ const name = "world";
 		{
 			name: "styles (no frontmatter)",
 			source: `<style>
-  .title {
-    font-family: fantasy;
-    font-size: 28px;
-  }
+		  .title {
+		    font-family: fantasy;
+		    font-size: 28px;
+		  }
 
-  .body {
-    font-size: 1em;
-  }
-</style>
+		  .body {
+		    font-size: 1em;
+		  }
+		</style>
 
-<h1 class="title">Page Title</h1>
-<p class="body">I’m a page</p>`,
+		<h1 class="title">Page Title</h1>
+		<p class="body">I’m a page</p>`,
 			want: want{
 				imports:     "",
 				frontmatter: []string{},
-				styles:      []string{},
+				styles:      []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px;}.body.astro-DPOHFLYM{font-size:1em;}`}"},
 				code: `<html><head>
 
-</head><body><h1 class="title astro-W37SZOV4">Page Title</h1>
-<p class="body astro-W37SZOV4">I’m a page</p></body></html>`,
+		</head><body><h1 class="title astro-DPOHFLYM">Page Title</h1>
+		<p class="body astro-DPOHFLYM">I’m a page</p></body></html>`,
 			},
 		},
 		{
@@ -470,7 +470,7 @@ import * as $$module2 from '../components/Widget2.astro';`},
 <script type="module" hoist>console.log("Hello");</script>`,
 			want: want{
 				imports:     "",
-				frontmatter: []string{"\n"},
+				frontmatter: []string{""},
 				styles:      []string{},
 				metadata:    `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'inline', value: 'console.log("Hello");' }] }`,
 				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
@@ -494,13 +494,13 @@ import * as $$module2 from '../components/Widget2.astro';`},
 		{
 			name: "script hoist without frontmatter",
 			source: `
-					<main>
-						<script type="module" hoist>console.log("Hello");</script>
-					`,
+							<main>
+								<script type="module" hoist>console.log("Hello");</script>
+							`,
 			want: want{
 				imports:  "",
 				styles:   []string{},
-				scripts:  []string{},
+				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
 				metadata: `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'inline', value: 'console.log("Hello");' }] }`,
 				code: `<html><head></head><body><main>
 
@@ -663,7 +663,6 @@ import * as $$module3 from 'custom-element';`,
 				// format want
 				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[1]))
 			}
-			toMatch = toMatch + "\n"
 			if len(tt.want.styles) > 0 {
 				toMatch = toMatch + STYLE_PRELUDE
 				for _, style := range tt.want.styles {
@@ -677,9 +676,6 @@ import * as $$module3 from 'custom-element';`,
 					toMatch = toMatch + script + ",\n"
 				}
 				toMatch = toMatch + SCRIPT_SUFFIX
-			}
-			if len(tt.want.frontmatter) > 0 {
-				toMatch = toMatch + "\n"
 			}
 			toMatch = toMatch + fmt.Sprintf("%s%s", RETURN, tt.want.code)
 			toMatch = toMatch + SUFFIX

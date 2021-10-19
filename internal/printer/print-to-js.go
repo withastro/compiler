@@ -98,6 +98,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		return
 	}
+
 	// Render frontmatter (will be the first node, if it exists)
 	if n.Type == FrontmatterNode {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -134,7 +135,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					if js_scanner.HasExports([]byte(renderBody)) {
 						panic(errors.New("Export statements must be placed at the top of .astro files!"))
 					}
-					// fmt.Println(js_scanner.AccessesPrivateVars([]byte(renderBody)))
 					//  {
 					// 	panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					// }
@@ -149,7 +149,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 					p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
-					p.print(strings.TrimSpace(renderBody) + "\n")
+					p.print(strings.TrimSpace(renderBody))
 				}
 
 				if len(n.Parent.Styles) > 0 {
@@ -192,18 +192,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.printFuncPrelude("$$Component")
 
 		// If we haven't printed the funcPrelude but we do have Styles/Scripts, we need to print them!
-		if len(n.Styles) > 0 {
+		if len(n.Parent.Styles) > 0 {
 			p.println("const STYLES = [")
-			for _, style := range n.Styles {
+			for _, style := range n.Parent.Styles {
 				p.printStyleOrScript(style)
 			}
 			p.println("];")
 			p.addNilSourceMapping()
 			p.println(fmt.Sprintf("%s.styles.add(...STYLES)", RESULT))
 		}
-		if len(n.Scripts) > 0 {
+		if len(n.Parent.Scripts) > 0 {
 			p.println("const SCRIPTS = [")
-			for _, script := range n.Scripts {
+			for _, script := range n.Parent.Scripts {
 				p.printStyleOrScript(script)
 			}
 			p.println("];")
@@ -306,8 +306,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
-
-	// fmt.Println("OPEN", n.Data)
 
 	if n.Fragment {
 		p.print("Fragment")
