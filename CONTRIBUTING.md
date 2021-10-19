@@ -16,6 +16,10 @@ If you use VS Code as your primary editor, installing the [Go extension][go-vsco
 
 [TinyGo][tinygo] is needed to compile the WASM, and is an improvement over Go’s default WASM compiler. TinyGo has [installation guides for every OS][tinygo-install].
 
+### Node
+
+You will also need [Node.js][node] installed, as well as Yarn 1.x (`npm i -g yarn`). More often than not, you won’t need to touch JS in this repo, but in case you do, be sure to run `yarn` first.
+
 ## Code Structure
 
 A simple explanation of the compiler process is:
@@ -47,5 +51,6 @@ Adding tests for the tokenizer, scanner, and printer can be found in `internal/t
 [go]: https://golang.org/
 [go-vscode]: https://marketplace.visualstudio.com/items?itemName=golang.go
 [gopath]: https://www.digitalocean.com/community/tutorials/understanding-the-gopath
+[node]: https://nodejs.org/
 [tinygo]: https://tinygo.org/
 [tinygo-install]: https://tinygo.org/getting-started/install/

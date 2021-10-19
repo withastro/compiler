@@ -13,10 +13,10 @@ issues:
 
     - linters:
         - typecheck
-      text: "syscall/js"
+      text: 'syscall/js'
     - linters:
         - staticcheck
-      text: "SA9003"
+      text: 'SA9003'
     - linters:
         - typecheck
-      text: "github.com/norunners/vert"
+      text: 'github.com/norunners/vert'

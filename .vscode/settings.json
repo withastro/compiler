@@ -1,9 +1,7 @@
 {
-  "go.lintTool":"golangci-lint",
-  "go.lintFlags": [
-    "--fast"
-  ],
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": ["--fast"],
   "go.toolsEnvVars": {
-    "GOFLAGS": "-tags=gc.conservative,scheduler.coroutines",
+    "GOFLAGS": "-tags=gc.conservative,scheduler.coroutines"
   }
 }

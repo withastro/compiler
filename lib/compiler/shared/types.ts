@@ -3,13 +3,13 @@ export interface TransformOptions {
   site?: string;
   sourcefile?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
-  as?: 'document'|'fragment';
+  as?: 'document' | 'fragment';
 }
 
 export interface TransformResult {
-	code: string;
-	map: string;
-  warnings: any[]
+  code: string;
+  map: string;
+  warnings: any[];
 }
 
 // This function transforms a single JavaScript file. It can be used to minify
@@ -34,10 +34,10 @@ export declare function initialize(options: InitializeOptions): Promise<void>;
 export interface InitializeOptions {
   // The URL of the "astro.wasm" file. This must be provided when running
   // astro in the browser.
-  wasmURL?: string
+  wasmURL?: string;
 
   // By default astro runs the WebAssembly-based browser API in a web worker
   // to avoid blocking the UI thread. This can be disabled by setting "worker"
   // to false.
-  worker?: boolean
+  worker?: boolean;
 }

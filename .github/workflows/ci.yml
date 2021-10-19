@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   pull_request:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
   build-wasm:
@@ -49,3 +49,19 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+
+  build-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        run: yarn
+        run: yarn build:compiler
+
+  lint-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - run: yarn
+      - run: yarn lint

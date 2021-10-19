@@ -1,11 +1,14 @@
-import type * as types from "./types.ts";
-import "./wasm_exec.js";
+import type * as types from './types.ts';
+import './wasm_exec.js';
 
 const Go = (globalThis as any).Go;
 
 export const transform: typeof types.transform = async (input, options) => {
   const service = await ensureServiceIsRunning();
-  return await service.transform(input, { internalURL: new URL('./internal.ts', import.meta.url).toString(), ...options });
+  return await service.transform(input, {
+    internalURL: new URL('./internal.ts', import.meta.url).toString(),
+    ...options,
+  });
 };
 
 export const compile: typeof types.compile = async (transformResult: types.TransformResult): Promise<string> => {
@@ -16,20 +19,20 @@ export const compile: typeof types.compile = async (transformResult: types.Trans
     scripts: new Set(),
     /** This function returns the `Astro` faux-global */
     createAstro: (props: any) => {
-      return { 
+      return {
         isPage: true,
         site: null,
         request: { url: null, canonicalURL: null },
         props,
-        fetchContent: () => {}
+        fetchContent: () => {},
       };
-    }
-  }
+    },
+  };
 
-  const { default: Component } = await import(`data:text/typescript;charset=utf-8;base64,${btoa(transformResult.code)}`)
+  const { default: Component } = await import(`data:text/typescript;charset=utf-8;base64,${btoa(transformResult.code)}`);
   let html = await renderPage(result, Component, {}, {});
-  return html
-}
+  return html;
+};
 
 interface Service {
   transform: typeof types.transform;
@@ -40,20 +43,14 @@ let longLivedService: Service | undefined;
 const ensureServiceIsRunning = (): Promise<Service> => {
   if (longLivedService) return Promise.resolve(longLivedService);
   return startRunningService();
-}
+};
 
-const instantiateWASM = async (
-  wasmURL: string,
-  importObject: Record<string, any>
-): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
+const instantiateWASM = async (wasmURL: string, importObject: Record<string, any>): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
   if (wasmURL.startsWith('file://')) {
-    const bytes = await Deno.readFile("./astro.wasm");
-    return await WebAssembly.instantiate(bytes, importObject)
+    const bytes = await Deno.readFile('./astro.wasm');
+    return await WebAssembly.instantiate(bytes, importObject);
   } else {
-      return await WebAssembly.instantiateStreaming(
-      fetch(wasmURL),
-      importObject
-    );
+    return await WebAssembly.instantiateStreaming(fetch(wasmURL), importObject);
   }
 };
 
@@ -62,9 +59,7 @@ const startRunningService = async () => {
   const wasm = await instantiateWASM(new URL('./astro.wasm', import.meta.url).toString(), go.importObject);
   go.run(wasm.instance);
 
-  const apiKeys = new Set([
-    'transform'
-  ]);
+  const apiKeys = new Set(['transform']);
   const service: any = Object.create(null);
 
   for (const key of apiKeys.values()) {
@@ -74,7 +69,7 @@ const startRunningService = async () => {
   }
 
   longLivedService = {
-    transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {})))
+    transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),
   };
   return longLivedService;
 };

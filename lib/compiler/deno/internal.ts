@@ -13,20 +13,20 @@ export async function renderAstroComponent(component: InstanceType<typeof AstroC
 export async function renderToString(result: any, componentFactory: AstroComponentFactory, props: any, children: any) {
   const Component = await componentFactory(result, props, children);
   let template = await renderAstroComponent(Component);
-  return template
+  return template;
 }
 
 export async function renderPage(result: any, Component: AstroComponentFactory, props: any, children: any) {
   const template = await renderToString(result, Component, props, children);
-  const styles = Array.from(result.styles).map(style => `<style>${style}</style>`);
-  const scripts = Array.from(result.scripts).map(script => `<script type="module">${script}</script>`);
-  return template.replace("</head>", styles.join('\n') + scripts.join('\n') + "</head>");
+  const styles = Array.from(result.styles).map((style) => `<style>${style}</style>`);
+  const scripts = Array.from(result.scripts).map((script) => `<script type="module">${script}</script>`);
+  return template.replace('</head>', styles.join('\n') + scripts.join('\n') + '</head>');
 }
 
 async function _render(child: any): Promise<any> {
   child = await child;
   if (Array.isArray(child)) {
-    return (await Promise.all(child.map(value => _render(value)))).join('\n');
+    return (await Promise.all(child.map((value) => _render(value)))).join('\n');
   } else if (typeof child === 'function') {
     // Special: If a child is a function, call it automatically.
     // This lets you do {() => ...} without the extra boilerplate
@@ -46,7 +46,7 @@ async function _render(child: any): Promise<any> {
 export class AstroComponent {
   private htmlParts: TemplateStringsArray;
   private expressions: any[];
-  
+
   constructor(htmlParts: TemplateStringsArray, expressions: any[]) {
     this.htmlParts = htmlParts;
     this.expressions = expressions;
@@ -78,9 +78,12 @@ export const createComponent = (cb: AstroComponentFactory) => {
   // Add a flag to this callback to mark it as an Astro component
   (cb as any).isAstroComponentFactory = true;
   return cb;
-}
+};
 
-function extractHydrationDirectives(inputProps: Record<string | number, any>): { hydrationDirective: [string, any] | null; props: Record<string | number, any> } {
+function extractHydrationDirectives(inputProps: Record<string | number, any>): {
+  hydrationDirective: [string, any] | null;
+  props: Record<string | number, any>;
+} {
   let props: Record<string | number, any> = {};
   let hydrationDirective: [string, any] | null = null;
   for (const [key, value] of Object.entries(inputProps)) {
@@ -136,7 +139,7 @@ export const renderComponent = async (result: any, displayName: string, Componen
   Component = await Component;
   // children = await renderGenerator(children);
   if (Component && (Component as any).isAstroComponentFactory) {
-    const output = await renderToString(result, (Component as any), _props, children)
+    const output = await renderToString(result, Component as any, _props, children);
     return output;
   }
   // const { renderers } = result._metadata;

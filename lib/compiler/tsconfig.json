@@ -9,12 +9,6 @@
     "noUnusedLocals": true,
     "esModuleInterop": true
   },
-  "include": [
-    "browser",
-    "node",
-    "shared",
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["browser", "node", "shared"],
+  "exclude": ["node_modules"]
 }
