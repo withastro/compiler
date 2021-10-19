@@ -464,6 +464,31 @@ import * as $$module2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
+			name: "ignore <style> in frontmatter",
+			source: `---
+const JSStyles = <style>h1 { color: blue; }</style>;
+---
+<body>
+  <JSStyles />
+  <style lang="scss">
+    p {
+      font-size: 1.4em;
+    }
+  </style>
+</body>
+`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{fmt.Sprintf(`{props:{"lang":"scss","data-astro-id":"YBDVCD4V"},children:%sp.astro-YBDVCD4V{font-size:1.4em;}%s}`, BACKTICK, BACKTICK)},
+				code: `<html><head></head><body>
+
+  ${$$renderComponent($$result,'JSStyles',JSStyles,{"class":"astro-YBDVCD4V"})}
+
+</body></html>`,
+			},
+		},
+		{
 			name: "script hoist with frontmatter",
 			source: `---
 ---
