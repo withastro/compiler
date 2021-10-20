@@ -29,27 +29,26 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - name: Set up Node.js 14.x
+
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: 14.x
 
       - name: Get tinygo runtime
         run: |
-
           wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.20.0/tinygo_0.20.0_amd64.deb
           sudo dpkg -i /tmp/tinygo_0.20.0_amd64.deb
 
       - name: Build WASM
         run: |
-          tinygo build -o astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
+          tinygo build -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
           cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
       - name: Install deps
         env:
           CI: true
         run: yarn --frozen-lockfile --ignore-engines
-          yarn build:compiler
 
       - name: Build JS
         run: yarn build:compiler
