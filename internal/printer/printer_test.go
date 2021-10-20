@@ -31,9 +31,9 @@ var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
 export default $$Component;`
 var STYLE_PRELUDE = "const STYLES = [\n"
-var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES)\n"
+var STYLE_SUFFIX = "];\n$$result.styles.add(...STYLES);\n"
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
-var SCRIPT_SUFFIX = "];\n$$result.scripts.add(...SCRIPTS)\n"
+var SCRIPT_SUFFIX = "];\n$$result.scripts.add(...SCRIPTS);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build');\nconst Astro = $$Astro;"
 
 type want struct {
@@ -663,6 +663,7 @@ import * as $$module3 from 'custom-element';`,
 				// format want
 				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[1]))
 			}
+			toMatch = toMatch + "\n"
 			if len(tt.want.styles) > 0 {
 				toMatch = toMatch + STYLE_PRELUDE
 				for _, style := range tt.want.styles {
