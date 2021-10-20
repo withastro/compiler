@@ -153,13 +153,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				}
 
 				if len(n.Parent.Styles) > 0 {
-					p.println("const STYLES = [")
+					p.println("\nconst STYLES = [")
 					for _, style := range n.Parent.Styles {
 						p.printStyleOrScript(style)
 					}
 					p.println("];")
 					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("%s.styles.add(...STYLES)", RESULT))
+					p.println(fmt.Sprintf("%s.styles.add(...STYLES);", RESULT))
 				}
 
 				if len(n.Parent.Scripts) > 0 {
@@ -169,7 +169,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 					p.println("];")
 					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS)", RESULT))
+					p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS);", RESULT))
 				}
 
 				p.printReturnOpen()
@@ -193,13 +193,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		// If we haven't printed the funcPrelude but we do have Styles/Scripts, we need to print them!
 		if len(n.Parent.Styles) > 0 {
-			p.println("const STYLES = [")
+			p.println("\nconst STYLES = [")
 			for _, style := range n.Parent.Styles {
 				p.printStyleOrScript(style)
 			}
 			p.println("];")
 			p.addNilSourceMapping()
-			p.println(fmt.Sprintf("%s.styles.add(...STYLES)", RESULT))
+			p.println(fmt.Sprintf("%s.styles.add(...STYLES);", RESULT))
 		}
 		if len(n.Parent.Scripts) > 0 {
 			p.println("const SCRIPTS = [")
@@ -208,7 +208,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			}
 			p.println("];")
 			p.addNilSourceMapping()
-			p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS)", RESULT))
+			p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS);", RESULT))
 		}
 
 		p.printReturnOpen()
