@@ -223,7 +223,7 @@ import * as $$module1 from 'test';
 `},
 				styles:   []string{},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
-				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:     `<html><head>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}</head></html>`,
 			},
 		},
 		{
@@ -244,7 +244,7 @@ import * as $$module1 from 'test';
 `},
 				styles:   []string{},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
-				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:     `<html><head>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}</head></html>`,
 			},
 		},
 		{
@@ -543,6 +543,7 @@ import * as $$module2 from '../components/Widget2.astro';`},
 		<Component>
 			<div slot={name}>Named</div>
 		</Component>`,
+			//fragment: true,
 			want: want{
 				imports: "",
 				frontmatter: []string{`import Component from 'test';
@@ -551,7 +552,7 @@ import * as $$module1 from 'test';
 `, `const name = 'named';`},
 				styles:   []string{},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
-				code:     `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:     `<html><head>${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}</head></html>`,
 			},
 		},
 		{
@@ -614,7 +615,40 @@ import * as $$module3 from 'custom-element';`,
 					`const name = 'world';`},
 				styles:   []string{},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], hydratedComponents: [One, Two, 'my-element'], hoisted: [] }`,
-				code:     "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$metadata.getPath(One)),\"client:component-export\":($$metadata.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$metadata.getPath(Two)),\"client:component-export\":($$metadata.getExport(Two))})}${$$renderComponent($$result,'my-element','my-element',{\"client:load\":true,\"client:component-path\":($$metadata.getPath('my-element')),\"client:component-export\":($$metadata.getExport('my-element'))})}`,})}",
+				code: `<html><head>${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
+${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
+${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}
+</head></html>`,
+			},
+		},
+		{
+			name:   "Components are put into the head",
+			source: `<BaseHead></BaseHead><link href="test">`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head></html>`,
+			},
+		},
+		{
+			name:   "Self-closing components are put into the head",
+			source: `<BaseHead /><link href="test">`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head></html>`,
+			},
+		},
+		{
+			name:   "Self-closing components in head",
+			source: `<html><head><BaseHead /><link href="test"></head><html>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
 			},
 		},
 	}

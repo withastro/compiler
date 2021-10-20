@@ -655,8 +655,13 @@ func beforeHTMLIM(p *parser) bool {
 			return true
 		}
 		if isComponent(p.tok.Data) {
+			p.parseImpliedToken(StartTagToken, a.Html, a.Html.String())
+			p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
 			p.addElement()
 			p.im = inBodyIM
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+			}
 			return true
 		}
 	case EndTagToken:
@@ -743,6 +748,10 @@ func inHeadIM(p *parser) bool {
 		// Allow components in Head
 		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
 			p.addElement()
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+			}
 			return true
 		}
 		switch p.tok.DataAtom {
@@ -1283,6 +1292,12 @@ func inBodyIM(p *parser) bool {
 			p.acknowledgeSelfClosingTag()
 		}
 	case EndTagToken:
+		if isComponent(p.tok.Data) {
+			p.addLoc()
+			p.oe.pop()
+			return true
+		}
+
 		switch p.tok.DataAtom {
 		case a.Body:
 			p.addLoc()
