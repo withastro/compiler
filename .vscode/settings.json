@@ -4,6 +4,6 @@
   "go.toolsEnvVars": {
     "GOOS": "js",
     "GOARCH": "wasm",
-    "GOFLAGS": "-tags=gc.conservative,scheduler.coroutines",
+    "GOFLAGS": "-tags=gc.conservative,scheduler.coroutines"
   }
 }

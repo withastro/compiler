@@ -3,14 +3,13 @@ export interface TransformOptions {
   site?: string;
   sourcefile?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
-  as?: 'document'|'fragment';
-  preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<string>
+  as?: 'document' | 'fragment';
+  preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<string>;
 }
 
 export interface TransformResult {
   code: string;
   map: string;
-  warnings: any[];
 }
 
 // This function transforms a single JavaScript file. It can be used to minify
@@ -21,8 +20,6 @@ export interface TransformResult {
 // Works in node: yes
 // Works in browser: yes
 export declare function transform(input: string, options?: TransformOptions): Promise<TransformResult>;
-
-export declare function compile(input: string, options?: TransformOptions): Promise<TransformResult>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before
@@ -36,9 +33,4 @@ export interface InitializeOptions {
   // The URL of the "astro.wasm" file. This must be provided when running
   // astro in the browser.
   wasmURL?: string;
-
-  // By default astro runs the WebAssembly-based browser API in a web worker
-  // to avoid blocking the UI thread. This can be disabled by setting "worker"
-  // to false.
-  worker?: boolean;
 }
