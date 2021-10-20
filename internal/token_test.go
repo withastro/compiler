@@ -170,6 +170,17 @@ func TestFrontmatter(t *testing.T) {
 			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
 		},
 		{
+			"function components w/ conditional rendering",
+			`---
+			const getSummary = (key) => {
+				return <>
+					{key && <><span class={` + "`" + `${className} key` + "`" + `}>{key}</span></>}
+				</>;
+			};
+			---`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, StartTagToken, StartExpressionToken, TextToken, TextToken, EndExpressionToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndTagToken, EndExpressionToken, TextToken, EndTagToken, TextToken, TextToken, FrontmatterFenceToken},
+		},
+		{
 			"less than isn’t a tag",
 			`
 			---
