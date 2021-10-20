@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.5
+
+### Patch Changes
+
+- Fix issue with CI deployment
+
 ## 0.2.4
 
 ### Patch Changes
