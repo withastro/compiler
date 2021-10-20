@@ -6,69 +6,137 @@
 // This file has been modified for use by the TinyGo compiler.
 // This file has been further modified for use by Astro.
 
-
 const enosys = () => {
-	const err = new Error("not implemented");
-	err.code = "ENOSYS";
-	return err;
+  const err = new Error('not implemented');
+  err.code = 'ENOSYS';
+  return err;
 };
 
-let outputBuf = "";
+let outputBuf = '';
 const fs = {
-	constants: { O_WRONLY: -1, O_RDWR: -1, O_CREAT: -1, O_TRUNC: -1, O_APPEND: -1, O_EXCL: -1 }, // unused
-	writeSync(fd, buf) {
-		outputBuf += decoder.decode(buf);
-		const nl = outputBuf.lastIndexOf("\n");
-		if (nl != -1) {
-			console.log(outputBuf.substr(0, nl));
-			outputBuf = outputBuf.substr(nl + 1);
-		}
-		return buf.length;
-	},
-	write(fd, buf, offset, length, position, callback) {
-		if (offset !== 0 || length !== buf.length || position !== null) {
-			callback(enosys());
-			return;
-		}
-		const n = this.writeSync(fd, buf);
-		callback(null, n);
-	},
-	chmod(path, mode, callback) { callback(enosys()); },
-	chown(path, uid, gid, callback) { callback(enosys()); },
-	close(fd, callback) { callback(enosys()); },
-	fchmod(fd, mode, callback) { callback(enosys()); },
-	fchown(fd, uid, gid, callback) { callback(enosys()); },
-	fstat(fd, callback) { callback(enosys()); },
-	fsync(fd, callback) { callback(null); },
-	ftruncate(fd, length, callback) { callback(enosys()); },
-	lchown(path, uid, gid, callback) { callback(enosys()); },
-	link(path, link, callback) { callback(enosys()); },
-	lstat(path, callback) { callback(enosys()); },
-	mkdir(path, perm, callback) { callback(enosys()); },
-	open(path, flags, mode, callback) { callback(enosys()); },
-	read(fd, buffer, offset, length, position, callback) { callback(enosys()); },
-	readdir(path, callback) { callback(enosys()); },
-	readlink(path, callback) { callback(enosys()); },
-	rename(from, to, callback) { callback(enosys()); },
-	rmdir(path, callback) { callback(enosys()); },
-	stat(path, callback) { callback(enosys()); },
-	symlink(path, link, callback) { callback(enosys()); },
-	truncate(path, length, callback) { callback(enosys()); },
-	unlink(path, callback) { callback(enosys()); },
-	utimes(path, atime, mtime, callback) { callback(enosys()); },
+  constants: {
+    O_WRONLY: -1,
+    O_RDWR: -1,
+    O_CREAT: -1,
+    O_TRUNC: -1,
+    O_APPEND: -1,
+    O_EXCL: -1,
+  }, // unused
+  writeSync(fd, buf) {
+    outputBuf += decoder.decode(buf);
+    const nl = outputBuf.lastIndexOf('\n');
+    if (nl != -1) {
+      console.log(outputBuf.substr(0, nl));
+      outputBuf = outputBuf.substr(nl + 1);
+    }
+    return buf.length;
+  },
+  write(fd, buf, offset, length, position, callback) {
+    if (offset !== 0 || length !== buf.length || position !== null) {
+      callback(enosys());
+      return;
+    }
+    const n = this.writeSync(fd, buf);
+    callback(null, n);
+  },
+  chmod(path, mode, callback) {
+    callback(enosys());
+  },
+  chown(path, uid, gid, callback) {
+    callback(enosys());
+  },
+  close(fd, callback) {
+    callback(enosys());
+  },
+  fchmod(fd, mode, callback) {
+    callback(enosys());
+  },
+  fchown(fd, uid, gid, callback) {
+    callback(enosys());
+  },
+  fstat(fd, callback) {
+    callback(enosys());
+  },
+  fsync(fd, callback) {
+    callback(null);
+  },
+  ftruncate(fd, length, callback) {
+    callback(enosys());
+  },
+  lchown(path, uid, gid, callback) {
+    callback(enosys());
+  },
+  link(path, link, callback) {
+    callback(enosys());
+  },
+  lstat(path, callback) {
+    callback(enosys());
+  },
+  mkdir(path, perm, callback) {
+    callback(enosys());
+  },
+  open(path, flags, mode, callback) {
+    callback(enosys());
+  },
+  read(fd, buffer, offset, length, position, callback) {
+    callback(enosys());
+  },
+  readdir(path, callback) {
+    callback(enosys());
+  },
+  readlink(path, callback) {
+    callback(enosys());
+  },
+  rename(from, to, callback) {
+    callback(enosys());
+  },
+  rmdir(path, callback) {
+    callback(enosys());
+  },
+  stat(path, callback) {
+    callback(enosys());
+  },
+  symlink(path, link, callback) {
+    callback(enosys());
+  },
+  truncate(path, length, callback) {
+    callback(enosys());
+  },
+  unlink(path, callback) {
+    callback(enosys());
+  },
+  utimes(path, atime, mtime, callback) {
+    callback(enosys());
+  },
 };
 const process = {
-	getuid() { return -1; },
-	getgid() { return -1; },
-	geteuid() { return -1; },
-	getegid() { return -1; },
-	getgroups() { throw enosys(); },
-	pid: -1,
-	ppid: -1,
-	umask() { throw enosys(); },
-	cwd() { throw enosys(); },
-	chdir() { throw enosys(); },
-}
+  getuid() {
+    return -1;
+  },
+  getgid() {
+    return -1;
+  },
+  geteuid() {
+    return -1;
+  },
+  getegid() {
+    return -1;
+  },
+  getgroups() {
+    throw enosys();
+  },
+  pid: -1,
+  ppid: -1,
+  umask() {
+    throw enosys();
+  },
+  cwd() {
+    throw enosys();
+  },
+  chdir() {
+    throw enosys();
+  },
+};
 
 Object.defineProperties(globalThis, {
   fs: {
@@ -77,13 +145,13 @@ Object.defineProperties(globalThis, {
   },
   process: {
     value: process,
-    enumerable: true
-  }
+    enumerable: true,
+  },
 });
 
-const encoder = new TextEncoder("utf-8");
-const decoder = new TextDecoder("utf-8");
-var logLine = [];
+const encoder = new TextEncoder('utf-8');
+const decoder = new TextDecoder('utf-8');
+let logLine = [];
 
 export default class Go {
   importObject: Record<string, any>;
@@ -124,7 +192,7 @@ export default class Go {
     const storeValue = (addr, v) => {
       const nanHead = 0x7ff80000;
 
-      if (typeof v === "number") {
+      if (typeof v === 'number') {
         if (isNaN(v)) {
           mem().setUint32(addr + 4, nanHead, true);
           mem().setUint32(addr, 0, true);
@@ -170,13 +238,13 @@ export default class Go {
       this._goRefCounts[id]++;
       let typeFlag = 1;
       switch (typeof v) {
-        case "string":
+        case 'string':
           typeFlag = 2;
           break;
-        case "symbol":
+        case 'symbol':
           typeFlag = 3;
           break;
-        case "function":
+        case 'function':
           typeFlag = 4;
           break;
       }
@@ -197,9 +265,7 @@ export default class Go {
     };
 
     const loadString = (ptr, len) => {
-      return decoder.decode(
-        new DataView(this._inst.exports.memory.buffer, ptr, len)
-      );
+      return decoder.decode(new DataView(this._inst.exports.memory.buffer, ptr, len));
     };
 
     const timeOrigin = Date.now() - performance.now();
@@ -230,7 +296,7 @@ export default class Go {
               }
             }
           } else {
-            console.error("invalid file descriptor:", fd);
+            console.error('invalid file descriptor:', fd);
           }
           mem().setUint32(nwritten_ptr, nwritten, true);
           return 0;
@@ -241,24 +307,24 @@ export default class Go {
             process.exit(code);
           } else {
             // Can't exit in a browser.
-            throw "trying to exit with code " + code;
+            throw 'trying to exit with code ' + code;
           }
         },
       },
       env: {
         // func ticks() float64
-        "runtime.ticks": () => {
+        'runtime.ticks': () => {
           return timeOrigin + performance.now();
         },
 
         // func sleepTicks(timeout float64)
-        "runtime.sleepTicks": (timeout) => {
+        'runtime.sleepTicks': (timeout) => {
           // Do not sleep, only reactivate scheduler after the given timeout.
           setTimeout(this._inst.exports.go_scheduler, timeout);
         },
 
         // func finalizeRef(v ref)
-        "syscall/js.finalizeRef": (v_addr) => {
+        'syscall/js.finalizeRef': (v_addr) => {
           // Note: TinyGo does not support finalizers so this is only called
           // for one specific case, by js.go:jsString.
           const id = mem().getUint32(v_addr, true);
@@ -272,13 +338,13 @@ export default class Go {
         },
 
         // func stringVal(value string) ref
-        "syscall/js.stringVal": (ret_ptr, value_ptr, value_len) => {
+        'syscall/js.stringVal': (ret_ptr, value_ptr, value_len) => {
           const s = loadString(value_ptr, value_len);
           storeValue(ret_ptr, s);
         },
 
         // func valueGet(v ref, p string) ref
-        "syscall/js.valueGet": (retval, v_addr, p_ptr, p_len) => {
+        'syscall/js.valueGet': (retval, v_addr, p_ptr, p_len) => {
           let prop = loadString(p_ptr, p_len);
           let value = loadValue(v_addr);
           let result = Reflect.get(value, prop);
@@ -286,7 +352,7 @@ export default class Go {
         },
 
         // func valueSet(v ref, p string, x ref)
-        "syscall/js.valueSet": (v_addr, p_ptr, p_len, x_addr) => {
+        'syscall/js.valueSet': (v_addr, p_ptr, p_len, x_addr) => {
           const v = loadValue(v_addr);
           const p = loadString(p_ptr, p_len);
           const x = loadValue(x_addr);
@@ -294,32 +360,24 @@ export default class Go {
         },
 
         // func valueDelete(v ref, p string)
-        "syscall/js.valueDelete": (v_addr, p_ptr, p_len) => {
+        'syscall/js.valueDelete': (v_addr, p_ptr, p_len) => {
           const v = loadValue(v_addr);
           const p = loadString(p_ptr, p_len);
           Reflect.deleteProperty(v, p);
         },
 
         // func valueIndex(v ref, i int) ref
-        "syscall/js.valueIndex": (ret_addr, v_addr, i) => {
+        'syscall/js.valueIndex': (ret_addr, v_addr, i) => {
           storeValue(ret_addr, Reflect.get(loadValue(v_addr), i));
         },
 
         // valueSetIndex(v ref, i int, x ref)
-        "syscall/js.valueSetIndex": (v_addr, i, x_addr) => {
+        'syscall/js.valueSetIndex': (v_addr, i, x_addr) => {
           Reflect.set(loadValue(v_addr), i, loadValue(x_addr));
         },
 
         // func valueCall(v ref, m string, args []ref) (ref, bool)
-        "syscall/js.valueCall": (
-          ret_addr,
-          v_addr,
-          m_ptr,
-          m_len,
-          args_ptr,
-          args_len,
-          args_cap
-        ) => {
+        'syscall/js.valueCall': (ret_addr, v_addr, m_ptr, m_len, args_ptr, args_len, args_cap) => {
           const v = loadValue(v_addr);
           const name = loadString(m_ptr, m_len);
           const args = loadSliceOfValues(args_ptr, args_len, args_cap);
@@ -334,13 +392,7 @@ export default class Go {
         },
 
         // func valueInvoke(v ref, args []ref) (ref, bool)
-        "syscall/js.valueInvoke": (
-          ret_addr,
-          v_addr,
-          args_ptr,
-          args_len,
-          args_cap
-        ) => {
+        'syscall/js.valueInvoke': (ret_addr, v_addr, args_ptr, args_len, args_cap) => {
           try {
             const v = loadValue(v_addr);
             const args = loadSliceOfValues(args_ptr, args_len, args_cap);
@@ -353,13 +405,7 @@ export default class Go {
         },
 
         // func valueNew(v ref, args []ref) (ref, bool)
-        "syscall/js.valueNew": (
-          ret_addr,
-          v_addr,
-          args_ptr,
-          args_len,
-          args_cap
-        ) => {
+        'syscall/js.valueNew': (ret_addr, v_addr, args_ptr, args_len, args_cap) => {
           const v = loadValue(v_addr);
           const args = loadSliceOfValues(args_ptr, args_len, args_cap);
           try {
@@ -372,12 +418,12 @@ export default class Go {
         },
 
         // func valueLength(v ref) int
-        "syscall/js.valueLength": (v_addr) => {
+        'syscall/js.valueLength': (v_addr) => {
           return loadValue(v_addr).length;
         },
 
         // valuePrepareString(v ref) (ref, int)
-        "syscall/js.valuePrepareString": (ret_addr, v_addr) => {
+        'syscall/js.valuePrepareString': (ret_addr, v_addr) => {
           const s = String(loadValue(v_addr));
           const str = encoder.encode(s);
           storeValue(ret_addr, str);
@@ -385,29 +431,18 @@ export default class Go {
         },
 
         // valueLoadString(v ref, b []byte)
-        "syscall/js.valueLoadString": (
-          v_addr,
-          slice_ptr,
-          slice_len,
-          slice_cap
-        ) => {
+        'syscall/js.valueLoadString': (v_addr, slice_ptr, slice_len, slice_cap) => {
           const str = loadValue(v_addr);
           loadSlice(slice_ptr, slice_len, slice_cap).set(str);
         },
 
         // func valueInstanceOf(v ref, t ref) bool
-        "syscall/js.valueInstanceOf": (v_addr, t_addr) => {
+        'syscall/js.valueInstanceOf': (v_addr, t_addr) => {
           return loadValue(v_addr) instanceof loadValue(t_addr);
         },
 
         // func copyBytesToGo(dst []byte, src ref) (int, bool)
-        "syscall/js.copyBytesToGo": (
-          ret_addr,
-          dest_addr,
-          dest_len,
-          dest_cap,
-          source_addr
-        ) => {
+        'syscall/js.copyBytesToGo': (ret_addr, dest_addr, dest_len, dest_cap, source_addr) => {
           let num_bytes_copied_addr = ret_addr;
           let returned_status_addr = ret_addr + 4; // Address of returned boolean status variable
 
@@ -426,13 +461,7 @@ export default class Go {
         // copyBytesToJS(dst ref, src []byte) (int, bool)
         // Originally copied from upstream Go project, then modified:
         //   https://github.com/golang/go/blob/3f995c3f3b43033013013e6c7ccc93a9b1411ca9/misc/wasm/wasm_exec.js#L404-L416
-        "syscall/js.copyBytesToJS": (
-          ret_addr,
-          dest_addr,
-          source_addr,
-          source_len,
-          source_cap
-        ) => {
+        'syscall/js.copyBytesToJS': (ret_addr, dest_addr, source_addr, source_len, source_cap) => {
           let num_bytes_copied_addr = ret_addr;
           let returned_status_addr = ret_addr + 4; // Address of returned boolean status variable
 
@@ -474,7 +503,7 @@ export default class Go {
       const callbackPromise = new Promise((resolve) => {
         this._resolveCallbackPromise = () => {
           if (this.exited) {
-            throw new Error("bad callback: Go program has already exited");
+            throw new Error('bad callback: Go program has already exited');
           }
           setTimeout(resolve, 0); // make sure it is asynchronous
         };
@@ -489,7 +518,7 @@ export default class Go {
 
   private _resume() {
     if (this.exited) {
-      throw new Error("Go program has already exited");
+      throw new Error('Go program has already exited');
     }
     this._inst.exports.resume();
     if (this.exited) {
