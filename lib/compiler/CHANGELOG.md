@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.4
+
+### Patch Changes
+
+- 4410c5a: Add support for a `preprocessStyle` function
+- 934e6a6: Chore: add linting, format code
+
 ## 0.1.15
 
 ### Patch Changes
