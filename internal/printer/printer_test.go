@@ -614,7 +614,40 @@ import * as $$module3 from 'custom-element';`,
 					`const name = 'world';`},
 				styles:   []string{},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], hydratedComponents: [One, Two, 'my-element'], hoisted: [] }`,
-				code:     "${$$renderComponent($$result,'One',One,{\"client:load\":true,\"client:component-path\":($$metadata.getPath(One)),\"client:component-export\":($$metadata.getExport(One))},{\"default\": () => $$render`${$$renderComponent($$result,'Two',Two,{\"client:load\":true,\"client:component-path\":($$metadata.getPath(Two)),\"client:component-export\":($$metadata.getExport(Two))})}${$$renderComponent($$result,'my-element','my-element',{\"client:load\":true,\"client:component-path\":($$metadata.getPath('my-element')),\"client:component-export\":($$metadata.getExport('my-element'))})}`,})}",
+				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
+${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
+${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}
+`,
+			},
+		},
+		{
+			name:   "Component siblings are siblings",
+			source: `<BaseHead></BaseHead><link href="test">`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+			},
+		},
+		{
+			name:   "Self-closing components siblings are siblings",
+			source: `<BaseHead /><link href="test">`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+			},
+		},
+		{
+			name:   "Self-closing components in head can have siblings",
+			source: `<html><head><BaseHead /><link href="test"></head><html>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
 			},
 		},
 	}

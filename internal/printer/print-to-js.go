@@ -91,11 +91,15 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			render1(p, c, RenderOptions{
-				isRoot:       true,
+				isRoot:       false,
 				isExpression: false,
 				depth:        depth + 1,
 			})
 		}
+
+		p.printReturnClose()
+		// TODO: use proper component name
+		p.printFuncSuffix("$$Component")
 		return
 	}
 
@@ -310,7 +314,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
-
 	if n.Fragment {
 		p.print("Fragment")
 	} else if !isSlot {
@@ -488,12 +491,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(")}")
 	} else {
 		p.print(`</` + n.Data + `>`)
-	}
-
-	if opts.isRoot {
-		p.printReturnClose()
-		// TODO: use proper component name
-		p.printFuncSuffix("$$Component")
 	}
 }
 
