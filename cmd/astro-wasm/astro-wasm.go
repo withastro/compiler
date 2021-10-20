@@ -91,6 +91,7 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	defer cb()
 	attrs := wasm_utils.GetAttrs(style)
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
+	// note: Rollup (and by extension our Astro Vite plugin) allows for "undefined" and "null" responses if a transform wishes to skip this occurrence
 	if data[0].IsUndefined() || data[0].IsNull() {
 		return
 	}

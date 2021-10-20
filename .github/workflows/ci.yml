@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   push:
@@ -7,27 +7,6 @@ on:
     branches: ['main']
 
 jobs:
-  build-wasm:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
-
-      - name: Get tinygo runtime
-        run: |
-          wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.20.0/tinygo_0.20.0_amd64.deb
-          sudo dpkg -i /tmp/tinygo_0.20.0_amd64.deb
-
-      - name: Build WASM
-        run: |
-          mkdir -p /home/runner/go/src/github.com/snowpackjs/astro
-          cp -R . /home/runner/go/src/github.com/snowpackjs/astro/
-          tinygo build -o astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
-
   test:
     runs-on: ubuntu-latest
     steps:
@@ -41,6 +20,42 @@ jobs:
       - name: Test
         run: go test -v ./internal/...
 
+  test-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+
+      - name: Get tinygo runtime
+        run: |
+          wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.20.0/tinygo_0.20.0_amd64.deb
+          sudo dpkg -i /tmp/tinygo_0.20.0_amd64.deb
+
+      - name: Build WASM
+        run: |
+          tinygo build -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
+          cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
+
+      - name: Install deps
+        env:
+          CI: true
+        run: yarn --frozen-lockfile --ignore-engines
+
+      - name: Build JS
+        run: yarn build:compiler
+
+      - name: Test WASM
+        run: yarn test
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -49,14 +64,6 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
-
-  build-js:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - run: yarn
-      - run: yarn build:compiler
 
   lint-js:
     runs-on: ubuntu-latest

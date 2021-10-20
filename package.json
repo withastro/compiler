@@ -12,7 +12,8 @@
     "lint": "eslint \"lib/**/*.{js,jsx,ts,tsx}\"",
     "format": "prettier -w .",
     "prerelease": "yarn build:compiler",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "test": "node ./lib/compiler/test.js"
   },
   "workspaces": [
     "lib/*"

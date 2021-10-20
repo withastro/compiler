@@ -1,4 +1,4 @@
-name: Changelog
+name: Release
 
 on:
   push:
@@ -17,6 +17,11 @@ jobs:
         with:
           go-version: 1.17
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+
       - name: Get tinygo runtime
         run: |
           wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.20.0/tinygo_0.20.0_amd64.deb
@@ -24,20 +29,13 @@ jobs:
 
       - name: Build WASM
         run: |
-          mkdir -p /home/runner/go/src/github.com/snowpackjs/astro
-          cp -R . /home/runner/go/src/github.com/snowpackjs/astro/
           tinygo build -no-debug -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
           cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
-      - name: Set up Node.js 14.x
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14.x
-
       - name: Install dependencies
-        run: yarn --frozen-lockfile --ignore-engines
         env:
           CI: true
+        run: yarn --frozen-lockfile --ignore-engines
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
