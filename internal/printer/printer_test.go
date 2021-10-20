@@ -543,7 +543,6 @@ import * as $$module2 from '../components/Widget2.astro';`},
 		<Component>
 			<div slot={name}>Named</div>
 		</Component>`,
-			//fragment: true,
 			want: want{
 				imports: "",
 				frontmatter: []string{`import Component from 'test';
