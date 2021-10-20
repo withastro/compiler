@@ -91,6 +91,9 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	defer cb()
 	attrs := wasm_utils.GetAttrs(style)
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
+	if data[0].IsUndefined() || data[0].IsNull() {
+		return
+	}
 	str := jsString(data[0].Get("code"))
 	if str == "" {
 		return
