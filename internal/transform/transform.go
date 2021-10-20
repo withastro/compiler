@@ -3,29 +3,24 @@ package transform
 import (
 	"fmt"
 	"strings"
+	"syscall/js"
 
 	tycho "github.com/snowpackjs/astro/internal"
 	a "golang.org/x/net/html/atom"
 )
 
 type TransformOptions struct {
-	As          string
-	Scope       string
-	Filename    string
-	InternalURL string
-	SourceMap   string
-	Site        string
+	As              string
+	Scope           string
+	Filename        string
+	InternalURL     string
+	SourceMap       string
+	Site            string
+	PreprocessStyle js.Value
 }
 
 func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
-	extractScriptsAndStyles(doc)
-
 	if len(doc.Styles) > 0 {
-		for _, style := range doc.Styles {
-			if hasAttr(style, "lang") {
-				Preprocess(style)
-			}
-		}
 		if shouldScope := ScopeStyle(doc.Styles, opts); shouldScope {
 			walk(doc, func(n *tycho.Node) {
 				ScopeElement(n, opts)
@@ -36,7 +31,7 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	return doc
 }
 
-func extractScriptsAndStyles(doc *tycho.Node) {
+func ExtractScriptsAndStyles(doc *tycho.Node) {
 	walk(doc, func(n *tycho.Node) {
 		if n.Type == tycho.ElementNode {
 			switch n.DataAtom {

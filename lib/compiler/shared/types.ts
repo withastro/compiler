@@ -3,7 +3,8 @@ export interface TransformOptions {
   site?: string;
   sourcefile?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
-  as?: 'document' | 'fragment';
+  as?: 'document'|'fragment';
+  preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<string>
 }
 
 export interface TransformResult {

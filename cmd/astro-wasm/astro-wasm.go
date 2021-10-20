@@ -1,4 +1,5 @@
-// +build js,wasm
+//go:build js && wasm
+
 package main
 
 import (
@@ -6,12 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"syscall/js"
 
 	"github.com/norunners/vert"
 	astro "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/printer"
 	"github.com/snowpackjs/astro/internal/transform"
+	"github.com/snowpackjs/astro/internal/wasm_utils"
 	"golang.org/x/net/html/atom"
 )
 
@@ -57,13 +60,16 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		site = "https://astro.build"
 	}
 
+	preprocessStyle := options.Get("preprocessStyle")
+
 	return transform.TransformOptions{
-		As:          as,
-		Scope:       hash,
-		Filename:    filename,
-		InternalURL: internalURL,
-		SourceMap:   sourcemap,
-		Site:        site,
+		As:              as,
+		Scope:           hash,
+		Filename:        filename,
+		InternalURL:     internalURL,
+		SourceMap:       sourcemap,
+		Site:            site,
+		PreprocessStyle: preprocessStyle,
 	}
 }
 
@@ -79,6 +85,18 @@ type RawSourceMap struct {
 type TransformResult struct {
 	Code string `js:"code"`
 	Map  string `js:"map"`
+}
+
+// This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
+func preprocessStyle(i int, style *astro.Node, transformOptions transform.TransformOptions, cb func()) {
+	defer cb()
+	attrs := transform.GetAttrs(style)
+	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.Invoke(style.FirstChild.Data, attrs))
+	str := jsString(data[0])
+	if str == "" {
+		return
+	}
+	style.FirstChild.Data = str
 }
 
 func Transform() interface{} {
@@ -111,7 +129,27 @@ func Transform() interface{} {
 					}
 				}
 
+				// Hoist styles and scripts to the top-level
+				transform.ExtractScriptsAndStyles(doc)
+
+				// Pre-process styles
+				// Important! These goroutines need to be spawned from this file or they don't work
+				var wg sync.WaitGroup
+				if len(doc.Styles) > 0 {
+					if transformOptions.PreprocessStyle.IsUndefined() != true {
+						for i, style := range doc.Styles {
+							wg.Add(1)
+							i := i
+							go preprocessStyle(i, style, transformOptions, wg.Done)
+						}
+					}
+				}
+				// Wait for all the style goroutines to finish
+				wg.Wait()
+
+				// Perform CSS and element scoping as needed
 				transform.Transform(doc, transformOptions)
+
 				result := printer.PrintToJS(source, doc, transformOptions)
 
 				switch transformOptions.SourceMap {

@@ -3,19 +3,6 @@ import { promises as fs } from 'fs';
 import Go from './wasm_exec.js';
 import { fileURLToPath } from 'url';
 
-const sharedFunctions = Object.create(null);
-sharedFunctions.stylePreprocess = (value: string) => value;
-
-export const init = async (options: any) => {
-  for (const key of Object.keys(sharedFunctions)) {
-    if (typeof options[key] !== 'undefined') {
-      sharedFunctions[key] = options[key];
-    }
-  }
-
-  return ensureServiceIsRunning();
-}
-
 export const transform: typeof types.transform = async (input, options) => {
   return ensureServiceIsRunning().then((service) => service.transform(input, options));
 };
@@ -49,10 +36,6 @@ const instantiateWASM = async (wasmURL: string, importObject: Record<string, any
 };
 
 const startRunningService = async () => {
-  for (const key of Object.keys(sharedFunctions)) {
-    const globalKey = `__astro_${key}`;
-    (globalThis as any)[globalKey] = (sharedFunctions as any)[key];
-  }
   const go = new Go();
   const wasm = await instantiateWASM(fileURLToPath(new URL('../astro.wasm', import.meta.url)), go.importObject);
   go.run(wasm.instance);
