@@ -655,8 +655,6 @@ func beforeHTMLIM(p *parser) bool {
 			return true
 		}
 		if isComponent(p.tok.Data) {
-			p.parseImpliedToken(StartTagToken, a.Html, a.Html.String())
-			p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
 			p.addElement()
 			p.im = inBodyIM
 			if p.hasSelfClosingToken {
@@ -1016,7 +1014,7 @@ func inBodyIM(p *parser) bool {
 		return false
 	case TextToken:
 		d := p.tok.Data
-		switch n := p.oe.top(); n.DataAtom {
+		switch n := p.top(); n.DataAtom {
 		case a.Pre, a.Listing:
 			if n.FirstChild == nil {
 				// Ignore a newline at the start of a <pre> block.
