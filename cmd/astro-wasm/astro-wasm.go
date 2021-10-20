@@ -107,68 +107,65 @@ func Transform() interface{} {
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
 
-			go func() {
-				var doc *astro.Node
+			var doc *astro.Node
 
-				if transformOptions.As == "document" {
-					docNode, _ := astro.Parse(strings.NewReader(source))
-					doc = docNode
-				} else if transformOptions.As == "fragment" {
-					nodes, _ := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-						Type:     astro.ElementNode,
-						Data:     atom.Body.String(),
-						DataAtom: atom.Body,
-					})
-					doc = &astro.Node{
-						Type: astro.DocumentNode,
-					}
-					for i := 0; i < len(nodes); i++ {
-						n := nodes[i]
-						doc.AppendChild(n)
-					}
+			if transformOptions.As == "document" {
+				docNode, _ := astro.Parse(strings.NewReader(source))
+				doc = docNode
+			} else if transformOptions.As == "fragment" {
+				nodes, _ := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+					Type:     astro.ElementNode,
+					Data:     atom.Body.String(),
+					DataAtom: atom.Body,
+				})
+				doc = &astro.Node{
+					Type: astro.DocumentNode,
 				}
+				for i := 0; i < len(nodes); i++ {
+					n := nodes[i]
+					doc.AppendChild(n)
+				}
+			}
 
-				// Hoist styles and scripts to the top-level
-				transform.ExtractScriptsAndStyles(doc)
+			// Hoist styles and scripts to the top-level
+			transform.ExtractScriptsAndStyles(doc)
 
-				// Pre-process styles
-				// Important! These goroutines need to be spawned from this file or they don't work
-				var wg sync.WaitGroup
-				if len(doc.Styles) > 0 {
-					if transformOptions.PreprocessStyle.(js.Value).IsUndefined() != true {
-						for i, style := range doc.Styles {
-							wg.Add(1)
-							i := i
-							go preprocessStyle(i, style, transformOptions, wg.Done)
-						}
+			// Pre-process styles
+			// Important! These goroutines need to be spawned from this file or they don't work
+			var wg sync.WaitGroup
+			if len(doc.Styles) > 0 {
+				if transformOptions.PreprocessStyle.(js.Value).IsUndefined() != true {
+					for i, style := range doc.Styles {
+						wg.Add(1)
+						i := i
+						go preprocessStyle(i, style, transformOptions, wg.Done)
 					}
 				}
-				// Wait for all the style goroutines to finish
-				wg.Wait()
+			}
+			// Wait for all the style goroutines to finish
+			wg.Wait()
 
-				// Perform CSS and element scoping as needed
-				transform.Transform(doc, transformOptions)
+			// Perform CSS and element scoping as needed
+			transform.Transform(doc, transformOptions)
 
-				result := printer.PrintToJS(source, doc, transformOptions)
+			result := printer.PrintToJS(source, doc, transformOptions)
 
-				switch transformOptions.SourceMap {
-				case "external":
-					resolve.Invoke(createExternalSourceMap(source, result, transformOptions))
-					return
-				case "both":
-					resolve.Invoke(createBothSourceMap(source, result, transformOptions))
-					return
-				case "inline":
-					resolve.Invoke(createInlineSourceMap(source, result, transformOptions))
-					return
-				}
+			switch transformOptions.SourceMap {
+			case "external":
+				resolve.Invoke(createExternalSourceMap(source, result, transformOptions))
+				return nil
+			case "both":
+				resolve.Invoke(createBothSourceMap(source, result, transformOptions))
+				return nil
+			case "inline":
+				resolve.Invoke(createInlineSourceMap(source, result, transformOptions))
+				return nil
+			}
 
-				resolve.Invoke(vert.ValueOf(TransformResult{
-					Code: string(result.Output),
-					Map:  "",
-				}))
-				return
-			}()
+			resolve.Invoke(vert.ValueOf(TransformResult{
+				Code: string(result.Output),
+				Map:  "",
+			}))
 
 			return nil
 		})
