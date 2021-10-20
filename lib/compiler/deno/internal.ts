@@ -80,21 +80,21 @@ export const createComponent = (cb: AstroComponentFactory) => {
   return cb;
 };
 
-function extractHydrationDirectives(inputProps: Record<string | number, any>): {
-  hydrationDirective: [string, any] | null;
-  props: Record<string | number, any>;
-} {
-  let props: Record<string | number, any> = {};
-  let hydrationDirective: [string, any] | null = null;
-  for (const [key, value] of Object.entries(inputProps)) {
-    if (key.startsWith('client:')) {
-      hydrationDirective = [key.split(':')[1], value];
-    } else {
-      props[key] = value;
-    }
-  }
-  return { hydrationDirective, props };
-}
+// function extractHydrationDirectives(inputProps: Record<string | number, any>): {
+//   hydrationDirective: [string, any] | null;
+//   props: Record<string | number, any>;
+// } {
+//   let props: Record<string | number, any> = {};
+//   let hydrationDirective: [string, any] | null = null;
+//   for (const [key, value] of Object.entries(inputProps)) {
+//     if (key.startsWith('client:')) {
+//       hydrationDirective = [key.split(':')[1], value];
+//     } else {
+//       props[key] = value;
+//     }
+//   }
+//   return { hydrationDirective, props };
+// }
 
 // interface HydrateScriptOptions {
 //   renderer: any;

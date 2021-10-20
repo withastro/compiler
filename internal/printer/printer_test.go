@@ -672,6 +672,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			}
 
 			hash := tycho.HashFromSource(code)
+			transform.ExtractScriptsAndStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",

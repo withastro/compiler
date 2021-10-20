@@ -9,17 +9,16 @@ import (
 )
 
 type TransformOptions struct {
-	As          string
-	Scope       string
-	Filename    string
-	InternalURL string
-	SourceMap   string
-	Site        string
+	As              string
+	Scope           string
+	Filename        string
+	InternalURL     string
+	SourceMap       string
+	Site            string
+	PreprocessStyle interface{}
 }
 
-func Transform(doc *tycho.Node, opts TransformOptions) {
-	extractScriptsAndStyles(doc)
-
+func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	if len(doc.Styles) > 0 {
 		if shouldScope := ScopeStyle(doc.Styles, opts); shouldScope {
 			walk(doc, func(n *tycho.Node) {
@@ -27,9 +26,11 @@ func Transform(doc *tycho.Node, opts TransformOptions) {
 			})
 		}
 	}
+
+	return doc
 }
 
-func extractScriptsAndStyles(doc *tycho.Node) {
+func ExtractScriptsAndStyles(doc *tycho.Node) {
 	walk(doc, func(n *tycho.Node) {
 		if n.Type == tycho.ElementNode {
 			switch n.DataAtom {

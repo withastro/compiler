@@ -9,7 +9,7 @@ export const transform: typeof types.transform = async (input, options) => {
 
 export const compile = async (template: string): Promise<string> => {
   const { default: mod } = await import(`data:text/javascript;charset=utf-8;base64,${Buffer.from(template).toString('base64')}`);
-  return mod.__render();
+  return mod;
 };
 
 interface Service {

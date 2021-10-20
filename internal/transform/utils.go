@@ -15,3 +15,24 @@ func hasTruthyAttr(n *astro.Node, key string) bool {
 	}
 	return false
 }
+
+func HasAttr(n *astro.Node, key string) bool {
+	for _, attr := range n.Attr {
+		if attr.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
+func GetQuotedAttr(n *astro.Node, key string) string {
+	for _, attr := range n.Attr {
+		if attr.Key == key {
+			if attr.Type == astro.QuotedAttribute {
+				return attr.Val
+			}
+			return ""
+		}
+	}
+	return ""
+}

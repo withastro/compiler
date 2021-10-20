@@ -14,11 +14,10 @@ let longLivedService: Service | undefined;
 
 export const initialize: typeof types.initialize = (options) => {
   let wasmURL = options.wasmURL;
-  let useWorker = options.worker !== false;
   if (!wasmURL) throw new Error('Must provide the "wasmURL" option');
   wasmURL += '';
   if (initializePromise) throw new Error('Cannot call "initialize" more than once');
-  initializePromise = startRunningService(wasmURL, useWorker);
+  initializePromise = startRunningService(wasmURL);
   initializePromise.catch(() => {
     // Let the caller try again if this fails
     initializePromise = void 0;
@@ -48,7 +47,7 @@ const instantiateWASM = async (wasmURL: string, importObject: Record<string, any
   return response;
 };
 
-const startRunningService = async (wasmURL: string, useWorker: boolean) => {
+const startRunningService = async (wasmURL: string) => {
   const go = new Go();
   const wasm = await instantiateWASM(wasmURL, go.importObject);
   go.run(wasm.instance);
