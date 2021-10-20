@@ -21,10 +21,9 @@ import (
 var done chan bool
 
 func main() {
-	done = make(chan bool, 1)
 	js.Global().Set("__astro_transform", Transform())
-
-	<-done
+	// This ensures that the WASM doesn't exit early
+	<-make(chan bool)
 }
 
 func jsString(j js.Value) string {
