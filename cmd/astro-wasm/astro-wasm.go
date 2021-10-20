@@ -91,7 +91,7 @@ type TransformResult struct {
 func preprocessStyle(i int, style *astro.Node, transformOptions transform.TransformOptions, cb func()) {
 	defer cb()
 	attrs := wasm_utils.GetAttrs(style)
-	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.Invoke(style.FirstChild.Data, attrs))
+	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
 	str := jsString(data[0])
 	if str == "" {
 		return
@@ -136,7 +136,7 @@ func Transform() interface{} {
 				// Important! These goroutines need to be spawned from this file or they don't work
 				var wg sync.WaitGroup
 				if len(doc.Styles) > 0 {
-					if transformOptions.PreprocessStyle.IsUndefined() != true {
+					if transformOptions.PreprocessStyle.(js.Value).IsUndefined() != true {
 						for i, style := range doc.Styles {
 							wg.Add(1)
 							i := i
