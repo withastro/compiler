@@ -1,10 +1,15 @@
+export interface PreprocessorResult {
+  code: string;
+  map?: string;
+}
+
 export interface TransformOptions {
   internalURL?: string;
   site?: string;
   sourcefile?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   as?: 'document' | 'fragment';
-  preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<string>;
+  preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<PreprocessorResult>;
 }
 
 export interface TransformResult {
