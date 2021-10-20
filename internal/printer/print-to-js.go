@@ -152,8 +152,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(strings.TrimSpace(renderBody))
 				}
 
+				// Print empty just to ensure a newline
+				p.println("")
 				if len(n.Parent.Styles) > 0 {
-					p.println("\nconst STYLES = [")
+					p.println("const STYLES = [")
 					for _, style := range n.Parent.Styles {
 						p.printStyleOrScript(style)
 					}
@@ -190,10 +192,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		// Render func prelude. Will only run for the first non-frontmatter node
 		// TODO: use the proper component name
 		p.printFuncPrelude("$$Component")
+		// This just ensures a newline
+		p.println("")
 
 		// If we haven't printed the funcPrelude but we do have Styles/Scripts, we need to print them!
 		if len(n.Parent.Styles) > 0 {
-			p.println("\nconst STYLES = [")
+			p.println("const STYLES = [")
 			for _, style := range n.Parent.Styles {
 				p.printStyleOrScript(style)
 			}
