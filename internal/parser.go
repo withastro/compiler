@@ -20,7 +20,8 @@ type parser struct {
 	// tokenizer provides the tokens for the parser.
 	tokenizer *Tokenizer
 	// tok is the most recently read token.
-	tok Token
+	tok  Token
+	ltok Token
 	// Self-closing tags like <hr/> are treated as start tags, except that
 	// hasSelfClosingToken is set while they are being processed.
 	hasSelfClosingToken bool
@@ -2385,6 +2386,15 @@ func frontmatterIM(p *parser) bool {
 		p.addText(p.tok.Data)
 		return true
 	case StartTagToken:
+		// If we're inside of a frontmatter node and there's no space before this tag,
+		// it's probably a type param.
+		if p.top().Type == FrontmatterNode && p.ltok.Data[len(p.ltok.Data)-1:] != " " {
+			p.addText("<")
+			p.addText(p.tok.Data)
+			p.addText(">")
+			return true
+		}
+
 		p.addElement()
 		if p.hasSelfClosingToken {
 			p.oe.pop()
@@ -2631,6 +2641,7 @@ func (p *parser) parse() error {
 		// CDATA sections are allowed only in foreign content.
 		n := p.oe.top()
 		p.tokenizer.AllowCDATA(n != nil && n.Namespace != "")
+		p.ltok = p.tok
 		// Read and parse the next token.
 		p.tokenizer.Next()
 		p.tok = p.tokenizer.Token()
