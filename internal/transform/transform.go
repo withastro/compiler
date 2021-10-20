@@ -3,7 +3,6 @@ package transform
 import (
 	"fmt"
 	"strings"
-	"syscall/js"
 
 	tycho "github.com/snowpackjs/astro/internal"
 	a "golang.org/x/net/html/atom"
@@ -16,7 +15,7 @@ type TransformOptions struct {
 	InternalURL     string
 	SourceMap       string
 	Site            string
-	PreprocessStyle js.Value
+	PreprocessStyle interface{}
 }
 
 func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {

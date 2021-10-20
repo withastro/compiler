@@ -14,7 +14,7 @@ import (
 	astro "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/printer"
 	"github.com/snowpackjs/astro/internal/transform"
-	"github.com/snowpackjs/astro/internal/wasm_utils"
+	wasm_utils "github.com/snowpackjs/astro/internal_wasm/utils"
 	"golang.org/x/net/html/atom"
 )
 
@@ -90,7 +90,7 @@ type TransformResult struct {
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
 func preprocessStyle(i int, style *astro.Node, transformOptions transform.TransformOptions, cb func()) {
 	defer cb()
-	attrs := transform.GetAttrs(style)
+	attrs := wasm_utils.GetAttrs(style)
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.Invoke(style.FirstChild.Data, attrs))
 	str := jsString(data[0])
 	if str == "" {

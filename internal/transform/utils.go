@@ -1,8 +1,6 @@
 package transform
 
 import (
-	"syscall/js"
-
 	astro "github.com/snowpackjs/astro/internal"
 )
 
@@ -25,19 +23,6 @@ func HasAttr(n *astro.Node, key string) bool {
 		}
 	}
 	return false
-}
-
-func GetAttrs(n *astro.Node) js.Value {
-	attrs := js.Global().Get("Object").New()
-	for _, attr := range n.Attr {
-		switch attr.Type {
-		case astro.QuotedAttribute:
-			attrs.Set(attr.Key, attr.Val)
-		case astro.EmptyAttribute:
-			attrs.Set(attr.Key, true)
-		}
-	}
-	return attrs
 }
 
 func GetQuotedAttr(n *astro.Node, key string) string {
