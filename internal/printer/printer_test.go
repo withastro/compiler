@@ -650,6 +650,21 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 				code:        `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
 			},
 		},
+		{
+			name: "Nested HTML in expressions, wrapped in parens",
+			source: `---
+const image = './penguin.png';
+const canonicalURL = new URL('http://example.com');
+---
+{image && (<meta property="og:image" content={new URL(image, canonicalURL)}>)}`,
+			want: want{
+				imports: "",
+				frontmatter: []string{"", `const image = './penguin.png';
+const canonicalURL = new URL('http://example.com');`},
+				styles: []string{},
+				code:   "<html><head>${image && ($$render`<meta property=\"og:image\"${$$addAttribute(new URL(image, canonicalURL), \"content\")}>`)}</head><body></body></html>",
+			},
+		},
 	}
 
 	for _, tt := range tests {

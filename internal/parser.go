@@ -815,7 +815,7 @@ func inHeadIM(p *parser) bool {
 		switch p.tok.DataAtom {
 		case a.Head:
 			p.addLoc()
-			p.oe.pop()
+			p.popUntil(defaultScope, a.Head)
 			p.im = afterHeadIM
 			return true
 		case a.Body, a.Html, a.Br:
@@ -1588,7 +1588,7 @@ func (p *parser) inBodyEndTagOther(tagAtom a.Atom, tagName string) {
 func textIM(p *parser) bool {
 	switch p.tok.Type {
 	case ErrorToken:
-		p.oe.pop()
+		break
 	case TextToken:
 		d := p.tok.Data
 		if n := p.oe.top(); n.DataAtom == a.Textarea && n.FirstChild == nil {
@@ -2417,7 +2417,12 @@ func expressionIM(p *parser) bool {
 		if p.isInsideHead() {
 			switch p.tok.DataAtom {
 			case a.Noframes, a.Style, a.Script, a.Title, a.Noscript, a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta:
-				return textIM(p)
+				origIm := p.originalIM
+				p.originalIM = nil
+				ret := inHeadIM(p)
+				p.im = expressionIM
+				p.originalIM = origIm
+				return ret
 			default:
 				for {
 					if n.Expression {
