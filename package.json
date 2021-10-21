@@ -13,7 +13,7 @@
     "format": "prettier -w .",
     "prerelease": "yarn build:compiler",
     "release": "changeset publish",
-    "test": "node ./lib/compiler/test.js"
+    "test": "node ./lib/compiler/test/test.mjs"
   },
   "workspaces": [
     "lib/*"
