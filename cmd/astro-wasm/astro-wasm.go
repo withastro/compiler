@@ -91,9 +91,11 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	defer cb()
 	attrs := wasm_utils.GetAttrs(style)
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
+	// Preprocessor can return `undefined` or `null` to indicate that no transformation should be applied (similar to Rollup)
 	if data[0].IsUndefined() || data[0].IsNull() {
 		return
 	}
+	// Otherwise, get the `string` value of the the returned `code`. TODO: Handle `map` gracefully
 	str := jsString(data[0].Get("code"))
 	if str == "" {
 		return
