@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.8
+
+### Patch Changes
+
+- b2d5564: Fixes wasm build
+
 ## 0.2.6
 
 ### Patch Changes
