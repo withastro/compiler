@@ -60,15 +60,17 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	}
 
 	preprocessStyle := options.Get("preprocessStyle")
+	preprocessScript := options.Get("preprocessScript")
 
 	return transform.TransformOptions{
-		As:              as,
-		Scope:           hash,
-		Filename:        filename,
-		InternalURL:     internalURL,
-		SourceMap:       sourcemap,
-		Site:            site,
-		PreprocessStyle: preprocessStyle,
+		As:               as,
+		Scope:            hash,
+		Filename:         filename,
+		InternalURL:      internalURL,
+		SourceMap:        sourcemap,
+		Site:             site,
+		PreprocessStyle:  preprocessStyle,
+		PreprocessScript: preprocessScript,
 	}
 }
 
@@ -87,7 +89,7 @@ type TransformResult struct {
 }
 
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
-func preprocessStyle(i int, style *astro.Node, transformOptions transform.TransformOptions, cb func()) {
+func preprocessStyle(style *astro.Node, transformOptions transform.TransformOptions, cb func()) {
 	defer cb()
 	attrs := wasm_utils.GetAttrs(style)
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
@@ -100,6 +102,21 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 		return
 	}
 	style.FirstChild.Data = str
+}
+
+func preprocessScript(script *astro.Node, transformOptions transform.TransformOptions, cb func()) {
+	defer cb()
+	attrs := wasm_utils.GetAttrs(script)
+	data, _ := wasm_utils.Await(transformOptions.PreprocessScript.(js.Func).Invoke(script.FirstChild.Data, attrs))
+	// note: Rollup (and by extension our Astro Vite plugin) allows for "undefined" and "null" responses if a transform wishes to skip this occurrence
+	if data[0].IsUndefined() || data[0].IsNull() {
+		return
+	}
+	str := jsString(data[0].Get("code"))
+	if str == "" {
+		return
+	}
+	script.FirstChild.Data = str
 }
 
 func Transform() interface{} {
@@ -139,13 +156,26 @@ func Transform() interface{} {
 			var wg sync.WaitGroup
 			if len(doc.Styles) > 0 {
 				if transformOptions.PreprocessStyle.(js.Value).IsUndefined() != true {
-					for i, style := range doc.Styles {
+					for _, style := range doc.Styles {
 						wg.Add(1)
-						i := i
-						go preprocessStyle(i, style, transformOptions, wg.Done)
+						go preprocessStyle(style, transformOptions, wg.Done)
 					}
 				}
 			}
+			if len(doc.Scripts) > 0 {
+				if transformOptions.PreprocessScript.(js.Value).IsUndefined() != true {
+					for _, script := range doc.Scripts {
+						wg.Add(1)
+						go preprocessScript(script, transformOptions, wg.Done)
+					}
+				}
+			}
+			transform.Walk(doc, func(n *astro.Node) {
+				if n.Type == astro.ElementNode && n.DataAtom == atom.Script {
+					wg.Add(1)
+					go preprocessScript(n, transformOptions, wg.Done)
+				}
+			})
 			// Wait for all the style goroutines to finish
 			wg.Wait()
 

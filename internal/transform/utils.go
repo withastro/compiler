@@ -2,6 +2,7 @@ package transform
 
 import (
 	astro "github.com/snowpackjs/astro/internal"
+	tycho "github.com/snowpackjs/astro/internal"
 )
 
 func hasTruthyAttr(n *astro.Node, key string) bool {
@@ -35,4 +36,15 @@ func GetQuotedAttr(n *astro.Node, key string) string {
 		}
 	}
 	return ""
+}
+
+func Walk(doc *tycho.Node, cb func(*tycho.Node)) {
+	var f func(*tycho.Node)
+	f = func(n *tycho.Node) {
+		cb(n)
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(doc)
 }
