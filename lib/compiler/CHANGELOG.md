@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.6
+
+### Patch Changes
+
+- fix small issue with `preprocessStyle` handling of `null` or `undefined`
+
 ## 0.2.5
 
 ### Patch Changes
