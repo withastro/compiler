@@ -280,10 +280,10 @@ func TestExpressions(t *testing.T) {
 			"expression map",
 			`<div>
 			  {items.map((item) => (
-          // < > < }
-          <div>{item}</div>
-        ))}
-      </div>`,
+		      // < > < }
+		      <div>{item}</div>
+		    ))}
+		  </div>`,
 			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, TextToken, EndTagToken},
 		},
 		{
@@ -332,6 +332,11 @@ func TestExpressions(t *testing.T) {
 			"title",
 			"<title>test {expr} test</title>",
 			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, TextToken, EndTagToken},
+		},
+		{
+			"String interpolation inside an expression within a title",
+			"<title>{content.title && `${title} 🚀 ${title}`}</title>",
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 	}
 
