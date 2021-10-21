@@ -665,6 +665,29 @@ const canonicalURL = new URL('http://example.com');`},
 				code:   "<html><head>${image && ($$render`<meta property=\"og:image\"${$$addAttribute(new URL(image, canonicalURL), \"content\")}>`)}</head><body></body></html>",
 			},
 		},
+		{
+			name: "Use of interfaces within frontmatter",
+			source: `---
+interface MarkdownFrontmatter {
+	date: number;
+	image: string;
+	author: string;
+}
+let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');
+---
+<div>testing</div>`,
+			want: want{
+				imports: "",
+				frontmatter: []string{"", `interface MarkdownFrontmatter {
+	date: number;
+	image: string;
+	author: string;
+}
+let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');`},
+				styles: []string{},
+				code:   "<html><head></head><body><div>testing</div></body></html>",
+			},
+		},
 	}
 
 	for _, tt := range tests {
