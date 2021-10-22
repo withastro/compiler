@@ -67,6 +67,11 @@ func TestBasic(t *testing.T) {
 			`<div>{ value }</div>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
+		{
+			"quotes within textContent",
+			`<p>can't</p>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
