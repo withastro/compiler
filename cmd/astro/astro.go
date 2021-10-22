@@ -44,7 +44,7 @@ const something = await Astro.fetchContent('../*.md');
 	doc, _ := astro.Parse(strings.NewReader(source))
 	hash := astro.HashFromSource(source)
 
-	transform.ExtractScriptsAndStyles(doc)
+	transform.ExtractStyles(doc)
 	transform.Transform(doc, transform.TransformOptions{
 		Scope: hash,
 	})

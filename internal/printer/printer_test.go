@@ -741,7 +741,7 @@ let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');`},
 			}
 
 			hash := tycho.HashFromSource(code)
-			transform.ExtractScriptsAndStyles(doc)
+			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",

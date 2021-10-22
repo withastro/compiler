@@ -90,7 +90,7 @@ func TestTransformScoping(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			ExtractScriptsAndStyles(doc)
+			ExtractStyles(doc)
 			Transform(doc, TransformOptions{Scope: "XXXXXX"})
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()

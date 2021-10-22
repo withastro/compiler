@@ -19,63 +19,69 @@ type TransformOptions struct {
 }
 
 func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
-	if len(doc.Styles) > 0 {
-		if shouldScope := ScopeStyle(doc.Styles, opts); shouldScope {
-			walk(doc, func(n *tycho.Node) {
-				ScopeElement(n, opts)
-			})
+	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
+	walk(doc, func(n *tycho.Node) {
+		ExtractScript(doc, n)
+		if shouldScope {
+			ScopeElement(n, opts)
 		}
-	}
-
+	})
 	return doc
 }
 
-func ExtractScriptsAndStyles(doc *tycho.Node) {
+func ExtractStyles(doc *tycho.Node) {
 	walk(doc, func(n *tycho.Node) {
 		if n.Type == tycho.ElementNode {
 			switch n.DataAtom {
-			case a.Script:
-				// if <script hoist>, hoist to the document root
-				if hasTruthyAttr(n, "hoist") {
-					doc.Scripts = append(doc.Scripts, n)
-					// Remove local script node
-					n.Parent.RemoveChild(n)
-				}
-				// otherwise leave in place
 			case a.Style:
 				doc.Styles = append(doc.Styles, n)
 				// Remove local style node
 				n.Parent.RemoveChild(n)
-			default:
-				if n.Component || n.CustomElement {
-					for _, attr := range n.Attr {
-						id := n.Data
-						if n.CustomElement {
-							id = fmt.Sprintf("'%s'", id)
-						}
+			}
+		}
+	})
+}
 
-						if strings.HasPrefix(attr.Key, "client:") {
-							doc.HydratedComponents = append(doc.HydratedComponents, n)
-							pathAttr := tycho.Attribute{
-								Key:  "client:component-path",
-								Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
-								Type: tycho.ExpressionAttribute,
-							}
-							n.Attr = append(n.Attr, pathAttr)
+func ExtractScript(doc *tycho.Node, n *tycho.Node) {
+	if n.Type == tycho.ElementNode {
+		switch n.DataAtom {
+		case a.Script:
+			// if <script hoist>, hoist to the document root
+			if hasTruthyAttr(n, "hoist") {
+				doc.Scripts = append(doc.Scripts, n)
+				// Remove local script node
+				n.Parent.RemoveChild(n)
+			}
+			// otherwise leave in place
+		default:
+			if n.Component || n.CustomElement {
+				for _, attr := range n.Attr {
+					id := n.Data
+					if n.CustomElement {
+						id = fmt.Sprintf("'%s'", id)
+					}
 
-							exportAttr := tycho.Attribute{
-								Key:  "client:component-export",
-								Val:  fmt.Sprintf("$$metadata.getExport(%s)", id),
-								Type: tycho.ExpressionAttribute,
-							}
-							n.Attr = append(n.Attr, exportAttr)
-							break
+					if strings.HasPrefix(attr.Key, "client:") {
+						doc.HydratedComponents = append(doc.HydratedComponents, n)
+						pathAttr := tycho.Attribute{
+							Key:  "client:component-path",
+							Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
+							Type: tycho.ExpressionAttribute,
 						}
+						n.Attr = append(n.Attr, pathAttr)
+
+						exportAttr := tycho.Attribute{
+							Key:  "client:component-export",
+							Val:  fmt.Sprintf("$$metadata.getExport(%s)", id),
+							Type: tycho.ExpressionAttribute,
+						}
+						n.Attr = append(n.Attr, exportAttr)
+						break
 					}
 				}
 			}
 		}
-	})
+	}
 }
 
 func walk(doc *tycho.Node, cb func(*tycho.Node)) {
