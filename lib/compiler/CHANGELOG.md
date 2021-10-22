@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.12
+
+### Patch Changes
+
+- c9fa9eb: Fix for apostrophe within elements
+
 ## 0.2.11
 
 ### Patch Changes
