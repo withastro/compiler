@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.14
+
+### Patch Changes
+
+- f59c886: Bugfix: allow for detection of void tags (e.g. <img>)
+- 4c8d14a: Fixes textContent containing a forward slash
+
 ## 0.2.13
 
 ### Patch Changes
