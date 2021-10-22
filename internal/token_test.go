@@ -358,6 +358,11 @@ func TestExpressions(t *testing.T) {
 			"<title>{content.title && `${title} 🚀 ${title}`}</title>",
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
+		{
+			"Nested use of string templates inside expressions",
+			"<div>{`${a} inner${a > 1 ? 's' : ''}.`}</div>",
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Expressions)

@@ -1328,6 +1328,9 @@ func (z *Tokenizer) Next() TokenType {
 	if z.fm != FrontmatterClosed {
 		goto frontmatter_loop
 	}
+	if len(z.expressionStack) > 0 {
+		goto expression_loop
+	}
 
 loop:
 	for {
