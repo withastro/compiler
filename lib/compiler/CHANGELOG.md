@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.13
+
+### Patch Changes
+
+- f262b61: Fix for string template usage within expressions
+
 ## 0.2.12
 
 ### Patch Changes
