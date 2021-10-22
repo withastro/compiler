@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.11
+
+### Patch Changes
+
+- 27629b2: Reverts the apostrophe change that broke markdown parsing
+
 ## 0.2.10
 
 ### Patch Changes
