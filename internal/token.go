@@ -1336,15 +1336,11 @@ loop:
 			return z.tt
 		}
 
-		if z.tt != StartTagToken {
-			// Does this need to exist at all?
-			// Expressions and frontmatter have their own loop
-			if c == '\'' || c == '"' || c == '`' {
-				z.readString(c)
-				z.tt = TextToken
-				z.data.End = z.raw.End
-				return z.tt
-			}
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.tt = TextToken
+			z.data.End = z.raw.End
+			return z.tt
 		}
 
 		if c == '{' || c == '}' {
