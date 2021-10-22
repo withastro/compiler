@@ -132,7 +132,7 @@ func Transform() interface{} {
 			}
 
 			// Hoist styles and scripts to the top-level
-			transform.ExtractScriptsAndStyles(doc)
+			transform.ExtractStyles(doc)
 
 			// Pre-process styles
 			// Important! These goroutines need to be spawned from this file or they don't work
