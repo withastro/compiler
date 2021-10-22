@@ -97,6 +97,11 @@ func TestBasic(t *testing.T) {
 			"<Markdown><span>can't</span></Markdown>",
 			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken},
 		},
+		{
+			"text containing a /",
+			"<span>next/router</span>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

@@ -1348,14 +1348,6 @@ loop:
 
 		var tokenType TokenType
 
-		// JS Comment or RegExp
-		if c == '/' {
-			z.readCommentOrRegExp()
-			z.tt = TextToken
-			z.data.End = z.raw.End
-			return z.tt
-		}
-
 		if z.m == MarkdownOpen {
 			// Does this need to exist at all?
 			// Expressions and frontmatter have their own loop
