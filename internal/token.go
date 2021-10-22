@@ -1543,6 +1543,14 @@ raw_with_expression_loop:
 			break raw_with_expression_loop
 		}
 
+		// handle string
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.tt = TextToken
+			z.data.End = z.raw.End
+			return z.tt
+		}
+
 		if c == '{' || c == '}' {
 			if x := z.raw.End - len("{"); z.raw.Start < x {
 				z.raw.End = x
