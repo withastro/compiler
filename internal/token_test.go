@@ -72,6 +72,16 @@ func TestBasic(t *testing.T) {
 			`<p>can't</p>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
+		{
+			"Markdown Inside markdown backtick treated as a string",
+			"<Markdown>`{}`</Markdown>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
+			"Quotes in elements in Markdown",
+			"<Markdown><span>can't</span></Markdown>",
+			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
