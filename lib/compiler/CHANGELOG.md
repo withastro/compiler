@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.10
+
+### Patch Changes
+
+- 57eb728: Fixes hydrated scripts not recognized when using fragment transformation
+
 ## 0.2.9
 
 ### Patch Changes
