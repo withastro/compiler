@@ -109,6 +109,37 @@ import * as $$module1 from '../components/Vue.vue';`,
 			},
 		},
 		{
+			name: "dot component",
+			source: `---
+import * as ns from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <ns.Component />
+  </body>
+</html>`,
+			want: want{
+				imports: "",
+				frontmatter: []string{
+					`import * as ns from '../components';
+
+import * as $$module1 from '../components';`,
+				},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components' }], hydratedComponents: [], hoisted: [] }`,
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    ${` + RENDER_COMPONENT + `($$result,'ns.Component',ns.Component,{})}
+  </body></html>`,
+			},
+		},
+		{
 			name:   "conditional render",
 			source: `<body>{false ? <div>#f</div> : <div>#t</div>}</body>`,
 			want: want{

@@ -389,6 +389,9 @@ func isFragment(data string) bool {
 }
 
 func isComponent(data string) bool {
+	if strings.Contains(data, ".") {
+		return true
+	}
 	return !isFragment(data) && data[0] > 'A' && data[0] < 'Z'
 }
 

@@ -33,6 +33,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken},
 		},
 		{
+			"dot component",
+			`<pkg.Item>`,
+			[]TokenType{StartTagToken},
+		},
+		{
 			"end tag",
 			`</html>`,
 			[]TokenType{EndTagToken},
