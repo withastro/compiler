@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.9
+
+### Patch Changes
+
+- 3ea8d8c: Fix for string interpolation within titles
+- ef7cb1e: Fixes bug with textContent containing apostrophe character
+
 ## 0.2.8
 
 ### Patch Changes
