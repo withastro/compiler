@@ -1017,10 +1017,17 @@ func (z *Tokenizer) readStartTag() TokenType {
 	if raw {
 		z.rawTag = string(z.buf[z.data.Start:z.data.End])
 	}
-	// Look for a self-closing token like "<br/>".
+
+	// HTML void tags list: https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#syntax-elements
+	// Note: self-closing tags in SVG and MathML work differently; handled below
+	if z.startTagIn("area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr") {
+		return SelfClosingTagToken
+	}
+	// Look for a self-closing token that’s not in the list above (e.g. "<svg><path/></svg>")
 	if z.err == nil && z.buf[z.raw.End-2] == '/' {
 		return SelfClosingTagToken
 	}
+
 	return StartTagToken
 }
 

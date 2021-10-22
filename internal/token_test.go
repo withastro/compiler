@@ -43,9 +43,24 @@ func TestBasic(t *testing.T) {
 			[]TokenType{EndTagToken},
 		},
 		{
-			"self-closing tag",
+			"self-closing tag (slash)",
 			`<meta charset="utf-8" />`,
 			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"self-closing tag (no slash)",
+			`<img width="480" height="320">`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"SVG (self-closing)",
+			`<svg><path/></svg>`,
+			[]TokenType{StartTagToken, SelfClosingTagToken, EndTagToken},
+		},
+		{
+			"SVG (left open)",
+			`<svg><path></svg>`, // note: this test isn’t “ideal” it’s just testing current behavior
+			[]TokenType{StartTagToken, StartTagToken, EndTagToken},
 		},
 		{
 			"text",
