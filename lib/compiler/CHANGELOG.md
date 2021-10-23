@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.15
+
+### Patch Changes
+
+- 8fbae5e: Bugfix: fix component detection bug in parser
+- 37b5b6e: Bugfix: wait to release processStyle() until after fn call
+
 ## 0.2.14
 
 ### Patch Changes
