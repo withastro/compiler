@@ -719,6 +719,33 @@ let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');`},
 				code:   "<html><head></head><body><div>testing</div></body></html>",
 			},
 		},
+		{
+			name: "Component names A-Z",
+			source: `---
+import AComponent from '../components/AComponent.jsx';
+import ZComponent from '../components/ZComponent.jsx';
+---
+
+<body>
+  <AComponent />
+  <ZComponent />
+</body>`,
+			want: want{
+				imports: "",
+				frontmatter: []string{
+					`import AComponent from '../components/AComponent.jsx';
+import ZComponent from '../components/ZComponent.jsx';
+
+import * as $$module1 from '../components/AComponent.jsx';
+import * as $$module2 from '../components/ZComponent.jsx';`},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components/AComponent.jsx' }, { module: $$module2, specifier: '../components/ZComponent.jsx' }], hydratedComponents: [], hoisted: [] }`,
+				styles:   []string{},
+				code: `<html><head></head><body>
+  ${` + RENDER_COMPONENT + `($$result,'AComponent',AComponent,{})}
+  ${` + RENDER_COMPONENT + `($$result,'ZComponent',ZComponent,{})}
+</body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
