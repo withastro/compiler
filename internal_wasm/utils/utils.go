@@ -14,7 +14,6 @@ func Await(awaitable js.Value) ([]js.Value, []js.Value) {
 		then <- args
 		return nil
 	})
-	defer thenFunc.Release()
 
 	catch := make(chan []js.Value)
 	defer close(catch)
@@ -22,9 +21,12 @@ func Await(awaitable js.Value) ([]js.Value, []js.Value) {
 		catch <- args
 		return nil
 	})
-	defer catchFunc.Release()
 
 	awaitable.Call("then", thenFunc).Call("catch", catchFunc)
+
+	// only release after awaitable.Call
+	defer thenFunc.Release()
+	defer catchFunc.Release()
 
 	select {
 	case result := <-then:
