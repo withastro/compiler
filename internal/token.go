@@ -238,13 +238,13 @@ type Tokenizer struct {
 	// err because it is valid for an io.Reader to return (n int, err1 error)
 	// such that n > 0 && err1 != nil, and callers should always process the
 	// n > 0 bytes before considering the error err1.
-	readErr error
+	// readErr error
 	// buf[raw.Start:raw.End] holds the raw bytes of the current token.
 	// buf[raw.End:] is buffered input that will yield future tokens.
 	raw loc.Span
 	buf []byte
 	// maxBuf limits the data buffered in buf. A value of 0 means unlimited.
-	maxBuf int
+	// maxBuf int
 	// buf[data.Start:data.End] holds the raw bytes of the current token's data:
 	// a text token's text, a tag token's tag name, etc.
 	data loc.Span
@@ -336,81 +336,23 @@ func (z *Tokenizer) Err() error {
 	return z.err
 }
 
-// readByte returns the next byte from the input stream, doing a buffered read
-// from z.r into z.buf if necessary. z.buf[z.raw.Start:z.raw.End] remains a contiguous byte
+// readByte returns the next byte from the input buffer.
+// z.buf[z.raw.Start:z.raw.End] remains a contiguous byte
 // slice that holds all the bytes read so far for the current token.
-// It sets z.err if the underlying reader returns an error.
 // Pre-condition: z.err == nil.
 func (z *Tokenizer) readByte() byte {
 	if z.raw.End >= len(z.buf) {
-		// Our buffer is exhausted and we have to read from z.r. Check if the
-		// previous read resulted in an error.
-		if z.readErr != nil {
-			z.err = z.readErr
-			return 0
-		}
-		// We copy z.buf[z.raw.Start:z.raw.End] to the beginning of z.buf. If the length
-		// z.raw.End - z.raw.Start is more than half the capacity of z.buf, then we
-		// allocate a new buffer before the copy.
-		c := cap(z.buf)
-		d := z.raw.End - z.raw.Start
-		var buf1 []byte
-		if 2*d > c {
-			buf1 = make([]byte, d, 2*c)
-		} else {
-			buf1 = z.buf[:d]
-		}
-		copy(buf1, z.buf[z.raw.Start:z.raw.End])
-		if x := z.raw.Start; x != 0 {
-			// Adjust the data/attr spans to refer to the same contents after the copy.
-			z.data.Start -= x
-			z.data.End -= x
-			z.pendingAttr[0].Start -= x
-			z.pendingAttr[0].End -= x
-			z.pendingAttr[1].Start -= x
-			z.pendingAttr[1].End -= x
-			for i := range z.attr {
-				z.attr[i][0].Start -= x
-				z.attr[i][0].End -= x
-				z.attr[i][1].Start -= x
-				z.attr[i][1].End -= x
-			}
-		}
-		z.raw.Start, z.raw.End, z.buf = 0, d, buf1[:d]
-		// Now that we have copied the live bytes to the start of the buffer,
-		// we read from z.r into the remainder.
-		var n int
-		n, z.readErr = readAtLeastOneByte(z.r, buf1[d:cap(buf1)])
-		if n == 0 {
-			z.err = z.readErr
-			return 0
-		}
-		z.buf = buf1[:d+n]
+		z.err = io.EOF // note: io.EOF is the only “safe” error that is a signal for the compiler to exit cleanly
+		return 0
 	}
 	x := z.buf[z.raw.End]
 	z.raw.End++
-	if z.maxBuf > 0 && z.raw.End-z.raw.Start >= z.maxBuf {
-		z.err = ErrBufferExceeded
-		return 0
-	}
 	return x
 }
 
 // Buffered returns a slice containing data buffered but not yet tokenized.
 func (z *Tokenizer) Buffered() []byte {
 	return z.buf[z.raw.End:]
-}
-
-// readAtLeastOneByte wraps an io.Reader so that reading cannot return (0, nil).
-// It returns io.ErrNoProgress if the underlying r.Read method returns (0, nil)
-// too many times in succession.
-func readAtLeastOneByte(r io.Reader, b []byte) (int, error) {
-	for i := 0; i < 100; i++ {
-		if n, err := r.Read(b); n != 0 || err != nil {
-			return n, err
-		}
-	}
-	return 0, io.ErrNoProgress
 }
 
 // skipWhiteSpace skips past any white space.
@@ -425,7 +367,16 @@ func (z *Tokenizer) skipWhiteSpace() {
 			return
 		}
 		switch c {
-		case ' ', '\n', '\r', '\t', '\f':
+		case
+			9,   // tab (\t)
+			10,  // newline (\n)
+			11,  // line tabulation
+			12,  // form feed (\f)
+			13,  // carriage return (\r)
+			32,  // space
+			85,  // next line
+			160, // no-break space
+			173: // soft hyphen
 			// No-op.
 		default:
 			z.raw.End--
@@ -1076,7 +1027,6 @@ func (z *Tokenizer) readUnclosedTag() {
 			c := z.readByte()
 			if z.err != nil {
 				z.data.End = z.raw.End
-				z.err = z.readErr
 				return
 			}
 
@@ -1084,11 +1034,9 @@ func (z *Tokenizer) readUnclosedTag() {
 			case ' ', '\n', '\r', '\t', '\f':
 				// Safely read up until a whitespace character
 				z.data.End = z.raw.End - 1
-				z.err = z.readErr
 				return
 			}
 		}
-		z.err = z.readErr
 		return
 	}
 }
@@ -1853,9 +1801,9 @@ func (z *Tokenizer) Token() Token {
 
 // SetMaxBuf sets a limit on the amount of data buffered during tokenization.
 // A value of 0 means unlimited.
-func (z *Tokenizer) SetMaxBuf(n int) {
-	z.maxBuf = n
-}
+// func (z *Tokenizer) SetMaxBuf(n int) {
+// 	z.maxBuf = n
+// }
 
 // NewTokenizer returns a new HTML Tokenizer for the given Reader.
 // The input is assumed to be UTF-8 encoded.
@@ -1872,9 +1820,11 @@ func NewTokenizer(r io.Reader) *Tokenizer {
 //
 // The input is assumed to be UTF-8 encoded.
 func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r)
 	z := &Tokenizer{
 		r:                          r,
-		buf:                        make([]byte, 0, 4096),
+		buf:                        buf.Bytes(),
 		fm:                         FrontmatterInitial,
 		openBraceIsExpressionStart: true,
 	}
@@ -1890,9 +1840,11 @@ func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
 // NewTokenizer returns a new HTML Tokenizer for the given Reader.
 // The input is assumed to be UTF-8 encoded.
 func NewAttributeTokenizer(r io.Reader) *Tokenizer {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r)
 	z := &Tokenizer{
 		r:   r,
-		buf: make([]byte, 0, 4096),
+		buf: buf.Bytes(),
 		fm:  FrontmatterClosed,
 	}
 	return z

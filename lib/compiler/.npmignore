@@ -7,4 +7,4 @@ deno/**/README.md
 !node/**/*.d.ts
 !shared/**/*.js
 !shared/**/*.d.ts
-
+!test/**/*

@@ -115,14 +115,20 @@ func Transform() interface{} {
 			var doc *astro.Node
 
 			if transformOptions.As == "document" {
-				docNode, _ := astro.Parse(strings.NewReader(source))
+				docNode, err := astro.Parse(strings.NewReader(source))
 				doc = docNode
+				if err != nil {
+					fmt.Println(err)
+				}
 			} else if transformOptions.As == "fragment" {
-				nodes, _ := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+				nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
 					Type:     astro.ElementNode,
 					Data:     atom.Body.String(),
 					DataAtom: atom.Body,
 				})
+				if err != nil {
+					fmt.Println(err)
+				}
 				doc = &astro.Node{
 					Type: astro.DocumentNode,
 				}

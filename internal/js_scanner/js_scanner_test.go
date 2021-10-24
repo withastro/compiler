@@ -16,8 +16,6 @@ type testcase struct {
 }
 
 func TestFindRenderBody(t *testing.T) {
-	// note: the tests have hashes inlined because it’s easier to read
-	// note: this must be valid CSS, hence the empty "{}"
 	tests := []testcase{
 		{
 			name:   "basic",
