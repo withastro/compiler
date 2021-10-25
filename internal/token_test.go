@@ -107,6 +107,11 @@ func TestBasic(t *testing.T) {
 			"<span data-astro-raw>function foo() { }</span>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
+		{
+			"Doesn't throw on other data attributes",
+			"<span data-foo></span>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
