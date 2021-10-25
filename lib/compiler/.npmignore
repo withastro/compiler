@@ -1,10 +1,5 @@
 **/*.ts
-deno/**/*
-deno/**/README.md
-!browser/**/*.js
-!browser/**/*.d.ts
-!node/**/*.js
-!node/**/*.d.ts
-!shared/**/*.js
-!shared/**/*.d.ts
-!test/**/*
+!**/*.d.ts
+deno
+test
+tsconfig.json
