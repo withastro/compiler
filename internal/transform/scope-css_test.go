@@ -33,6 +33,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   ".class.astro-XXXXXX+.class.astro-XXXXXX{}",
 		},
 		{
+			name:   "and selector",
+			source: ".class,.class{}",
+			want:   ".class.astro-XXXXXX,.class.astro-XXXXXX{}",
+		},
+		{
 			name:   "children universal",
 			source: ".class *{}",
 			want:   ".class.astro-XXXXXX .astro-XXXXXX{}",
@@ -153,6 +158,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   ".class\\:class.astro-XXXXXX:focus{}",
 		},
 		// the following tests assert we leave valid CSS alone
+		{
+			name:   "attributes",
+			source: "body{background-image:url('/assets/bg.jpg');clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%);}",
+			want:   "body{background-image:url('/assets/bg.jpg');clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%);}",
+		},
 		{
 			name:   "keyframes",
 			source: "@keyframes shuffle{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}",
