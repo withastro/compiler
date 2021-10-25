@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.17
+
+### Patch Changes
+
+- 4f9155a: Bugfix: fix character limit of 4096 characters
+- 83df04c: Upgrade to Go 1.17
+
 ## 0.2.16
 
 ### Patch Changes
