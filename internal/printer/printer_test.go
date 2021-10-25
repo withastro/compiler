@@ -2,6 +2,7 @@ package printer
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 
@@ -36,6 +37,9 @@ var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\n$$result.scripts.add(...SCRIPTS);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build');\nconst Astro = $$Astro;"
 
+// SPECIAL TEST FIXTURES
+var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
+
 type want struct {
 	imports     string
 	frontmatter []string
@@ -53,6 +57,11 @@ type testcase struct {
 }
 
 func TestPrinter(t *testing.T) {
+	longRandomString := ""
+	for i := 0; i < 4080; i++ {
+		longRandomString += string(NON_WHITESPACE_CHARS[rand.Intn(len(NON_WHITESPACE_CHARS))])
+	}
+
 	tests := []testcase{
 		{
 			name:   "basic (no frontmatter)",
@@ -250,8 +259,7 @@ import Component from "test";
 				imports: "",
 				frontmatter: []string{`import Component from "test";
 
-import * as $$module1 from 'test';
-`},
+import * as $$module1 from 'test';`},
 				styles:   []string{},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
 				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
@@ -271,8 +279,7 @@ import Component from 'test';
 				imports: "",
 				frontmatter: []string{`import Component from 'test';
 
-import * as $$module1 from 'test';
-`},
+import * as $$module1 from 'test';`},
 				styles:   []string{},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
 				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
@@ -647,8 +654,7 @@ import * as $$module3 from 'custom-element';`,
 				metadata: `{ modules: [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], hydratedComponents: [One, Two, 'my-element'], hoisted: [] }`,
 				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
 ${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
-${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}
-`,
+${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}`,
 			},
 		},
 		{
@@ -746,6 +752,23 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 </body></html>`,
 			},
 		},
+		{
+			name: "Parser can handle files > 4096 chars",
+			source: `<html><body>` + longRandomString + `<img
+  width="1600"
+  height="1131"
+  class="img"
+  src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75"
+  srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w"
+  sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"
+></body></html>`,
+			want: want{
+				imports:     ``,
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `<html><head></head><body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -775,44 +798,43 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 				Site:        "https://astro.build",
 				InternalURL: "http://localhost:3000/",
 			})
-			output := strings.TrimSpace(test_utils.Dedent(string(result.Output)))
+			output := string(result.Output)
 
 			toMatch := INTERNAL_IMPORTS
 			if len(tt.want.frontmatter) > 0 {
-				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[0])) + "\n"
+				toMatch += test_utils.Dedent(tt.want.frontmatter[0])
 			}
 			// Default metadata
 			metadata := "{ modules: [], hydratedComponents: [], hoisted: [] }"
 			if len(tt.want.metadata) > 0 {
-				metadata = tt.want.metadata
+				metadata = test_utils.Dedent(tt.want.metadata)
 			}
-			toMatch = toMatch + fmt.Sprintf("\nexport const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
-			toMatch = toMatch + CREATE_ASTRO_CALL + "\n"
-			toMatch = toMatch + "\n" + PRELUDE
+			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
+			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n\n"
+			toMatch += test_utils.Dedent(PRELUDE) + "\n"
 			if len(tt.want.frontmatter) > 1 {
-				// format want
-				toMatch = toMatch + fmt.Sprint(strings.TrimSpace(tt.want.frontmatter[1]))
+				toMatch += test_utils.Dedent(tt.want.frontmatter[1])
 			}
-			toMatch = toMatch + "\n"
+			toMatch += "\n"
 			if len(tt.want.styles) > 0 {
 				toMatch = toMatch + STYLE_PRELUDE
 				for _, style := range tt.want.styles {
-					toMatch = toMatch + style + ",\n"
+					toMatch += style + ",\n"
 				}
-				toMatch = toMatch + STYLE_SUFFIX
+				toMatch += STYLE_SUFFIX
 			}
 			if len(tt.want.scripts) > 0 {
 				toMatch = toMatch + SCRIPT_PRELUDE
 				for _, script := range tt.want.scripts {
-					toMatch = toMatch + script + ",\n"
+					toMatch += script + ",\n"
 				}
-				toMatch = toMatch + SCRIPT_SUFFIX
+				toMatch += SCRIPT_SUFFIX
 			}
-			toMatch = toMatch + fmt.Sprintf("%s%s", RETURN, tt.want.code)
-			toMatch = toMatch + SUFFIX
+			toMatch += test_utils.Dedent(fmt.Sprintf("%s%s", RETURN, tt.want.code))
+			toMatch += SUFFIX
 
 			// compare to expected string, show diff if mismatch
-			if diff := ANSIDiff(toMatch, output); diff != "" {
+			if diff := ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
 				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
 			}
 		})

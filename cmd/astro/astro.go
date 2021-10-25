@@ -41,7 +41,11 @@ const something = await Astro.fetchContent('../*.md');
 </html>
 `
 
-	doc, _ := astro.Parse(strings.NewReader(source))
+	doc, err := astro.Parse(strings.NewReader(source))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	hash := astro.HashFromSource(source)
 
 	transform.ExtractStyles(doc)
