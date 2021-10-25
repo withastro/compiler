@@ -102,6 +102,11 @@ func TestBasic(t *testing.T) {
 			"<span>next/router</span>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
+		{
+			"data-astro-raw allows children to be parsed as Text",
+			"<span data-astro-raw>function foo() { }</span>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

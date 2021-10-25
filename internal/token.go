@@ -988,6 +988,25 @@ loop:
 	return false
 }
 
+func (z *Tokenizer) hasTag(s string) bool {
+loop:
+	for i := len(z.attr) - 1; i >= 0; i-- {
+		x := z.attr[i]
+		key := z.buf[x[0].Start:x[0].End]
+		for i := 0; i < len(s); i++ {
+			c := key[i]
+			if 'A' <= c && c <= 'Z' {
+				c += 'a' - 'A'
+			}
+			if c != s[i] {
+				continue loop
+			}
+		}
+		return true
+	}
+	return false
+}
+
 // readStartTag reads the next start tag token. The opening "<a" has already
 // been consumed, where 'a' means anything in [A-Za-z].
 func (z *Tokenizer) readStartTag() TokenType {
@@ -1013,6 +1032,9 @@ func (z *Tokenizer) readStartTag() TokenType {
 		raw = z.startTagIn("textarea", "title")
 	case 'x':
 		raw = z.startTagIn("xmp")
+	}
+	if !raw {
+		raw = z.hasTag("data-astro-raw")
 	}
 	if raw {
 		z.rawTag = string(z.buf[z.data.Start:z.data.End])
