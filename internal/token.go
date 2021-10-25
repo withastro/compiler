@@ -935,9 +935,10 @@ loop:
 func (z *Tokenizer) hasTag(s string) bool {
 loop:
 	for i := len(z.attr) - 1; i >= 0; i-- {
+
 		x := z.attr[i]
 		key := z.buf[x[0].Start:x[0].End]
-		for i := 0; i < len(s); i++ {
+		for i := 0; i < len(key); i++ {
 			c := key[i]
 			if 'A' <= c && c <= 'Z' {
 				c += 'a' - 'A'
