@@ -234,17 +234,10 @@ type Tokenizer struct {
 	// subsequent Next calls would return an ErrorToken.
 	// err is never reset. Once it becomes non-nil, it stays non-nil.
 	err error
-	// readErr is the error returned by the io.Reader r. It is separate from
-	// err because it is valid for an io.Reader to return (n int, err1 error)
-	// such that n > 0 && err1 != nil, and callers should always process the
-	// n > 0 bytes before considering the error err1.
-	// readErr error
 	// buf[raw.Start:raw.End] holds the raw bytes of the current token.
 	// buf[raw.End:] is buffered input that will yield future tokens.
 	raw loc.Span
 	buf []byte
-	// maxBuf limits the data buffered in buf. A value of 0 means unlimited.
-	// maxBuf int
 	// buf[data.Start:data.End] holds the raw bytes of the current token's data:
 	// a text token's text, a tag token's tag name, etc.
 	data loc.Span
@@ -1798,12 +1791,6 @@ func (z *Tokenizer) Token() Token {
 	}
 	return t
 }
-
-// SetMaxBuf sets a limit on the amount of data buffered during tokenization.
-// A value of 0 means unlimited.
-// func (z *Tokenizer) SetMaxBuf(n int) {
-// 	z.maxBuf = n
-// }
 
 // NewTokenizer returns a new HTML Tokenizer for the given Reader.
 // The input is assumed to be UTF-8 encoded.
