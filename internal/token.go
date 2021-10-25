@@ -938,7 +938,7 @@ loop:
 
 		x := z.attr[i]
 		key := z.buf[x[0].Start:x[0].End]
-		for i := 0; i < len(key); i++ {
+		for i := 0; i < len(key) && i < len(s); i++ {
 			c := key[i]
 			if 'A' <= c && c <= 'Z' {
 				c += 'a' - 'A'
