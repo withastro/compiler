@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.16
+
+### Patch Changes
+
+- 9ad8da7: Allows a data-astro-raw attr to parse children as raw text
+- 61b77de: Bugfix: CSS and selector scoping
+
 ## 0.2.15
 
 ### Patch Changes
