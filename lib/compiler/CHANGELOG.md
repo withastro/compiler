@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.18
+
+### Patch Changes
+
+- 2f4b772: Prevents overrunning an array when checking for raw attribute
+
 ## 0.2.17
 
 ### Patch Changes
