@@ -34,7 +34,7 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
-func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
+func makeTransformOptions(options js.Value) transform.TransformOptions {
 	filename := jsString(options.Get("sourcefile"))
 	if filename == "" {
 		filename = "<stdin>"
@@ -64,7 +64,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 
 	return transform.TransformOptions{
 		As:              as,
-		Scope:           hash,
+		Scope:           "",
 		Filename:        filename,
 		InternalURL:     internalURL,
 		SourceMap:       sourcemap,
@@ -106,8 +106,10 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 func Transform() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		source := jsString(args[0])
-		hash := astro.HashFromSource(source)
-		transformOptions := makeTransformOptions(js.Value(args[1]), hash)
+		transformOptions := makeTransformOptions(js.Value(args[1]))
+		// Important! Include filename in hash so identical islands still get unique IDs
+		hash := astro.HashFromSource(fmt.Sprintf("// %s\n%s", transformOptions.Filename, source))
+		transformOptions.Scope = hash
 
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
