@@ -237,7 +237,8 @@ func globalElement(id string) bool {
 		"noscript",
 		"script",
 		"style",
-		"title":
+		"title",
+		":root":
 		return true
 	default:
 		return false

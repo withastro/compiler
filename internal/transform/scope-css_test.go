@@ -153,6 +153,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   "html,body{}",
 		},
 		{
+			name:   ":root",
+			source: ":root{}",
+			want:   ":root{}",
+		},
+		{
 			name:   "escaped characters",
 			source: ".class\\:class:focus{}",
 			want:   ".class\\:class.astro-XXXXXX:focus{}",
