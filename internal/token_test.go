@@ -53,6 +53,26 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken},
 		},
 		{
+			"self-closing script",
+			`<script />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"self-closing script with sibling",
+			`<script /><div></div><div />`,
+			[]TokenType{SelfClosingTagToken, StartTagToken, EndTagToken, SelfClosingTagToken},
+		},
+		{
+			"self-closing style",
+			`<style />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"self-closing style with sibling",
+			`<style /><div></div><div />`,
+			[]TokenType{SelfClosingTagToken, StartTagToken, EndTagToken, SelfClosingTagToken},
+		},
+		{
 			"SVG (self-closing)",
 			`<svg><path/></svg>`,
 			[]TokenType{StartTagToken, SelfClosingTagToken, EndTagToken},

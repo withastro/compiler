@@ -381,6 +381,12 @@ func (z *Tokenizer) skipWhiteSpace() {
 // readRawOrRCDATA reads until the next "</foo>", where "foo" is z.rawTag and
 // is typically something like "script" or "textarea".
 func (z *Tokenizer) readRawOrRCDATA() {
+	// If <script /> or any raw tag, don't try to read any data
+	if z.Token().Type == SelfClosingTagToken {
+		z.data.End = z.raw.End
+		z.rawTag = ""
+		return
+	}
 	if z.rawTag == "script" {
 		z.readScript()
 		z.textIsRaw = true
