@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.2.19
+
+### Patch Changes
+
+- 318dd69: Fix handling of self-closing "raw" tags like <script /> and <style />
+- 9372c10: Support `define:vars` with root `html` element on pages
+- c4491cd: Fix bug with <script define:vars> when not using the `hoist` attribute
+
 ## 0.2.18
 
 ### Patch Changes
