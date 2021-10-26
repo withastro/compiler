@@ -170,9 +170,8 @@ outer:
 						}
 
 						// scope class
-						isCssSelector := gt == css.BeginRulesetGrammar || gt == css.QualifiedRuleGrammar
-						if val.TokenType == css.IdentToken && // only scope scope-able tokens
-							isCssSelector && // don’t scope @media and other non-class specifiers
+						isCssSelector := (gt == css.BeginRulesetGrammar || gt == css.QualifiedRuleGrammar) && (val.TokenType == css.IdentToken || val.TokenType == css.HashToken)
+						if isCssSelector && // don’t scope @media and other non-class specifiers
 							!isPseudoState && // don’t scope pseudostates
 							!isGlobal && // don’t scope in :global() scope
 							!isGlobalElement &&
