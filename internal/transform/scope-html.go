@@ -13,6 +13,7 @@ func ScopeElement(n *tycho.Node, opts TransformOptions) {
 }
 
 var NeverScopedElements map[string]bool = map[string]bool{
+	// "html" is a notable omission, see `NeverScopedSelectors`
 	"Fragment": true,
 	"base":     true,
 	"body":     true,
@@ -20,7 +21,6 @@ var NeverScopedElements map[string]bool = map[string]bool{
 	"frame":    true,
 	"frameset": true,
 	"head":     true,
-	"html":     true,
 	"link":     true,
 	"meta":     true,
 	"noframes": true,
@@ -28,6 +28,12 @@ var NeverScopedElements map[string]bool = map[string]bool{
 	"script":   true,
 	"style":    true,
 	"title":    true,
+}
+
+var NeverScopedSelectors map[string]bool = map[string]bool{
+	// html is never scoped as a selector (from CSS) but is scoped as an element (from HTML)
+	"html":  true,
+	":root": true,
 }
 
 func injectScopedClass(n *tycho.Node, opts TransformOptions) {

@@ -330,7 +330,7 @@ const name = "world";
 				imports:     "",
 				frontmatter: []string{},
 				styles:      []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px;}.body.astro-DPOHFLYM{font-size:1em;}`}"},
-				code: `<html><head>
+				code: `<html class="astro-DPOHFLYM"><head>
 
 		</head><body><h1 class="title astro-DPOHFLYM">Page Title</h1>
 		<p class="body astro-DPOHFLYM">I’m a page</p></body></html>`,
@@ -462,7 +462,7 @@ import * as $$module1 from '../components/Counter.jsx';`,
 // https://docs.astro.build/core-concepts/astro-components/`},
 				styles:   []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Counter.jsx' }], hydratedComponents: [Counter], hoisted: [] }`,
-				code: `<html lang="en">
+				code: `<html lang="en" class="astro-HMNNHVCQ">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
