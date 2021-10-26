@@ -223,10 +223,7 @@ func scopeRule(id string, opts TransformOptions) string {
 
 // Get list of elements that should be scoped
 func globalElement(id string) bool {
-	if NeverScopedElements[id] == true {
-		return true
-	}
-	if NeverScopedSelectors[id] == true {
+	if NeverScopedElements[id] || NeverScopedSelectors[id] {
 		return true
 	}
 	return false
