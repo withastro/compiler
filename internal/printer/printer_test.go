@@ -678,6 +678,16 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			},
 		},
 		{
+			name:   "Self-closing script in head works",
+			source: `<html><head><script /></head><html>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{},
+				code:        `<html><head><script></script></head><body></body></html>`,
+			},
+		},
+		{
 			name:   "Self-closing components in head can have siblings",
 			source: `<html><head><BaseHead /><link href="test"></head><html>`,
 			want: want{
