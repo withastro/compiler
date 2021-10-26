@@ -553,6 +553,13 @@ import * as $$module2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
+			name:   "script define:vars",
+			source: `<main><script define:vars={{ value: 0 }} type="module">console.log(value);</script>`,
+			want: want{
+				code: fmt.Sprintf(`<html><head></head><body><main><script type="module">${%s({ value: 0 })}console.log(value);</script></main></body></html>`, DEFINE_SCRIPT_VARS),
+			},
+		},
+		{
 			name:   "text after title expression",
 			source: `<title>a {expr} b</title>`,
 			want: want{

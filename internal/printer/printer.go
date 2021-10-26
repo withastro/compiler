@@ -9,6 +9,7 @@ import (
 	"github.com/snowpackjs/astro/internal/loc"
 	"github.com/snowpackjs/astro/internal/sourcemap"
 	"github.com/snowpackjs/astro/internal/transform"
+	"golang.org/x/net/html/atom"
 )
 
 type PrintResult struct {
@@ -88,6 +89,40 @@ func (p *printer) printTemplateLiteralClose() {
 	p.print(BACKTICK)
 }
 
+func (p *printer) printDefineVars(n *astro.Node) {
+	// Only handle <script> or <style>
+	if !(n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
+		return
+	}
+	for _, attr := range n.Attr {
+		if attr.Key == "define:vars" {
+			var value string
+			var defineCall string
+
+			if n.DataAtom == atom.Script {
+				defineCall = DEFINE_SCRIPT_VARS
+			} else if n.DataAtom == atom.Style {
+				defineCall = DEFINE_STYLE_VARS
+			}
+			switch attr.Type {
+			case astro.QuotedAttribute:
+				value = `"` + attr.Val + `"`
+			case astro.EmptyAttribute:
+				value = attr.Key
+			case astro.ExpressionAttribute:
+				value = strings.TrimSpace(attr.Val)
+			}
+			p.addNilSourceMapping()
+			p.print(fmt.Sprintf("${%s(", defineCall))
+			p.addSourceMapping(attr.ValLoc)
+			p.print(value)
+			p.addNilSourceMapping()
+			p.print(")}")
+			return
+		}
+	}
+}
+
 func (p *printer) printFuncPrelude(componentName string) {
 	if p.hasFuncPrelude {
 		return
@@ -163,6 +198,10 @@ func (p *printer) printStyleOrScript(n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute) {
+	if attr.Key == "define:vars" {
+		return
+	}
+
 	if attr.Namespace != "" {
 		p.print(attr.Namespace)
 		p.print(":")

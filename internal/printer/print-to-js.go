@@ -384,6 +384,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 	}
 
+	if n.DataAtom == atom.Script || n.DataAtom == atom.Style {
+		p.printDefineVars(n)
+	}
+
 	// Render any child nodes.
 	switch n.Data {
 	case "iframe", "noembed", "noframes", "noscript", "plaintext", "script", "style", "xmp":
