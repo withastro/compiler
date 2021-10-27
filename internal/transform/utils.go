@@ -8,7 +8,7 @@ func hasTruthyAttr(n *astro.Node, key string) bool {
 	for _, attr := range n.Attr {
 		if attr.Key == key &&
 			(attr.Type == astro.EmptyAttribute) ||
-			(attr.Type == astro.ExpressionAttribute && attr.Val == "true") ||
+			(attr.Type == astro.ExpressionAttribute && (attr.Val == "true" || attr.Val == "1")) ||
 			(attr.Type == astro.QuotedAttribute && (attr.Val == "" || attr.Val == "true")) {
 			return true
 		}
