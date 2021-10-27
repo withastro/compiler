@@ -778,9 +778,17 @@ func inHeadIM(p *parser) bool {
 			p.addElement()
 			p.setOriginalIM()
 			p.im = textIM
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+			}
 			return true
 		case a.Noframes, a.Style:
 			p.parseGenericRawTextElement()
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+			}
 			return true
 		case a.Head:
 			// Ignore the token.
