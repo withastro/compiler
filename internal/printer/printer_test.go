@@ -804,11 +804,12 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 			want: want{
 				imports:     "",
 				frontmatter: []string{},
-				styles:      []string{"{props:{\"data-astro-id\":\"5TTPPIQX\",children:`#fire.astro-5TTPPIQX{fill:orange;stroke:purple;}.wordmark.astro-5TTPPIQX{fill:black;}`}"},
-				code: `<svg class="astro-5TTPPIQX">
+				styles:      []string{"{props:{\"data-astro-id\":\"5TTPPIQX\"},children:`#fire.astro-5TTPPIQX{fill:orange;stroke:purple;}.wordmark.astro-5TTPPIQX{fill:black;}`}"},
+				code: `<html class="astro-5TTPPIQX"><head></head><body><svg class="astro-5TTPPIQX">
+
   <path id="#fire" d="M0,0 M340,29" class="astro-5TTPPIQX"></path>
   <path class="wordmark astro-5TTPPIQX" d="M0,0 M340,29"></path>
-</svg>`,
+</svg></body></html>`,
 			},
 		},
 	}
