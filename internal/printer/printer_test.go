@@ -786,6 +786,14 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 				code:        `<html><head></head><body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
 			},
 		},
+		{
+			name:   "SVG styles",
+			source: `<svg><style>path { fill: red; }</style></svg>`,
+			want: want{
+				styles: []string{},
+				code:   `<html><head></head><body><svg><style>path { fill: red; }</style></svg></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
