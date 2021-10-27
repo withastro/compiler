@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.20
+
+### Patch Changes
+
+- 39298e4: Fix small bugs with script/style hoisting behavior
+- bd1014a: Bugfix: style tags in SVG
+
 ## 0.2.19
 
 ### Patch Changes

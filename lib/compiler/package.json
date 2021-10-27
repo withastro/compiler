@@ -1,7 +1,7 @@
 {
   "name": "@astrojs/compiler",
   "type": "module",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "scripts": {
     "build": "tsc -p ."
   },
