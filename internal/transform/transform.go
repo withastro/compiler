@@ -20,7 +20,6 @@ type TransformOptions struct {
 }
 
 func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
-	InjectDoctype(doc, opts)
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	walk(doc, func(n *tycho.Node) {
 		ExtractScript(doc, n)
@@ -29,31 +28,6 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 		}
 	})
 	return doc
-}
-
-func InjectDoctype(doc *tycho.Node, opts TransformOptions) {
-	if opts.As != "document" {
-		return
-	}
-	var hasDoctype bool
-	walk(doc, func(n *tycho.Node) {
-		if hasDoctype {
-			return
-		}
-		if n.Type == tycho.DoctypeNode {
-			hasDoctype = true
-			return
-		}
-	})
-
-	if hasDoctype {
-		return
-	}
-
-	doc.InsertBefore(&tycho.Node{
-		Type: tycho.DoctypeNode,
-		Data: "html",
-	}, doc.FirstChild)
 }
 
 func ExtractStyles(doc *tycho.Node) {

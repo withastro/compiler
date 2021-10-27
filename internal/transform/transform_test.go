@@ -109,38 +109,3 @@ func TestTransformScoping(t *testing.T) {
 		})
 	}
 }
-
-func TestInjection(t *testing.T) {
-	tests := []struct {
-		name   string
-		source string
-		want   string
-	}{
-		{
-			name:   "basic",
-			source: `<div />`,
-			want:   `<!DOCTYPE html><html><head></head><body><div></div></body></html>`,
-		},
-		{
-			name:   "existing",
-			source: `<!DOCTYPE html><div />`,
-			want:   `<!DOCTYPE html><html><head></head><body><div></div></body></html>`,
-		},
-	}
-	var b strings.Builder
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
-			if err != nil {
-				t.Error(err)
-			}
-			Transform(doc, TransformOptions{As: "document", Scope: "XXXXXX"})
-			astro.PrintToSource(&b, doc)
-			got := b.String()
-			if tt.want != got {
-				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
-			}
-		})
-	}
-}
