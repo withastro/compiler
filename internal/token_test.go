@@ -145,6 +145,11 @@ func TestBasic(t *testing.T) {
 			"<span data-foo></span>",
 			[]TokenType{StartTagToken, EndTagToken},
 		},
+		{
+			"Supports <style> inside of <svg>",
+			`<svg><style><div>:root { color: red; }</style></svg>`,
+			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
