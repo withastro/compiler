@@ -28,7 +28,7 @@ outer:
 			Val: opts.Scope,
 		})
 		if n.FirstChild == nil {
-			continue outer
+			continue
 		}
 		p := css.NewParser(bytes.NewBufferString(n.FirstChild.Data), false)
 		out := ""
