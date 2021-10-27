@@ -786,6 +786,32 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 				code:        `<html><head></head><body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
 			},
 		},
+		{
+			name: "<style> in SVG",
+			source: `<svg>
+<style>
+  #fire {
+		fill: orange;
+		stroke: purple;
+	}
+	.wordmark {
+		fill: black;
+	}
+</style>
+  <path id="#fire" d="M0,0 M340,29"></path>
+  <path class="wordmark" d="M0,0 M340,29"></path>
+</svg>`,
+			want: want{
+				imports:     "",
+				frontmatter: []string{},
+				styles:      []string{"{props:{\"data-astro-id\":\"5TTPPIQX\"},children:`#fire.astro-5TTPPIQX{fill:orange;stroke:purple;}.wordmark.astro-5TTPPIQX{fill:black;}`}"},
+				code: `<html class="astro-5TTPPIQX"><head></head><body><svg class="astro-5TTPPIQX">
+
+  <path id="#fire" d="M0,0 M340,29" class="astro-5TTPPIQX"></path>
+  <path class="wordmark astro-5TTPPIQX" d="M0,0 M340,29"></path>
+</svg></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -83,6 +83,19 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartTagToken, EndTagToken},
 		},
 		{
+			"SVG with style",
+			`<svg><style>
+		#fire {
+			fill: orange;
+			stroke: purple;
+		}
+		.wordmark {
+			fill: black;
+		}
+</style><path id="#fire" d="M0,0 M340,29"></path><path class="wordmark" d="M0,0 M340,29"></path></svg>`,
+			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, StartTagToken, EndTagToken, StartTagToken, EndTagToken, EndTagToken},
+		},
+		{
 			"text",
 			"test",
 			[]TokenType{TextToken},

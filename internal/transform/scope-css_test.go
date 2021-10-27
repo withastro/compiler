@@ -23,6 +23,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   ".class.astro-XXXXXX{}",
 		},
 		{
+			name:   "id",
+			source: "#class{}",
+			want:   "#class.astro-XXXXXX{}",
+		},
+		{
 			name:   "element",
 			source: "h1{}",
 			want:   "h1.astro-XXXXXX{}",

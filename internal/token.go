@@ -300,6 +300,9 @@ func (z *Tokenizer) AllowCDATA(allowCDATA bool) {
 // an end tag token for "</title>". There are no distinct start tag or end tag
 // tokens for the "<b>" and "</b>".
 //
+// The only exception is <style>, which should be treated as raw text no
+// matter what (handled in the conditional).
+//
 // This tokenizer implementation will generally look for raw text at the right
 // times. Strictly speaking, an HTML5 compliant tokenizer should not look for
 // raw text if in foreign content: <title> generally needs raw text, but a
@@ -317,7 +320,9 @@ func (z *Tokenizer) AllowCDATA(allowCDATA bool) {
 // Note that this 'raw text' concept is different from the one offered by the
 // Tokenizer.Raw method.
 func (z *Tokenizer) NextIsNotRawText() {
-	z.rawTag = ""
+	if z.rawTag != "style" {
+		z.rawTag = ""
+	}
 }
 
 // Err returns the error associated with the most recent ErrorToken token.
@@ -962,9 +967,6 @@ loop:
 // been consumed, where 'a' means anything in [A-Za-z].
 func (z *Tokenizer) readStartTag() TokenType {
 	z.readTag(true)
-	if z.err != nil {
-		return ErrorToken
-	}
 	// Several tags flag the tokenizer's next token as raw.
 	c, raw := z.buf[z.data.Start], false
 	if 'A' <= c && c <= 'Z' {
@@ -1276,11 +1278,6 @@ func (z *Tokenizer) Next() TokenType {
 			z.openBraceIsExpressionStart = false
 		}
 	}
-
-	if z.err != nil {
-		z.tt = ErrorToken
-		return z.tt
-	}
 	if z.rawTag != "" {
 		if z.rawTag == "plaintext" {
 			// Read everything up to EOF.
@@ -1463,7 +1460,6 @@ frontmatter_loop:
 		if z.fm == FrontmatterClosed {
 			goto loop
 		}
-
 		c := z.readByte()
 		if z.err != nil {
 			break frontmatter_loop
