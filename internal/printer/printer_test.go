@@ -787,29 +787,11 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 			},
 		},
 		{
-			name: "<style> in SVG",
-			source: `<svg>
-<style>
-  #fire {
-		fill: orange;
-		stroke: purple;
-	}
-	.wordmark {
-		fill: black;
-	}
-</style>
-  <path id="#fire" d="M0,0 M340,29"></path>
-  <path class="wordmark" d="M0,0 M340,29"></path>
-</svg>`,
+			name:   "SVG styles",
+			source: `<svg><style>path { fill: red; }</style></svg>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{"{props:{\"data-astro-id\":\"5TTPPIQX\"},children:`#fire.astro-5TTPPIQX{fill:orange;stroke:purple;}.wordmark.astro-5TTPPIQX{fill:black;}`}"},
-				code: `<html class="astro-5TTPPIQX"><head></head><body><svg class="astro-5TTPPIQX">
-
-  <path id="#fire" d="M0,0 M340,29" class="astro-5TTPPIQX"></path>
-  <path class="wordmark astro-5TTPPIQX" d="M0,0 M340,29"></path>
-</svg></body></html>`,
+				styles: []string{},
+				code:   `<html><head></head><body><svg><style>path { fill: red; }</style></svg></body></html>`,
 			},
 		},
 	}

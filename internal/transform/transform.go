@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tycho "github.com/snowpackjs/astro/internal"
+	"golang.org/x/net/html/atom"
 	a "golang.org/x/net/html/atom"
 )
 
@@ -34,6 +35,11 @@ func ExtractStyles(doc *tycho.Node) {
 		if n.Type == tycho.ElementNode {
 			switch n.DataAtom {
 			case a.Style:
+				// Do not extract <style> inside of SVGs
+				if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
+					fmt.Println(n.FirstChild.Data)
+					return
+				}
 				doc.Styles = append(doc.Styles, n)
 				// Remove local style node
 				n.Parent.RemoveChild(n)
