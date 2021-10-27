@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.21
+
+### Patch Changes
+
+- 7b46e9f: Revert automatic DOCTYPE injection to fix package
+
 ## 0.2.20
 
 ### Patch Changes
