@@ -11,8 +11,6 @@ func PrintToSource(buf *strings.Builder, node *Node) {
 		for c := node.FirstChild; c != nil; c = c.NextSibling {
 			PrintToSource(buf, c)
 		}
-	case DoctypeNode:
-		buf.WriteString("<!DOCTYPE " + node.Data + ">")
 	case TextNode:
 		buf.WriteString(node.Data)
 	case ElementNode:
