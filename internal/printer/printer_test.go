@@ -794,6 +794,22 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 				code:   `<html><head></head><body><svg><style>path { fill: red; }</style></svg></body></html>`,
 			},
 		},
+		{
+			name:   "Empty script",
+			source: `<script hoist></script>`,
+			want: want{
+				scripts: []string{`{props:{"hoist":true}}`},
+				code:    `<html><head></head><body></body></html>`,
+			},
+		},
+		{
+			name:   "Empty style",
+			source: `<style define:vars={{ color: "Gainsboro" }}></style>`,
+			want: want{
+				styles: []string{`{props:{"define:vars":({ color: "Gainsboro" }),"data-astro-id":"7HAAVZPE"}}`},
+				code:   `<html class="astro-7HAAVZPE"><head></head><body></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

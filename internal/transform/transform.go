@@ -37,7 +37,6 @@ func ExtractStyles(doc *tycho.Node) {
 			case a.Style:
 				// Do not extract <style> inside of SVGs
 				if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
-					fmt.Println(n.FirstChild.Data)
 					return
 				}
 				doc.Styles = append(doc.Styles, n)

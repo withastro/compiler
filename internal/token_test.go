@@ -150,6 +150,11 @@ func TestBasic(t *testing.T) {
 			`<svg><style><div>:root { color: red; }</style></svg>`,
 			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken},
 		},
+		{
+			"multiple scoped :global",
+			`<style>:global(test-2) {}</style><style>test-1{}</style>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken, StartTagToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

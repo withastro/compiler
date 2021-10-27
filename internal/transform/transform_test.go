@@ -81,6 +81,15 @@ func TestTransformScoping(t *testing.T) {
 			`,
 			want: `<div class="astro-XXXXXX"></div>`,
 		},
+		{
+			name: "multiple scoped :global",
+			source: `
+				<style>:global(test-2) {}</style>
+				<style>:global(test-1) {}</style>
+				<div />
+			`,
+			want: `<div class="astro-XXXXXX"></div>`,
+		},
 	}
 	var b strings.Builder
 	for _, tt := range tests {

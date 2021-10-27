@@ -27,6 +27,9 @@ outer:
 			Key: "data-astro-id",
 			Val: opts.Scope,
 		})
+		if n.FirstChild == nil {
+			continue
+		}
 		p := css.NewParser(bytes.NewBufferString(n.FirstChild.Data), false)
 		out := ""
 
