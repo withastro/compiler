@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.22
+
+### Patch Changes
+
+- 04c1b63: Fix bug with dynamic classes
+
 ## 0.2.21
 
 ### Patch Changes
