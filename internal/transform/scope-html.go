@@ -61,7 +61,7 @@ func injectScopedClass(n *tycho.Node, opts TransformOptions) {
 				return
 			case tycho.ExpressionAttribute:
 				// as an expression
-				attr.Val = attr.Val + ` + " astro-` + opts.Scope + `"`
+				attr.Val = "(" + attr.Val + `) + " astro-` + opts.Scope + `"`
 				n.Attr[i] = attr
 				return
 			}

@@ -33,12 +33,17 @@ func TestScopeHTML(t *testing.T) {
 		{
 			name:   "expression string",
 			source: `<div class={"test"} />`,
-			want:   `<div class={"test" + " astro-XXXXXX"}></div>`,
+			want:   `<div class={("test") + " astro-XXXXXX"}></div>`,
 		},
 		{
 			name:   "expression function",
 			source: `<div class={clsx({ [test]: true })} />`,
-			want:   `<div class={clsx({ [test]: true }) + " astro-XXXXXX"}></div>`,
+			want:   `<div class={(clsx({ [test]: true })) + " astro-XXXXXX"}></div>`,
+		},
+		{
+			name:   "expression dynamic",
+			source: "<div class={condition ? 'a' : 'b'} />",
+			want:   `<div class={(condition ? 'a' : 'b') + " astro-XXXXXX"}></div>`,
 		},
 		{
 			name:   "empty",
@@ -51,14 +56,14 @@ func TestScopeHTML(t *testing.T) {
 			want:   "<div class=`${value} astro-XXXXXX`></div>",
 		},
 		{
-			name:   "component className",
+			name:   "component className not scoped",
 			source: `<Component className="test" />`,
 			want:   `<Component className="test astro-XXXXXX"></Component>`,
 		},
 		{
 			name:   "component className expression",
 			source: `<Component className={"test"} />`,
-			want:   `<Component className={"test" + " astro-XXXXXX"}></Component>`,
+			want:   `<Component className={("test") + " astro-XXXXXX"}></Component>`,
 		},
 		{
 			name:   "component className shorthand",
