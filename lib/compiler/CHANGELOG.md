@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.23
+
+### Patch Changes
+
+- 632c29b: Fix nil pointer dereference when every element on page is a component
+- 105a159: Fix bug where text inside of elements inside of an expression was not read properly (https://github.com/snowpackjs/astro/issues/1617)
+
 ## 0.2.22
 
 ### Patch Changes
