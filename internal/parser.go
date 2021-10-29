@@ -210,7 +210,9 @@ func (p *parser) generateLoc() []loc.Loc {
 
 func (p *parser) addLoc() {
 	n := p.oe.top()
-	n.Loc = append(n.Loc, p.tok.Loc)
+	if n != nil {
+		n.Loc = append(n.Loc, p.tok.Loc)
+	}
 }
 
 // generateImpliedEndTags pops nodes off the stack of open elements as long as

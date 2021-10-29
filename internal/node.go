@@ -180,9 +180,12 @@ type nodeStack []*Node
 // pop pops the stack. It will panic if s is empty.
 func (s *nodeStack) pop() *Node {
 	i := len(*s)
-	n := (*s)[i-1]
-	*s = (*s)[:i-1]
-	return n
+	if i > 0 {
+		n := (*s)[i-1]
+		*s = (*s)[:i-1]
+		return n
+	}
+	return nil
 }
 
 // top returns the most recently pushed node, or nil if s is empty.

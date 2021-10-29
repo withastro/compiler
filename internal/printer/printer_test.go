@@ -896,6 +896,29 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 </script> --></head><body></body></html>`,
 			},
 		},
+		{
+			name: "All components",
+			source: `
+---
+import { Container, Col, Row } from 'react-bootstrap';
+---
+<Container>
+    <Row>
+        <Col>
+            <h1>Hi!</h1>
+        </Col>
+    </Row>
+</Container>
+`,
+			want: want{
+				frontmatter: []string{
+					`import { Container, Col, Row } from 'react-bootstrap';
+
+import * as $$module1 from 'react-bootstrap';`},
+				metadata: `{ modules: [{ module: $$module1, specifier: 'react-bootstrap' }], hydratedComponents: [], hoisted: [] }`,
+				code:     "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{})}<h1>Hi!</h1>`,})}`,})}\n.",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -958,6 +981,10 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
 				toMatch += SCRIPT_SUFFIX
 			}
 			toMatch += test_utils.Dedent(fmt.Sprintf("%s%s", RETURN, tt.want.code))
+			// HACK: add period to end of test to indicate significant preceding whitespace (otherwise stripped by dedent)
+			if strings.HasSuffix(toMatch, ".") {
+				toMatch = strings.TrimRight(toMatch, ".")
+			}
 			toMatch += SUFFIX
 
 			// compare to expected string, show diff if mismatch
@@ -984,6 +1011,7 @@ func ANSIDiff(x, y interface{}, opts ...cmp.Option) string {
 		case strings.HasPrefix(s, "+"):
 			ss[i] = escapeCode(32) + s + escapeCode(0)
 		}
+		fmt.Println()
 	}
 	return strings.Join(ss, "\n")
 }
