@@ -223,9 +223,10 @@ type Tokenizer struct {
 	// r is the source of the HTML text.
 	r io.Reader
 	// tt is the TokenType of the current token.
-	tt TokenType
-	fm FrontmatterState
-	m  MarkdownState
+	tt            TokenType
+	prevTokenType TokenType
+	fm            FrontmatterState
+	m             MarkdownState
 	// err is the first error encountered during tokenization. It is possible
 	// for tt != Error && err != nil to hold: this means that Next returned a
 	// valid token but the subsequent Next call will return an error token.
@@ -1267,6 +1268,7 @@ func (z *Tokenizer) Next() TokenType {
 	z.raw.Start = z.raw.End
 	z.data.Start = z.raw.End
 	z.data.End = z.raw.End
+	z.prevTokenType = z.tt
 
 	// This handles expressions nested inside of Frontmatter elements
 	// but preserves `{}` as text outside of elements
@@ -1302,7 +1304,8 @@ func (z *Tokenizer) Next() TokenType {
 	if z.fm != FrontmatterClosed {
 		goto frontmatter_loop
 	}
-	if len(z.expressionStack) > 0 {
+	// When inside an expression but after a StartTag, read next tokens as regular text rather than expression text
+	if len(z.expressionStack) > 0 && z.prevTokenType != StartTagToken {
 		goto expression_loop
 	}
 
