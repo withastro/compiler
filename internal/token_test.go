@@ -155,6 +155,11 @@ func TestBasic(t *testing.T) {
 			`<style>:global(test-2) {}</style><style>test-1{}</style>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken, StartTagToken, TextToken, EndTagToken},
 		},
+		{
+			"element with single quote",
+			`<div>Don't panic</div>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
@@ -435,6 +440,26 @@ func TestExpressions(t *testing.T) {
 			"Nested use of string templates inside expressions",
 			"<div>{`${a} inner${a > 1 ? 's' : ''}.`}</div>",
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"expression with single quote",
+			`{true && <div>Don't panic</div>}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken},
+		},
+		{
+			"expression with double quote",
+			`{true && <div>Don't panic</div>}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken},
+		},
+		{
+			"expression with literal quote",
+			`{true && <div>Don` + "`" + `t panic</div>}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken},
+		},
+		{
+			"ternary expression with single quote",
+			`{true ? <div>Don't panic</div> : <div>Do' panic</div>}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken},
 		},
 	}
 
