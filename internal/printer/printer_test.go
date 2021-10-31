@@ -13,6 +13,7 @@ import (
 )
 
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
+	FRAGMENT,
 	"render as " + TEMPLATE_TAG,
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
@@ -917,6 +918,20 @@ import { Container, Col, Row } from 'react-bootstrap';
 import * as $$module1 from 'react-bootstrap';`},
 				metadata: `{ modules: [{ module: $$module1, specifier: 'react-bootstrap' }], hydratedComponents: [], hoisted: [] }`,
 				code:     "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{})}<h1>Hi!</h1>`,})}`,})}\n.",
+			},
+		},
+		{
+			name:   "Fragment",
+			source: `<body><Fragment><div>Default</div><div>Named</div></Fragment></body>`,
+			want: want{
+				code: `<html><head></head><body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}</body></html>`,
+			},
+		},
+		{
+			name:   "Fragment shorthand",
+			source: `<body><><div>Default</div><div>Named</div></></body>`,
+			want: want{
+				code: `<html><head></head><body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}</body></html>`,
 			},
 		},
 	}

@@ -160,6 +160,16 @@ func TestBasic(t *testing.T) {
 			`<div>Don't panic</div>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
+		{
+			"fragment",
+			`<>foo</>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
+			"fragment",
+			`<Fragment>foo</Fragment>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

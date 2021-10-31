@@ -38,6 +38,7 @@ var CREATE_METADATA = "$$createMetadata"
 var METADATA = "$$metadata"
 var RESULT = "$$result"
 var SLOTS = "$$slots"
+var FRAGMENT = "Fragment"
 var BACKTICK = "`"
 
 func (p *printer) print(text string) {
@@ -53,6 +54,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 		return
 	}
 	p.print(fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
+		FRAGMENT,
 		"render as " + TEMPLATE_TAG,
 		"createAstro as " + CREATE_ASTRO,
 		"createComponent as " + CREATE_COMPONENT,
