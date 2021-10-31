@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	tycho "github.com/snowpackjs/astro/internal"
 	"github.com/snowpackjs/astro/internal/test_utils"
 	"github.com/snowpackjs/astro/internal/transform"
@@ -934,6 +933,20 @@ import * as $$module1 from 'react-bootstrap';`},
 				code: `<html><head></head><body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}</body></html>`,
 			},
 		},
+		{
+			name:   "Fragment slotted",
+			source: `<body><Component><><div>Default</div><div>Named</div></></Component></body>`,
+			want: want{
+				code: `<html><head></head><body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}` + BACKTICK + `,})}</body></html>`,
+			},
+		},
+		{
+			name:   "Fragment slotted with name",
+			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
+			want: want{
+				code: `<html><head></head><body>${$$renderComponent($$result,'Component',Component,{},{"named": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{"slot":"named"},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}` + BACKTICK + `,})}</body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1003,30 +1016,9 @@ import * as $$module1 from 'react-bootstrap';`},
 			toMatch += SUFFIX
 
 			// compare to expected string, show diff if mismatch
-			if diff := ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
+			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
 				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
 			}
 		})
 	}
-}
-
-func ANSIDiff(x, y interface{}, opts ...cmp.Option) string {
-	escapeCode := func(code int) string {
-		return fmt.Sprintf("\x1b[%dm", code)
-	}
-	diff := cmp.Diff(x, y, opts...)
-	if diff == "" {
-		return ""
-	}
-	ss := strings.Split(diff, "\n")
-	for i, s := range ss {
-		switch {
-		case strings.HasPrefix(s, "-"):
-			ss[i] = escapeCode(31) + s + escapeCode(0)
-		case strings.HasPrefix(s, "+"):
-			ss[i] = escapeCode(32) + s + escapeCode(0)
-		}
-		fmt.Println()
-	}
-	return strings.Join(ss, "\n")
 }
