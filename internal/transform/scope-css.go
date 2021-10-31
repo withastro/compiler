@@ -205,9 +205,14 @@ outer:
 					out += ","
 				}
 			default:
-				out += string(data)
+				strData := string(data)
+				out += strData
 				for _, val := range p.Values() {
 					strVal := string(val.Data)
+					// handle CSS variables
+					if strings.HasPrefix(strData, "--") {
+						out += ":"
+					}
 					out += strVal
 				}
 				out += ";"

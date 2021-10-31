@@ -174,6 +174,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   "body{background-image:url('/assets/bg.jpg');clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%);}",
 		},
 		{
+			name:   "variables",
+			source: "body{--bg:red;background:var(--bg);color:black;}",
+			want:   "body{--bg:red;background:var(--bg);color:black;}",
+		},
+		{
 			name:   "keyframes",
 			source: "@keyframes shuffle{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}",
 			want:   "@keyframes shuffle{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}",
