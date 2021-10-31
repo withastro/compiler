@@ -303,6 +303,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	isFragment := n.Fragment
 	isComponent := isFragment || n.Component || n.CustomElement
+	isClientOnly := isComponent && transform.HasAttr(n, "client:only")
 	isSlot := n.DataAtom == atom.Slot
 
 	p.addSourceMapping(n.Loc[0])
@@ -322,6 +323,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	switch true {
 	case isFragment:
 		p.print("Fragment")
+	case isClientOnly:
+		p.print("null")
 	case !isSlot && n.CustomElement:
 		p.print(fmt.Sprintf("'%s'", n.Data))
 	case !isSlot:

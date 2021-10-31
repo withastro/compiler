@@ -149,6 +149,37 @@ import * as $$module1 from '../components';`,
 			},
 		},
 		{
+			name: "client:only component",
+			source: `---
+import { Component } from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component client:only />
+  </body>
+</html>`,
+			want: want{
+				imports: "",
+				frontmatter: []string{
+					`import { Component } from '../components';
+
+import * as $$module1 from '../components';`,
+				},
+				styles:   []string{},
+				metadata: `{ modules: [{ module: $$module1, specifier: '../components' }], hydratedComponents: [], hoisted: [] }`,
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true})}
+  </body></html>`,
+			},
+		},
+		{
 			name:   "conditional render",
 			source: `<body>{false ? <div>#f</div> : <div>#t</div>}</body>`,
 			want: want{

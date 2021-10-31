@@ -82,7 +82,7 @@ func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
 				id = fmt.Sprintf("'%s'", id)
 			}
 
-			if strings.HasPrefix(attr.Key, "client:") {
+			if strings.HasPrefix(attr.Key, "client:") && attr.Key != "client:only" {
 				// prepend node to maintain authored order
 				doc.Metadata.HydratedComponents = append([]*tycho.Node{n}, doc.HydratedComponents...)
 				pathAttr := tycho.Attribute{
