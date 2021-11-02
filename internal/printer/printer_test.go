@@ -658,7 +658,7 @@ import * as $$module2 from 'two';
 import * as $$module3 from 'custom-element';`,
 					`const name = 'world';`},
 				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], hydratedComponents: [One, Two, 'my-element'], hoisted: [] }`,
+				metadata: `{ modules: [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], hydratedComponents: ['my-element', Two, One], hoisted: [] }`,
 				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
 ${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
 ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}`,
@@ -929,9 +929,9 @@ import * as $$module1 from 'react-bootstrap';`},
 <div />`,
 			want: want{
 				styles: []string{
-					"{props:{\"global\":true},children:`div { color: red }`}",
-					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green;}`}",
 					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:blue;}`}",
+					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green;}`}",
+					"{props:{\"global\":true},children:`div { color: red }`}",
 				},
 				code: "<html class=\"astro-EX5CHM4O\"><head>\n\n\n\n\n\n\n</head>\n<body><div class=\"astro-EX5CHM4O\"></div></body></html>",
 			},
