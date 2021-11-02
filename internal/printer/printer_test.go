@@ -929,13 +929,13 @@ import * as $$module1 from 'react-bootstrap';`},
 </head>
 <div />
 `,
-			want: want{
-				styles: []string{
-					"{props:{\"global\":true},children:`div { color: red }`}",
-					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green;}`}",
-					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:blue;}`}",
-				},
-				code: "<html class=\"astro-EX5CHM4O\"><head>\n\n\n\n\n\n\n</head>\n<body><div class=\"astro-EX5CHM4O\"></div></body></html>",
+		want: want{
+			styles: []string{
+				"{props:{\"global\":true},children:`div { color: red }`}",
+				"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green;}`}",
+				"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:blue;}`}",
+			},
+			code:   "<html class=\"astro-EX5CHM4O\"><head>\n\n\n\n\n\n\n</head>\n<body><div class=\"astro-EX5CHM4O\"></div></body></html>",
 			name:   "Fragment",
 			source: `<body><Fragment><div>Default</div><div>Named</div></Fragment></body>`,
 			want: want{
