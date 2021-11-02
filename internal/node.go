@@ -56,6 +56,7 @@ type Node struct {
 	// These are only accessible from the document root Node
 	Styles, Scripts    []*Node
 	HydratedComponents []*Node
+	ExternalResources  [][]Attribute
 
 	Type      NodeType
 	DataAtom  atom.Atom

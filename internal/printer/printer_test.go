@@ -3,6 +3,7 @@ package printer
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -47,6 +48,7 @@ type want struct {
 	metadata    string
 	code        string
 	scripts     []string
+	resources   []string
 }
 
 type testcase struct {
@@ -372,6 +374,12 @@ const name = "world";
 				imports:     "",
 				frontmatter: []string{},
 				styles:      []string{},
+				resources: []string{
+					`{'rel':'icon','href':'/favicon.ico'}`,
+					`{'rel':'icon','href':'/favicon.svg','type':'image/svg+xml'}`,
+					`{'rel':'apple-touch-icon','href':'/apple-touch-icon.png'}`,
+					`{'rel':'stylesheet','href':'css/styles.css?v=1.0'}`,
+				},
 				code: `<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="utf-8">
@@ -460,8 +468,9 @@ import * as $$module1 from '../components/Counter.jsx';`,
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`},
-				styles:   []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
-				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Counter.jsx' }], hydratedComponents: [Counter], hoisted: [] }`,
+				styles:    []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
+				metadata:  `{ modules: [{ module: $$module1, specifier: '../components/Counter.jsx' }], hydratedComponents: [Counter], hoisted: [] }`,
+				resources: []string{`{'rel':'icon','type':'image/x-icon','href':'/favicon.ico'}`},
 				code: `<html lang="en" class="astro-HMNNHVCQ">
   <head>
     <meta charset="utf-8">
@@ -671,6 +680,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 				imports:     "",
 				frontmatter: []string{},
 				styles:      []string{},
+				resources:   []string{`{'href':'test'}`},
 				code:        `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
@@ -681,6 +691,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 				imports:     "",
 				frontmatter: []string{},
 				styles:      []string{},
+				resources:   []string{`{'href':'test'}`},
 				code:        `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
@@ -701,6 +712,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 				imports:     "",
 				frontmatter: []string{},
 				styles:      []string{},
+				resources:   []string{`{'href':'test'}`},
 				code:        `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
 			},
 		},
@@ -854,6 +866,17 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
   gtag('config', 'G-TEL60V1WM9');
 </script> -->`,
 			want: want{
+				resources: []string{
+					`{'rel':'icon','type':'image/svg+xml','href':'/favicon.svg'}`,
+					`{'rel':'alternate icon','type':'image/x-icon','href':'/favicon.ico'}`,
+					`{'rel':'sitemap','href':'/sitemap.xml'}`,
+					`{'rel':'stylesheet','href':'/theme.css'}`,
+					`{'rel':'stylesheet','href':'/code.css'}`,
+					`{'rel':'stylesheet','href':'/index.css'}`,
+					`{'rel':'preconnect','href':'https://fonts.googleapis.com'}`,
+					`{'rel':'preconnect','href':'https://fonts.gstatic.com','crossorigin':true}`,
+					`{'href':'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital@0;1&display=swap','rel':'stylesheet'}`,
+				},
 				code: `<!-- Global Metadata --><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width">
 
@@ -971,6 +994,29 @@ import * as $$module1 from 'react-bootstrap';`},
 				code: `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render` + BACKTICK + `<div slot="name">Name</div><div>Default</div>` + BACKTICK + `,})}</body></html>`,
 			},
 		},
+		{
+			name:   "empty <link> tags ignored",
+			source: `<link>`,
+			want: want{
+				code: `<html><head><link></head><body></body></html>`,
+			},
+		},
+		{
+			name:   "<link> attr keys escaped",
+			source: `<link class:list={[{ btn: true }]} data-rss>`,
+			want: want{
+				resources: []string{`{'class:list':[{ btn: true }],'data-rss':true}`},
+				code:      `<html><head><link${$$addAttribute([{ btn: true }], "class:list")} data-rss></head><body></body></html>`,
+			},
+		},
+		{
+			name:   "all resource attrs respected",
+			source: `<link empty expr={Astro.resolve('../styles.css')} literal=` + "`styles.css`" + ` {shorthand} {...spread} quoted="styles.css">`,
+			want: want{
+				resources: []string{`{'empty':true,'expr':Astro.resolve('../styles.css'),'literal':` + "`styles.css`" + `,[shorthand]:true,...(spread),'quoted':'styles.css'}`},
+				code:      `<html><head><link empty${$$addAttribute(Astro.resolve('../styles.css'), "expr")}${$$addAttribute(` + "`styles.css`" + `, "literal")}${$$addAttribute(shorthand, "shorthand")}${$$spreadAttributes(spread, "spread")} quoted="styles.css"></head><body></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1011,6 +1057,18 @@ import * as $$module1 from 'react-bootstrap';`},
 			if len(tt.want.metadata) > 0 {
 				metadata = test_utils.Dedent(tt.want.metadata)
 			}
+			resources := `[`
+			if len(tt.want.resources) > 0 {
+				for i, resource := range tt.want.resources {
+					if i > 0 {
+						resources += ","
+					}
+					resources += resource
+				}
+			}
+			resources += `]`
+			appendToMetadata := regexp.MustCompile(`,?\s*}$`)
+			metadata = appendToMetadata.ReplaceAllString(metadata, ", resources: "+resources+" }")
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
 			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n\n"
 			toMatch += test_utils.Dedent(PRELUDE) + "\n"
@@ -1032,6 +1090,7 @@ import * as $$module1 from 'react-bootstrap';`},
 				}
 				toMatch += SCRIPT_SUFFIX
 			}
+			// code
 			toMatch += test_utils.Dedent(fmt.Sprintf("%s%s", RETURN, tt.want.code))
 			// HACK: add period to end of test to indicate significant preceding whitespace (otherwise stripped by dedent)
 			if strings.HasSuffix(toMatch, ".") {

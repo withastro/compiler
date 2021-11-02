@@ -24,6 +24,7 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	walk(doc, func(n *tycho.Node) {
 		ExtractScript(doc, n)
 		AddComponentProps(doc, n)
+		CollectExternalResources(doc, n)
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
@@ -100,6 +101,14 @@ func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
 				n.Attr = append(n.Attr, exportAttr)
 				break
 			}
+		}
+	}
+}
+
+func CollectExternalResources(doc *tycho.Node, n *tycho.Node) {
+	if n.Type == tycho.ElementNode && n.DataAtom == a.Link {
+		if len(n.Attr) > 0 {
+			doc.ExternalResources = append(doc.ExternalResources, n.Attr)
 		}
 	}
 }
