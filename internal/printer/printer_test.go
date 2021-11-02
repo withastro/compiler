@@ -919,6 +919,25 @@ import * as $$module1 from 'react-bootstrap';`},
 				code:     "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{})}<h1>Hi!</h1>`,})}`,})}\n.",
 			},
 		},
+		{
+			name: "Mixed style siblings",
+			source: `
+<head>
+	<style global>div { color: red }</style>
+	<style>div { color: green }</style>
+	<style>div { color: blue }</style>
+</head>
+<div />
+`,
+			want: want{
+				styles: []string{
+					"{props:{\"global\":true},children:`div { color: red }`}",
+					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green;}`}",
+					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:blue;}`}",
+				},
+				code: "<html class=\"astro-EX5CHM4O\"><head>\n\n\n\n\n\n\n</head>\n<body><div class=\"astro-EX5CHM4O\"></div></body></html>",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1011,7 +1030,6 @@ func ANSIDiff(x, y interface{}, opts ...cmp.Option) string {
 		case strings.HasPrefix(s, "+"):
 			ss[i] = escapeCode(32) + s + escapeCode(0)
 		}
-		fmt.Println()
 	}
 	return strings.Join(ss, "\n")
 }
