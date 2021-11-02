@@ -964,6 +964,13 @@ import * as $$module1 from 'react-bootstrap';`},
 				code: `<html><head></head><body>${$$renderComponent($$result,'Component',Component,{},{"named": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{"slot":"named"},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}` + BACKTICK + `,})}</body></html>`,
 			},
 		},
+		{
+			name:   "Preseve slots inside custom-element",
+			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
+			want: want{
+				code: `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render` + BACKTICK + `<div slot="name">Name</div><div>Default</div>` + BACKTICK + `,})}</body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
