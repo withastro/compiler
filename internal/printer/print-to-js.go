@@ -301,27 +301,31 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		return
 	}
 
-	isComponent := (n.Component || n.CustomElement) && n.Data != "Fragment"
+	isFragment := n.Fragment
+	isComponent := isFragment || n.Component || n.CustomElement
 	isSlot := n.DataAtom == atom.Slot
 
 	p.addSourceMapping(n.Loc[0])
-	if isComponent {
+	switch true {
+	case isFragment:
+		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, "Fragment"))
+	case isComponent:
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, n.Data))
-	} else if isSlot {
+	case isSlot:
 		p.print(fmt.Sprintf("${%s(%s,%s[", RENDER_SLOT, RESULT, SLOTS))
-	} else {
+	default:
 		p.print("<")
+
 	}
 
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
-	if n.Fragment {
+	switch true {
+	case isFragment:
 		p.print("Fragment")
-	} else if !isSlot {
-		if n.CustomElement {
-			p.print(fmt.Sprintf("'%s'", n.Data))
-		} else {
-			p.print(n.Data)
-		}
+	case !isSlot && n.CustomElement:
+		p.print(fmt.Sprintf("'%s'", n.Data))
+	case !isSlot:
+		p.print(n.Data)
 	}
 
 	p.addSourceMapping(n.Loc[0])
@@ -357,7 +361,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	} else {
 		for _, a := range n.Attr {
 			if a.Key == "slot" {
-				if !((n.Parent.Component || n.Parent.CustomElement) && n.Parent.Data != "Fragment") {
+				if !(n.Parent.Component || n.Parent.CustomElement) {
 					panic(`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`)
 				}
 			} else {

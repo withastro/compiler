@@ -387,7 +387,7 @@ func (p *parser) addExpression() {
 }
 
 func isFragment(data string) bool {
-	return len(data) == 0
+	return len(data) == 0 || data == "Fragment"
 }
 
 func isComponent(data string) bool {
