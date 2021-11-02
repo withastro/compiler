@@ -2,10 +2,9 @@ package js_scanner
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/snowpackjs/astro/internal/test_utils"
 )
 
 type testcase struct {
@@ -170,29 +169,9 @@ import { c } from "c";`,
 			split := FindRenderBody([]byte(tt.source))
 			got := tt.source[:split]
 			// compare to expected string, show diff if mismatch
-			if diff := ANSIDiff(got, tt.want); diff != "" {
+			if diff := test_utils.ANSIDiff(got, tt.want); diff != "" {
 				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
 			}
 		})
 	}
-}
-
-func ANSIDiff(x, y interface{}, opts ...cmp.Option) string {
-	escapeCode := func(code int) string {
-		return fmt.Sprintf("\x1b[%dm", code)
-	}
-	diff := cmp.Diff(x, y, opts...)
-	if diff == "" {
-		return ""
-	}
-	ss := strings.Split(diff, "\n")
-	for i, s := range ss {
-		switch {
-		case strings.HasPrefix(s, "-"):
-			ss[i] = escapeCode(31) + s + escapeCode(0)
-		case strings.HasPrefix(s, "+"):
-			ss[i] = escapeCode(32) + s + escapeCode(0)
-		}
-	}
-	return strings.Join(ss, "\n")
 }

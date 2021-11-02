@@ -1,6 +1,7 @@
 package astro
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -12,6 +13,12 @@ type TokenTypeTest struct {
 	name     string
 	input    string
 	expected []TokenType
+}
+
+type TokenPanicTest struct {
+	name    string
+	input   string
+	message string
 }
 
 type AttributeTest struct {
@@ -165,9 +172,37 @@ func TestBasic(t *testing.T) {
 			`<div>Don't panic</div>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
+		{
+			"fragment",
+			`<>foo</>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
+			"fragment",
+			`<Fragment>foo</Fragment>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		// Special Case: this should PANIC! Not sure how to test for a panic
+
 	}
 
 	runTokenTypeTest(t, Basic)
+}
+
+func TestPanics(t *testing.T) {
+	Panics := []TokenPanicTest{
+		{
+			"fragment with attributes",
+			`< slot="named">foo</>`,
+			`Unable to assign attributes when using <> Fragment shorthand syntax!
+
+To fix this, please change
+  < slot="named">
+to use the longhand Fragment syntax:
+  <Fragment slot="named">`,
+		},
+	}
+	runPanicTest(t, Panics)
 }
 
 func TestFrontmatter(t *testing.T) {
@@ -540,6 +575,34 @@ func runTokenTypeTest(t *testing.T, suite []TokenTypeTest) {
 			if !reflect.DeepEqual(tokens, tt.expected) {
 				t.Errorf("Tokens = %v\nExpected = %v", tokens, tt.expected)
 			}
+		})
+	}
+}
+
+func runPanicTest(t *testing.T, suite []TokenPanicTest) {
+	for _, tt := range suite {
+		value := test_utils.Dedent(tt.input)
+		t.Run(tt.name, func(t *testing.T) {
+			tokenizer := NewTokenizer(strings.NewReader(value))
+			defer func() {
+				r := recover()
+
+				if r == nil {
+					t.Errorf("%s did not panic\nExpected %s", tt.name, tt.message)
+				}
+
+				if diff := test_utils.ANSIDiff(test_utils.Dedent(r.(string)), test_utils.Dedent(tt.message)); diff != "" {
+					t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+				}
+			}()
+			var next TokenType
+			for {
+				next = tokenizer.Next()
+				if next == ErrorToken {
+					break
+				}
+			}
+
 		})
 	}
 }

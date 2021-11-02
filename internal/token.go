@@ -11,6 +11,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/snowpackjs/astro/internal/loc"
 	"golang.org/x/net/html/atom"
@@ -365,19 +366,7 @@ func (z *Tokenizer) skipWhiteSpace() {
 			fmt.Printf("Unexpected character in skipWhiteSpace: \"%v\"\n", string(c))
 			return
 		}
-		switch c {
-		case
-			9,   // tab (\t)
-			10,  // newline (\n)
-			11,  // line tabulation
-			12,  // form feed (\f)
-			13,  // carriage return (\r)
-			32,  // space
-			85,  // next line
-			160, // no-break space
-			173: // soft hyphen
-			// No-op.
-		default:
+		if !unicode.IsSpace(rune(c)) {
 			z.raw.End--
 			return
 		}
@@ -1371,6 +1360,14 @@ loop:
 			z.tt = StartTagToken
 			return z.tt
 		default:
+			raw := z.Raw()
+			// Error: encountered an attempted use of <> syntax with attributes, like `< slot="named">Hello world!</>`
+			if len(raw) > 1 && bytes.HasPrefix(raw, []byte{'<'}) {
+				element := bytes.Split(z.Buffered(), []byte{'>'})
+				incorrect := fmt.Sprintf("< %s>", element[0])
+				correct := fmt.Sprintf("<Fragment %s>", element[0])
+				panic(fmt.Sprintf("Unable to assign attributes when using <> Fragment shorthand syntax!\n\nTo fix this, please change\n  %s\nto use the longhand Fragment syntax:\n  %s\n", incorrect, correct))
+			}
 			// Reconsume the current character.
 			z.raw.End--
 			continue
@@ -1415,7 +1412,6 @@ loop:
 				break loop
 			}
 			if c == '>' {
-				// TODO: </> should be overloaded as a shorthand for Fragment!
 				z.tt = EndTagToken
 				return z.tt
 			}
