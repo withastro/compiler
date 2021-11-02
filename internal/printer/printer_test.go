@@ -921,14 +921,12 @@ import * as $$module1 from 'react-bootstrap';`},
 		},
 		{
 			name: "Mixed style siblings",
-			source: `
-				<head>
-					<style global>div { color: red }</style>
-					<style>div { color: green }</style>
-					<style>div { color: blue }</style>
-				</head>
-				<div />
-			`,
+			source: `<head>
+	<style global>div { color: red }</style>
+	<style>div { color: green }</style>
+	<style>div { color: blue }</style>
+</head>
+<div />`,
 			want: want{
 				styles: []string{
 					"{props:{\"global\":true},children:`div { color: red }`}",
