@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.2.24
+
+### Patch Changes
+
+- bfd1b94: Fix issue with `style` and `script` processing where siblings would be skipped
+- 726d272: Fix <Fragment> and <> handling
+- f052465: Fix CSS variable parsing in the scoped CSS transform
+
 ## 0.2.23
 
 ### Patch Changes
