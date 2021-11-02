@@ -665,6 +665,7 @@ func beforeHTMLIM(p *parser) bool {
 			p.im = inBodyIM
 			if p.hasSelfClosingToken {
 				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
 			}
 			return true
 		}
@@ -755,6 +756,7 @@ func inHeadIM(p *parser) bool {
 			if p.hasSelfClosingToken {
 				p.addLoc()
 				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
 			}
 			return true
 		}
@@ -783,6 +785,7 @@ func inHeadIM(p *parser) bool {
 			if p.hasSelfClosingToken {
 				p.addLoc()
 				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
 			}
 			return true
 		case a.Noframes, a.Style:
@@ -790,6 +793,7 @@ func inHeadIM(p *parser) bool {
 			if p.hasSelfClosingToken {
 				p.addLoc()
 				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
 			}
 			return true
 		case a.Head:
@@ -826,6 +830,7 @@ func inHeadIM(p *parser) bool {
 			p.addElement()
 			return true
 		}
+
 		switch p.tok.DataAtom {
 		case a.Head:
 			p.addLoc()

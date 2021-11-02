@@ -169,6 +169,7 @@ func (n *Node) clone() *Node {
 		Attr:          make([]Attribute, len(n.Attr)),
 		CustomElement: n.CustomElement,
 		Component:     n.Component,
+		Loc:           n.Loc,
 	}
 	copy(m.Attr, n.Attr)
 	return m

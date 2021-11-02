@@ -163,6 +163,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken, StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"multiple styles",
+			`<style global>a {}</style><style>b {}</style><style>c {}</style>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken, StartTagToken, TextToken, EndTagToken, StartTagToken, TextToken, EndTagToken},
+		},
+		{
 			"element with single quote",
 			`<div>Don't panic</div>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
