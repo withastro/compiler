@@ -290,7 +290,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 
 	// Hydrated Components
 	p.print(", hydratedComponents: [")
-	for i, node := range doc.HydratedComponents {
+	for i, node := range doc.Metadata.HydratedComponents {
 		if i > 0 {
 			p.print(", ")
 		}
@@ -318,7 +318,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 
 	// Add Resources (<link> tags)
 	p.print(", resources: [")
-	for tagI, tagAttrs := range doc.ExternalResources {
+	for tagI, tagAttrs := range doc.Metadata.Resources {
 		if tagI > 0 {
 			p.print(",")
 		}

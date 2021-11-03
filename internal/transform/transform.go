@@ -85,7 +85,7 @@ func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
 
 			if strings.HasPrefix(attr.Key, "client:") {
 				// prepend node to maintain authored order
-				doc.HydratedComponents = append([]*tycho.Node{n}, doc.HydratedComponents...)
+				doc.Metadata.HydratedComponents = append([]*tycho.Node{n}, doc.HydratedComponents...)
 				pathAttr := tycho.Attribute{
 					Key:  "client:component-path",
 					Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
@@ -108,7 +108,7 @@ func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
 func CollectExternalResources(doc *tycho.Node, n *tycho.Node) {
 	if n.Type == tycho.ElementNode && n.DataAtom == a.Link {
 		if len(n.Attr) > 0 {
-			doc.ExternalResources = append(doc.ExternalResources, n.Attr)
+			doc.Metadata.Resources = append(doc.Metadata.Resources, n.Attr)
 		}
 	}
 }

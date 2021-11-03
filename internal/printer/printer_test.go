@@ -3,7 +3,6 @@ package printer
 import (
 	"fmt"
 	"math/rand"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -45,10 +44,16 @@ type want struct {
 	imports     string
 	frontmatter []string
 	styles      []string
-	metadata    string
-	code        string
 	scripts     []string
-	resources   []string
+	metadata
+	code string
+}
+
+type metadata struct {
+	hoisted            []string
+	hydratedComponents []string
+	modules            []string
+	resources          []string
 }
 
 type testcase struct {
@@ -69,10 +74,8 @@ func TestPrinter(t *testing.T) {
 			name:   "basic (no frontmatter)",
 			source: `<button>Click</button>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        `<html><head></head><body><button>Click</button></body></html>`,
+				imports: "",
+				code:    `<html><head></head><body><button>Click</button></body></html>`,
 			},
 		},
 		{
@@ -84,7 +87,6 @@ const href = '/about';
 			want: want{
 				imports:     "",
 				frontmatter: []string{"", "const href = '/about';"},
-				styles:      []string{},
 				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
 			},
 		},
@@ -102,14 +104,12 @@ import VueComponent from '../components/Vue.vue';
   </body>
 </html>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{
 					`import VueComponent from '../components/Vue.vue';
 
 import * as $$module1 from '../components/Vue.vue';`,
 				},
-				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Vue.vue' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components/Vue.vue' }`}},
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -133,14 +133,13 @@ import * as ns from '../components';
   </body>
 </html>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{
 					`import * as ns from '../components';
 
 import * as $$module1 from '../components';`,
 				},
 				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: '../components' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components' }`}},
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -154,10 +153,7 @@ import * as $$module1 from '../components';`,
 			name:   "conditional render",
 			source: `<body>{false ? <div>#f</div> : <div>#t</div>}</body>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        "<html><head></head><body>${false ? $$render`<div>#f</div>` : $$render`<div>#t</div>`}</body></html>",
+				code: "<html><head></head><body>${false ? $$render`<div>#f</div>` : $$render`<div>#t</div>`}</body></html>",
 			},
 		},
 		{
@@ -171,9 +167,7 @@ const items = [0, 1, 2];
 	})}
 </ul>`,
 			want: want{
-				imports:     "",
 				frontmatter: []string{"", "const items = [0, 1, 2];"},
-				styles:      []string{},
 				code: fmt.Sprintf(`<html><head></head><body><ul>
 	${items.map(item => {
 		return $$render%s<li>${item}</li>%s;
@@ -213,10 +207,7 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			name:   "backtick in HTML comment",
 			source: "<body><!-- `npm install astro` --></body>",
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        "<html><head></head><body><!-- \\`npm install astro\\` --></body></html>",
+				code: "<html><head></head><body><!-- \\`npm install astro\\` --></body></html>",
 			},
 		},
 		{
@@ -234,9 +225,7 @@ const items = ['red', 'yellow', 'blue'];
   ))}
 </div>`,
 			want: want{
-				imports:     "",
 				frontmatter: []string{"", "const items = ['red', 'yellow', 'blue'];"},
-				styles:      []string{},
 				code: `<html><head></head><body><div>
   ${items.map((item) => (
     // foo < > < }
@@ -258,12 +247,10 @@ import Component from "test";
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{`import Component from "test";
 
 import * as $$module1 from 'test';`},
-				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
 				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
@@ -282,8 +269,7 @@ import Component from 'test';
 				frontmatter: []string{`import Component from 'test';
 
 import * as $$module1 from 'test';`},
-				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
 				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
@@ -303,7 +289,6 @@ const name = "world";
 			want: want{
 				imports:     "",
 				frontmatter: []string{``, `const name = "world";`},
-				styles:      []string{},
 				code: `<html>
   <head>
     <title>Hello ${name}</title>
@@ -329,9 +314,8 @@ const name = "world";
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px;}.body.astro-DPOHFLYM{font-size:1em;}`}"},
+				imports: "",
+				styles:  []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px;}.body.astro-DPOHFLYM{font-size:1em;}`}"},
 				code: `<html class="astro-DPOHFLYM"><head>
 
 		</head><body><h1 class="title astro-DPOHFLYM">Page Title</h1>
@@ -371,14 +355,14 @@ const name = "world";
   </body>
 </html>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				resources: []string{
-					`{'rel':'icon','href':'/favicon.ico'}`,
-					`{'rel':'icon','href':'/favicon.svg','type':'image/svg+xml'}`,
-					`{'rel':'apple-touch-icon','href':'/apple-touch-icon.png'}`,
-					`{'rel':'stylesheet','href':'css/styles.css?v=1.0'}`,
+				imports: "",
+				metadata: metadata{
+					resources: []string{
+						`{'rel':'icon','href':'/favicon.ico'}`,
+						`{'rel':'icon','href':'/favicon.svg','type':'image/svg+xml'}`,
+						`{'rel':'apple-touch-icon','href':'/apple-touch-icon.png'}`,
+						`{'rel':'stylesheet','href':'css/styles.css?v=1.0'}`,
+					},
 				},
 				code: `<!DOCTYPE html><html lang="en">
 <head>
@@ -468,9 +452,12 @@ import * as $$module1 from '../components/Counter.jsx';`,
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`},
-				styles:    []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
-				metadata:  `{ modules: [{ module: $$module1, specifier: '../components/Counter.jsx' }], hydratedComponents: [Counter], hoisted: [] }`,
-				resources: []string{`{'rel':'icon','type':'image/x-icon','href':'/favicon.ico'}`},
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
+				metadata: metadata{
+					modules:            []string{`{ module: $$module1, specifier: '../components/Counter.jsx' }`},
+					hydratedComponents: []string{`Counter`},
+					resources:          []string{`{'rel':'icon','type':'image/x-icon','href':'/favicon.ico'}`},
+				},
 				code: `<html lang="en" class="astro-HMNNHVCQ">
   <head>
     <meta charset="utf-8">
@@ -502,8 +489,12 @@ import Widget2 from '../components/Widget2.astro';
 
 import * as $$module1 from '../components/Widget.astro';
 import * as $$module2 from '../components/Widget2.astro';`},
-				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: '../components/Widget.astro' }, { module: $$module2, specifier: '../components/Widget2.astro' }], hydratedComponents: [], hoisted: [] }`,
+				styles: []string{},
+				metadata: metadata{
+					modules: []string{
+						`{ module: $$module1, specifier: '../components/Widget.astro' }`,
+						`{ module: $$module2, specifier: '../components/Widget2.astro' }`},
+				},
 				code: `<html lang="en">
   <head>
     <script type="module" src="/regular_script.js"></script>
@@ -519,8 +510,8 @@ import * as $$module2 from '../components/Widget2.astro';`},
 				imports:     "",
 				frontmatter: []string{""},
 				styles:      []string{},
-				metadata:    `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'inline', value: 'console.log("Hello");' }] }`,
 				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
+				metadata:    metadata{hoisted: []string{`{ type: 'inline', value: 'console.log("Hello");' }`}},
 				code:        `<html><head></head><body></body></html>`,
 			},
 		},
@@ -533,8 +524,8 @@ import * as $$module2 from '../components/Widget2.astro';`},
 				imports:     "",
 				frontmatter: []string{"\n"},
 				styles:      []string{},
-				metadata:    `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'remote', src: 'url' }] }`,
 				scripts:     []string{`{props:{"type":"module","hoist":true,"src":"url"}}`},
+				metadata:    metadata{hoisted: []string{`{ type: 'remote', src: 'url' }`}},
 				code:        "<html><head></head><body></body></html>",
 			},
 		},
@@ -548,7 +539,7 @@ import * as $$module2 from '../components/Widget2.astro';`},
 				imports:  "",
 				styles:   []string{},
 				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
-				metadata: `{ modules: [], hydratedComponents: [], hoisted: [{ type: 'inline', value: 'console.log("Hello");' }] }`,
+				metadata: metadata{hoisted: []string{`{ type: 'inline', value: 'console.log("Hello");' }`}},
 				code: `<html><head></head><body><main>
 
 </main></body></html>`,
@@ -572,20 +563,14 @@ import * as $$module2 from '../components/Widget2.astro';`},
 			name:   "text after title expression",
 			source: `<title>a {expr} b</title>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        `<html><head><title>a ${expr} b</title></head><body></body></html>`,
+				code: `<html><head><title>a ${expr} b</title></head><body></body></html>`,
 			},
 		},
 		{
 			name:   "text after title expressions",
 			source: `<title>a {expr} b {expr} c</title>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        `<html><head><title>a ${expr} b ${expr} c</title></head><body></body></html>`,
+				code: `<html><head><title>a ${expr} b ${expr} c</title></head><body></body></html>`,
 			},
 		},
 		{
@@ -604,7 +589,7 @@ import * as $$module2 from '../components/Widget2.astro';`},
 import * as $$module1 from 'test';
 `, `const name = 'named';`},
 				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
 				code:     `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
@@ -612,20 +597,14 @@ import * as $$module1 from 'test';
 			name:   "condition expressions at the top-level",
 			source: `{cond && <span></span>}{cond && <strong></strong>}`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        "<html><head></head><body>${cond && $$render`<span></span>`}${cond && $$render`<strong></strong>`}</body></html>",
+				code: "<html><head></head><body>${cond && $$render`<span></span>`}${cond && $$render`<strong></strong>`}</body></html>",
 			},
 		},
 		{
 			name:   "condition expressions at the top-level with head content",
 			source: `{cond && <meta charset=utf8>}{cond && <title>My title</title>}`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        "<html><head>${cond && $$render`<meta charset=\"utf8\">`}${cond && $$render`<title>My title</title>`}</head><body></body></html>",
+				code: "<html><head>${cond && $$render`<meta charset=\"utf8\">`}${cond && $$render`<title>My title</title>`}</head><body></body></html>",
 			},
 		},
 		{
@@ -635,12 +614,11 @@ import 'test';
 ---
 <my-element></my-element>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{`import 'test';
 
 import * as $$module1 from 'test';`},
 				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: 'test' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
 				code:     `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
 		},
@@ -657,7 +635,6 @@ const name = 'world';
 <my-element client:load />
 `,
 			want: want{
-				imports: "",
 				frontmatter: []string{`import One from 'one';
 import Two from 'two';
 import 'custom-element';
@@ -666,8 +643,14 @@ import * as $$module1 from 'one';
 import * as $$module2 from 'two';
 import * as $$module3 from 'custom-element';`,
 					`const name = 'world';`},
-				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: 'one' }, { module: $$module2, specifier: 'two' }, { module: $$module3, specifier: 'custom-element' }], hydratedComponents: ['my-element', Two, One], hoisted: [] }`,
+				metadata: metadata{
+					modules: []string{
+						`{ module: $$module1, specifier: 'one' }`,
+						`{ module: $$module2, specifier: 'two' }`,
+						`{ module: $$module3, specifier: 'custom-element' }`,
+					},
+					hydratedComponents: []string{"'my-element'", "Two", "One"},
+				},
 				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
 ${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
 ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}`,
@@ -677,43 +660,31 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Component siblings are siblings",
 			source: `<BaseHead></BaseHead><link href="test">`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				resources:   []string{`{'href':'test'}`},
-				code:        `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+				metadata: metadata{resources: []string{`{'href':'test'}`}},
+				code:     `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
 		{
 			name:   "Self-closing components siblings are siblings",
 			source: `<BaseHead /><link href="test">`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				resources:   []string{`{'href':'test'}`},
-				code:        `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+				metadata: metadata{resources: []string{`{'href':'test'}`}},
+				code:     `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
 		{
 			name:   "Self-closing script in head works",
 			source: `<html><head><script /></head><html>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        `<html><head><script></script></head><body></body></html>`,
+				code: `<html><head><script></script></head><body></body></html>`,
 			},
 		},
 		{
 			name:   "Self-closing components in head can have siblings",
 			source: `<html><head><BaseHead /><link href="test"></head><html>`,
 			want: want{
-				imports:     "",
-				frontmatter: []string{},
-				styles:      []string{},
-				resources:   []string{`{'href':'test'}`},
-				code:        `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
+				metadata: metadata{resources: []string{`{'href':'test'}`}},
+				code:     `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
 			},
 		},
 		{
@@ -766,15 +737,18 @@ import ZComponent from '../components/ZComponent.jsx';
   <ZComponent />
 </body>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{
 					`import AComponent from '../components/AComponent.jsx';
 import ZComponent from '../components/ZComponent.jsx';
 
 import * as $$module1 from '../components/AComponent.jsx';
 import * as $$module2 from '../components/ZComponent.jsx';`},
-				metadata: `{ modules: [{ module: $$module1, specifier: '../components/AComponent.jsx' }, { module: $$module2, specifier: '../components/ZComponent.jsx' }], hydratedComponents: [], hoisted: [] }`,
-				styles:   []string{},
+				metadata: metadata{
+					modules: []string{
+						`{ module: $$module1, specifier: '../components/AComponent.jsx' }`,
+						`{ module: $$module2, specifier: '../components/ZComponent.jsx' }`,
+					},
+				},
 				code: `<html><head></head><body>
   ${` + RENDER_COMPONENT + `($$result,'AComponent',AComponent,{})}
   ${` + RENDER_COMPONENT + `($$result,'ZComponent',ZComponent,{})}
@@ -792,18 +766,14 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
   sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"
 ></body></html>`,
 			want: want{
-				imports:     ``,
-				frontmatter: []string{},
-				styles:      []string{},
-				code:        `<html><head></head><body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
+				code: `<html><head></head><body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
 			},
 		},
 		{
 			name:   "SVG styles",
 			source: `<svg><style>path { fill: red; }</style></svg>`,
 			want: want{
-				styles: []string{},
-				code:   `<html><head></head><body><svg><style>path { fill: red; }</style></svg></body></html>`,
+				code: `<html><head></head><body><svg><style>path { fill: red; }</style></svg></body></html>`,
 			},
 		},
 		{
@@ -866,16 +836,18 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
   gtag('config', 'G-TEL60V1WM9');
 </script> -->`,
 			want: want{
-				resources: []string{
-					`{'rel':'icon','type':'image/svg+xml','href':'/favicon.svg'}`,
-					`{'rel':'alternate icon','type':'image/x-icon','href':'/favicon.ico'}`,
-					`{'rel':'sitemap','href':'/sitemap.xml'}`,
-					`{'rel':'stylesheet','href':'/theme.css'}`,
-					`{'rel':'stylesheet','href':'/code.css'}`,
-					`{'rel':'stylesheet','href':'/index.css'}`,
-					`{'rel':'preconnect','href':'https://fonts.googleapis.com'}`,
-					`{'rel':'preconnect','href':'https://fonts.gstatic.com','crossorigin':true}`,
-					`{'href':'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital@0;1&display=swap','rel':'stylesheet'}`,
+				metadata: metadata{
+					resources: []string{
+						`{'rel':'icon','type':'image/svg+xml','href':'/favicon.svg'}`,
+						`{'rel':'alternate icon','type':'image/x-icon','href':'/favicon.ico'}`,
+						`{'rel':'sitemap','href':'/sitemap.xml'}`,
+						`{'rel':'stylesheet','href':'/theme.css'}`,
+						`{'rel':'stylesheet','href':'/code.css'}`,
+						`{'rel':'stylesheet','href':'/index.css'}`,
+						`{'rel':'preconnect','href':'https://fonts.googleapis.com'}`,
+						`{'rel':'preconnect','href':'https://fonts.gstatic.com','crossorigin':true}`,
+						`{'href':'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital@0;1&display=swap','rel':'stylesheet'}`,
+					},
 				},
 				code: `<!-- Global Metadata --><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width">
@@ -938,7 +910,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 					`import { Container, Col, Row } from 'react-bootstrap';
 
 import * as $$module1 from 'react-bootstrap';`},
-				metadata: `{ modules: [{ module: $$module1, specifier: 'react-bootstrap' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap' }`}},
 				code:     "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{})}<h1>Hi!</h1>`,})}`,})}\n.",
 			},
 		},
@@ -1005,16 +977,18 @@ import * as $$module1 from 'react-bootstrap';`},
 			name:   "<link> attr keys escaped",
 			source: `<link class:list={[{ btn: true }]} data-rss>`,
 			want: want{
-				resources: []string{`{'class:list':[{ btn: true }],'data-rss':true}`},
-				code:      `<html><head><link${$$addAttribute([{ btn: true }], "class:list")} data-rss></head><body></body></html>`,
+				metadata: metadata{resources: []string{`{'class:list':[{ btn: true }],'data-rss':true}`}},
+				code:     `<html><head><link${$$addAttribute([{ btn: true }], "class:list")} data-rss></head><body></body></html>`,
 			},
 		},
 		{
 			name:   "all resource attrs respected",
-			source: `<link empty expr={Astro.resolve('../styles.css')} literal=` + "`styles.css`" + ` {shorthand} {...spread} quoted="styles.css">`,
+			source: "<link empty expr={Astro.resolve('../styles.css')} literal=`styles.css` {shorthand} {...spread} quoted=\"styles.css\">",
 			want: want{
-				resources: []string{`{'empty':true,'expr':Astro.resolve('../styles.css'),'literal':` + "`styles.css`" + `,[shorthand]:true,...(spread),'quoted':'styles.css'}`},
-				code:      `<html><head><link empty${$$addAttribute(Astro.resolve('../styles.css'), "expr")}${$$addAttribute(` + "`styles.css`" + `, "literal")}${$$addAttribute(shorthand, "shorthand")}${$$spreadAttributes(spread, "spread")} quoted="styles.css"></head><body></body></html>`,
+				metadata: metadata{
+					resources: []string{"{'empty':true,'expr':Astro.resolve('../styles.css'),'literal':`styles.css`,[shorthand]:true,...(spread),'quoted':'styles.css'}"},
+				},
+				code: `<html><head><link empty${$$addAttribute(Astro.resolve('../styles.css'), "expr")}${$$addAttribute(` + "`styles.css`" + `, "literal")}${$$addAttribute(shorthand, "shorthand")}${$$spreadAttributes(spread, "spread")} quoted="styles.css"></head><body></body></html>`,
 			},
 		},
 	}
@@ -1052,23 +1026,52 @@ import * as $$module1 from 'react-bootstrap';`},
 			if len(tt.want.frontmatter) > 0 {
 				toMatch += test_utils.Dedent(tt.want.frontmatter[0])
 			}
-			// Default metadata
-			metadata := "{ modules: [], hydratedComponents: [], hoisted: [] }"
-			if len(tt.want.metadata) > 0 {
-				metadata = test_utils.Dedent(tt.want.metadata)
-			}
-			resources := `[`
-			if len(tt.want.resources) > 0 {
-				for i, resource := range tt.want.resources {
+			// build metadata object from provided strings
+			metadata := "{ "
+			// metadata.modules
+			metadata += "modules: ["
+			if len(tt.want.metadata.modules) > 0 {
+				for i, m := range tt.want.metadata.modules {
 					if i > 0 {
-						resources += ","
+						metadata += ", "
 					}
-					resources += resource
+					metadata += m
 				}
 			}
-			resources += `]`
-			appendToMetadata := regexp.MustCompile(`,?\s*}$`)
-			metadata = appendToMetadata.ReplaceAllString(metadata, ", resources: "+resources+" }")
+			metadata += "]"
+			// metadata.hydratedComponents
+			metadata += ", hydratedComponents: ["
+			if len(tt.want.metadata.hydratedComponents) > 0 {
+				for i, c := range tt.want.hydratedComponents {
+					if i > 0 {
+						metadata += ", "
+					}
+					metadata += c
+				}
+			}
+			metadata += "]"
+			// metadata.hoisted
+			metadata += ", hoisted: ["
+			if len(tt.want.metadata.hoisted) > 0 {
+				for i, h := range tt.want.hoisted {
+					if i > 0 {
+						metadata += ", "
+					}
+					metadata += h
+				}
+			}
+			metadata += "]"
+			// metadata.resources
+			metadata += ", resources: ["
+			if len(tt.want.metadata.resources) > 0 {
+				for i, r := range tt.want.resources {
+					if i > 0 {
+						metadata += ","
+					}
+					metadata += r
+				}
+			}
+			metadata += "] }"
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
 			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n\n"
 			toMatch += test_utils.Dedent(PRELUDE) + "\n"
