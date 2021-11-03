@@ -1252,6 +1252,21 @@ func (z *Tokenizer) Loc() loc.Loc {
 	return loc.Loc{Start: z.raw.Start}
 }
 
+// An expression boundary means the next tokens should be treated as a JS expression
+// (_do_ handle strings, comments, regexp, etc) rather than as plain text
+func (z *Tokenizer) isAtExpressionBoundary() bool {
+	prev := z.prevTokenType
+	if len(z.expressionStack) == 0 {
+		return false
+	}
+	switch prev {
+	// Inside of expressions, these tokens flag that the following tokens are plain text (not JS)
+	case StartTagToken, EndTagToken, SelfClosingTagToken, EndExpressionToken:
+		return false
+	}
+	return true
+}
+
 // Next scans the next token and returns its type.
 func (z *Tokenizer) Next() TokenType {
 	z.raw.Start = z.raw.End
@@ -1293,8 +1308,7 @@ func (z *Tokenizer) Next() TokenType {
 	if z.fm != FrontmatterClosed {
 		goto frontmatter_loop
 	}
-	// When inside an expression but after a StartTag, read next tokens as regular text rather than expression text
-	if len(z.expressionStack) > 0 && z.prevTokenType != StartTagToken {
+	if z.isAtExpressionBoundary() {
 		goto expression_loop
 	}
 
