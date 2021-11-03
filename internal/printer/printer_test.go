@@ -169,7 +169,7 @@ import { Component } from '../components';
 import * as $$module1 from '../components';`,
 				},
 				styles:   []string{},
-				metadata: `{ modules: [{ module: $$module1, specifier: '../components' }], hydratedComponents: [], hoisted: [] }`,
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components' }`}},
 				code: `<html>
   <head>
     <title>Hello world</title>
