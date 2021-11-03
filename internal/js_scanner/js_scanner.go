@@ -7,25 +7,6 @@ import (
 	"github.com/tdewolff/parse/v2/js"
 )
 
-// An ImportType is the type of import.
-type ImportType uint32
-
-const (
-	StandardImport ImportType = iota
-	DynamicImport
-)
-
-type ImportStatement struct {
-	Type           ImportType
-	Start          int
-	End            int
-	StatementStart int
-	StatementEnd   int
-}
-
-var source []byte
-var pos int
-
 // This function returns the index at which we should split the frontmatter.
 // The first slice contains any top-level imports/exports, which are global.
 // The second slice contains any non-exported declarations, which are scoped to the render body
@@ -170,7 +151,16 @@ func AccessesPrivateVars(source []byte) bool {
 	}
 }
 
-func NextImportSpecifier(_source []byte, pos int) (int, string) {
+type Import struct {
+	ExportName string
+	LocalName  string
+}
+type ImportStatement struct {
+	Imports   []Import
+	Specifier string
+}
+
+func NextImportStatement(_source []byte, pos int) (int, ImportStatement) {
 	source := _source[pos:]
 	l := js.NewLexer(parse.NewInputBytes(source))
 	i := pos
@@ -178,21 +168,58 @@ func NextImportSpecifier(_source []byte, pos int) (int, string) {
 		token, value := l.Next()
 		if token == js.ErrorToken {
 			// EOF or other error
-			return -1, ""
+			return -1, ImportStatement{}
 		}
 		// Imports should be consumed up until we find a specifier,
 		// then we can exit after the following line terminator or semicolon
 		if token == js.ImportToken {
 			i += len(value)
 			specifier := ""
+			imports := make([]Import, 0)
+			currImport := Import{}
 			for {
 				next, nextValue := l.Next()
 				i += len(nextValue)
+
 				if next == js.StringToken {
 					specifier = string(nextValue[1 : len(nextValue)-1])
 				}
+
 				if specifier != "" && (next == js.LineTerminatorToken || next == js.SemicolonToken) {
-					return i, specifier
+					if currImport.ExportName != "" {
+						if currImport.LocalName == "" {
+							currImport.LocalName = currImport.ExportName
+						}
+						imports = append(imports, currImport)
+					}
+					return i, ImportStatement{
+						Imports:   imports,
+						Specifier: specifier,
+					}
+				}
+
+				if next == js.WhitespaceToken {
+					continue
+				}
+
+				if next == js.CommaToken {
+					if currImport.LocalName == "" {
+						currImport.LocalName = currImport.ExportName
+					}
+					imports = append(imports, currImport)
+					currImport = Import{}
+				}
+
+				if next == js.IdentifierToken {
+					if currImport.ExportName != "" {
+						currImport.LocalName = string(nextValue)
+					} else {
+						currImport.ExportName = string(nextValue)
+					}
+				}
+
+				if next == js.MulToken {
+					currImport.ExportName = string(nextValue)
 				}
 			}
 		}
