@@ -314,42 +314,5 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 			p.print(fmt.Sprintf("{ type: 'inline', value: '%s' }", escapeSingleQuote(node.FirstChild.Data)))
 		}
 	}
-	p.print("]")
-
-	// Add Resources (<link> tags)
-	p.print(", resources: [")
-	for tagI, tagAttrs := range doc.Metadata.Resources {
-		if tagI > 0 {
-			p.print(",")
-		}
-
-		p.print("{")
-		for attrI, attr := range tagAttrs {
-			if attrI > 0 {
-				p.print(",")
-			}
-			switch attr.Type {
-			// href
-			case astro.EmptyAttribute:
-				p.print(fmt.Sprintf("'%s':true", escapeSingleQuote(attr.Key)))
-			// href={styleURL}
-			case astro.ExpressionAttribute:
-				p.print(fmt.Sprintf("'%s':%s", escapeSingleQuote(attr.Key), attr.Val))
-			// href="styles.css"
-			case astro.QuotedAttribute:
-				p.print(fmt.Sprintf("'%s':'%s'", escapeSingleQuote(attr.Key), escapeSingleQuote(attr.Val)))
-			// {...props}
-			case astro.SpreadAttribute:
-				p.print(fmt.Sprintf("...(%s)", attr.Key))
-			// {value}
-			case astro.ShorthandAttribute:
-				p.print(fmt.Sprintf("[%s]:true", attr.Key))
-			// href=`styles.css`
-			case astro.TemplateLiteralAttribute:
-				p.print(fmt.Sprintf("'%s':`%s`", escapeSingleQuote(attr.Key), attr.Val))
-			}
-		}
-		p.print("}")
-	}
 	p.print("] });\n\n")
 }

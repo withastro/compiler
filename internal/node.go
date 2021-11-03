@@ -69,7 +69,6 @@ type Node struct {
 // template layer, as well as any additional info needed to render the component.
 type Metadata struct {
 	HydratedComponents []*Node
-	Resources          [][]Attribute
 }
 
 // InsertBefore inserts newChild as a child of n, immediately before oldChild

@@ -53,7 +53,6 @@ type metadata struct {
 	hoisted            []string
 	hydratedComponents []string
 	modules            []string
-	resources          []string
 }
 
 type testcase struct {
@@ -356,14 +355,6 @@ const name = "world";
 </html>`,
 			want: want{
 				imports: "",
-				metadata: metadata{
-					resources: []string{
-						`{'rel':'icon','href':'/favicon.ico'}`,
-						`{'rel':'icon','href':'/favicon.svg','type':'image/svg+xml'}`,
-						`{'rel':'apple-touch-icon','href':'/apple-touch-icon.png'}`,
-						`{'rel':'stylesheet','href':'css/styles.css?v=1.0'}`,
-					},
-				},
 				code: `<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="utf-8">
@@ -456,7 +447,6 @@ import * as $$module1 from '../components/Counter.jsx';`,
 				metadata: metadata{
 					modules:            []string{`{ module: $$module1, specifier: '../components/Counter.jsx' }`},
 					hydratedComponents: []string{`Counter`},
-					resources:          []string{`{'rel':'icon','type':'image/x-icon','href':'/favicon.ico'}`},
 				},
 				code: `<html lang="en" class="astro-HMNNHVCQ">
   <head>
@@ -660,16 +650,14 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Component siblings are siblings",
 			source: `<BaseHead></BaseHead><link href="test">`,
 			want: want{
-				metadata: metadata{resources: []string{`{'href':'test'}`}},
-				code:     `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+				code: `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
 		{
 			name:   "Self-closing components siblings are siblings",
 			source: `<BaseHead /><link href="test">`,
 			want: want{
-				metadata: metadata{resources: []string{`{'href':'test'}`}},
-				code:     `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+				code: `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
 		{
@@ -683,8 +671,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Self-closing components in head can have siblings",
 			source: `<html><head><BaseHead /><link href="test"></head><html>`,
 			want: want{
-				metadata: metadata{resources: []string{`{'href':'test'}`}},
-				code:     `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
+				code: `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head><body></body></html>`,
 			},
 		},
 		{
@@ -836,19 +823,6 @@ import * as $$module2 from '../components/ZComponent.jsx';`},
   gtag('config', 'G-TEL60V1WM9');
 </script> -->`,
 			want: want{
-				metadata: metadata{
-					resources: []string{
-						`{'rel':'icon','type':'image/svg+xml','href':'/favicon.svg'}`,
-						`{'rel':'alternate icon','type':'image/x-icon','href':'/favicon.ico'}`,
-						`{'rel':'sitemap','href':'/sitemap.xml'}`,
-						`{'rel':'stylesheet','href':'/theme.css'}`,
-						`{'rel':'stylesheet','href':'/code.css'}`,
-						`{'rel':'stylesheet','href':'/index.css'}`,
-						`{'rel':'preconnect','href':'https://fonts.googleapis.com'}`,
-						`{'rel':'preconnect','href':'https://fonts.gstatic.com','crossorigin':true}`,
-						`{'href':'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital@0;1&display=swap','rel':'stylesheet'}`,
-					},
-				},
 				code: `<!-- Global Metadata --><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width">
 
@@ -966,31 +940,6 @@ import * as $$module1 from 'react-bootstrap';`},
 				code: `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render` + BACKTICK + `<div slot="name">Name</div><div>Default</div>` + BACKTICK + `,})}</body></html>`,
 			},
 		},
-		{
-			name:   "empty <link> tags ignored",
-			source: `<link>`,
-			want: want{
-				code: `<html><head><link></head><body></body></html>`,
-			},
-		},
-		{
-			name:   "<link> attr keys escaped",
-			source: `<link class:list={[{ btn: true }]} data-rss>`,
-			want: want{
-				metadata: metadata{resources: []string{`{'class:list':[{ btn: true }],'data-rss':true}`}},
-				code:     `<html><head><link${$$addAttribute([{ btn: true }], "class:list")} data-rss></head><body></body></html>`,
-			},
-		},
-		{
-			name:   "all resource attrs respected",
-			source: "<link empty expr={Astro.resolve('../styles.css')} literal=`styles.css` {shorthand} {...spread} quoted=\"styles.css\">",
-			want: want{
-				metadata: metadata{
-					resources: []string{"{'empty':true,'expr':Astro.resolve('../styles.css'),'literal':`styles.css`,[shorthand]:true,...(spread),'quoted':'styles.css'}"},
-				},
-				code: `<html><head><link empty${$$addAttribute(Astro.resolve('../styles.css'), "expr")}${$$addAttribute(` + "`styles.css`" + `, "literal")}${$$addAttribute(shorthand, "shorthand")}${$$spreadAttributes(spread, "spread")} quoted="styles.css"></head><body></body></html>`,
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -1058,17 +1007,6 @@ import * as $$module1 from 'react-bootstrap';`},
 						metadata += ", "
 					}
 					metadata += h
-				}
-			}
-			metadata += "]"
-			// metadata.resources
-			metadata += ", resources: ["
-			if len(tt.want.metadata.resources) > 0 {
-				for i, r := range tt.want.resources {
-					if i > 0 {
-						metadata += ","
-					}
-					metadata += r
 				}
 			}
 			metadata += "] }"
