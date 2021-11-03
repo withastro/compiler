@@ -54,8 +54,8 @@ type Node struct {
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
 
 	// These are only accessible from the document root Node
-	Styles, Scripts    []*Node
-	HydratedComponents []*Node
+	Styles, Scripts []*Node
+	Metadata
 
 	Type      NodeType
 	DataAtom  atom.Atom
@@ -63,6 +63,12 @@ type Node struct {
 	Namespace string
 	Attr      []Attribute
 	Loc       []loc.Loc
+}
+
+// Metadata is a collection of anything that needs to be hoisted out of the
+// template layer, as well as any additional info needed to render the component.
+type Metadata struct {
+	HydratedComponents []*Node
 }
 
 // InsertBefore inserts newChild as a child of n, immediately before oldChild

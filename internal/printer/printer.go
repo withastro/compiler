@@ -286,10 +286,11 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 		}
 		p.print(fmt.Sprintf("{ module: $$module%v, specifier: '%s' }", i, specs[i-1]))
 	}
-	p.print("], hydratedComponents: [")
+	p.print("]")
 
 	// Hydrated Components
-	for i, node := range doc.HydratedComponents {
+	p.print(", hydratedComponents: [")
+	for i, node := range doc.Metadata.HydratedComponents {
 		if i > 0 {
 			p.print(", ")
 		}
