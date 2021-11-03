@@ -160,9 +160,8 @@ type ImportStatement struct {
 	Specifier string
 }
 
-func NextImportStatement(_source []byte, pos int) (int, ImportStatement) {
-	source := _source[pos:]
-	l := js.NewLexer(parse.NewInputBytes(source))
+func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
+	l := js.NewLexer(parse.NewInputBytes(source[pos:]))
 	i := pos
 	for {
 		token, value := l.Next()
