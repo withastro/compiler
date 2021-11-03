@@ -44,7 +44,8 @@ func ExtractStyles(doc *tycho.Node) {
 			if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
 				return
 			}
-			doc.Styles = append(doc.Styles, n)
+			// prepend node to maintain authored order
+			doc.Styles = append([]*tycho.Node{n}, doc.Styles...)
 		}
 	})
 	// Important! Remove styles from original location *after* walking the doc
@@ -67,7 +68,8 @@ func ExtractScript(doc *tycho.Node, n *tycho.Node) {
 	if n.Type == tycho.ElementNode && n.DataAtom == a.Script {
 		// if <script hoist>, hoist to the document root
 		if hasTruthyAttr(n, "hoist") {
-			doc.Scripts = append(doc.Scripts, n)
+			// prepend node to maintain authored order
+			doc.Scripts = append([]*tycho.Node{n}, doc.Scripts...)
 		}
 	}
 }
@@ -81,7 +83,8 @@ func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
 			}
 
 			if strings.HasPrefix(attr.Key, "client:") {
-				doc.HydratedComponents = append(doc.HydratedComponents, n)
+				// prepend node to maintain authored order
+				doc.HydratedComponents = append([]*tycho.Node{n}, doc.HydratedComponents...)
 				pathAttr := tycho.Attribute{
 					Key:  "client:component-path",
 					Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
