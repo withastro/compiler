@@ -41,7 +41,6 @@ var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https:/
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
 
 type want struct {
-	imports     string
 	frontmatter []string
 	styles      []string
 	scripts     []string
@@ -73,8 +72,7 @@ func TestPrinter(t *testing.T) {
 			name:   "basic (no frontmatter)",
 			source: `<button>Click</button>`,
 			want: want{
-				imports: "",
-				code:    `<html><head></head><body><button>Click</button></body></html>`,
+				code: `<html><head></head><body><button>Click</button></body></html>`,
 			},
 		},
 		{
@@ -84,7 +82,6 @@ const href = '/about';
 ---
 <a href={href}>About</a>`,
 			want: want{
-				imports:     "",
 				frontmatter: []string{"", "const href = '/about';"},
 				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
 			},
@@ -162,20 +159,14 @@ import { Component } from '../components';
   </body>
 </html>`,
 			want: want{
-				imports: "",
-				frontmatter: []string{
-					`import { Component } from '../components';
-
-import * as $$module1 from '../components';`,
-				},
-				styles:   []string{},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components' }`}},
+				frontmatter: []string{"import { Component } from '../components';"},
+				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
   <head>
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":"../components","client:component-export":"Component"})}
   </body></html>`,
 			},
 		},
@@ -220,7 +211,6 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 	})}
 </div>`,
 			want: want{
-				imports:     "",
 				frontmatter: []string{"", "const groups = [[0, 1, 2], [3, 4, 5]];"},
 				styles:      []string{},
 				code: fmt.Sprintf(`<html><head></head><body><div>
@@ -295,7 +285,6 @@ import Component from 'test';
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{`import Component from 'test';
 
 import * as $$module1 from 'test';`},
@@ -317,7 +306,6 @@ const name = "world";
   </body>
 </html>`,
 			want: want{
-				imports:     "",
 				frontmatter: []string{``, `const name = "world";`},
 				code: `<html>
   <head>
@@ -344,8 +332,7 @@ const name = "world";
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				imports: "",
-				styles:  []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px;}.body.astro-DPOHFLYM{font-size:1em;}`}"},
+				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px;}.body.astro-DPOHFLYM{font-size:1em;}`}"},
 				code: `<html class="astro-DPOHFLYM"><head>
 
 		</head><body><h1 class="title astro-DPOHFLYM">Page Title</h1>
@@ -385,7 +372,6 @@ const name = "world";
   </body>
 </html>`,
 			want: want{
-				imports: "",
 				code: `<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="utf-8">
@@ -463,7 +449,6 @@ const someProps = {
   </body>
 </html>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{`// Component Imports
 import Counter from '../components/Counter.jsx'
 
@@ -504,7 +489,6 @@ import Widget2 from '../components/Widget2.astro';
     <script type="module" src="/regular_script.js"></script>
   </head>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{`import Widget from '../components/Widget.astro';
 import Widget2 from '../components/Widget2.astro';
 
@@ -528,7 +512,6 @@ import * as $$module2 from '../components/Widget2.astro';`},
 ---
 <script type="module" hoist>console.log("Hello");</script>`,
 			want: want{
-				imports:     "",
 				frontmatter: []string{""},
 				styles:      []string{},
 				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
@@ -542,7 +525,6 @@ import * as $$module2 from '../components/Widget2.astro';`},
 ---
 <script type="module" hoist src="url" />`,
 			want: want{
-				imports:     "",
 				frontmatter: []string{"\n"},
 				styles:      []string{},
 				scripts:     []string{`{props:{"type":"module","hoist":true,"src":"url"}}`},
@@ -557,7 +539,6 @@ import * as $$module2 from '../components/Widget2.astro';`},
 								<script type="module" hoist>console.log("Hello");</script>
 							`,
 			want: want{
-				imports:  "",
 				styles:   []string{},
 				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
 				metadata: metadata{hoisted: []string{`{ type: 'inline', value: 'console.log("Hello");' }`}},
@@ -604,7 +585,6 @@ import * as $$module2 from '../components/Widget2.astro';`},
 			<div slot={name}>Named</div>
 		</Component>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{`import Component from 'test';
 
 import * as $$module1 from 'test';
@@ -713,7 +693,6 @@ const canonicalURL = new URL('http://example.com');
 ---
 {image && (<meta property="og:image" content={new URL(image, canonicalURL)}>)}`,
 			want: want{
-				imports: "",
 				frontmatter: []string{"", `const image = './penguin.png';
 const canonicalURL = new URL('http://example.com');`},
 				styles: []string{},
@@ -732,7 +711,6 @@ let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');
 ---
 <div>testing</div>`,
 			want: want{
-				imports: "",
 				frontmatter: []string{"", `interface MarkdownFrontmatter {
 	date: number;
 	image: string;
