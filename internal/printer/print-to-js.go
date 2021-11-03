@@ -364,6 +364,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				if !(n.Parent.Component || n.Parent.CustomElement) {
 					panic(`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`)
 				}
+				if n.Parent.CustomElement {
+					p.printAttribute(a)
+					p.addSourceMapping(n.Loc[0])
+				}
 			} else {
 				p.printAttribute(a)
 				p.addSourceMapping(n.Loc[0])
@@ -424,6 +428,19 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		if !isAllWhiteSpace {
 			switch true {
+			case n.CustomElement:
+				p.print(`,{`)
+				p.print(fmt.Sprintf(`"%s": () => `, "default"))
+				p.printTemplateLiteralOpen()
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					render1(p, c, RenderOptions{
+						isRoot:       false,
+						isExpression: opts.isExpression,
+						depth:        depth + 1,
+					})
+				}
+				p.printTemplateLiteralClose()
+				p.print(`,}`)
 			case isComponent:
 				p.print(`,{`)
 				slottedChildren := make(map[string][]*Node)
