@@ -501,6 +501,21 @@ func TestExpressions(t *testing.T) {
 			`{true ? <div>Don't panic</div> : <div>Do' panic</div>}`,
 			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken},
 		},
+		{
+			"single quote after expression",
+			`{true && <div>{value} Don't panic</div>}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, TextToken, EndTagToken, EndExpressionToken},
+		},
+		{
+			"single quote after self-closing",
+			`{true && <div><span /> Don't panic</div>}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, SelfClosingTagToken, TextToken, EndTagToken, EndExpressionToken},
+		},
+		{
+			"single quote after end tag",
+			`{true && <div><span></span> Don't panic</div>}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, StartTagToken, EndTagToken, TextToken, EndTagToken, EndExpressionToken},
+		},
 	}
 
 	runTokenTypeTest(t, Expressions)

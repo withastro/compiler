@@ -1252,6 +1252,21 @@ func (z *Tokenizer) Loc() loc.Loc {
 	return loc.Loc{Start: z.raw.Start}
 }
 
+// When inside of an expression, this function is called to determine if the next token should be
+// treated agnostically (plain text, not JS) or as JS (_do_ handle comments, strings, etc)
+// This allows '"`/ chars inside of elements!
+func (z *Tokenizer) isAtTextBoundary() bool {
+	prev := z.prevTokenType
+	if len(z.expressionStack) == 0 {
+		return false
+	}
+	switch prev {
+	case StartTagToken, EndTagToken, SelfClosingTagToken, EndExpressionToken:
+		return false
+	}
+	return true
+}
+
 // Next scans the next token and returns its type.
 func (z *Tokenizer) Next() TokenType {
 	z.raw.Start = z.raw.End
@@ -1294,7 +1309,7 @@ func (z *Tokenizer) Next() TokenType {
 		goto frontmatter_loop
 	}
 	// When inside an expression but after a StartTag, read next tokens as regular text rather than expression text
-	if len(z.expressionStack) > 0 && z.prevTokenType != StartTagToken {
+	if z.isAtTextBoundary() {
 		goto expression_loop
 	}
 
