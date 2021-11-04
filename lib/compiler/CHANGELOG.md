@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 0.2.25
+
+### Patch Changes
+
+- 59f36cb: Fix custom-element slot behavior to remain spec compliant
+- 79b2e6f: Fix style/script ordering
+- 6041ee5: Add support for `client:only` directive
+- 2cd35f6: Fix apostrophe handling inside of elements which are inside of expressions ([#1478](https://github.com/snowpackjs/astro/issues/1478))
+
 ## 0.2.24
 
 ### Patch Changes
