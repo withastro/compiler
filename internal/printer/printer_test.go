@@ -146,7 +146,32 @@ import * as $$module1 from '../components';`,
 			},
 		},
 		{
-			name: "client:only component",
+			name: "client:only component (default)",
+			source: `---
+import Component from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component client:only />
+  </body>
+</html>`,
+			want: want{
+				frontmatter: []string{"import Component from '../components';"},
+				// Specifically do NOT render any metadata here, we need to skip this import
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":"../components","client:component-export":"default"})}
+  </body></html>`,
+			},
+		},
+		{
+			name: "client:only component (named)",
 			source: `---
 import { Component } from '../components';
 ---
@@ -167,6 +192,31 @@ import { Component } from '../components';
   </head>
   <body>
     ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":"../components","client:component-export":"Component"})}
+  </body></html>`,
+			},
+		},
+		{
+			name: "client:only component (namespace)",
+			source: `---
+import * as components from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <components.A client:only />
+  </body>
+</html>`,
+			want: want{
+				frontmatter: []string{"import * as components from '../components';"},
+				// Specifically do NOT render any metadata here, we need to skip this import
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-path":"../components","client:component-export":"A"})}
   </body></html>`,
 			},
 		},

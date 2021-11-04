@@ -160,6 +160,13 @@ type ImportStatement struct {
 	Specifier string
 }
 
+type ImportState uint32
+
+const (
+	ImportDefault ImportState = iota
+	ImportNamed
+)
+
 func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 	l := js.NewLexer(parse.NewInputBytes(source[pos:]))
 	i := pos
@@ -175,6 +182,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 			i += len(value)
 			specifier := ""
 			imports := make([]Import, 0)
+			importState := ImportDefault
 			currImport := Import{}
 			for {
 				next, nextValue := l.Next()
@@ -201,6 +209,10 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					continue
 				}
 
+				if next == js.OpenBraceToken {
+					importState = ImportNamed
+				}
+
 				if next == js.CommaToken {
 					if currImport.LocalName == "" {
 						currImport.LocalName = currImport.ExportName
@@ -212,8 +224,11 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 				if next == js.IdentifierToken {
 					if currImport.ExportName != "" {
 						currImport.LocalName = string(nextValue)
-					} else {
+					} else if importState == ImportNamed {
 						currImport.ExportName = string(nextValue)
+					} else if importState == ImportDefault {
+						currImport.ExportName = "default"
+						currImport.LocalName = string(nextValue)
 					}
 				}
 

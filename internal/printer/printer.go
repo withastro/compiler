@@ -265,10 +265,34 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 	modCount := 1
 	loc, statement := js_scanner.NextImportStatement(source, 0)
 	for loc != -1 {
-		isClientOnly := false
+		isClientOnlyImport := false
 		for _, n := range doc.Metadata.ClientOnlyComponents {
 			for _, imported := range statement.Imports {
-				if imported.LocalName == n.Data {
+				if imported.ExportName == "*" {
+					prefix := fmt.Sprintf("%s.", imported.LocalName)
+
+					if strings.HasPrefix(n.Data, prefix) {
+						exportParts := strings.Split(n.Data[len(prefix):], ".")
+						exportName := exportParts[0]
+						// Inject metadata attributes to `client:only` Component
+						pathAttr := astro.Attribute{
+							Key:  "client:component-path",
+							Val:  statement.Specifier,
+							Type: astro.QuotedAttribute,
+						}
+						n.Attr = append(n.Attr, pathAttr)
+
+						exportAttr := astro.Attribute{
+							Key:  "client:component-export",
+							Val:  exportName,
+							Type: astro.QuotedAttribute,
+						}
+						n.Attr = append(n.Attr, exportAttr)
+
+						isClientOnlyImport = true
+						break
+					}
+				} else if imported.LocalName == n.Data {
 					// Inject metadata attributes to `client:only` Component
 					pathAttr := astro.Attribute{
 						Key:  "client:component-path",
@@ -284,15 +308,15 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 					}
 					n.Attr = append(n.Attr, exportAttr)
 
-					isClientOnly = true
+					isClientOnlyImport = true
 					break
 				}
 			}
-			if isClientOnly {
+			if isClientOnlyImport {
 				break
 			}
 		}
-		if !isClientOnly {
+		if !isClientOnlyImport {
 			p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, statement.Specifier))
 			specs = append(specs, statement.Specifier)
 			modCount++
