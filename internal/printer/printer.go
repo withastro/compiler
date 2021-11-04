@@ -263,12 +263,65 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 	var specs []string
 
 	modCount := 1
-	loc, specifier := js_scanner.NextImportSpecifier(source, 0)
+	loc, statement := js_scanner.NextImportStatement(source, 0)
 	for loc != -1 {
-		p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, specifier))
-		specs = append(specs, specifier)
-		loc, specifier = js_scanner.NextImportSpecifier(source, loc)
-		modCount++
+		isClientOnlyImport := false
+		for _, n := range doc.Metadata.ClientOnlyComponents {
+			for _, imported := range statement.Imports {
+				if imported.ExportName == "*" {
+					prefix := fmt.Sprintf("%s.", imported.LocalName)
+
+					if strings.HasPrefix(n.Data, prefix) {
+						exportParts := strings.Split(n.Data[len(prefix):], ".")
+						exportName := exportParts[0]
+						// Inject metadata attributes to `client:only` Component
+						pathAttr := astro.Attribute{
+							Key:  "client:component-path",
+							Val:  statement.Specifier,
+							Type: astro.QuotedAttribute,
+						}
+						n.Attr = append(n.Attr, pathAttr)
+
+						exportAttr := astro.Attribute{
+							Key:  "client:component-export",
+							Val:  exportName,
+							Type: astro.QuotedAttribute,
+						}
+						n.Attr = append(n.Attr, exportAttr)
+
+						isClientOnlyImport = true
+						break
+					}
+				} else if imported.LocalName == n.Data {
+					// Inject metadata attributes to `client:only` Component
+					pathAttr := astro.Attribute{
+						Key:  "client:component-path",
+						Val:  statement.Specifier,
+						Type: astro.QuotedAttribute,
+					}
+					n.Attr = append(n.Attr, pathAttr)
+
+					exportAttr := astro.Attribute{
+						Key:  "client:component-export",
+						Val:  imported.ExportName,
+						Type: astro.QuotedAttribute,
+					}
+					n.Attr = append(n.Attr, exportAttr)
+
+					isClientOnlyImport = true
+					break
+				}
+			}
+			if isClientOnlyImport {
+				break
+			}
+		}
+		if !isClientOnlyImport {
+			p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, statement.Specifier))
+			specs = append(specs, statement.Specifier)
+			modCount++
+		}
+		loc, statement = js_scanner.NextImportStatement(source, loc)
 	}
 	// If we added imports, add a line break.
 	if modCount > 1 {

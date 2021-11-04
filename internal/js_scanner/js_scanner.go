@@ -7,25 +7,6 @@ import (
 	"github.com/tdewolff/parse/v2/js"
 )
 
-// An ImportType is the type of import.
-type ImportType uint32
-
-const (
-	StandardImport ImportType = iota
-	DynamicImport
-)
-
-type ImportStatement struct {
-	Type           ImportType
-	Start          int
-	End            int
-	StatementStart int
-	StatementEnd   int
-}
-
-var source []byte
-var pos int
-
 // This function returns the index at which we should split the frontmatter.
 // The first slice contains any top-level imports/exports, which are global.
 // The second slice contains any non-exported declarations, which are scoped to the render body
@@ -170,158 +151,93 @@ func AccessesPrivateVars(source []byte) bool {
 	}
 }
 
-// TODO: refactor to use lexer!
-func NextImportSpecifier(_source []byte, _pos int) (int, string) {
-	source = _source
-	pos = _pos
-	inImport := false
-	var cont bool
-	var start int
-	end := 0
+type Import struct {
+	ExportName string
+	LocalName  string
+}
+type ImportStatement struct {
+	Imports   []Import
+	Specifier string
+}
 
-MainLoop:
-	for ; pos < len(source)-1; pos++ {
-		c := readCommentWhitespace(true)
+type ImportState uint32
 
-		if inImport {
-			if c == '"' || c == '\'' {
-				pos++
-				start = pos
-				readString(start, c)
-				end = pos
+const (
+	ImportDefault ImportState = iota
+	ImportNamed
+)
 
-				// Continue the loop
-				cont = true
-				break MainLoop
-			}
-		} else {
-			switch true {
-			case c == 'i':
-				if isKeywordStart() && str_eq6('i', 'm', 'p', 'o', 'r', 't') {
-					pos += 6
-					inImport = true
+func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
+	l := js.NewLexer(parse.NewInputBytes(source[pos:]))
+	i := pos
+	for {
+		token, value := l.Next()
+		if token == js.ErrorToken {
+			// EOF or other error
+			return -1, ImportStatement{}
+		}
+		// Imports should be consumed up until we find a specifier,
+		// then we can exit after the following line terminator or semicolon
+		if token == js.ImportToken {
+			i += len(value)
+			specifier := ""
+			imports := make([]Import, 0)
+			importState := ImportDefault
+			currImport := Import{}
+			for {
+				next, nextValue := l.Next()
+				i += len(nextValue)
+
+				if next == js.StringToken {
+					specifier = string(nextValue[1 : len(nextValue)-1])
+				}
+
+				if specifier != "" && (next == js.LineTerminatorToken || next == js.SemicolonToken) {
+					if currImport.ExportName != "" {
+						if currImport.LocalName == "" {
+							currImport.LocalName = currImport.ExportName
+						}
+						imports = append(imports, currImport)
+					}
+					return i, ImportStatement{
+						Imports:   imports,
+						Specifier: specifier,
+					}
+				}
+
+				if next == js.WhitespaceToken {
 					continue
 				}
-			case c == '/':
-				if str_eq2('/', '/') {
-					readLineComment()
-					continue
-				} else if str_eq2('/', '*') {
-					readBlockComment(true)
-					continue
+
+				if next == js.OpenBraceToken {
+					importState = ImportNamed
+				}
+
+				if next == js.CommaToken {
+					if currImport.LocalName == "" {
+						currImport.LocalName = currImport.ExportName
+					}
+					imports = append(imports, currImport)
+					currImport = Import{}
+				}
+
+				if next == js.IdentifierToken {
+					if currImport.ExportName != "" {
+						currImport.LocalName = string(nextValue)
+					} else if importState == ImportNamed {
+						currImport.ExportName = string(nextValue)
+					} else if importState == ImportDefault {
+						currImport.ExportName = "default"
+						currImport.LocalName = string(nextValue)
+					}
+				}
+
+				if next == js.MulToken {
+					currImport.ExportName = string(nextValue)
 				}
 			}
 		}
-	}
 
-	if cont {
-		specifier := source[start:end]
-		return pos, string(specifier)
-	} else {
-		return -1, ""
-	}
-}
-
-// The following utilities are adapted from https://github.com/guybedford/es-module-lexer
-// Released under the MIT License (C) 2018-2021 Guy Bedford
-
-// Note: non-asii BR and whitespace checks omitted for perf / footprint
-// if there is a significant user need this can be reconsidered
-func isBr(c byte) bool {
-	return c == '\r' || c == '\n'
-}
-
-func isWsNotBr(c byte) bool {
-	return c == 9 || c == 11 || c == 12 || c == 32 || c == 160
-}
-
-func isBrOrWs(c byte) bool {
-	return c > 8 && c < 14 || c == 32 || c == 160
-}
-
-func isBrOrWsOrPunctuatorNotDot(c byte) bool {
-	return c > 8 && c < 14 || c == 32 || c == 160 || isPunctuator(c) && c != '.'
-}
-
-func isPunctuator(ch byte) bool {
-	// 23 possible punctuator endings: !%&()*+,-./:;<=>?[]^{}|~
-	return ch == '!' || ch == '%' || ch == '&' ||
-		ch > 39 && ch < 48 || ch > 57 && ch < 64 ||
-		ch == '[' || ch == ']' || ch == '^' ||
-		ch > 122 && ch < 127
-}
-
-func str_eq2(c1 byte, c2 byte) bool {
-	return len(source[pos:]) >= 2 && source[pos+1] == c2 && source[pos] == c1
-}
-
-func str_eq6(c1 byte, c2 byte, c3 byte, c4 byte, c5 byte, c6 byte) bool {
-	return len(source[pos:]) >= 6 && source[pos+5] == c6 && source[pos+4] == c5 && source[pos+3] == c4 && source[pos+2] == c3 && source[pos+1] == c2 && source[pos] == c1
-}
-
-func isKeywordStart() bool {
-	return isBrOrWsOrPunctuatorNotDot(source[pos-1])
-}
-
-func readBlockComment(br bool) {
-	pos++
-	for ; pos < len(source)-1; pos++ {
-		c := source[pos]
-		if !br && isBr(c) {
-			return
-		}
-		if c == '*' && source[pos+1] == '/' {
-			pos++
-			return
-		}
-	}
-}
-
-func readLineComment() {
-	for ; pos < len(source)-1; pos++ {
-		c := source[pos]
-		if c == '\n' || c == '\r' {
-			return
-		}
-	}
-}
-
-func readCommentWhitespace(br bool) byte {
-	var c byte
-	for ; pos < len(source)-1; pos++ {
-		c = source[pos]
-		switch true {
-		case c == '/':
-			if str_eq2('/', '/') {
-				readLineComment()
-				continue
-			} else if str_eq2('/', '*') {
-				readBlockComment(true)
-				continue
-			} else {
-				return c
-			}
-		case (br && !isBrOrWs(c)):
-			return c
-		case (!br && !isWsNotBr(c)):
-			return c
-		}
-	}
-	return c
-}
-
-func readString(start int, quoteChar byte) {
-	var c byte
-
-MainLoop:
-	for ; pos < len(source)-1; pos++ {
-		c = source[pos]
-		switch true {
-		case c == '\\':
-			pos++
-			continue
-		case c == quoteChar:
-			break MainLoop
-		}
+		i += len(value)
 	}
 }

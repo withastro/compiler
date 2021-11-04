@@ -68,7 +68,8 @@ type Node struct {
 // Metadata is a collection of anything that needs to be hoisted out of the
 // template layer, as well as any additional info needed to render the component.
 type Metadata struct {
-	HydratedComponents []*Node
+	HydratedComponents   []*Node
+	ClientOnlyComponents []*Node
 }
 
 // InsertBefore inserts newChild as a child of n, immediately before oldChild
