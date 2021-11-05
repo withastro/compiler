@@ -41,9 +41,10 @@ var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https:/
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
 
 type want struct {
-	frontmatter []string
-	styles      []string
-	scripts     []string
+	frontmatter    []string
+	styles         []string
+	scripts        []string
+	getStaticPaths string
 	metadata
 	code string
 }
@@ -84,6 +85,57 @@ const href = '/about';
 			want: want{
 				frontmatter: []string{"", "const href = '/about';"},
 				code:        `<html><head></head><body><a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a></body></html>`,
+			},
+		},
+		{
+			name: "getStaticPaths (basic)",
+			source: `---
+export const getStaticPaths = async () => {
+	return { paths: [] }
+}
+---
+<div></div>`,
+			want: want{
+				frontmatter: []string{`export const getStaticPaths = async () => {
+	return { paths: [] }
+}`, ""},
+				code: `<html><head></head><body><div></div></body></html>`,
+			},
+		},
+		{
+			name: "getStaticPaths (hoisted)",
+			source: `---
+const a = 0;
+export const getStaticPaths = async () => {
+	return { paths: [] }
+}
+---
+<div></div>`,
+			want: want{
+				frontmatter: []string{"", `const a = 0;`},
+				getStaticPaths: `export const getStaticPaths = async () => {
+	return { paths: [] }
+}`,
+				code: `<html><head></head><body><div></div></body></html>`,
+			},
+		},
+		{
+			name: "getStaticPaths (hoisted II)",
+			source: `---
+const a = 0;
+export async function getStaticPaths() {
+	return { paths: [] }
+}
+const b = 0;
+---
+<div></div>`,
+			want: want{
+				frontmatter: []string{"", `const a = 0;
+const b = 0;`},
+				getStaticPaths: `export async function getStaticPaths() {
+	return { paths: [] }
+}`,
+				code: `<html><head></head><body><div></div></body></html>`,
 			},
 		},
 		{
@@ -1069,8 +1121,12 @@ import * as $$module1 from 'react-bootstrap';`},
 				}
 			}
 			metadata += "] }"
+
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
 			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n\n"
+			if len(tt.want.getStaticPaths) > 0 {
+				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
+			}
 			toMatch += test_utils.Dedent(PRELUDE) + "\n"
 			if len(tt.want.frontmatter) > 1 {
 				toMatch += test_utils.Dedent(tt.want.frontmatter[1])
