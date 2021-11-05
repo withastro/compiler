@@ -993,10 +993,17 @@ import * as $$module1 from 'react-bootstrap';`},
 			},
 		},
 		{
-			name:   "Preseve slots inside custom-element",
+			name:   "Preserve slots inside custom-element",
 			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
 			want: want{
 				code: `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render` + BACKTICK + `<div slot="name">Name</div><div>Default</div>` + BACKTICK + `,})}</body></html>`,
+			},
+		},
+		{
+			name:   "Preserve namespaces",
+			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></svg>`,
+			want: want{
+				code: `<html><head></head><body><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></rect></svg></body></html>`,
 			},
 		},
 	}

@@ -204,6 +204,10 @@ func (p *printer) printAttribute(attr astro.Attribute) {
 		return
 	}
 
+	if attr.Namespace != "" || attr.Type == astro.QuotedAttribute || attr.Type == astro.EmptyAttribute {
+		p.print(" ")
+	}
+
 	if attr.Namespace != "" {
 		p.print(attr.Namespace)
 		p.print(":")
@@ -211,14 +215,12 @@ func (p *printer) printAttribute(attr astro.Attribute) {
 
 	switch attr.Type {
 	case astro.QuotedAttribute:
-		p.print(" ")
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
 		p.print("=")
 		p.addSourceMapping(attr.ValLoc)
 		p.print(`"` + attr.Val + `"`)
 	case astro.EmptyAttribute:
-		p.print(" ")
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
 	case astro.ExpressionAttribute:
