@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	astro "github.com/snowpackjs/astro/internal"
 	tycho "github.com/snowpackjs/astro/internal"
 	"golang.org/x/net/html/atom"
 	a "golang.org/x/net/html/atom"
@@ -32,6 +33,19 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	// Important! Remove scripts from original location *after* walking the doc
 	for _, script := range doc.Scripts {
 		script.Parent.RemoveChild(script)
+	}
+
+	// If we've emptied out all the nodes, this was a Fragment that only contained hoisted elements
+	// Add an empty FrontmatterNode to allow the empty component to be printed
+	if doc.FirstChild == nil {
+		empty := &astro.Node{
+			Type: astro.FrontmatterNode,
+		}
+		empty.AppendChild(&astro.Node{
+			Type: astro.TextNode,
+			Data: "",
+		})
+		doc.AppendChild(empty)
 	}
 
 	return doc

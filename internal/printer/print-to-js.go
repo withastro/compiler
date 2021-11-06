@@ -105,6 +105,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Render frontmatter (will be the first node, if it exists)
 	if n.Type == FrontmatterNode {
+		fmt.Println("FrontmatterNode")
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
@@ -114,9 +115,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				// `renderBodyStart` will be the index where we should split the frontmatter.
 				// If we don't encounter any of those, `renderBodyStart` will be `-1`
 				renderBodyStart := js_scanner.FindRenderBody([]byte(c.Data))
-				p.addSourceMapping(n.Loc[0])
+				if len(n.Loc) > 0 {
+					p.addSourceMapping(n.Loc[0])
+				}
 				if renderBodyStart == -1 {
-					p.addSourceMapping(c.Loc[0])
+					if len(c.Loc) > 0 {
+						p.addSourceMapping(c.Loc[0])
+					}
 					if js_scanner.AccessesPrivateVars([]byte(c.Data)) {
 						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					}
@@ -142,7 +147,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					//  {
 					// 	panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
 					// }
-					p.addSourceMapping(c.Loc[0])
+					if len(c.Loc) > 0 {
+						p.addSourceMapping(c.Loc[0])
+					}
 					p.println(strings.TrimSpace(importStatements))
 
 					// 1. Component imports, if any exist.
@@ -152,7 +159,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
-					p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
+					if len(c.Loc) > 0 {
+						p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
+					}
 					p.print(strings.TrimSpace(renderBody))
 				}
 
