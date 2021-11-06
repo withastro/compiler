@@ -105,7 +105,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Render frontmatter (will be the first node, if it exists)
 	if n.Type == FrontmatterNode {
-		fmt.Println("FrontmatterNode")
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
