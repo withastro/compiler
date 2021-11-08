@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.2.26
+
+### Patch Changes
+
+- 3e5ef91: Implement getStaticPaths hoisting
+- 8a434f9: Fix namespace handling to support attributes like `xmlns:xlink`
+
 ## 0.2.25
 
 ### Patch Changes
