@@ -5,7 +5,6 @@
 package printer
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -118,15 +117,19 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.addSourceMapping(n.Loc[0])
 				}
 				if renderBodyStart == -1 {
-					if len(c.Loc) > 0 {
+          if len(c.Loc) > 0 {
 						p.addSourceMapping(c.Loc[0])
 					}
-					if js_scanner.AccessesPrivateVars([]byte(c.Data)) {
-						panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
-					}
+					preprocessed := js_scanner.HoistExports([]byte(c.Data))
 
 					// 1. After imports put in the top-level Astro.
 					p.printTopLevelAstro()
+
+					if len(preprocessed.Hoisted) > 0 {
+						for _, hoisted := range preprocessed.Hoisted {
+							p.println(strings.TrimSpace(string(hoisted)))
+						}
+					}
 
 					// 2. The frontmatter.
 					p.print(strings.TrimSpace(c.Data))
@@ -138,7 +141,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.printFuncPrelude("$$Component")
 				} else {
 					importStatements := c.Data[0:renderBodyStart]
-					renderBody := c.Data[renderBodyStart:]
+					content := c.Data[renderBodyStart:]
+					preprocessed := js_scanner.HoistExports([]byte(content))
 
 					if js_scanner.HasExports([]byte(renderBody)) {
 						panic(errors.New("Export statements must be placed at the top of .astro files!"))
@@ -156,12 +160,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// 2. Top-level Astro global.
 					p.printTopLevelAstro()
 
+					if len(preprocessed.Hoisted) > 0 {
+						for _, hoisted := range preprocessed.Hoisted {
+							p.println(strings.TrimSpace(string(hoisted)))
+						}
+					}
+
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
 					if len(c.Loc) > 0 {
 						p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
 					}
-					p.print(strings.TrimSpace(renderBody))
+          p.print(strings.TrimSpace(string(preprocessed.Body)))
 				}
 
 				// Print empty just to ensure a newline
