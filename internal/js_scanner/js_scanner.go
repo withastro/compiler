@@ -137,6 +137,130 @@ func HasExports(source []byte) bool {
 	}
 }
 
+type HoistedScripts struct {
+	Hoisted [][]byte
+	Body    []byte
+}
+
+func HoistExports(source []byte) HoistedScripts {
+	shouldHoist := hasGetStaticPaths(source)
+	if !shouldHoist {
+		return HoistedScripts{
+			Body: source,
+		}
+	}
+
+	l := js.NewLexer(parse.NewInputBytes(source))
+	i := 0
+	pairs := make(map[byte]int)
+
+	// Let's lex the script until we find what we need!
+	for {
+		token, value := l.Next()
+
+		if token == js.ErrorToken {
+			if l.Err() != io.EOF {
+				return HoistedScripts{
+					Body: source,
+				}
+			}
+			break
+		}
+
+		// Common delimeters. Track their length, then skip.
+		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
+			i += len(value)
+			continue
+		}
+
+		// Exports should be consumed until all opening braces are closed,
+		// a specifier is found, and a line terminator has been found
+		if token == js.ExportToken {
+			foundGetStaticPaths := false
+			foundSemicolonOrLineTerminator := false
+			start := i - 1
+			i += len(value)
+			for {
+				next, nextValue := l.Next()
+				i += len(nextValue)
+
+				if js.IsIdentifier(next) {
+					if !foundGetStaticPaths {
+						foundGetStaticPaths = string(nextValue) == "getStaticPaths"
+					}
+				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
+					foundSemicolonOrLineTerminator = true
+				} else if js.IsPunctuator(next) {
+					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
+						pairs[nextValue[0]]++
+					} else if nextValue[0] == '}' {
+						pairs['{']--
+					} else if nextValue[0] == ')' {
+						pairs['(']--
+					} else if nextValue[0] == ']' {
+						pairs['[']--
+					}
+				}
+
+				if next == js.ErrorToken {
+					return HoistedScripts{
+						Body: source,
+					}
+				}
+
+				if foundGetStaticPaths && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
+					hoisted := make([][]byte, 1)
+					hoisted = append(hoisted, source[start:i])
+					body := make([]byte, 0)
+					body = append(body, source[0:start]...)
+					body = append(body, source[i:]...)
+					return HoistedScripts{
+						Hoisted: hoisted,
+						Body:    body,
+					}
+				}
+			}
+		}
+
+		// Track opening and closing braces
+		if js.IsPunctuator(token) {
+			if value[0] == '{' || value[0] == '(' || value[0] == '[' {
+				pairs[value[0]]++
+				i += len(value)
+				continue
+			} else if value[0] == '}' {
+				pairs['{']--
+			} else if value[0] == ')' {
+				pairs['(']--
+			} else if value[0] == ']' {
+				pairs['[']--
+			}
+		}
+
+		// Track our current position
+		i += len(value)
+	}
+
+	// If we haven't found anything... there's nothing to find! Split at the start.
+	return HoistedScripts{
+		Body: source,
+	}
+}
+
+func hasGetStaticPaths(source []byte) bool {
+	l := js.NewLexer(parse.NewInputBytes(source))
+	for {
+		token, value := l.Next()
+		if token == js.ErrorToken {
+			// EOF or other error
+			return false
+		}
+		if token == js.IdentifierToken && string(value) == "getStaticPaths" {
+			return true
+		}
+	}
+}
+
 func AccessesPrivateVars(source []byte) bool {
 	l := js.NewLexer(parse.NewInputBytes(source))
 	for {
