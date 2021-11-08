@@ -366,7 +366,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 		if src != nil {
 			p.print(fmt.Sprintf("{ type: 'remote', src: '%s' }", escapeSingleQuote(src.Val)))
 		} else if node.FirstChild != nil {
-			p.print(fmt.Sprintf("{ type: 'inline', value: '%s' }", escapeSingleQuote(node.FirstChild.Data)))
+			p.print(fmt.Sprintf("{ type: 'inline', value: `%s` }", escapeInterpolation(escapeBackticks(node.FirstChild.Data))))
 		}
 	}
 	p.print("] });\n\n")

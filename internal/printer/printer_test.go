@@ -617,7 +617,7 @@ import * as $$module2 from '../components/Widget2.astro';`},
 				frontmatter: []string{""},
 				styles:      []string{},
 				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
-				metadata:    metadata{hoisted: []string{`{ type: 'inline', value: 'console.log("Hello");' }`}},
+				metadata:    metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
 				code:        `<html><head></head><body></body></html>`,
 			},
 		},
@@ -643,7 +643,7 @@ import * as $$module2 from '../components/Widget2.astro';`},
 			want: want{
 				styles:   []string{},
 				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
-				metadata: metadata{hoisted: []string{`{ type: 'inline', value: 'console.log("Hello");' }`}},
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
 				code: `<html><head></head><body><main>
 
 </main></body></html>`,

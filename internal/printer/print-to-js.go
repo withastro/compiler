@@ -5,6 +5,7 @@
 package printer
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -113,9 +114,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				// `renderBodyStart` will be the index where we should split the frontmatter.
 				// If we don't encounter any of those, `renderBodyStart` will be `-1`
 				renderBodyStart := js_scanner.FindRenderBody([]byte(c.Data))
-				p.addSourceMapping(n.Loc[0])
+				if len(n.Loc) > 0 {
+					p.addSourceMapping(n.Loc[0])
+				}
 				if renderBodyStart == -1 {
-					p.addSourceMapping(c.Loc[0])
+					if len(c.Loc) > 0 {
+						p.addSourceMapping(c.Loc[0])
+					}
 					preprocessed := js_scanner.HoistExports([]byte(c.Data))
 
 					// 1. After imports put in the top-level Astro.
@@ -139,8 +144,14 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					importStatements := c.Data[0:renderBodyStart]
 					content := c.Data[renderBodyStart:]
 					preprocessed := js_scanner.HoistExports([]byte(content))
+					renderBody := preprocessed.Body
 
-					p.addSourceMapping(c.Loc[0])
+					if js_scanner.HasExports(renderBody) {
+						panic(errors.New("Export statements must be placed at the top of .astro files!"))
+					}
+					if len(c.Loc) > 0 {
+						p.addSourceMapping(c.Loc[0])
+					}
 					p.println(strings.TrimSpace(importStatements))
 
 					// 1. Component imports, if any exist.
@@ -156,7 +167,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
-					p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
+					if len(c.Loc) > 0 {
+						p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
+					}
 					p.print(strings.TrimSpace(string(preprocessed.Body)))
 				}
 
