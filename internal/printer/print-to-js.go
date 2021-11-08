@@ -5,6 +5,7 @@
 package printer
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -117,7 +118,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.addSourceMapping(n.Loc[0])
 				}
 				if renderBodyStart == -1 {
-          if len(c.Loc) > 0 {
+					if len(c.Loc) > 0 {
 						p.addSourceMapping(c.Loc[0])
 					}
 					preprocessed := js_scanner.HoistExports([]byte(c.Data))
@@ -143,13 +144,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					importStatements := c.Data[0:renderBodyStart]
 					content := c.Data[renderBodyStart:]
 					preprocessed := js_scanner.HoistExports([]byte(content))
+					renderBody := preprocessed.Body
 
-					if js_scanner.HasExports([]byte(renderBody)) {
+					if js_scanner.HasExports(renderBody) {
 						panic(errors.New("Export statements must be placed at the top of .astro files!"))
 					}
-					//  {
-					// 	panic(errors.New("Variables prefixed by \"$$\" are reserved for Astro's internal usage!"))
-					// }
 					if len(c.Loc) > 0 {
 						p.addSourceMapping(c.Loc[0])
 					}
@@ -171,7 +170,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					if len(c.Loc) > 0 {
 						p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
 					}
-          p.print(strings.TrimSpace(string(preprocessed.Body)))
+					p.print(strings.TrimSpace(string(preprocessed.Body)))
 				}
 
 				// Print empty just to ensure a newline
