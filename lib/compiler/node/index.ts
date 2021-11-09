@@ -4,7 +4,27 @@ import Go from './wasm_exec.js';
 import { fileURLToPath } from 'url';
 
 export const transform: typeof types.transform = async (input, options) => {
-  return ensureServiceIsRunning().then((service) => service.transform(input, options));
+  return ensureServiceIsRunning()
+    .then((service) => service.transform(input, options))
+    .catch((err) => {
+      if (err.toString().includes('unreachable')) {
+        const title = '🐛 BUG: `@astrojs/compiler` panic';
+        const filename = options?.sourcefile ? `**root/src/${options?.sourcefile.split('/src/')[2]}**` : '';
+        const body = `### Describe the Bug
+
+\`@astrojs/compiler\` encountered an unrecoverable error when compiling the following file.
+
+${filename}
+\`\`\`astro\n${input}\n\`\`\`
+`;
+        const url = `https://github.com/snowpackjs/astro/issues/new?labels=compiler&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+        throw new Error(`Uh oh, the Astro compiler encountered an unrecoverable error!
+        
+Please open a GitHub issue using the link below:
+${url}`);
+      }
+      throw err;
+    });
 };
 
 export const compile = async (template: string): Promise<string> => {
