@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.2.27
+
+### Patch Changes
+
+- 460c1e2: Use `$metadata.resolvePath` utility to support the `client:only` directive
+
 ## 0.2.26
 
 ### Patch Changes
