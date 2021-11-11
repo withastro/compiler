@@ -218,7 +218,7 @@ import Component from '../components';
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":"../components","client:component-export":"default"})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
   </body></html>`,
 			},
 		},
@@ -243,7 +243,7 @@ import { Component } from '../components';
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":"../components","client:component-export":"Component"})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"Component"})}
   </body></html>`,
 			},
 		},
@@ -268,7 +268,7 @@ import * as components from '../components';
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-path":"../components","client:component-export":"A"})}
+    ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"A"})}
   </body></html>`,
 			},
 		},
