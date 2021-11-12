@@ -2079,6 +2079,15 @@ func inSelectIM(p *parser) bool {
 			Data: p.tok.Data,
 			Loc:  p.generateLoc(),
 		})
+	case StartExpressionToken:
+		p.addExpression()
+		p.setOriginalIM()
+		p.im = expressionIM
+		return true
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
+		return true
 	case DoctypeToken:
 		// Ignore the token.
 		return true

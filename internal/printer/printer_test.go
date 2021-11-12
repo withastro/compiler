@@ -1125,6 +1125,28 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
 				},
 			},
 		},
+		{
+			name: "select option expression",
+			source: `---
+const value = 'test';
+---
+<select><option>{value}</option></select>`,
+			want: want{
+				frontmatter: []string{"", "const value = 'test';"},
+				code:        `<html><head></head><body><select><option>${value}</option></select></body></html>`,
+			},
+		},
+		{
+			name: "select nested option",
+			source: `---
+const value = 'test';
+---
+<select>{value && <option>{value}</option>}</select>`,
+			want: want{
+				frontmatter: []string{"", "const value = 'test';"},
+				code:        `<html><head></head><body><select>${value && $$render` + BACKTICK + `<option>${value}</option>` + BACKTICK + `}</select></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
