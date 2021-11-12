@@ -1058,6 +1058,101 @@ import * as $$module1 from 'react-bootstrap';`},
 				code: `<html><head></head><body><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></rect></svg></body></html>`,
 			},
 		},
+		{
+			name: "Import scanning",
+			source: fmt.Sprintf(`---
+import Header from '../../components/Header.jsx'
+import Footer from '../../components/Footer.astro'
+import ProductPageContent from '../../components/ProductPageContent.jsx';
+
+export async function getStaticPaths() {
+  let products = await fetch(%s${import.meta.env.PUBLIC_NETLIFY_URL}/.netlify/functions/get-product-list%s)
+    .then(res => res.json()).then((response) => {
+      console.log('--- built product pages ---')
+      return response.products.edges
+    });
+
+  return products.map((p, i) => {
+    return {
+      params: {pid: p.node.handle},
+      props: {product: p},
+    };
+  });
+}
+
+const { product } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shoperoni | Buy {product.node.title}</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style/global.css">
+</head>
+<body>
+  <Header />
+  <div class="product-page">
+    <article>
+      <ProductPageContent client:visible product={product.node} />
+    </article>
+  </div>
+  <Footer />
+</body>
+</html>`, BACKTICK, BACKTICK),
+			want: want{
+				code: `<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shoperoni | Buy ${product.node.title}</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style/global.css">
+</head>
+<body>
+  ${$$renderComponent($$result,'Header',Header,{})}
+  <div class="product-page">
+    <article>
+      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-path":($$metadata.getPath(ProductPageContent)),"client:component-export":($$metadata.getExport(ProductPageContent))})}
+    </article>
+  </div>
+  ${$$renderComponent($$result,'Footer',Footer,{})}
+</body></html>`,
+				frontmatter: []string{`import Header from '../../components/Header.jsx'
+import Footer from '../../components/Footer.astro'
+import ProductPageContent from '../../components/ProductPageContent.jsx';
+
+import * as $$module1 from '../../components/Header.jsx';
+import * as $$module2 from '../../components/Footer.astro';
+import * as $$module3 from '../../components/ProductPageContent.jsx';`, "const { product } = Astro.props;",
+				},
+				getStaticPaths: fmt.Sprintf(`export async function getStaticPaths() {
+					let products = await fetch(%s${import.meta.env.PUBLIC_NETLIFY_URL}/.netlify/functions/get-product-list%s)
+						.then(res => res.json()).then((response) => {
+							console.log('--- built product pages ---')
+							return response.products.edges
+						});
+
+					return products.map((p, i) => {
+						return {
+							params: {pid: p.node.handle},
+							props: {product: p},
+						};
+					});
+				}`, BACKTICK, BACKTICK),
+				metadata: metadata{
+					modules: []string{`{ module: $$module1, specifier: '../../components/Header.jsx' }`,
+						`{ module: $$module2, specifier: '../../components/Footer.astro' }`,
+						`{ module: $$module3, specifier: '../../components/ProductPageContent.jsx' }`,
+					},
+					hydratedComponents: []string{`ProductPageContent`},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

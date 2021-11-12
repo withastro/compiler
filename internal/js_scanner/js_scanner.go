@@ -359,6 +359,11 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 				if next == js.MulToken {
 					currImport.ExportName = string(nextValue)
 				}
+
+				// if this is import.meta.*, ignore (watch for first dot)
+				if next == js.DotToken && len(specifier) == 0 {
+					break
+				}
 			}
 		}
 
