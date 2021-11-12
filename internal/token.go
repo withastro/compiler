@@ -416,12 +416,6 @@ loop:
 	z.rawTag = ""
 }
 
-// readRawWithExpressions reads until the next "</foo>", where "foo" is z.rawTag
-// This is a special case for Astro where we /do/ want expressions like in <title>
-// func (z *Tokenizer) readRawWithExpressions() {
-
-// }
-
 // readRawEndTag attempts to read a tag like "</foo>", where "foo" is z.rawTag.
 // If it succeeds, it backs up the input position to reconsume the tag and
 // returns true. Otherwise it returns false. The opening "</" has already been
@@ -1292,7 +1286,7 @@ func (z *Tokenizer) Next() TokenType {
 			}
 			z.data.End = z.raw.End
 			z.textIsRaw = true
-		} else if z.rawTag == "title" {
+		} else if z.rawTag == "title" || z.rawTag == "textarea" {
 			goto raw_with_expression_loop
 		} else {
 			z.readRawOrRCDATA()
