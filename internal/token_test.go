@@ -344,6 +344,11 @@ const RegExp = /---< > > { }; import thing from "thing"; /
 			{html}`,
 			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, FrontmatterFenceToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken},
 		},
+		{
+			"textarea",
+			`<textarea>{html}</textarea>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
+		},
 		// {
 		// 	"less than with no space isn’t a tag",
 		// 	`

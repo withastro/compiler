@@ -1147,6 +1147,17 @@ const value = 'test';
 				code:        `<html><head></head><body><select>${value && $$render` + BACKTICK + `<option>${value}</option>` + BACKTICK + `}</select></body></html>`,
 			},
 		},
+		{
+			name: "textarea",
+			source: `---
+const value = 'test';
+---
+<textarea>{value}</textarea>`,
+			want: want{
+				frontmatter: []string{"", "const value = 'test';"},
+				code:        `<html><head></head><body><textarea>${value}</textarea></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
