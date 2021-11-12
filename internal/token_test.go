@@ -265,23 +265,23 @@ func TestFrontmatter(t *testing.T) {
 			[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken},
 		},
 		{
-			"tokenizes elements inside",
+			"does not tokenize elements inside",
 			`
 			---
 			const a = <div />;
 			---
 			`,
-			[]TokenType{FrontmatterFenceToken, TextToken, SelfClosingTagToken, TextToken, FrontmatterFenceToken},
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, FrontmatterFenceToken},
 		},
 		{
-			"elements can have expression as child in frontmatter",
+			"no elements or expressions in frontmatter",
 			`
 			---
 			const contents = "foo";
 			const a = <div>{contents}</div>;
 			---
 			`,
-			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, FrontmatterFenceToken},
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
 		},
 		{
 			"brackets within frontmatter treated as text",
@@ -295,7 +295,7 @@ func TestFrontmatter(t *testing.T) {
 			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
 		},
 		{
-			"brackets within tags treated as expressions while brackets in frontmatter treated as text",
+			"frontmatter tags and brackets all treated as text",
 			`
 			---
 			const contents = "foo";
@@ -305,7 +305,7 @@ func TestFrontmatter(t *testing.T) {
 			}
 			---
 			`,
-			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken},
 		},
 		{
 			"less than isn’t a tag",

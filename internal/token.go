@@ -1350,6 +1350,10 @@ loop:
 		if c != '<' {
 			continue loop
 		}
+		if z.fm == FrontmatterOpen {
+			z.raw.End--
+			goto frontmatter_loop
+		}
 
 		// Check if the '<' we have just read is part of a tag, comment
 		// or doctype. If not, it's part of the accumulated text token.
@@ -1524,8 +1528,13 @@ frontmatter_loop:
 
 		if s == '<' || s == '{' || s == '}' || c == '<' || c == '{' || c == '}' {
 			z.dashCount = 0
-			z.raw.End--
-			goto loop
+			if z.fm == FrontmatterOpen && (s == '<' || c == '<') {
+				// Do not support elements inside of frontmatter!
+				continue frontmatter_loop
+			} else {
+				z.raw.End--
+				goto loop
+			}
 		}
 
 		// handle string
