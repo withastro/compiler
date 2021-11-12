@@ -3,6 +3,8 @@ package printer
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -45,8 +47,9 @@ type want struct {
 	styles         []string
 	scripts        []string
 	getStaticPaths string
+	code           string
+	skipHoist      bool // HACK: sometimes `getStaticPaths()` appears in a slightly-different location. Only use this if needed!
 	metadata
-	code string
 }
 
 type metadata struct {
@@ -153,9 +156,7 @@ import VueComponent from '../components/Vue.vue';
 </html>`,
 			want: want{
 				frontmatter: []string{
-					`import VueComponent from '../components/Vue.vue';
-
-import * as $$module1 from '../components/Vue.vue';`,
+					`import VueComponent from '../components/Vue.vue';`,
 				},
 				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components/Vue.vue' }`}},
 				code: `<html>
@@ -181,13 +182,9 @@ import * as ns from '../components';
   </body>
 </html>`,
 			want: want{
-				frontmatter: []string{
-					`import * as ns from '../components';
-
-import * as $$module1 from '../components';`,
-				},
-				styles:   []string{},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components' }`}},
+				frontmatter: []string{`import * as ns from '../components';`},
+				styles:      []string{},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: '../components' }`}},
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -369,11 +366,9 @@ import Component from "test";
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				frontmatter: []string{`import Component from "test";
-
-import * as $$module1 from 'test';`},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
-				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				frontmatter: []string{`import Component from "test";`},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -387,11 +382,9 @@ import Component from 'test';
 	<div slot="named">Named</div>
 </Component>`,
 			want: want{
-				frontmatter: []string{`import Component from 'test';
-
-import * as $$module1 from 'test';`},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
-				code:     `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				frontmatter: []string{`import Component from 'test';`},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -552,9 +545,7 @@ const someProps = {
 </html>`,
 			want: want{
 				frontmatter: []string{`// Component Imports
-import Counter from '../components/Counter.jsx'
-
-import * as $$module1 from '../components/Counter.jsx';`,
+import Counter from '../components/Counter.jsx'`,
 					`const someProps = {
   count: 0,
 }
@@ -592,10 +583,7 @@ import Widget2 from '../components/Widget2.astro';
   </head>`,
 			want: want{
 				frontmatter: []string{`import Widget from '../components/Widget.astro';
-import Widget2 from '../components/Widget2.astro';
-
-import * as $$module1 from '../components/Widget.astro';
-import * as $$module2 from '../components/Widget2.astro';`},
+import Widget2 from '../components/Widget2.astro';`},
 				styles: []string{},
 				metadata: metadata{
 					modules: []string{
@@ -687,13 +675,10 @@ import * as $$module2 from '../components/Widget2.astro';`},
 			<div slot={name}>Named</div>
 		</Component>`,
 			want: want{
-				frontmatter: []string{`import Component from 'test';
-
-import * as $$module1 from 'test';
-`, `const name = 'named';`},
-				styles:   []string{},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
-				code:     `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
+				styles:      []string{},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -717,12 +702,10 @@ import 'test';
 ---
 <my-element></my-element>`,
 			want: want{
-				frontmatter: []string{`import 'test';
-
-import * as $$module1 from 'test';`},
-				styles:   []string{},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
-				code:     `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
+				frontmatter: []string{`import 'test';`},
+				styles:      []string{},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
 		},
 		{
@@ -740,11 +723,7 @@ const name = 'world';
 			want: want{
 				frontmatter: []string{`import One from 'one';
 import Two from 'two';
-import 'custom-element';
-
-import * as $$module1 from 'one';
-import * as $$module2 from 'two';
-import * as $$module3 from 'custom-element';`,
+import 'custom-element';`,
 					`const name = 'world';`},
 				metadata: metadata{
 					modules: []string{
@@ -837,10 +816,7 @@ import ZComponent from '../components/ZComponent.jsx';
 			want: want{
 				frontmatter: []string{
 					`import AComponent from '../components/AComponent.jsx';
-import ZComponent from '../components/ZComponent.jsx';
-
-import * as $$module1 from '../components/AComponent.jsx';
-import * as $$module2 from '../components/ZComponent.jsx';`},
+import ZComponent from '../components/ZComponent.jsx';`},
 				metadata: metadata{
 					modules: []string{
 						`{ module: $$module1, specifier: '../components/AComponent.jsx' }`,
@@ -991,12 +967,9 @@ import { Container, Col, Row } from 'react-bootstrap';
 </Container>
 `,
 			want: want{
-				frontmatter: []string{
-					`import { Container, Col, Row } from 'react-bootstrap';
-
-import * as $$module1 from 'react-bootstrap';`},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap' }`}},
-				code:     "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{})}<h1>Hi!</h1>`,})}`,})}\n.",
+				frontmatter: []string{`import { Container, Col, Row } from 'react-bootstrap';`},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap' }`}},
+				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{})}<h1>Hi!</h1>`,})}`,})}\n.",
 			},
 		},
 		{
@@ -1058,6 +1031,100 @@ import * as $$module1 from 'react-bootstrap';`},
 				code: `<html><head></head><body><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></rect></svg></body></html>`,
 			},
 		},
+		{
+			name: "import.meta.env",
+			source: fmt.Sprintf(`---
+import Header from '../../components/Header.jsx'
+import Footer from '../../components/Footer.astro'
+import ProductPageContent from '../../components/ProductPageContent.jsx';
+
+export async function getStaticPaths() {
+  let products = await fetch(%s${import.meta.env.PUBLIC_NETLIFY_URL}/.netlify/functions/get-product-list%s)
+    .then(res => res.json()).then((response) => {
+      console.log('--- built product pages ---')
+      return response.products.edges
+    });
+
+  return products.map((p, i) => {
+    return {
+      params: {pid: p.node.handle},
+      props: {product: p},
+    };
+  });
+}
+
+const { product } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shoperoni | Buy {product.node.title}</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style/global.css">
+</head>
+<body>
+  <Header />
+  <div class="product-page">
+    <article>
+      <ProductPageContent client:visible product={product.node} />
+    </article>
+  </div>
+  <Footer />
+</body>
+</html>`, BACKTICK, BACKTICK),
+			want: want{
+				code: `<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shoperoni | Buy ${product.node.title}</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style/global.css">
+</head>
+<body>
+  ${$$renderComponent($$result,'Header',Header,{})}
+  <div class="product-page">
+    <article>
+      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-path":($$metadata.getPath(ProductPageContent)),"client:component-export":($$metadata.getExport(ProductPageContent))})}
+    </article>
+  </div>
+  ${$$renderComponent($$result,'Footer',Footer,{})}
+</body></html>`,
+				frontmatter: []string{
+					`import Header from '../../components/Header.jsx'
+import Footer from '../../components/Footer.astro'
+import ProductPageContent from '../../components/ProductPageContent.jsx';`,
+					"const { product } = Astro.props;",
+				},
+				getStaticPaths: fmt.Sprintf(`export async function getStaticPaths() {
+  let products = await fetch(%s${import.meta.env.PUBLIC_NETLIFY_URL}/.netlify/functions/get-product-list%s)
+    .then(res => res.json()).then((response) => {
+      console.log('--- built product pages ---')
+      return response.products.edges
+    });
+
+  return products.map((p, i) => {
+    return {
+      params: {pid: p.node.handle},
+      props: {product: p},
+    };
+  });
+}`, BACKTICK, BACKTICK),
+				skipHoist: true,
+				metadata: metadata{
+					modules: []string{`{ module: $$module1, specifier: '../../components/Header.jsx' }`,
+						`{ module: $$module2, specifier: '../../components/Footer.astro' }`,
+						`{ module: $$module3, specifier: '../../components/ProductPageContent.jsx' }`,
+					},
+					hydratedComponents: []string{`ProductPageContent`},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1092,6 +1159,19 @@ import * as $$module1 from 'react-bootstrap';`},
 			toMatch := INTERNAL_IMPORTS
 			if len(tt.want.frontmatter) > 0 {
 				toMatch += test_utils.Dedent(tt.want.frontmatter[0])
+			}
+			// Fixes some tests where getStaticPaths appears in a different location
+			if tt.want.skipHoist == true && len(tt.want.getStaticPaths) > 0 {
+				toMatch += "\n\n"
+				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n"
+			}
+			moduleSpecRe := regexp.MustCompile(`specifier:\s*('[^']+')`)
+			if len(tt.want.metadata.modules) > 0 {
+				toMatch += "\n\n"
+				for i, m := range tt.want.metadata.modules {
+					spec := moduleSpecRe.FindSubmatch([]byte(m)) // 0: full match, 1: submatch
+					toMatch += fmt.Sprintf("import * as $$module%s from %s;\n", strconv.Itoa(i+1), string(spec[1]))
+				}
 			}
 			// build metadata object from provided strings
 			metadata := "{ "
@@ -1131,7 +1211,7 @@ import * as $$module1 from 'react-bootstrap';`},
 
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
 			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n\n"
-			if len(tt.want.getStaticPaths) > 0 {
+			if tt.want.skipHoist != true && len(tt.want.getStaticPaths) > 0 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
 			}
 			toMatch += test_utils.Dedent(PRELUDE) + "\n"
