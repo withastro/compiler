@@ -268,7 +268,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 	loc, statement := js_scanner.NextImportStatement(source, 0)
 	for loc != -1 {
 		isClientOnlyImport := false
-		for _, n := range doc.Metadata.ClientOnlyComponents {
+		for _, n := range doc.ClientOnlyComponents {
 			for _, imported := range statement.Imports {
 				if imported.ExportName == "*" {
 					prefix := fmt.Sprintf("%s.", imported.LocalName)
@@ -345,7 +345,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 
 	// Hydrated Components
 	p.print(", hydratedComponents: [")
-	for i, node := range doc.Metadata.HydratedComponents {
+	for i, node := range doc.HydratedComponents {
 		if i > 0 {
 			p.print(", ")
 		}
