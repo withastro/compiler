@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.3.1
+
+### Patch Changes
+
+- 432eaaf: Fix for compiler regression causing nil pointer
+
 ## 0.3.0
 
 ### Minor Changes
