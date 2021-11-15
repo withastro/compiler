@@ -55,7 +55,7 @@ type Node struct {
 
 	// These are only accessible from the document root Node
 	Styles, Scripts []*Node
-	Metadata
+	Metadata        *Metadata
 
 	Type      NodeType
 	DataAtom  atom.Atom
