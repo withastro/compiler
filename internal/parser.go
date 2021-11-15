@@ -2725,7 +2725,8 @@ func ParseWithOptions(r io.Reader, opts ...ParseOption) (*Node, error) {
 	p := &parser{
 		tokenizer: NewTokenizer(r),
 		doc: &Node{
-			Type: DocumentNode,
+			Type:     DocumentNode,
+			Metadata: &Metadata{},
 		},
 		scripting:        true,
 		framesetOK:       true,
