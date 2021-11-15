@@ -1,5 +1,17 @@
 # @astrojs/compiler
 
+## 0.3.0
+
+### Minor Changes
+
+- 1255477: Drop support for elements inside of Frontmatter, which was undefined behavior that caused lots of TypeScript interop problems
+
+### Patch Changes
+
+- 44dc0c6: Fixes issue with \x00 character on OSX
+- d74acfa: Fix regression with expressions inside of <select> elements
+- f50ae69: Bugfix: don’t treat import.meta as import statement
+
 ## 0.2.27
 
 ### Patch Changes
