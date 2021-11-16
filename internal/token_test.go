@@ -123,6 +123,21 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"attribute expression with quoted braces",
+			`<div value={"{"} />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"attribute expression with quote",
+			`<div value={/* hello */} />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"JSX-style comment inside element",
+			`<div {/* hello */} a=b />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
 			"quotes within textContent",
 			`<p>can't</p>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
@@ -182,8 +197,6 @@ func TestBasic(t *testing.T) {
 			`<Fragment>foo</Fragment>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
-		// Special Case: this should PANIC! Not sure how to test for a panic
-
 	}
 
 	runTokenTypeTest(t, Basic)
@@ -200,6 +213,11 @@ To fix this, please change
   < slot="named">
 to use the longhand Fragment syntax:
   <Fragment slot="named">`,
+		},
+		{
+			"block comment in attribute",
+			`<div {// uhh} />`,
+			`Block comments (//) are not allowed inside of expressions`,
 		},
 	}
 	runPanicTest(t, Panics)
@@ -572,6 +590,11 @@ func TestAttributes(t *testing.T) {
 			"multiple quoted",
 			`<div a="value" b='value' c=value/>`,
 			[]AttributeType{QuotedAttribute, QuotedAttribute, QuotedAttribute},
+		},
+		{
+			"expression with quoted braces",
+			`<div value={ "{" } />`,
+			[]AttributeType{ExpressionAttribute},
 		},
 	}
 

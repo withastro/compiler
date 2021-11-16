@@ -1231,6 +1231,20 @@ func (z *Tokenizer) readTagAttrExpression() {
 			return
 		}
 		switch c {
+		// Handle comments, strings within attrs
+		case '/', '"', '\'', '`':
+			end := z.data.End
+			if c == '/' {
+				next := z.readByte()
+				if next == '/' {
+					panic("Block comments (//) are not allowed inside of expressions")
+				}
+				z.readCommentOrRegExp()
+			} else {
+				z.readString(c)
+			}
+			z.raw.End = z.data.End
+			z.data.End = end
 		case '{':
 			z.attrExpressionStack++
 		case '}':
