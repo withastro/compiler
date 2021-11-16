@@ -787,28 +787,6 @@ find_next:
 }
 
 // read RegExp expressions and comments (starting from '/' byte)
-func (z *Tokenizer) readMultilineCommentOrRegExp() {
-	c := z.readByte() // find next character after '/' to know how to handle it
-	switch c {
-	// multi-line comment
-	case '*':
-		// look for "*/"
-		for {
-			z.readUntilChar([]byte{'*'})
-			c = z.readByte()
-			if c == '/' {
-				z.data.End = z.raw.End
-				return
-			}
-		}
-	// RegExp
-	default:
-		z.raw.End--
-		z.readUntilChar([]byte{'/', '\r', '\n'})
-	}
-}
-
-// read RegExp expressions and comments (starting from '/' byte)
 func (z *Tokenizer) readCommentOrRegExp() {
 	c := z.readByte() // find next character after '/' to know how to handle it
 	switch c {
