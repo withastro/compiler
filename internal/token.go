@@ -787,6 +787,28 @@ find_next:
 }
 
 // read RegExp expressions and comments (starting from '/' byte)
+func (z *Tokenizer) readMultilineCommentOrRegExp() {
+	c := z.readByte() // find next character after '/' to know how to handle it
+	switch c {
+	// multi-line comment
+	case '*':
+		// look for "*/"
+		for {
+			z.readUntilChar([]byte{'*'})
+			c = z.readByte()
+			if c == '/' {
+				z.data.End = z.raw.End
+				return
+			}
+		}
+	// RegExp
+	default:
+		z.raw.End--
+		z.readUntilChar([]byte{'/', '\r', '\n'})
+	}
+}
+
+// read RegExp expressions and comments (starting from '/' byte)
 func (z *Tokenizer) readCommentOrRegExp() {
 	c := z.readByte() // find next character after '/' to know how to handle it
 	switch c {
@@ -1231,6 +1253,20 @@ func (z *Tokenizer) readTagAttrExpression() {
 			return
 		}
 		switch c {
+		// Handle comments, strings within attrs
+		case '/', '"', '\'', '`':
+			end := z.data.End
+			if c == '/' {
+				next := z.readByte()
+				if next == '/' {
+					panic("Block comments (//) are not allowed inside of expressions")
+				}
+				z.readCommentOrRegExp()
+			} else {
+				z.readString(c)
+			}
+			z.raw.End = z.data.End
+			z.data.End = end
 		case '{':
 			z.attrExpressionStack++
 		case '}':
