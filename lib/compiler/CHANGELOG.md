@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.3.2
+
+### Patch Changes
+
+- 8800f80: Fix comments and strings inside of attribute expressions
+
 ## 0.3.1
 
 ### Patch Changes
