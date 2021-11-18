@@ -44,7 +44,7 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 		walk(doc, func(n *tycho.Node) {
 			if n.Component && n.Parent != nil && n.Parent.DataAtom == a.Head {
 				onlyComponent = n
-			} else if hasBody == false && n.DataAtom == a.Body {
+			} else if !hasBody && n.DataAtom == a.Body {
 				hasBody = true
 			}
 		})
