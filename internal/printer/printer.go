@@ -53,19 +53,21 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	if p.hasInternalImports {
 		return
 	}
-	p.print(fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
-		FRAGMENT,
-		"render as " + TEMPLATE_TAG,
-		"createAstro as " + CREATE_ASTRO,
-		"createComponent as " + CREATE_COMPONENT,
-		"renderComponent as " + RENDER_COMPONENT,
-		"renderSlot as " + RENDER_SLOT,
-		"addAttribute as " + ADD_ATTRIBUTE,
-		"spreadAttributes as " + SPREAD_ATTRIBUTES,
-		"defineStyleVars as " + DEFINE_STYLE_VARS,
-		"defineScriptVars as " + DEFINE_SCRIPT_VARS,
-		"createMetadata as " + CREATE_METADATA,
-	}, ",\n  "), importSpecifier))
+	p.print("import {\n  ")
+	p.print(FRAGMENT + ",\n  ")
+	p.print("render as " + TEMPLATE_TAG + ",\n  ")
+	p.print("createAstro as " + CREATE_ASTRO + ",\n  ")
+	p.print("createComponent as " + CREATE_COMPONENT + ",\n  ")
+	p.print("renderComponent as " + RENDER_COMPONENT + ",\n  ")
+	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
+	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
+	p.print("spreadAttributes as " + SPREAD_ATTRIBUTES + ",\n  ")
+	p.print("defineStyleVars as " + DEFINE_STYLE_VARS + ",\n  ")
+	p.print("defineScriptVars as " + DEFINE_SCRIPT_VARS + ",\n  ")
+	p.print("createMetadata as " + CREATE_METADATA)
+	p.print("\n} from \"")
+	p.print(importSpecifier)
+	p.print("\";\n")
 	p.hasInternalImports = true
 }
 
