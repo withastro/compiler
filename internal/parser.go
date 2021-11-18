@@ -825,9 +825,22 @@ func inHeadIM(p *parser) bool {
 			p.templateStack = append(p.templateStack, inTemplateIM)
 			return true
 		}
+
+		if p.oe.top() != nil && (isComponent(p.oe.top().Data) || isFragment((p.oe.top().Data))) {
+			p.addElement()
+			p.setOriginalIM()
+			p.im = inBodyIM
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
+		}
 	case EndTagToken:
 		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
-			p.addElement()
+			p.addLoc()
+			p.oe.pop()
 			return true
 		}
 

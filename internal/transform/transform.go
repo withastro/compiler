@@ -35,6 +35,27 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 		script.Parent.RemoveChild(script)
 	}
 
+	// Sometimes files have leading <script hoist> or <style>...
+	// Since we can't detect a "component-only" file until after `parse`, we need to handle
+	// them here. The component will be hoisted to the root of the document, `html` and `head` will be removed.
+	if opts.As != "Fragment" {
+		hasBody := false
+		var onlyComponent *tycho.Node
+		walk(doc, func(n *tycho.Node) {
+			if n.Component && n.Parent != nil && n.Parent.DataAtom == a.Head {
+				onlyComponent = n
+			} else if !hasBody && n.DataAtom == a.Body {
+				hasBody = true
+			}
+		})
+
+		if !hasBody && onlyComponent != nil {
+			onlyComponent.Parent.RemoveChild(onlyComponent)
+			doc.AppendChild(onlyComponent)
+			doc.RemoveChild(onlyComponent.PrevSibling)
+		}
+	}
+
 	// If we've emptied out all the nodes, this was a Fragment that only contained hoisted elements
 	// Add an empty FrontmatterNode to allow the empty component to be printed
 	if doc.FirstChild == nil {

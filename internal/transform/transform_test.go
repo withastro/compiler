@@ -109,3 +109,47 @@ func TestTransformScoping(t *testing.T) {
 		})
 	}
 }
+
+func TestFullTransform(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name: "top-level component with leading style",
+			source: `---
+import Component from "test";
+---
+<style>:root{}</style><Component><h1>Hello world</h1></Component>
+			`,
+			want: `<Component class="astro-XXXXXX"><h1 class="astro-XXXXXX">Hello world</h1></Component>`,
+		},
+		{
+			name: "top-level component with trailing style",
+			source: `---
+import Component from "test";
+---
+<Component><h1>Hello world</h1></Component><style>:root{}</style>
+			`,
+			want: `<Component class="astro-XXXXXX"><h1 class="astro-XXXXXX">Hello world</h1></Component>`,
+		},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			ExtractStyles(doc)
+			Transform(doc, TransformOptions{Scope: "XXXXXX"})
+			astro.PrintToSource(&b, doc)
+			got := strings.TrimSpace(b.String())
+			if tt.want != got {
+				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
+			}
+		})
+	}
+}
