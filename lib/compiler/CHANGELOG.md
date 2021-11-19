@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.3.3
+
+### Patch Changes
+
+- 6d2a3c2: Fix handling of top-level component nodes with leading styles
+- 2ce10c6: Fix "call to released function" issue
+
 ## 0.3.2
 
 ### Patch Changes
