@@ -1184,7 +1184,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "escaped entity",
 			source: `<img alt="A person saying &#x22;hello&#x22;">`,
 			want: want{
-				code: `<html><head></head><body><img alt="A person saying &#x22;hello&#x22;"></body></html>`,
+				code: `<html><head></head><body><img alt="A person saying &quot;hello&quot;"></body></html>`,
 			},
 		},
 	}

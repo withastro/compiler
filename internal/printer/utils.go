@@ -31,3 +31,7 @@ func escapeBackticks(src string) string {
 func escapeSingleQuote(str string) string {
 	return strings.Replace(str, "'", "\\'", -1)
 }
+
+func encodeDoubleQuote(str string) string {
+	return strings.Replace(str, `"`, "&quot;", -1)
+}
