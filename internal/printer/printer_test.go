@@ -1158,6 +1158,28 @@ const value = 'test';
 				code:        `<html><head></head><body><textarea>${value}</textarea></body></html>`,
 			},
 		},
+		{
+			name: "table expressions (no implicit tbody)",
+			source: `---
+const items = ["Dog", "Cat", "Platipus"];
+---
+<table>{items.map(item => (<tr><td>{item}</td></tr>))}</table>`,
+			want: want{
+				frontmatter: []string{"", `const items = ["Dog", "Cat", "Platipus"];`},
+				code:        `<html><head></head><body><table>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td></tr>` + BACKTICK + `))}</table></body></html>`,
+			},
+		},
+		{
+			name: "tbody expressions",
+			source: `---
+const items = ["Dog", "Cat", "Platipus"];
+---
+<table><tr><td>Name</td></tr>{items.map(item => (<tr><td>{item}</td></tr>))}</table>`,
+			want: want{
+				frontmatter: []string{"", `const items = ["Dog", "Cat", "Platipus"];`},
+				code:        `<html><head></head><body><table><tbody><tr><td>Name</td></tr>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td></tr>` + BACKTICK + `))}</tbody></table></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

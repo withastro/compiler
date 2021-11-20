@@ -313,7 +313,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTemplateLiteralClose()
 			}
 		}
-		p.addSourceMapping(n.Loc[1])
+		if len(n.Loc) >= 2 {
+			p.addSourceMapping(n.Loc[1])
+		}
 		p.print("}")
 		return
 	}
