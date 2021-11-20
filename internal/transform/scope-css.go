@@ -140,7 +140,7 @@ outer:
 						}
 						out += strVal
 					case "*":
-						if !isGlobal {
+						if parenCount == 0 && !isGlobal {
 							out += scopeRule("", opts) // turns "*" into ".astro-XXXXXX" rather than "*.astro-XXXXXX"
 						} else {
 							out += strVal

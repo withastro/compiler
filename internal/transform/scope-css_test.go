@@ -189,6 +189,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
 		},
 		{
+			name:   "calc",
+			source: ":root{padding:calc(var(--space) * 2);}",
+			want:   ":root{padding:calc(var(--space) * 2);}",
+		},
+		{
 			name:   "charset",
 			source: "@charset \"utf-8\";",
 			want:   "@charset \"utf-8\";",
