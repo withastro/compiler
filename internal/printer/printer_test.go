@@ -1178,6 +1178,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			want: want{
 				frontmatter: []string{"", `const items = ["Dog", "Cat", "Platipus"];`},
 				code:        `<html><head></head><body><table><tbody><tr><td>Name</td></tr>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td></tr>` + BACKTICK + `))}</tbody></table></body></html>`,
+			}
+		},
+		{
+			name:   "escaped entity",
+			source: `<img alt="A person saying &#x22;hello&#x22;">`,
+			want: want{
+				code: `<html><head></head><body><img alt="A person saying &#x22;hello&#x22;"></body></html>`,
 			},
 		},
 	}
