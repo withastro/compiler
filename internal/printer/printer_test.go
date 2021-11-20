@@ -1187,6 +1187,13 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `<html><head></head><body><img alt="A person saying &quot;hello&quot;"></body></html>`,
 			},
 		},
+		{
+			name:   "textarea in form",
+			source: `<html><Component><form><textarea></textarea></form></Component></html>`,
+			want: want{
+				code: `<html>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `})}</html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
