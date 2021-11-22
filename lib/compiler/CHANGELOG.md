@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 0.3.4
+
+### Patch Changes
+
+- 351f298: Fix edge case with with `textarea` inside of a Component when the document generated an implicit `head` tag
+- 0bcfd4b: Fix CSS scoping of \* character inside of calc() expressions
+- 4be512f: Encode double quotes inside of quoted attributes
+- ad865e5: Fix behavior of expressions inside of <table> elements
+
 ## 0.3.3
 
 ### Patch Changes
