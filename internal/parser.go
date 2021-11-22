@@ -1081,7 +1081,7 @@ func inBodyIM(p *parser) bool {
 			if p.oe.contains(a.Template) {
 				return true
 			}
-			if len(p.oe) >= 2 {
+			if len(p.oe) >= 1 {
 				body := p.oe[1]
 				if body.Type == ElementNode && body.DataAtom == a.Body {
 					p.framesetOK = false
@@ -1662,6 +1662,11 @@ func inTableIM(p *parser) bool {
 				return true
 			}
 		}
+	case StartExpressionToken:
+		p.addExpression()
+		p.setOriginalIM()
+		p.im = expressionIM
+		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
 		case a.Caption:
@@ -2493,6 +2498,8 @@ func expressionIM(p *parser) bool {
 				p.originalIM = inBodyIM
 				return false
 			}
+		} else if p.oe.contains(a.Table) {
+			return inTableBodyIM(p)
 		} else {
 			return inBodyIM(p)
 		}
