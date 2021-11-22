@@ -1069,6 +1069,17 @@ func inBodyIM(p *parser) bool {
 			p.framesetOK = false
 		}
 	case StartTagToken:
+		// It's possible we were moved here from inHeadIM
+		// via the children of a Component. We need to clear the originalIM
+		// and switch the implicit `head` tag to `body`
+		if p.originalIM != nil {
+			i := p.indexOfElementInScope(defaultScope, a.Head)
+			if i != -1 {
+				p.oe[i].Data = "body"
+				p.oe[i].DataAtom = a.Body
+				p.originalIM = nil
+			}
+		}
 		switch p.tok.DataAtom {
 		case a.Html:
 			if p.oe.contains(a.Template) {
