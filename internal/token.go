@@ -915,9 +915,6 @@ loop:
 		}
 		for i := 0; i < len(s); i++ {
 			c := z.buf[z.data.Start+i]
-			if 'A' <= c && c <= 'Z' {
-				c += 'a' - 'A'
-			}
 			if c != s[i] {
 				continue loop
 			}
@@ -935,9 +932,6 @@ loop:
 		key := z.buf[x[0].Start:x[0].End]
 		for i := 0; i < len(key) && i < len(s); i++ {
 			c := key[i]
-			if 'A' <= c && c <= 'Z' {
-				c += 'a' - 'A'
-			}
 			if c != s[i] {
 				continue loop
 			}
@@ -953,9 +947,6 @@ func (z *Tokenizer) readStartTag() TokenType {
 	z.readTag(true)
 	// Several tags flag the tokenizer's next token as raw.
 	c, raw := z.buf[z.data.Start], false
-	if 'A' <= c && c <= 'Z' {
-		c += 'a' - 'A'
-	}
 	switch c {
 	case 'i':
 		raw = z.startTagIn("iframe")
@@ -1816,7 +1807,9 @@ func (z *Tokenizer) Token() Token {
 			key, keyLoc, val, valLoc, attrType, moreAttr = z.TagAttr()
 			t.Attr = append(t.Attr, Attribute{"", atom.String(key), keyLoc, string(val), valLoc, attrTokenizer, attrType})
 		}
-		if a := atom.Lookup(name); a != 0 {
+		if isFragment(string(name)) || isComponent(string(name)) {
+			t.DataAtom, t.Data = 0, string(name)
+		} else if a := atom.Lookup(name); a != 0 {
 			t.DataAtom, t.Data = a, a.String()
 		} else {
 			t.DataAtom, t.Data = 0, string(name)
