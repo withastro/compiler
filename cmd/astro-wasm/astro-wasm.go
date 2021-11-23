@@ -90,6 +90,9 @@ type TransformResult struct {
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
 func preprocessStyle(i int, style *astro.Node, transformOptions transform.TransformOptions, cb func()) {
 	defer cb()
+	if style.FirstChild == nil {
+		return
+	}
 	attrs := wasm_utils.GetAttrs(style)
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
 	// note: Rollup (and by extension our Astro Vite plugin) allows for "undefined" and "null" responses if a transform wishes to skip this occurrence
