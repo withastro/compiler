@@ -969,7 +969,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			want: want{
 				frontmatter: []string{`import { Container, Col, Row } from 'react-bootstrap';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap' }`}},
-				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{})}<h1>Hi!</h1>`,})}`,})}\n.",
+				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`<h1>Hi!</h1>`,})}`,})}`,})}",
 			},
 		},
 		{
@@ -1192,6 +1192,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: `<html><Component><form><textarea></textarea></form></Component></html>`,
 			want: want{
 				code: `<html><body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `,})}</body></html>`,
+			},
+		},
+		{
+			name:   "slot inside of Base",
+			source: `<Base title="Home"><div>Hello</div></Base>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render` + BACKTICK + `<div>Hello</div>` + BACKTICK + `,})}`,
 			},
 		},
 	}
