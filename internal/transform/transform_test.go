@@ -155,9 +155,20 @@ func TestFullTransform(t *testing.T) {
 			want:   `<Component></Component>`,
 		},
 		{
-			name:   "",
+			name:   "works with nested components",
 			source: `<style></style><A><div><B /></div></A>`,
 			want:   `<A><div><B></B></div></A>`,
+		},
+		{
+			name: "does not remove trailing siblings",
+			source: `<title>Title</title>
+<span />
+<Component />
+<span />`,
+			want: `<html><head><title>Title</title>
+</head><body><span></span>
+<Component></Component>
+<span></span></body></html>`,
 		},
 	}
 	var b strings.Builder
