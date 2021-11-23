@@ -851,6 +851,17 @@ import ZComponent from '../components/ZComponent.jsx';`},
 			},
 		},
 		{
+			name: "svg expressions",
+			source: `---
+const title = 'icon';
+---
+<svg>{title ?? null}</svg>`,
+			want: want{
+				frontmatter: []string{"", "const title = 'icon';"},
+				code:        `<html><head></head><body><svg>${title ?? null}</svg></body></html>`,
+			},
+		},
+		{
 			name:   "Empty script",
 			source: `<script hoist></script>`,
 			want: want{
