@@ -2533,7 +2533,6 @@ func ignoreTheRemainingTokens(p *parser) bool {
 
 const whitespaceOrNUL = whitespace + "\x00"
 
-// TODO: handle expressions in SVG
 // Section 12.2.6.5
 func parseForeignContent(p *parser) bool {
 	switch p.tok.Type {
