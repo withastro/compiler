@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.3.7
+
+### Patch Changes
+
+- eb0d17f: Fix edge case with files that contain a single component
+
 ## 0.3.6
 
 ### Patch Changes
