@@ -16,6 +16,9 @@ func PrintToSource(buf *strings.Builder, node *Node) {
 	case ElementNode:
 		buf.WriteString(fmt.Sprintf(`<%s`, node.Data))
 		for _, attr := range node.Attr {
+			if attr.Key == ImplicitNodeMarker {
+				continue
+			}
 			if attr.Namespace != "" {
 				buf.WriteString(attr.Namespace)
 				buf.WriteString(":")
