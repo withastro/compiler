@@ -154,6 +154,11 @@ func TestFullTransform(t *testing.T) {
 			source: `<Component />`,
 			want:   `<Component></Component>`,
 		},
+		{
+			name:   "",
+			source: `<style></style><A><div><B /></div></A>`,
+			want:   `<A><div><B></B></div></A>`,
+		},
 	}
 	var b strings.Builder
 	for _, tt := range tests {

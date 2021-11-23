@@ -184,7 +184,7 @@ func hasSiblings(n *tycho.Node) bool {
 
 	if sibling := n.PrevSibling; sibling != nil {
 		if sibling.Type == tycho.TextNode {
-			return strings.TrimSpace(n.NextSibling.Data) != ""
+			return strings.TrimSpace(n.PrevSibling.Data) != ""
 		} else {
 			return sibling.Type != tycho.CommentNode
 		}
