@@ -182,7 +182,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 					p.println("];")
 					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("%s.styles.add(...STYLES);", RESULT))
+					p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE));", RESULT))
 				}
 
 				if len(n.Parent.Scripts) > 0 {
@@ -192,7 +192,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 					p.println("];")
 					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS);", RESULT))
+					p.println(fmt.Sprintf("for (const SCRIPT of SCRIPTS) %s.scripts.add(SCRIPT));", RESULT))
 				}
 
 				p.printReturnOpen()
@@ -224,7 +224,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			}
 			p.println("];")
 			p.addNilSourceMapping()
-			p.println(fmt.Sprintf("%s.styles.add(...STYLES);", RESULT))
+			p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE));", RESULT))
 		}
 		if len(n.Parent.Scripts) > 0 {
 			p.println("const SCRIPTS = [")
@@ -233,7 +233,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			}
 			p.println("];")
 			p.addNilSourceMapping()
-			p.println(fmt.Sprintf("%s.scripts.add(...SCRIPTS);", RESULT))
+			p.println(fmt.Sprintf("for (const SCRIPT of SCRIPTS) %s.scripts.add(SCRIPT));", RESULT))
 		}
 
 		p.printReturnOpen()
