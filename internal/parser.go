@@ -2533,7 +2533,6 @@ func ignoreTheRemainingTokens(p *parser) bool {
 
 const whitespaceOrNUL = whitespace + "\x00"
 
-// TODO: handle expressions in SVG
 // Section 12.2.6.5
 func parseForeignContent(p *parser) bool {
 	switch p.tok.Type {
@@ -2611,6 +2610,14 @@ func parseForeignContent(p *parser) bool {
 				break
 			}
 		}
+		return true
+	case StartExpressionToken:
+		p.reconstructActiveFormattingElements()
+		p.addExpression()
+		return true
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
 		return true
 	default:
 		// Ignore the token.
