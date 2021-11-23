@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.3.8
+
+### Patch Changes
+
+- 2c8f5d8: Fix another component-only edge case
+
 ## 0.3.7
 
 ### Patch Changes
