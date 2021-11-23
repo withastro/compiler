@@ -1223,6 +1223,13 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render` + BACKTICK + `<div>Hello</div>` + BACKTICK + `,})}`,
 			},
 		},
+		{
+			name:   "user-defined `implicit` is printed",
+			source: `<html implicit></html>`,
+			want: want{
+				code: `<html implicit><head></head><body></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
