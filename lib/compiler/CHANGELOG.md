@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.3.5
+
+### Patch Changes
+
+- bca7e00: Fixed issue where an Astro Components could only add one style or script
+- 2a2f951: Fix regression where leading `<style>` elements could break generated tags
+- db162f8: Fix case-sensitivity of void elements
+- 44ee189: Fixed issue where expressions did not work within SVG elements
+- 9557113: Fix panic when preprocessed style is empty
+
 ## 0.3.4
 
 ### Patch Changes
