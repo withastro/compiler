@@ -1213,7 +1213,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "textarea in form",
 			source: `<html><Component><form><textarea></textarea></form></Component></html>`,
 			want: want{
-				code: `<html><body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `,})}</body></html>`,
+				code: `<html>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `,})}</html>`,
 			},
 		},
 		{
