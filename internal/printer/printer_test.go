@@ -862,6 +862,17 @@ const title = 'icon';
 			},
 		},
 		{
+			name: "advanced svg expression",
+			source: `---
+const title = 'icon';
+---
+<svg>{title ? <title>{title}</title> : null}</svg>`,
+			want: want{
+				frontmatter: []string{"", "const title = 'icon';"},
+				code:        `<html><head></head><body><svg>${title ? $$render` + BACKTICK + `<title>${title}</title>` + BACKTICK + ` : null}</svg></body></html>`,
+			},
+		},
+		{
 			name:   "Empty script",
 			source: `<script hoist></script>`,
 			want: want{
