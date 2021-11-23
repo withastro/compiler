@@ -2612,6 +2612,14 @@ func parseForeignContent(p *parser) bool {
 			}
 		}
 		return true
+	case StartExpressionToken:
+		p.reconstructActiveFormattingElements()
+		p.addExpression()
+		return true
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
+		return true
 	default:
 		// Ignore the token.
 	}
