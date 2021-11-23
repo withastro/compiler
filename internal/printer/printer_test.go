@@ -34,9 +34,9 @@ var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
 export default $$Component;`
 var STYLE_PRELUDE = "const STYLES = [\n"
-var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE));\n"
+var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE);\n"
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
-var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT));\n"
+var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build');\nconst Astro = $$Astro;"
 
 // SPECIAL TEST FIXTURES
