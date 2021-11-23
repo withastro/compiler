@@ -30,6 +30,9 @@ const (
 	ExpressionNode
 )
 
+// Used as an Attribute Key to mark implicit nodes
+const ImplicitNodeMarker = "\x00implicit"
+
 // Section 12.2.4.3 says "The markers are inserted when entering applet,
 // object, marquee, template, td, th, and caption elements, and are used
 // to prevent formatting from "leaking" into applet, object, marquee,

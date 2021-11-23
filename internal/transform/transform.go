@@ -39,20 +39,35 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	// Since we can't detect a "component-only" file until after `parse`, we need to handle
 	// them here. The component will be hoisted to the root of the document, `html` and `head` will be removed.
 	if opts.As != "Fragment" {
-		hasBody := false
 		var onlyComponent *tycho.Node
+		var rootNode *tycho.Node
 		walk(doc, func(n *tycho.Node) {
-			if n.Component && n.Parent != nil && n.Parent.DataAtom == a.Head {
-				onlyComponent = n
-			} else if !hasBody && n.DataAtom == a.Body {
-				hasBody = true
+			if p := n.Parent; n.Component && p != nil && (p.DataAtom == a.Head || p.DataAtom == a.Body) {
+				if !hasSiblings(n) {
+					onlyComponent = n
+				}
+				return
+			}
+			if n.DataAtom == a.Html && (!IsImplictNode(n) || childCount(n) == 1) {
+				rootNode = n
+				return
 			}
 		})
 
-		if !hasBody && onlyComponent != nil {
-			onlyComponent.Parent.RemoveChild(onlyComponent)
-			doc.AppendChild(onlyComponent)
-			doc.RemoveChild(onlyComponent.PrevSibling)
+		if rootNode == nil {
+			rootNode = doc
+		}
+
+		if onlyComponent != nil {
+			p := onlyComponent.Parent
+			if IsImplictNode(p) {
+				onlyComponent.Parent.RemoveChild(onlyComponent)
+				rootNode.AppendChild(onlyComponent)
+				rootNode.RemoveChild(onlyComponent.PrevSibling)
+				if rootNode.FirstChild != nil && IsImplictNode(rootNode.FirstChild) {
+					rootNode.RemoveChild(rootNode.FirstChild)
+				}
+			}
 		}
 	}
 
@@ -152,4 +167,28 @@ func walk(doc *tycho.Node, cb func(*tycho.Node)) {
 		}
 	}
 	f(doc)
+}
+
+func hasSiblings(n *tycho.Node) bool {
+	if n.NextSibling == nil && n.PrevSibling == nil {
+		return false
+	}
+
+	if sibling := n.NextSibling; sibling != nil {
+		if sibling.Type == tycho.TextNode {
+			return strings.TrimSpace(n.NextSibling.Data) != ""
+		} else {
+			return sibling.Type != tycho.CommentNode
+		}
+	}
+
+	if sibling := n.PrevSibling; sibling != nil {
+		if sibling.Type == tycho.TextNode {
+			return strings.TrimSpace(n.NextSibling.Data) != ""
+		} else {
+			return sibling.Type != tycho.CommentNode
+		}
+	}
+
+	return false
 }

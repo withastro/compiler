@@ -2670,6 +2670,7 @@ func (p *parser) parseImpliedToken(t TokenType, dataAtom a.Atom, data string) {
 		Type:     t,
 		DataAtom: dataAtom,
 		Data:     data,
+		Attr:     []Attribute{{Key: ImplicitNodeMarker, Type: EmptyAttribute}},
 	}
 	p.hasSelfClosingToken = false
 	p.parseCurrentToken()

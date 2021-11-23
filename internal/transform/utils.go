@@ -25,6 +25,25 @@ func HasAttr(n *astro.Node, key string) bool {
 	return false
 }
 
+func IsImplictNode(n *astro.Node) bool {
+	return HasAttr(n, astro.ImplicitNodeMarker)
+}
+
+func IsImplictNodeMarker(attr astro.Attribute) bool {
+	return attr.Key == astro.ImplicitNodeMarker
+}
+
+func childCount(n *astro.Node) int {
+	var i int
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if IsImplictNode(c) {
+			continue
+		}
+		i++
+	}
+	return i
+}
+
 func GetQuotedAttr(n *astro.Node, key string) string {
 	for _, attr := range n.Attr {
 		if attr.Key == key {

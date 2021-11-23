@@ -118,21 +118,41 @@ func TestFullTransform(t *testing.T) {
 	}{
 		{
 			name: "top-level component with leading style",
-			source: `---
-import Component from "test";
----
-<style>:root{}</style><Component><h1>Hello world</h1></Component>
+			source: `<style>:root{}</style><Component><h1>Hello world</h1></Component>
 			`,
-			want: `<Component class="astro-XXXXXX"><h1 class="astro-XXXXXX">Hello world</h1></Component>`,
+			want: `<Component><h1>Hello world</h1></Component>`,
+		},
+		{
+			name: "top-level component with leading style body",
+			source: `<style>:root{}</style><Component><div><h1>Hello world</h1></div></Component>
+			`,
+			want: `<Component><div><h1>Hello world</h1></div></Component>`,
 		},
 		{
 			name: "top-level component with trailing style",
-			source: `---
-import Component from "test";
----
-<Component><h1>Hello world</h1></Component><style>:root{}</style>
+			source: `<Component><h1>Hello world</h1></Component><style>:root{}</style>
 			`,
-			want: `<Component class="astro-XXXXXX"><h1 class="astro-XXXXXX">Hello world</h1></Component>`,
+			want: `<Component><h1>Hello world</h1></Component>`,
+		},
+		{
+			name:   "respects explicitly authored elements",
+			source: `<html><Component /></html>`,
+			want:   `<html><Component></Component></html>`,
+		},
+		{
+			name:   "respects explicitly authored elements 2",
+			source: `<head></head><Component />`,
+			want:   `<html><head></head><Component></Component></html>`,
+		},
+		{
+			name:   "respects explicitly authored elements 3",
+			source: `<body><Component /></body>`,
+			want:   `<html><head></head><body><Component></Component></body></html>`,
+		},
+		{
+			name:   "removes implicitly generated elements",
+			source: `<Component />`,
+			want:   `<Component></Component>`,
 		},
 	}
 	var b strings.Builder
@@ -144,7 +164,9 @@ import Component from "test";
 				t.Error(err)
 			}
 			ExtractStyles(doc)
-			Transform(doc, TransformOptions{Scope: "XXXXXX"})
+			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
+			doc.Styles = make([]*astro.Node, 0)
+			Transform(doc, TransformOptions{})
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {

@@ -1213,7 +1213,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "textarea in form",
 			source: `<html><Component><form><textarea></textarea></form></Component></html>`,
 			want: want{
-				code: `<html><body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `,})}</body></html>`,
+				code: `<html>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `,})}</html>`,
 			},
 		},
 		{
@@ -1221,6 +1221,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: `<Base title="Home"><div>Hello</div></Base>`,
 			want: want{
 				code: `${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render` + BACKTICK + `<div>Hello</div>` + BACKTICK + `,})}`,
+			},
+		},
+		{
+			name:   "user-defined `implicit` is printed",
+			source: `<html implicit></html>`,
+			want: want{
+				code: `<html implicit><head></head><body></body></html>`,
 			},
 		},
 	}

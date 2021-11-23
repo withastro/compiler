@@ -382,6 +382,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(`]`)
 	} else {
 		for _, a := range n.Attr {
+			if transform.IsImplictNodeMarker(a) {
+				continue
+			}
 			if a.Key == "slot" {
 				if !(n.Parent.Component || n.Parent.CustomElement) {
 					panic(`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`)
