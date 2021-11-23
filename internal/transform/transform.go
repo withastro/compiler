@@ -174,21 +174,21 @@ func hasSiblings(n *tycho.Node) bool {
 		return false
 	}
 
-	if sibling := n.NextSibling; sibling != nil {
-		if sibling.Type == tycho.TextNode {
-			return strings.TrimSpace(n.NextSibling.Data) != ""
-		} else {
-			return sibling.Type != tycho.CommentNode
+	var flag bool
+	if n.Parent != nil {
+		for c := n.Parent.FirstChild; c != nil; c = c.NextSibling {
+			if c == n {
+				continue
+			}
+			if c.Type == astro.TextNode && strings.TrimSpace(c.Data) == "" {
+				continue
+			}
+			if c.Type == astro.CommentNode {
+				continue
+			}
+			flag = true
 		}
 	}
 
-	if sibling := n.PrevSibling; sibling != nil {
-		if sibling.Type == tycho.TextNode {
-			return strings.TrimSpace(n.PrevSibling.Data) != ""
-		} else {
-			return sibling.Type != tycho.CommentNode
-		}
-	}
-
-	return false
+	return flag
 }
