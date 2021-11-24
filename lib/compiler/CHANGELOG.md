@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.3.9
+
+### Patch Changes
+
+- 2884a82: Bugfix: CSS comments insert semicolon
+
 ## 0.3.8
 
 ### Patch Changes
