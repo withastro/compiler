@@ -1230,6 +1230,22 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `<html implicit><head></head><body></body></html>`,
 			},
 		},
+		{
+			name: "css comment doesn’t produce semicolon",
+			source: `<style>/* comment */.container {
+    padding: 2rem;
+	}
+</style>
+
+<div class="container">My Text</div>`,
+
+			want: want{
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"RN5ULUD7"},children:%s/* comment */.container.astro-RN5ULUD7{padding:2rem;}%s}`, BACKTICK, BACKTICK)},
+				code: `<html class="astro-RN5ULUD7"><head>
+
+</head><body><div class="container astro-RN5ULUD7">My Text</div></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

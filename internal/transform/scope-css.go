@@ -47,6 +47,8 @@ outer:
 				} else {
 					break walk // an unrecoverable error occurred, or the end has been reached
 				}
+			case css.CommentGrammar:
+				out += string(data)
 			case css.EndAtRuleGrammar,
 				css.EndRulesetGrammar:
 				out += "}"
