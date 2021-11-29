@@ -1,7 +1,7 @@
 package transform
 
 import (
-	astro "github.com/snowpackjs/astro/internal"
+	astro "github.com/withastro/compiler/internal"
 )
 
 func hasTruthyAttr(n *astro.Node, key string) bool {

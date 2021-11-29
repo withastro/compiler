@@ -12,10 +12,10 @@ import (
 	"syscall/js"
 
 	"github.com/norunners/vert"
-	astro "github.com/snowpackjs/astro/internal"
-	"github.com/snowpackjs/astro/internal/printer"
-	"github.com/snowpackjs/astro/internal/transform"
-	wasm_utils "github.com/snowpackjs/astro/internal_wasm/utils"
+	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/printer"
+	"github.com/withastro/compiler/internal/transform"
+	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 	"golang.org/x/net/html/atom"
 )
 

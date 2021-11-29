@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	astro "github.com/snowpackjs/astro/internal"
-	"github.com/snowpackjs/astro/internal/js_scanner"
-	"github.com/snowpackjs/astro/internal/loc"
-	"github.com/snowpackjs/astro/internal/sourcemap"
-	"github.com/snowpackjs/astro/internal/transform"
+	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/js_scanner"
+	"github.com/withastro/compiler/internal/loc"
+	"github.com/withastro/compiler/internal/sourcemap"
+	"github.com/withastro/compiler/internal/transform"
 	"golang.org/x/net/html/atom"
 )
 

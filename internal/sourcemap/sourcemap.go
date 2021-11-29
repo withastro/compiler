@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"unicode/utf8"
 
-	"github.com/snowpackjs/astro/internal/helpers"
-	"github.com/snowpackjs/astro/internal/loc"
+	"github.com/withastro/compiler/internal/helpers"
+	"github.com/withastro/compiler/internal/loc"
 )
 
 type Mapping struct {

@@ -10,7 +10,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/snowpackjs/astro/internal/loc"
+	"github.com/withastro/compiler/internal/loc"
 	a "golang.org/x/net/html/atom"
 )
 

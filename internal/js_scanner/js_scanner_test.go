@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/snowpackjs/astro/internal/test_utils"
+	"github.com/withastro/compiler/internal/test_utils"
 )
 
 type testcase struct {

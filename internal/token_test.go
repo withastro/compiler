@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/snowpackjs/astro/internal/test_utils"
+	"github.com/withastro/compiler/internal/test_utils"
 )
 
 type TokenTypeTest struct {
