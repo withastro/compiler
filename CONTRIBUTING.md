@@ -16,6 +16,15 @@ If you use VS Code as your primary editor, installing the [Go extension][go-vsco
 
 [TinyGo][tinygo] is needed to compile the WASM, and is an improvement over Go’s default WASM compiler. TinyGo has [installation guides for every OS][tinygo-install].
 
+#### Downgrading
+
+Sometimes you may have to install an older version of tinygo, either to test or because we aren’t using the latest version. To do this on Homebrew:
+
+1. Visit [tinygo’s Homebrew script](https://github.com/tinygo-org/homebrew-tools/blob/master/tinygo.rb)
+2. Go back through the commit history to find the version you want
+3. Save this anywhere on disk as `tinygo.rb` (e.g. `~/Desktop/tinygo.rb`)
+4. Install this local version using `brew install ~/Desktop/tinygo.rb`
+
 ### Node
 
 You will also need [Node.js][node] installed, as well as Yarn 1.x (`npm i -g yarn`). More often than not, you won’t need to touch JS in this repo, but in case you do, be sure to run `yarn` first.
