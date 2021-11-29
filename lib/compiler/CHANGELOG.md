@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.4.0
+
+### Minor Changes
+
+- 7e1aded: Change behavior of `as: "fragment"` option to support arbitrary `head` and `body` tags
+
 ## 0.3.9
 
 ### Patch Changes
