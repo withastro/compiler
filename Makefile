@@ -6,10 +6,10 @@ GO_FLAGS += "-ldflags=-s -w"
 # Avoid embedding the build path in the executable for more reproducible builds
 GO_FLAGS += -trimpath
 
-astro: cmd/astro/*.go pkg/*/*.go internal/*/*.go go.mod
+astro: cmd/astro/*.go internal/*/*.go go.mod
 	CGO_ENABLED=0 go build $(GO_FLAGS) ./cmd/astro
 
-astro-wasm: cmd/astro/*.go pkg/*/*.go internal/*/*.go go.mod
+astro-wasm: cmd/astro/*.go internal/*/*.go go.mod
 	tinygo build -no-debug -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
 	cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
