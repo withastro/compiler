@@ -1,4 +1,4 @@
-module github.com/snowpackjs/astro
+module github.com/withastro/compiler
 
 go 1.17
 

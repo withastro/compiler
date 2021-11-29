@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	astro "github.com/snowpackjs/astro/internal"
-	tycho "github.com/snowpackjs/astro/internal"
+	astro "github.com/withastro/compiler/internal"
 	"golang.org/x/net/html/atom"
 	a "golang.org/x/net/html/atom"
 )
@@ -20,9 +19,9 @@ type TransformOptions struct {
 	PreprocessStyle interface{}
 }
 
-func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
+func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
-	walk(doc, func(n *tycho.Node) {
+	walk(doc, func(n *astro.Node) {
 		ExtractScript(doc, n)
 		AddComponentProps(doc, n)
 		if shouldScope {
@@ -39,9 +38,9 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	// Since we can't detect a "component-only" file until after `parse`, we need to handle
 	// them here. The component will be hoisted to the root of the document, `html` and `head` will be removed.
 	if opts.As != "fragment" {
-		var onlyComponent *tycho.Node
-		var rootNode *tycho.Node
-		walk(doc, func(n *tycho.Node) {
+		var onlyComponent *astro.Node
+		var rootNode *astro.Node
+		walk(doc, func(n *astro.Node) {
 			if p := n.Parent; n.Component && p != nil && (p.DataAtom == a.Head || p.DataAtom == a.Body) {
 				if !hasSiblings(n) {
 					onlyComponent = n
@@ -87,15 +86,15 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	return doc
 }
 
-func ExtractStyles(doc *tycho.Node) {
-	walk(doc, func(n *tycho.Node) {
-		if n.Type == tycho.ElementNode && n.DataAtom == a.Style {
+func ExtractStyles(doc *astro.Node) {
+	walk(doc, func(n *astro.Node) {
+		if n.Type == astro.ElementNode && n.DataAtom == a.Style {
 			// Do not extract <style> inside of SVGs
 			if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
 				return
 			}
 			// prepend node to maintain authored order
-			doc.Styles = append([]*tycho.Node{n}, doc.Styles...)
+			doc.Styles = append([]*astro.Node{n}, doc.Styles...)
 		}
 	})
 	// Important! Remove styles from original location *after* walking the doc
@@ -105,8 +104,8 @@ func ExtractStyles(doc *tycho.Node) {
 }
 
 // TODO: cleanup sibling whitespace after removing scripts/styles
-// func removeSiblingWhitespace(n *tycho.Node) {
-// 	if c := n.NextSibling; c != nil && c.Type == tycho.TextNode {
+// func removeSiblingWhitespace(n *astro.Node) {
+// 	if c := n.NextSibling; c != nil && c.Type == astro.TextNode {
 // 		content := strings.TrimSpace(c.Data)
 // 		if len(content) == 0 {
 // 			c.Parent.RemoveChild(c)
@@ -114,18 +113,18 @@ func ExtractStyles(doc *tycho.Node) {
 // 	}
 // }
 
-func ExtractScript(doc *tycho.Node, n *tycho.Node) {
-	if n.Type == tycho.ElementNode && n.DataAtom == a.Script {
+func ExtractScript(doc *astro.Node, n *astro.Node) {
+	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
 		// if <script hoist>, hoist to the document root
 		if hasTruthyAttr(n, "hoist") {
 			// prepend node to maintain authored order
-			doc.Scripts = append([]*tycho.Node{n}, doc.Scripts...)
+			doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
 		}
 	}
 }
 
-func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
-	if n.Type == tycho.ElementNode && (n.Component || n.CustomElement) {
+func AddComponentProps(doc *astro.Node, n *astro.Node) {
+	if n.Type == astro.ElementNode && (n.Component || n.CustomElement) {
 		for _, attr := range n.Attr {
 			id := n.Data
 			if n.CustomElement {
@@ -134,22 +133,22 @@ func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
 
 			if strings.HasPrefix(attr.Key, "client:") {
 				if attr.Key == "client:only" {
-					doc.ClientOnlyComponents = append([]*tycho.Node{n}, doc.ClientOnlyComponents...)
+					doc.ClientOnlyComponents = append([]*astro.Node{n}, doc.ClientOnlyComponents...)
 					break
 				}
 				// prepend node to maintain authored order
-				doc.HydratedComponents = append([]*tycho.Node{n}, doc.HydratedComponents...)
-				pathAttr := tycho.Attribute{
+				doc.HydratedComponents = append([]*astro.Node{n}, doc.HydratedComponents...)
+				pathAttr := astro.Attribute{
 					Key:  "client:component-path",
 					Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
-					Type: tycho.ExpressionAttribute,
+					Type: astro.ExpressionAttribute,
 				}
 				n.Attr = append(n.Attr, pathAttr)
 
-				exportAttr := tycho.Attribute{
+				exportAttr := astro.Attribute{
 					Key:  "client:component-export",
 					Val:  fmt.Sprintf("$$metadata.getExport(%s)", id),
-					Type: tycho.ExpressionAttribute,
+					Type: astro.ExpressionAttribute,
 				}
 				n.Attr = append(n.Attr, exportAttr)
 				break
@@ -158,9 +157,9 @@ func AddComponentProps(doc *tycho.Node, n *tycho.Node) {
 	}
 }
 
-func walk(doc *tycho.Node, cb func(*tycho.Node)) {
-	var f func(*tycho.Node)
-	f = func(n *tycho.Node) {
+func walk(doc *astro.Node, cb func(*astro.Node)) {
+	var f func(*astro.Node)
+	f = func(n *astro.Node) {
 		cb(n)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			f(c)
@@ -169,7 +168,7 @@ func walk(doc *tycho.Node, cb func(*tycho.Node)) {
 	f(doc)
 }
 
-func hasSiblings(n *tycho.Node) bool {
+func hasSiblings(n *astro.Node) bool {
 	if n.NextSibling == nil && n.PrevSibling == nil {
 		return false
 	}

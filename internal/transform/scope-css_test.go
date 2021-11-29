@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	tycho "github.com/snowpackjs/astro/internal"
-	"github.com/snowpackjs/astro/internal/test_utils"
+	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/test_utils"
 )
 
 func TestScopeStyle(t *testing.T) {
@@ -213,12 +213,12 @@ func TestScopeStyle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// note: the "{}" is only added to make it valid CSS
 			code := test_utils.Dedent("<style>\n" + tt.source + " \n</style>")
-			doc, err := tycho.Parse(strings.NewReader(code))
+			doc, err := astro.Parse(strings.NewReader(code))
 			if err != nil {
 				t.Error(err)
 			}
 			styleEl := doc.LastChild.FirstChild.FirstChild // note: root is <html>, and we need to get <style> which lives in head
-			styles := []*tycho.Node{styleEl}
+			styles := []*astro.Node{styleEl}
 			ScopeStyle(styles, TransformOptions{Scope: "XXXXXX"})
 			got := styles[0].FirstChild.Data
 			if tt.want != got {

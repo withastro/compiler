@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	tycho "github.com/snowpackjs/astro/internal"
-	"github.com/snowpackjs/astro/internal/test_utils"
-	"github.com/snowpackjs/astro/internal/transform"
+	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/test_utils"
+	"github.com/withastro/compiler/internal/transform"
 )
 
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
@@ -1261,13 +1261,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := tycho.Parse(strings.NewReader(code))
+			doc, err := astro.Parse(strings.NewReader(code))
 
 			if err != nil {
 				t.Error(err)
 			}
 
-			hash := tycho.HashFromSource(code)
+			hash := astro.HashFromSource(code)
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, transform.TransformOptions{

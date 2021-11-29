@@ -5,7 +5,7 @@
 package astro
 
 import (
-	"github.com/snowpackjs/astro/internal/loc"
+	"github.com/withastro/compiler/internal/loc"
 	"golang.org/x/net/html/atom"
 )
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	astro "github.com/snowpackjs/astro/internal"
+	astro "github.com/withastro/compiler/internal"
 	"golang.org/x/net/html/atom"
 )
 

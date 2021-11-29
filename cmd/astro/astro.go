@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	astro "github.com/snowpackjs/astro/internal"
-	"github.com/snowpackjs/astro/internal/printer"
-	"github.com/snowpackjs/astro/internal/transform"
+	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/printer"
+	"github.com/withastro/compiler/internal/transform"
 )
 
 func main() {
@@ -62,31 +62,31 @@ const something = await Astro.fetchContent('../*.md');
 	fmt.Print(output)
 }
 
-// 	// z := tycho.NewTokenizer(strings.NewReader(source))
+// 	// z := astro.NewTokenizer(strings.NewReader(source))
 
 // 	// for {
-// 	// 	if z.Next() == tycho.ErrorToken {
+// 	// 	if z.Next() == astro.ErrorToken {
 // 	// 		// Returning io.EOF indicates success.
 // 	// 		return
 // 	// 	}
 // 	// tok := z.Token()
 
-// 	// if tok.Type == tycho.StartTagToken {
+// 	// if tok.Type == astro.StartTagToken {
 // 	// 	for _, attr := range tok.Attr {
 // 	// 		switch attr.Type {
-// 	// 		case tycho.ShorthandAttribute:
+// 	// 		case astro.ShorthandAttribute:
 // 	// 			fmt.Println("ShorthandAttribute", attr.Key, attr.Val)
-// 	// 		case tycho.ExpressionAttribute:
+// 	// 		case astro.ExpressionAttribute:
 // 	// 			if strings.Contains(attr.Val, "<") {
 // 	// 				fmt.Println("ExpressionAttribute with Elements", attr.Val)
 // 	// 			} else {
 // 	// 				fmt.Println("ExpressionAttribute", attr.Key, attr.Val)
 // 	// 			}
-// 	// 		case tycho.QuotedAttribute:
+// 	// 		case astro.QuotedAttribute:
 // 	// 			fmt.Println("QuotedAttribute", attr.Key, attr.Val)
-// 	// 		case tycho.SpreadAttribute:
+// 	// 		case astro.SpreadAttribute:
 // 	// 			fmt.Println("SpreadAttribute", attr.Key, attr.Val)
-// 	// 		case tycho.TemplateLiteralAttribute:
+// 	// 		case astro.TemplateLiteralAttribute:
 // 	// 			fmt.Println("TemplateLiteralAttribute", attr.Key, attr.Val)
 // 	// 		}
 // 	// 	}
@@ -95,7 +95,7 @@ const something = await Astro.fetchContent('../*.md');
 // }
 
 // func Transform(source string) interface{} {
-// 	doc, _ := tycho.ParseFragment(strings.NewReader(source), nil)
+// 	doc, _ := astro.ParseFragment(strings.NewReader(source), nil)
 
 // 	for _, node := range doc {
 // 		fmt.Println(node.Data)
@@ -107,7 +107,7 @@ const something = await Astro.fetchContent('../*.md');
 // 	// })
 
 // 	// w := new(strings.Builder)
-// 	// tycho.Render(w, doc)
+// 	// astro.Render(w, doc)
 // 	// js := w.String()
 
 // 	// return js

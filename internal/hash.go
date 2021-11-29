@@ -3,7 +3,7 @@ package astro
 import (
 	"encoding/base32"
 
-	"github.com/snowpackjs/astro/internal/xxhash"
+	"github.com/withastro/compiler/internal/xxhash"
 )
 
 func HashFromSource(source string) string {
