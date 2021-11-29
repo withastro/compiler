@@ -1082,6 +1082,10 @@ func inBodyIM(p *parser) bool {
 		}
 		switch p.tok.DataAtom {
 		case a.Html:
+			if p.inTemplateFragmentContext() {
+				p.addElement()
+				return true
+			}
 			if p.oe.contains(a.Template) {
 				return true
 			}
@@ -1089,10 +1093,14 @@ func inBodyIM(p *parser) bool {
 		case a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta, a.Noframes, a.Script, a.Style, a.Template, a.Title:
 			return inHeadIM(p)
 		case a.Body:
+			if p.inTemplateFragmentContext() {
+				p.addElement()
+				return true
+			}
 			if p.oe.contains(a.Template) {
 				return true
 			}
-			if len(p.oe) >= 1 {
+			if len(p.oe) > 1 {
 				body := p.oe[1]
 				if body.Type == ElementNode && body.DataAtom == a.Body {
 					p.framesetOK = false
@@ -1318,7 +1326,13 @@ func inBodyIM(p *parser) bool {
 				p.acknowledgeSelfClosingTag()
 			}
 			return true
-		case a.Caption, a.Col, a.Colgroup, a.Frame, a.Head, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
+		case a.Head:
+			if p.inTemplateFragmentContext() {
+				p.addElement()
+				p.im = inHeadIM
+				return true
+			}
+		case a.Caption, a.Col, a.Colgroup, a.Frame, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
 			// Ignore the token.
 		default:
 			p.reconstructActiveFormattingElements()
@@ -1444,6 +1458,10 @@ func inBodyIM(p *parser) bool {
 		p.addFrontmatter(true)
 	}
 	return true
+}
+
+func (p *parser) inTemplateFragmentContext() bool {
+	return len(p.oe) == 1 && p.context != nil && p.context.DataAtom == a.Template
 }
 
 func (p *parser) inBodyEndTagFormatting(tagAtom a.Atom, tagName string) {
@@ -2157,7 +2175,7 @@ func inSelectInTableIM(p *parser) bool {
 // Section 12.2.6.4.18.
 func inTemplateIM(p *parser) bool {
 	switch p.tok.Type {
-	case TextToken, CommentToken, DoctypeToken:
+	case TextToken, CommentToken, DoctypeToken, FrontmatterFenceToken:
 		return inBodyIM(p)
 	case StartTagToken:
 		switch p.tok.DataAtom {

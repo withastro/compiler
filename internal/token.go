@@ -1849,16 +1849,3 @@ func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
 	}
 	return z
 }
-
-// NewTokenizer returns a new HTML Tokenizer for the given Reader.
-// The input is assumed to be UTF-8 encoded.
-func NewAttributeTokenizer(r io.Reader) *Tokenizer {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r)
-	z := &Tokenizer{
-		r:   r,
-		buf: buf.Bytes(),
-		fm:  FrontmatterClosed,
-	}
-	return z
-}
