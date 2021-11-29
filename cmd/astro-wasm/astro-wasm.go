@@ -60,6 +60,11 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		site = "https://astro.build"
 	}
 
+	projectRoot := jsString(options.Get("projectRoot"))
+	if projectRoot == "" {
+		projectRoot = "."
+	}
+
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
@@ -69,6 +74,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		InternalURL:     internalURL,
 		SourceMap:       sourcemap,
 		Site:            site,
+		ProjectRoot:     projectRoot,
 		PreprocessStyle: preprocessStyle,
 	}
 }
