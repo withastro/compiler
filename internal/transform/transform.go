@@ -38,7 +38,7 @@ func Transform(doc *tycho.Node, opts TransformOptions) *tycho.Node {
 	// Sometimes files have leading <script hoist> or <style>...
 	// Since we can't detect a "component-only" file until after `parse`, we need to handle
 	// them here. The component will be hoisted to the root of the document, `html` and `head` will be removed.
-	if opts.As != "Fragment" {
+	if opts.As != "fragment" {
 		var onlyComponent *tycho.Node
 		var rootNode *tycho.Node
 		walk(doc, func(n *tycho.Node) {

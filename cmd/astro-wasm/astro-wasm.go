@@ -126,8 +126,8 @@ func Transform() interface{} {
 			} else if transformOptions.As == "fragment" {
 				nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
 					Type:     astro.ElementNode,
-					Data:     atom.Body.String(),
-					DataAtom: atom.Body,
+					Data:     atom.Template.String(),
+					DataAtom: atom.Template,
 				})
 				if err != nil {
 					fmt.Println(err)
