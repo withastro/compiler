@@ -208,6 +208,19 @@ func TestScopeStyle(t *testing.T) {
 			source: "@import url(\"./my-file.css\");",
 			want:   "@import url(\"./my-file.css\");",
 		},
+		{
+			name:   "valid CSS, madeup syntax",
+			source: "@tailwind base;",
+			want:   "@tailwind base;",
+		},
+		{
+			name: "invalid CSS (missing semi)",
+			source: `.foo {
+  color: blue
+  font-size: 18px;
+}`,
+			want: `.foo.astro-XXXXXX{color:blue font-size:18px;}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
