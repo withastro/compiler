@@ -9,6 +9,7 @@ export interface TransformOptions {
   sourcefile?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   as?: 'document' | 'fragment';
+  projectRoot?: string;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<PreprocessorResult>;
 }
 

@@ -260,7 +260,7 @@ func (p *printer) addNilSourceMapping() {
 }
 
 func (p *printer) printTopLevelAstro() {
-	p.println(fmt.Sprintf("const $$Astro = %s(import.meta.url, '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, p.opts.Site))
+	p.println(fmt.Sprintf("const $$Astro = %s(import.meta.url, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, p.opts.Site, p.opts.ProjectRoot))
 }
 
 func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {

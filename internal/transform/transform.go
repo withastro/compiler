@@ -16,6 +16,7 @@ type TransformOptions struct {
 	InternalURL     string
 	SourceMap       string
 	Site            string
+	ProjectRoot     string
 	PreprocessStyle interface{}
 }
 

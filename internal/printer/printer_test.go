@@ -37,7 +37,7 @@ var STYLE_PRELUDE = "const STYLES = [\n"
 var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE);\n"
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT);\n"
-var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build');\nconst Astro = $$Astro;"
+var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build', '.');\nconst Astro = $$Astro;"
 
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
@@ -1274,6 +1274,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				Scope:       "astro-XXXX",
 				Site:        "https://astro.build",
 				InternalURL: "http://localhost:3000/",
+				ProjectRoot: ".",
 			})
 			output := string(result.Output)
 
