@@ -2864,7 +2864,8 @@ func ParseFragmentWithOptions(r io.Reader, context *Node, opts ...ParseOption) (
 	}
 
 	var result []*Node
-	if p.fm.FirstChild != nil {
+
+	if p.fm != nil && p.fm.FirstChild != nil {
 		p.fm.Parent.RemoveChild(p.fm)
 		result = append(result, p.fm)
 	}
