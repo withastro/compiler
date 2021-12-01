@@ -1651,7 +1651,7 @@ func (p *parser) inBodyEndTagOther(tagAtom a.Atom, tagName string) {
 func textIM(p *parser) bool {
 	switch p.tok.Type {
 	case ErrorToken:
-		if p.context != nil {
+		if p.inTemplateFragmentContext() {
 			return inBodyIM(p)
 		}
 	case TextToken:
@@ -1673,6 +1673,7 @@ func textIM(p *parser) bool {
 	case EndTagToken:
 		p.addLoc()
 		p.oe.pop()
+		return true
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
@@ -2718,6 +2719,9 @@ func (p *parser) parseCurrentToken() {
 		if p.inForeignContent() {
 			consumed = parseForeignContent(p)
 		} else {
+			if p.im == nil && p.context != nil {
+				p.im = inBodyIM
+			}
 			consumed = p.im(p)
 		}
 	}
