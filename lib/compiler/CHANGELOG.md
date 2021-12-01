@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.5.4
+
+### Patch Changes
+
+- f2e0322: Do not reconstruct active formatting elements on expression start
+- 0103285: Bugfix: expressions in table context
+
 ## 0.5.3
 
 ### Patch Changes
