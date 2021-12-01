@@ -215,6 +215,12 @@ func (t Token) String() string {
 		return "<!--" + t.Data + "-->"
 	case DoctypeToken:
 		return "<!DOCTYPE " + t.Data + ">"
+	case FrontmatterFenceToken:
+		return "---"
+	case StartExpressionToken:
+		return "{"
+	case EndExpressionToken:
+		return "}"
 	}
 	return "Invalid(" + strconv.Itoa(int(t.Type)) + ")"
 }
