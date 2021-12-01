@@ -1432,7 +1432,6 @@ func inBodyIM(p *parser) bool {
 			Loc:  p.generateLoc(),
 		})
 	case StartExpressionToken:
-		p.reconstructActiveFormattingElements()
 		p.addExpression()
 		p.originalIM = inBodyIM
 		p.im = inExpressionIM
