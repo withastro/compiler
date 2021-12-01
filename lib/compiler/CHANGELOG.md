@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.5.3
+
+### Patch Changes
+
+- 50cbc57: Fix fragment expression behavior edge case
+
 ## 0.5.2
 
 ### Patch Changes
