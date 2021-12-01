@@ -1247,6 +1247,25 @@ const items = ["Dog", "Cat", "Platipus"];
 </head><body><div class="container astro-RN5ULUD7">My Text</div></body></html>`,
 			},
 		},
+		{
+			name: "sibling expressions",
+			source: `<html><body>
+  <table>
+  {true ? (<tr><td>Row 1</td></tr>) : null}
+  {true ? (<tr><td>Row 2</td></tr>) : null}
+  {true ? (<tr><td>Row 3</td></tr>) : null}
+  </table>
+</body>`,
+			want: want{
+				code: fmt.Sprintf(`<html><head></head><body>
+  <table>
+  ${true ? ($$render%s<tr><td>Row 1</td></tr>%s) : null}
+  ${true ? ($$render%s<tr><td>Row 2</td></tr>%s) : null}
+  ${true ? ($$render%s<tr><td>Row 3</td></tr>%s) : null}
+
+</table></body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+			},
+		},
 	}
 
 	for _, tt := range tests {

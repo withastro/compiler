@@ -1698,7 +1698,7 @@ func inTableIM(p *parser) bool {
 		}
 	case StartExpressionToken:
 		p.addExpression()
-		p.setOriginalIM()
+		p.originalIM = inTableIM
 		p.im = inExpressionIM
 		return true
 	case StartTagToken:
