@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: ['main']
 
+# Automatically cancel in-progress actions on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -33,7 +38,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 14.x
+          node-version: 14
+          cache: 'yarn'
 
       - name: Get tinygo runtime
         run: |
@@ -45,10 +51,10 @@ jobs:
           tinygo build -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
           cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
-      - name: Install deps
+      - name: Install NPM Dependencies
+        run: yarn install --prefer-offline --frozen-lockfile --ignore-engines
         env:
           CI: true
-        run: yarn --frozen-lockfile --ignore-engines
 
       - name: Build JS
         run: yarn build:compiler
