@@ -20,7 +20,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 14.x
+          node-version: 14
+          cache: 'yarn'
 
       - name: Get tinygo runtime
         run: |
@@ -32,16 +33,18 @@ jobs:
           tinygo build -no-debug -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
           cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
-      - name: Install dependencies
+      - name: Install NPM Dependencies
+        run: yarn install --prefer-offline --frozen-lockfile --ignore-engines
         env:
           CI: true
-        run: yarn --frozen-lockfile --ignore-engines
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@master
+        uses: changesets/action@v1
         with:
           publish: yarn release
+          commit: '[ci] release'
+          title: '[ci] release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
