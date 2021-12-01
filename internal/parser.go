@@ -729,7 +729,7 @@ func beforeHeadIM(p *parser) bool {
 		p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
 		p.addExpression()
 		p.setOriginalIM()
-		p.im = expressionIM
+		p.im = inExpressionIM
 		return true
 	}
 	p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
@@ -891,7 +891,7 @@ func inHeadIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.setOriginalIM()
-		p.im = expressionIM
+		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:
 		p.addLoc()
@@ -1434,7 +1434,9 @@ func inBodyIM(p *parser) bool {
 	case StartExpressionToken:
 		p.reconstructActiveFormattingElements()
 		p.addExpression()
-		return true
+		p.setOriginalIM()
+		p.im = inExpressionIM
+		return false
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
@@ -1649,10 +1651,10 @@ func (p *parser) inBodyEndTagOther(tagAtom a.Atom, tagName string) {
 func textIM(p *parser) bool {
 	switch p.tok.Type {
 	case ErrorToken:
-		break
+		return inBodyIM(p)
 	case TextToken:
 		d := p.tok.Data
-		if n := p.oe.top(); n.DataAtom == a.Textarea && n.FirstChild == nil {
+		if n := p.oe.top(); n != nil && n.DataAtom == a.Textarea && n.FirstChild == nil {
 			// Ignore a newline at the start of a <textarea> block.
 			if d != "" && d[0] == '\r' {
 				d = d[1:]
@@ -1694,7 +1696,7 @@ func inTableIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.setOriginalIM()
-		p.im = expressionIM
+		p.im = inExpressionIM
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
@@ -2129,7 +2131,7 @@ func inSelectIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.setOriginalIM()
-		p.im = expressionIM
+		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:
 		p.addLoc()
@@ -2207,6 +2209,12 @@ func inTemplateIM(p *parser) bool {
 			p.im = inBodyIM
 			return false
 		}
+	case StartExpressionToken:
+		p.addExpression()
+		p.templateStack.pop()
+		p.templateStack = append(p.templateStack, inExpressionIM)
+		p.im = inExpressionIM
+		return true
 	case EndTagToken:
 		switch p.tok.DataAtom {
 		case a.Template:
@@ -2486,7 +2494,7 @@ func frontmatterIM(p *parser) bool {
 	}
 }
 
-func expressionIM(p *parser) bool {
+func inExpressionIM(p *parser) bool {
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
@@ -2504,7 +2512,7 @@ func expressionIM(p *parser) bool {
 				origIm := p.originalIM
 				p.originalIM = nil
 				ret := inHeadIM(p)
-				p.im = expressionIM
+				p.im = inExpressionIM
 				p.originalIM = origIm
 				return ret
 			default:
@@ -2516,7 +2524,7 @@ func expressionIM(p *parser) bool {
 						p.parseImpliedToken(StartTagToken, a.Body, a.Body.String())
 						n.Parent.RemoveChild(n)
 						p.addChild(n)
-						p.im = expressionIM
+						p.im = inExpressionIM
 						break
 					}
 
