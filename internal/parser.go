@@ -1434,9 +1434,9 @@ func inBodyIM(p *parser) bool {
 	case StartExpressionToken:
 		p.reconstructActiveFormattingElements()
 		p.addExpression()
-		p.setOriginalIM()
+		p.originalIM = inBodyIM
 		p.im = inExpressionIM
-		return false
+		return true
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
@@ -1651,7 +1651,10 @@ func (p *parser) inBodyEndTagOther(tagAtom a.Atom, tagName string) {
 func textIM(p *parser) bool {
 	switch p.tok.Type {
 	case ErrorToken:
-		return inBodyIM(p)
+		if p.context != nil {
+			return inBodyIM(p)
+		}
+		break
 	case TextToken:
 		d := p.tok.Data
 		if n := p.oe.top(); n != nil && n.DataAtom == a.Textarea && n.FirstChild == nil {
