@@ -13,6 +13,15 @@ astro-wasm: cmd/astro/*.go internal/*/*.go go.mod
 	tinygo build -no-debug -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
 	cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
+# alias to make astro-wasm
+wasm:
+	make astro-wasm
+
+# useful for local debugging, retains go stacktrace for panics
+debug: cmd/astro/*.go internal/*/*.go go.mod
+	tinygo build -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
+	cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
+
 publish-node: 
 	make astro-wasm
 	cd lib/compiler && npm run build
