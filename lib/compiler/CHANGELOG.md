@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.5.2
+
+### Patch Changes
+
+- 8f0e3d7: Fix fragment parsing bugs when frontmatter is missing or top-level expressions are present
+
 ## 0.5.1
 
 ### Patch Changes
