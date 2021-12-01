@@ -1654,7 +1654,6 @@ func textIM(p *parser) bool {
 		if p.context != nil {
 			return inBodyIM(p)
 		}
-		break
 	case TextToken:
 		d := p.tok.Data
 		if n := p.oe.top(); n != nil && n.DataAtom == a.Textarea && n.FirstChild == nil {
