@@ -330,6 +330,13 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "nested expressions",
+			source: `<article>{(previous || next) && <aside>{previous && <div>Previous Article: <a rel="prev" href={new URL(previous.link, Astro.site).pathname}>{previous.text}</a></div>}{next && <div>Next Article: <a rel="next" href={new URL(next.link, Astro.site).pathname}>{next.text}</a></div>}</aside>}</article>`,
+			want: want{
+				code: `<html><head></head><body><article>${(previous || next) && $$render` + BACKTICK + `<aside>${previous && $$render` + BACKTICK + `<div>Previous Article: <a rel="prev"${$$addAttribute(new URL(previous.link, Astro.site).pathname, "href")}>${previous.text}</a></div>` + BACKTICK + `}${next && $$render` + BACKTICK + `<div>Next Article: <a rel="next"${$$addAttribute(new URL(next.link, Astro.site).pathname, "href")}>${next.text}</a></div>` + BACKTICK + `}</aside>` + BACKTICK + `}</article></body></html>`,
+			},
+		},
+		{
 			name: "expressions with JS comments",
 			source: `---
 const items = ['red', 'yellow', 'blue'];
