@@ -294,7 +294,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if n.FirstChild != nil {
 			p.print("${")
 		} else {
-			p.print("${undefined")
+			p.print("${(void 0)")
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {

@@ -1284,14 +1284,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "Empty expression",
 			source: "<body>({})</body>",
 			want: want{
-				code: `<html><head></head><body>(${undefined})</body></html>`,
+				code: `<html><head></head><body>(${(void 0)})</body></html>`,
 			},
 		},
 		{
 			name:   "Empty attribute expression",
 			source: "<body attr={}></body>",
 			want: want{
-				code: `<html><head></head><body${$$addAttribute(undefined, "attr")}></body></html>`,
+				code: `<html><head></head><body${$$addAttribute((void 0), "attr")}></body></html>`,
 			},
 		},
 	}

@@ -168,7 +168,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.print(":")
 			p.addSourceMapping(a.ValLoc)
 			if a.Val == "" {
-				p.print(`(undefined)`)
+				p.print(`(void 0)`)
 			} else {
 				p.print(`(` + a.Val + `)`)
 			}
@@ -233,7 +233,7 @@ func (p *printer) printAttribute(attr astro.Attribute) {
 		p.print(fmt.Sprintf("${%s(", ADD_ATTRIBUTE))
 		p.addSourceMapping(attr.ValLoc)
 		if strings.TrimSpace(attr.Val) == "" {
-			p.print("undefined")
+			p.print("(void 0)")
 		} else {
 			p.print(strings.TrimSpace(attr.Val))
 		}
