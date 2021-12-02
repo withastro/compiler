@@ -1367,6 +1367,18 @@ loop:
 			break loop
 		}
 
+		// Empty <> Fragment start tag
+		if c == '>' {
+			if x := z.raw.End - len("<>"); z.raw.Start < x {
+				z.raw.End = x
+				z.data.End = x
+				z.tt = TextToken
+				return z.tt
+			}
+			z.tt = StartTagToken
+			return z.tt
+		}
+
 		// We're in an element again, so open braces should open an expression
 		z.openBraceIsExpressionStart = true
 		switch {
@@ -1378,10 +1390,6 @@ loop:
 			// We use CommentToken to mean any of "<!--actual comments-->",
 			// "<!DOCTYPE declarations>" and "<?xml processing instructions?>".
 			tokenType = CommentToken
-		case c == '>':
-			// Empty <> Fragment start tag
-			z.tt = StartTagToken
-			return z.tt
 		default:
 			raw := z.Raw()
 			// Error: encountered an attempted use of <> syntax with attributes, like `< slot="named">Hello world!</>`
