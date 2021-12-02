@@ -197,6 +197,15 @@ func TestBasic(t *testing.T) {
 			`<Fragment>foo</Fragment>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
+		{
+			"Markdown codeblock",
+			fmt.Sprintf(`<Markdown>
+%s%s%s
+open brace {
+%s%s%s
+</Markdown>`, "`", "`", "`", "`", "`", "`"),
+			[]TokenType{StartTagToken, TextToken, TextToken, TextToken, TextToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
