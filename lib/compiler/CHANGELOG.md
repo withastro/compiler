@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.5.6
+
+### Patch Changes
+
+- 7ca419e: Improve behavior of empty expressions in body and attributes, where `{}` is equivalent to `{(void 0)}`
+
 ## 0.5.5
 
 ### Patch Changes
