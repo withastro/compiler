@@ -1280,6 +1280,20 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: fmt.Sprintf(`${$$renderComponent($$result,'XElement',XElement,{...(attrs)})}${onLoadString ? $$render%s<script></script>%s : null }`, BACKTICK, BACKTICK),
 			},
 		},
+		{
+			name:   "Empty expression",
+			source: "<body>({})</body>",
+			want: want{
+				code: `<html><head></head><body>(${undefined})</body></html>`,
+			},
+		},
+		{
+			name:   "Empty attribute expression",
+			source: "<body attr={}></body>",
+			want: want{
+				code: `<html><head></head><body${$$addAttribute(undefined, "attr")}></body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

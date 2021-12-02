@@ -211,6 +211,11 @@ open brace {
 </Markdown>`, "`", "`", "`", "`", "`", "`"),
 			[]TokenType{StartTagToken, TextToken, TextToken, TextToken, TextToken, EndTagToken},
 		},
+		{
+			"Empty expression",
+			"({})",
+			[]TokenType{TextToken, StartExpressionToken, EndExpressionToken, TextToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

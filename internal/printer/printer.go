@@ -167,7 +167,11 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.print(`"` + a.Key + `"`)
 			p.print(":")
 			p.addSourceMapping(a.ValLoc)
-			p.print(`(` + a.Val + `)`)
+			if a.Val == "" {
+				p.print(`(undefined)`)
+			} else {
+				p.print(`(` + a.Val + `)`)
+			}
 		case astro.SpreadAttribute:
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
 			p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
@@ -228,7 +232,11 @@ func (p *printer) printAttribute(attr astro.Attribute) {
 	case astro.ExpressionAttribute:
 		p.print(fmt.Sprintf("${%s(", ADD_ATTRIBUTE))
 		p.addSourceMapping(attr.ValLoc)
-		p.print(strings.TrimSpace(attr.Val))
+		if strings.TrimSpace(attr.Val) == "" {
+			p.print("undefined")
+		} else {
+			p.print(strings.TrimSpace(attr.Val))
+		}
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
 	case astro.SpreadAttribute:
