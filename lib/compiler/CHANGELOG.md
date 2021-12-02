@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.5.5
+
+### Patch Changes
+
+- 7a41d7b: Fix `<>` syntax edge case inside of expressions
+- b0d35b9: Fix edge case with conditional scripts
+
 ## 0.5.4
 
 ### Patch Changes
