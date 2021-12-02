@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🏡 Main Astro Repo
+    url: https://github.com/withastro/astro
+    about: Unsure if your bug is related to the compiler? Please open an issue in the main Astro repo!
+  - name: 👾 Chat
+    url: https://astro.build/chat
+    about: Our Discord server is active, come join us!
+  - name: 💁 Support
+    url: https://astro.build/chat
+    about: 'This issue tracker is not for support questions. Join us on Discord for assistance!'
