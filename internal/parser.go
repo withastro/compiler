@@ -780,7 +780,9 @@ func inHeadIM(p *parser) bool {
 			return true
 		case a.Script, a.Title:
 			p.addElement()
-			p.setOriginalIM()
+			if p.originalIM == nil {
+				p.setOriginalIM()
+			}
 			p.im = textIM
 			if p.hasSelfClosingToken {
 				p.addLoc()
@@ -2551,6 +2553,9 @@ func inExpressionIM(p *parser) bool {
 		return true
 	}
 	p.im = p.originalIM
+	if p.im == nil {
+		p.im = inBodyIM
+	}
 	p.originalIM = nil
 	return p.tok.Type == EndTagToken
 }

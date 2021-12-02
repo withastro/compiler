@@ -1273,6 +1273,13 @@ const items = ["Dog", "Cat", "Platipus"];
 </table></body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
 			},
 		},
+		{
+			name:   "XElement",
+			source: `<XElement {...attrs}></XElement>{onLoadString ? <script></script> : null }`,
+			want: want{
+				code: fmt.Sprintf(`${$$renderComponent($$result,'XElement',XElement,{...(attrs)})}${onLoadString ? $$render%s<script></script>%s : null }`, BACKTICK, BACKTICK),
+			},
+		},
 	}
 
 	for _, tt := range tests {
