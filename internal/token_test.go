@@ -193,6 +193,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"fragment shorthand",
+			`<h1>A{cond && <>item <span>B{text}</span></>}</h1>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndTagToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"fragment",
 			`<Fragment>foo</Fragment>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
