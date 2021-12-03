@@ -2499,6 +2499,9 @@ func frontmatterIM(p *parser) bool {
 }
 
 func inExpressionIM(p *parser) bool {
+	// p.afe (active formatting elements) should be cleared when entering an expression
+	p.clearActiveFormattingElements()
+
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
@@ -2553,9 +2556,6 @@ func inExpressionIM(p *parser) bool {
 		return true
 	}
 	p.im = p.originalIM
-	if p.im == nil {
-		p.im = inBodyIM
-	}
 	p.originalIM = nil
 	return p.tok.Type == EndTagToken
 }
@@ -2645,7 +2645,6 @@ func parseForeignContent(p *parser) bool {
 		}
 		return true
 	case StartExpressionToken:
-		p.reconstructActiveFormattingElements()
 		p.addExpression()
 		return true
 	case EndExpressionToken:
