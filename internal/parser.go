@@ -1337,7 +1337,9 @@ func inBodyIM(p *parser) bool {
 		case a.Caption, a.Col, a.Colgroup, a.Frame, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
 			// Ignore the token.
 		default:
-			p.reconstructActiveFormattingElements()
+			if !isComponent(p.tok.Data) {
+				p.reconstructActiveFormattingElements()
+			}
 			p.addElement()
 			if p.hasSelfClosingToken {
 				p.oe.pop()
@@ -2553,9 +2555,6 @@ func inExpressionIM(p *parser) bool {
 		return true
 	}
 	p.im = p.originalIM
-	if p.im == nil {
-		p.im = inBodyIM
-	}
 	p.originalIM = nil
 	return p.tok.Type == EndTagToken
 }
@@ -2645,7 +2644,6 @@ func parseForeignContent(p *parser) bool {
 		}
 		return true
 	case StartExpressionToken:
-		p.reconstructActiveFormattingElements()
 		p.addExpression()
 		return true
 	case EndExpressionToken:

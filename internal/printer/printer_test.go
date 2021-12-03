@@ -296,6 +296,20 @@ const items = [0, 1, 2];
 			},
 		},
 		{
+			name:   "map without component",
+			source: `<header><nav>{menu.map((item) => <a href={item.href}>{item.title}</a>)}</nav></header>`,
+			want: want{
+				code: fmt.Sprintf(`<html><head></head><body><header><nav>${menu.map((item) => $$render%s<a${$$addAttribute(item.href, "href")}>${item.title}</a>%s)}</nav></header></body></html>`, BACKTICK, BACKTICK),
+			},
+		},
+		{
+			name:   "map with component",
+			source: `<header><nav>{menu.map((item) => <a href={item.href}>{item.title}</a>)}</nav><Hello/></header>`,
+			want: want{
+				code: fmt.Sprintf(`<html><head></head><body><header><nav>${menu.map((item) => $$render%s<a${$$addAttribute(item.href, "href")}>${item.title}</a>%s)}</nav>${$$renderComponent($$result,'Hello',Hello,{})}</header></body></html>`, BACKTICK, BACKTICK),
+			},
+		},
+		{
 			name: "map nested",
 			source: `---
 const groups = [[0, 1, 2], [3, 4, 5]];
