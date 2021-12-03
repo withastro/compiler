@@ -1337,9 +1337,7 @@ func inBodyIM(p *parser) bool {
 		case a.Caption, a.Col, a.Colgroup, a.Frame, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
 			// Ignore the token.
 		default:
-			if !isComponent(p.tok.Data) {
-				p.reconstructActiveFormattingElements()
-			}
+			p.reconstructActiveFormattingElements()
 			p.addElement()
 			if p.hasSelfClosingToken {
 				p.oe.pop()
@@ -2501,6 +2499,9 @@ func frontmatterIM(p *parser) bool {
 }
 
 func inExpressionIM(p *parser) bool {
+	// p.afe (active formatting elements) should be cleared when entering an expression
+	p.clearActiveFormattingElements()
+
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
