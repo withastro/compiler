@@ -1294,6 +1294,13 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `<html><head></head><body${$$addAttribute((void 0), "attr")}></body></html>`,
 			},
 		},
+		{
+			name:   "simple ternary",
+			source: `{link ? <a href="/">{link}</a> : <div>no link</div>}`,
+			want: want{
+				code: fmt.Sprintf(`<html><head></head><body>${link ? $$render%s<a href="/">${link}</a>%s : $$render%s<div>no link</div>%s}</body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+			},
+		},
 	}
 
 	for _, tt := range tests {
