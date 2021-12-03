@@ -277,6 +277,13 @@ import * as components from '../components';
 			},
 		},
 		{
+			name:   "simple ternary",
+			source: `<body>{link ? <a href="/">{link}</a> : <div>no link</div>}</body>`,
+			want: want{
+				code: fmt.Sprintf(`<html><head></head><body>${link ? $$render%s<a href="/">${link}</a>%s : $$render%s<div>no link</div>%s}</body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+			},
+		},
+		{
 			name: "map basic",
 			source: `---
 const items = [0, 1, 2];
