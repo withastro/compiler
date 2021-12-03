@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.5.7
+
+### Patch Changes
+
+- 75bd730: Fix regression with Components mixed with active formatting elements
+
 ## 0.5.6
 
 ### Patch Changes
