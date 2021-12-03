@@ -23,6 +23,7 @@ type printer struct {
 	builder            sourcemap.ChunkBuilder
 	hasFuncPrelude     bool
 	hasInternalImports bool
+	hasCSSImports      bool
 }
 
 var TEMPLATE_TAG = "$$render"
@@ -69,6 +70,19 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print(importSpecifier)
 	p.print("\";\n")
 	p.hasInternalImports = true
+}
+
+func (p *printer) printCSSImports(cssLen int) {
+	if p.hasCSSImports {
+		return
+	}
+	i := 0
+	for i < cssLen {
+		p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.css\";", p.opts.Filename, i))
+		i++
+	}
+	p.print("\n")
+	p.hasCSSImports = true
 }
 
 func (p *printer) printReturnOpen() {

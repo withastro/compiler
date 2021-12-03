@@ -1318,7 +1318,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			hash := astro.HashFromSource(code)
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
-			result := PrintToJS(code, doc, transform.TransformOptions{
+			result := PrintToJS(code, doc, 0, transform.TransformOptions{
 				Scope:       "astro-XXXX",
 				Site:        "https://astro.build",
 				InternalURL: "http://localhost:3000/",

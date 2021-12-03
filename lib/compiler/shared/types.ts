@@ -14,6 +14,7 @@ export interface TransformOptions {
 }
 
 export interface TransformResult {
+  css: string[];
   code: string;
   map: string;
 }
