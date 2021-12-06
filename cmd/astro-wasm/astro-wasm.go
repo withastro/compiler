@@ -34,6 +34,13 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
+func jsBool(j js.Value) bool {
+	if j.IsUndefined() || j.IsNull() {
+		return false
+	}
+	return j.Bool()
+}
+
 func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
 	filename := jsString(options.Get("sourcefile"))
 	if filename == "" {
@@ -66,7 +73,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	}
 
 	staticExtraction := false
-	if options.Get("experimentalStaticExtraction").Bool() {
+	if jsBool(options.Get("experimentalStaticExtraction")) {
 		staticExtraction = true
 	}
 
