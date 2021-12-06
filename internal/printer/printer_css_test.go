@@ -2,7 +2,6 @@ package printer
 
 import (
 	"fmt"
-	"math/rand"
 	"strings"
 	"testing"
 
@@ -12,11 +11,6 @@ import (
 )
 
 func TestPrinterCSS(t *testing.T) {
-	longRandomString := ""
-	for i := 0; i < 4080; i++ {
-		longRandomString += string(NON_WHITESPACE_CHARS[rand.Intn(len(NON_WHITESPACE_CHARS))])
-	}
-
 	tests := []testcase{
 		{
 			name: "styles (no frontmatter)",

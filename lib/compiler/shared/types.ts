@@ -11,6 +11,7 @@ export interface TransformOptions {
   as?: 'document' | 'fragment';
   projectRoot?: string;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<PreprocessorResult>;
+  experimentalStaticExtraction?: boolean;
 }
 
 export interface TransformResult {
