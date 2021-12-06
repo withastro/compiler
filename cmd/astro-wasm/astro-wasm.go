@@ -65,17 +65,23 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		projectRoot = "."
 	}
 
+	staticExtraction := false
+	if options.Get("experimentalStaticExtraction").Bool() {
+		staticExtraction = true
+	}
+
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		As:              as,
-		Scope:           hash,
-		Filename:        filename,
-		InternalURL:     internalURL,
-		SourceMap:       sourcemap,
-		Site:            site,
-		ProjectRoot:     projectRoot,
-		PreprocessStyle: preprocessStyle,
+		As:               as,
+		Scope:            hash,
+		Filename:         filename,
+		InternalURL:      internalURL,
+		SourceMap:        sourcemap,
+		Site:             site,
+		ProjectRoot:      projectRoot,
+		PreprocessStyle:  preprocessStyle,
+		StaticExtraction: staticExtraction,
 	}
 }
 
@@ -169,14 +175,16 @@ func Transform() interface{} {
 			// Perform CSS and element scoping as needed
 			transform.Transform(doc, transformOptions)
 
-			css_result := printer.PrintCSS(source, doc, transformOptions)
-			cssLen := len(css_result.Output)
-			result := printer.PrintToJS(source, doc, cssLen, transformOptions)
-
 			css := []string{}
-			for _, bytes := range css_result.Output {
-				css = append(css, string(bytes))
+			// Only perform static CSS extraction if the flag is passed in.
+			if transformOptions.StaticExtraction {
+				css_result := printer.PrintCSS(source, doc, transformOptions)
+				for _, bytes := range css_result.Output {
+					css = append(css, string(bytes))
+				}
 			}
+
+			result := printer.PrintToJS(source, doc, len(css), transformOptions)
 
 			switch transformOptions.SourceMap {
 			case "external":
