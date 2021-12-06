@@ -78,6 +78,7 @@ func (p *printer) printCSSImports(cssLen int) {
 	}
 	i := 0
 	for i < cssLen {
+		// import '/src/pages/index.astro?astro&type=style&index=0&lang.css';
 		p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.css\";", p.opts.Filename, i))
 		i++
 	}
