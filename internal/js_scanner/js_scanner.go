@@ -48,11 +48,11 @@ func FindRenderBody(source []byte) int {
 			for {
 				next, nextValue := l.Next()
 				i += len(nextValue)
-				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
-					break
-				}
 				if next == js.StringToken {
 					foundSpecifier = true
+				}
+				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
+					break
 				}
 				if !foundAssertion && next == js.IdentifierToken && strings.ToLower(string(nextValue)) == "assert" {
 					foundAssertion = true
