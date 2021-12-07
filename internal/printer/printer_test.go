@@ -142,6 +142,21 @@ const b = 0;`},
 			},
 		},
 		{
+			name: "import assertions",
+			source: `---
+import data from "test" assert { type: 'json' };
+---
+<html><head></head><body></body></html>`,
+			want: want{
+				frontmatter: []string{
+					`import data from "test" assert { type: 'json' };`,
+				},
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				styles:   []string{},
+				code:     `<html><head></head><body></body></html>`,
+			},
+		},
+		{
 			name: "component",
 			source: `---
 import VueComponent from '../components/Vue.vue';

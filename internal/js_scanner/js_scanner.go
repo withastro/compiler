@@ -304,6 +304,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 		// then we can exit after the following line terminator or semicolon
 		if token == js.ImportToken {
 			i += len(value)
+			foundSpecifier := false
 			specifier := ""
 			imports := make([]Import, 0)
 			importState := ImportDefault
@@ -312,7 +313,8 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 				next, nextValue := l.Next()
 				i += len(nextValue)
 
-				if next == js.StringToken {
+				if !foundSpecifier && next == js.StringToken {
+					foundSpecifier = true
 					specifier = string(nextValue[1 : len(nextValue)-1])
 				}
 
