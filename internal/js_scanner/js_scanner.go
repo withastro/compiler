@@ -44,13 +44,29 @@ func FindRenderBody(source []byte) int {
 		if token == js.ImportToken {
 			i += len(value)
 			foundSpecifier := false
+			foundAssertion := false
 			for {
 				next, nextValue := l.Next()
 				i += len(nextValue)
 				if next == js.StringToken {
 					foundSpecifier = true
 				}
-				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) {
+				if !foundAssertion && next == js.IdentifierToken && strings.ToLower(string(nextValue)) == "assert" {
+					foundAssertion = true
+				}
+				if foundSpecifier {
+					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
+						pairs[nextValue[0]]++
+					} else if nextValue[0] == '}' {
+						pairs['{']--
+					} else if nextValue[0] == ')' {
+						pairs['(']--
+					} else if nextValue[0] == ']' {
+						pairs['[']--
+					}
+				}
+
+				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
 					break
 				}
 			}
@@ -302,47 +318,29 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 		// then we can exit after the following line terminator or semicolon
 		if token == js.ImportToken {
 			i += len(value)
-			foundAssertion := false
-			foundSpecifier := false
 			specifier := ""
+			assertion := ""
+			hasSpecifier := false
+			hasAssertion := false
 			imports := make([]Import, 0)
 			importState := ImportDefault
 			currImport := Import{}
+			pairs := make(map[byte]int)
 			for {
 				next, nextValue := l.Next()
 				i += len(nextValue)
 
-				if !foundSpecifier && next == js.StringToken {
-					foundSpecifier = true
-					specifier = string(nextValue[1 : len(nextValue)-1])
-				}
-
-				if foundSpecifier {
+				if (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
 					if currImport.ExportName != "" {
 						if currImport.LocalName == "" {
 							currImport.LocalName = currImport.ExportName
 						}
 						imports = append(imports, currImport)
 					}
-
-					assertions := ""
-
-					for {
-						next, nextValue := l.Next()
-						i += len(nextValue)
-						if next == js.IdentifierToken && strings.ToLower(string(nextValue)) == "assert" {
-							foundAssertion = true
-						} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
-							break
-						} else if foundAssertion && next != js.WhitespaceToken {
-							assertions += string(nextValue)
-						}
-					}
-
 					return i, ImportStatement{
 						Imports:    imports,
 						Specifier:  specifier,
-						Assertions: assertions,
+						Assertions: assertion,
 					}
 				}
 
@@ -350,17 +348,40 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					continue
 				}
 
-				if next == js.OpenBraceToken {
-					importState = ImportNamed
+				if hasAssertion {
+					assertion += string(nextValue)
 				}
 
-				// Special case for import assertions, probably should be tracking that this is inside of an import statement.
-				if token == js.IdentifierToken && string(value) == "assert" {
-					i += len(value)
+				if js.IsPunctuator(next) {
+					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
+						pairs[nextValue[0]]++
+					} else if nextValue[0] == '}' {
+						pairs['{']--
+					} else if nextValue[0] == ')' {
+						pairs['(']--
+					} else if nextValue[0] == ']' {
+						pairs['[']--
+					}
+
 					continue
 				}
 
-				if next == js.CommaToken {
+				if !hasSpecifier && next == js.StringToken {
+					specifier = string(nextValue[1 : len(nextValue)-1])
+					hasSpecifier = true
+					continue
+				}
+
+				if hasSpecifier && !hasAssertion && next == js.IdentifierToken && strings.ToLower(string(nextValue)) == "assert" {
+					hasAssertion = true
+					continue
+				}
+
+				if !hasSpecifier && next == js.OpenBraceToken {
+					importState = ImportNamed
+				}
+
+				if !hasSpecifier && next == js.CommaToken {
 					if currImport.LocalName == "" {
 						currImport.LocalName = currImport.ExportName
 					}
@@ -368,7 +389,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					currImport = Import{}
 				}
 
-				if next == js.IdentifierToken {
+				if !hasSpecifier && next == js.IdentifierToken {
 					if currImport.ExportName != "" {
 						currImport.LocalName = string(nextValue)
 					} else if importState == ImportNamed {
@@ -379,7 +400,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					}
 				}
 
-				if next == js.MulToken {
+				if !hasSpecifier && next == js.MulToken {
 					currImport.ExportName = string(nextValue)
 				}
 
