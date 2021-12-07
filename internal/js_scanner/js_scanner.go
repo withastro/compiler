@@ -2,7 +2,6 @@ package js_scanner
 
 import (
 	"io"
-	"strings"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
@@ -54,7 +53,7 @@ func FindRenderBody(source []byte) int {
 				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
 					break
 				}
-				if !foundAssertion && next == js.IdentifierToken && strings.ToLower(string(nextValue)) == "assert" {
+				if !foundAssertion && next == js.IdentifierToken && string(nextValue) == "assert" {
 					foundAssertion = true
 				}
 				if foundSpecifier {
@@ -319,8 +318,8 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 			i += len(value)
 			specifier := ""
 			assertion := ""
-			hasSpecifier := false
-			hasAssertion := false
+			foundSpecifier := false
+			foundAssertion := false
 			imports := make([]Import, 0)
 			importState := ImportDefault
 			currImport := Import{}
@@ -329,7 +328,13 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 				next, nextValue := l.Next()
 				i += len(nextValue)
 
-				if (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
+				if !foundSpecifier && next == js.StringToken {
+					specifier = string(nextValue[1 : len(nextValue)-1])
+					foundSpecifier = true
+					continue
+				}
+
+				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
 					if currImport.ExportName != "" {
 						if currImport.LocalName == "" {
 							currImport.LocalName = currImport.ExportName
@@ -347,7 +352,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					continue
 				}
 
-				if hasAssertion {
+				if foundAssertion {
 					assertion += string(nextValue)
 				}
 
@@ -365,22 +370,22 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					continue
 				}
 
-				if !hasSpecifier && next == js.StringToken {
+				if !foundAssertion && next == js.StringToken {
 					specifier = string(nextValue[1 : len(nextValue)-1])
-					hasSpecifier = true
+					foundSpecifier = true
 					continue
 				}
 
-				if hasSpecifier && !hasAssertion && next == js.IdentifierToken && strings.ToLower(string(nextValue)) == "assert" {
-					hasAssertion = true
+				if !foundAssertion && next == js.IdentifierToken && string(nextValue) == "assert" {
+					foundAssertion = true
 					continue
 				}
 
-				if !hasSpecifier && next == js.OpenBraceToken {
+				if !foundAssertion && next == js.OpenBraceToken {
 					importState = ImportNamed
 				}
 
-				if !hasSpecifier && next == js.CommaToken {
+				if !foundAssertion && next == js.CommaToken {
 					if currImport.LocalName == "" {
 						currImport.LocalName = currImport.ExportName
 					}
@@ -388,7 +393,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					currImport = Import{}
 				}
 
-				if !hasSpecifier && next == js.IdentifierToken {
+				if !foundAssertion && next == js.IdentifierToken {
 					if currImport.ExportName != "" {
 						currImport.LocalName = string(nextValue)
 					} else if importState == ImportNamed {
@@ -399,7 +404,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					}
 				}
 
-				if !hasSpecifier && next == js.MulToken {
+				if !foundAssertion && next == js.MulToken {
 					currImport.ExportName = string(nextValue)
 				}
 
