@@ -151,7 +151,7 @@ import data from "test" assert { type: 'json' };
 				frontmatter: []string{
 					`import data from "test" assert { type: 'json' };`,
 				},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {type:'json'} }`}},
 				styles:   []string{},
 				code:     `<html><head></head><body></body></html>`,
 			},
@@ -173,7 +173,7 @@ import VueComponent from '../components/Vue.vue';
 				frontmatter: []string{
 					`import VueComponent from '../components/Vue.vue';`,
 				},
-				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components/Vue.vue' }`}},
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: '../components/Vue.vue', assert: {} }`}},
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -199,7 +199,7 @@ import * as ns from '../components';
 			want: want{
 				frontmatter: []string{`import * as ns from '../components';`},
 				styles:      []string{},
-				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: '../components' }`}},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: '../components', assert: {} }`}},
 				code: `<html>
   <head>
     <title>Hello world</title>
@@ -410,7 +410,7 @@ import Component from "test";
 </Component>`,
 			want: want{
 				frontmatter: []string{`import Component from "test";`},
-				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
 				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
@@ -426,7 +426,7 @@ import Component from 'test';
 </Component>`,
 			want: want{
 				frontmatter: []string{`import Component from 'test';`},
-				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
 				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
@@ -598,7 +598,7 @@ import Counter from '../components/Counter.jsx'`,
 // https://docs.astro.build/core-concepts/astro-components/`},
 				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				metadata: metadata{
-					modules:            []string{`{ module: $$module1, specifier: '../components/Counter.jsx' }`},
+					modules:            []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
 					hydratedComponents: []string{`Counter`},
 				},
 				code: `<html lang="en" class="astro-HMNNHVCQ">
@@ -631,8 +631,8 @@ import Widget2 from '../components/Widget2.astro';`},
 				styles: []string{},
 				metadata: metadata{
 					modules: []string{
-						`{ module: $$module1, specifier: '../components/Widget.astro' }`,
-						`{ module: $$module2, specifier: '../components/Widget2.astro' }`},
+						`{ module: $$module1, specifier: '../components/Widget.astro', assert: {} }`,
+						`{ module: $$module2, specifier: '../components/Widget2.astro', assert: {} }`},
 				},
 				code: `<html lang="en">
   <head>
@@ -721,7 +721,7 @@ import Widget2 from '../components/Widget2.astro';`},
 			want: want{
 				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
 				styles:      []string{},
-				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
 				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
@@ -748,7 +748,7 @@ import 'test';
 			want: want{
 				frontmatter: []string{`import 'test';`},
 				styles:      []string{},
-				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test' }`}},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
 				code:        `<html><head></head><body>${$$renderComponent($$result,'my-element','my-element',{})}</body></html>`,
 			},
 		},
@@ -771,9 +771,9 @@ import 'custom-element';`,
 					`const name = 'world';`},
 				metadata: metadata{
 					modules: []string{
-						`{ module: $$module1, specifier: 'one' }`,
-						`{ module: $$module2, specifier: 'two' }`,
-						`{ module: $$module3, specifier: 'custom-element' }`,
+						`{ module: $$module1, specifier: 'one', assert: {} }`,
+						`{ module: $$module2, specifier: 'two', assert: {} }`,
+						`{ module: $$module3, specifier: 'custom-element', assert: {} }`,
 					},
 					hydratedComponents: []string{"'my-element'", "Two", "One"},
 				},
@@ -863,8 +863,8 @@ import ZComponent from '../components/ZComponent.jsx';
 import ZComponent from '../components/ZComponent.jsx';`},
 				metadata: metadata{
 					modules: []string{
-						`{ module: $$module1, specifier: '../components/AComponent.jsx' }`,
-						`{ module: $$module2, specifier: '../components/ZComponent.jsx' }`,
+						`{ module: $$module1, specifier: '../components/AComponent.jsx', assert: {} }`,
+						`{ module: $$module2, specifier: '../components/ZComponent.jsx', assert: {} }`,
 					},
 				},
 				code: `<html><head></head><body>
@@ -1034,7 +1034,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 `,
 			want: want{
 				frontmatter: []string{`import { Container, Col, Row } from 'react-bootstrap';`},
-				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap' }`}},
+				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap', assert: {} }`}},
 				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`<h1>Hi!</h1>`,})}`,})}`,})}",
 			},
 		},
@@ -1183,9 +1183,9 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
 }`, BACKTICK, BACKTICK),
 				skipHoist: true,
 				metadata: metadata{
-					modules: []string{`{ module: $$module1, specifier: '../../components/Header.jsx' }`,
-						`{ module: $$module2, specifier: '../../components/Footer.astro' }`,
-						`{ module: $$module3, specifier: '../../components/ProductPageContent.jsx' }`,
+					modules: []string{`{ module: $$module1, specifier: '../../components/Header.jsx', assert: {} }`,
+						`{ module: $$module2, specifier: '../../components/Footer.astro', assert: {} }`,
+						`{ module: $$module3, specifier: '../../components/ProductPageContent.jsx', assert: {} }`,
 					},
 					hydratedComponents: []string{`ProductPageContent`},
 				},
@@ -1372,12 +1372,16 @@ const items = ["Dog", "Cat", "Platipus"];
 				toMatch += "\n\n"
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n"
 			}
-			moduleSpecRe := regexp.MustCompile(`specifier:\s*('[^']+')`)
+			moduleSpecRe := regexp.MustCompile(`specifier:\s*('[^']+'),\s*assert:\s*([^}]+\})`)
 			if len(tt.want.metadata.modules) > 0 {
 				toMatch += "\n\n"
 				for i, m := range tt.want.metadata.modules {
 					spec := moduleSpecRe.FindSubmatch([]byte(m)) // 0: full match, 1: submatch
-					toMatch += fmt.Sprintf("import * as $$module%s from %s;\n", strconv.Itoa(i+1), string(spec[1]))
+					asrt := ""
+					if string(spec[2]) != "{}" {
+						asrt = " assert " + string(spec[2])
+					}
+					toMatch += fmt.Sprintf("import * as $$module%s from %s%s;\n", strconv.Itoa(i+1), string(spec[1]), asrt)
 				}
 			}
 			// build metadata object from provided strings

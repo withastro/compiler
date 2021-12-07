@@ -2,6 +2,7 @@ package js_scanner
 
 import (
 	"io"
+	"strings"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
@@ -85,12 +86,6 @@ func FindRenderBody(source []byte) int {
 					break
 				}
 			}
-			continue
-		}
-
-		// Special case for import assertions, probably should be tracking that this is inside of an import statement.
-		if token == js.IdentifierToken && string(value) == "assert" {
-			i += len(value)
 			continue
 		}
 
@@ -278,10 +273,13 @@ func AccessesPrivateVars(source []byte) bool {
 type Import struct {
 	ExportName string
 	LocalName  string
+	Assertions string
 }
+
 type ImportStatement struct {
-	Imports   []Import
-	Specifier string
+	Imports    []Import
+	Specifier  string
+	Assertions string
 }
 
 type ImportState uint32
@@ -304,6 +302,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 		// then we can exit after the following line terminator or semicolon
 		if token == js.ImportToken {
 			i += len(value)
+			foundAssertion := false
 			foundSpecifier := false
 			specifier := ""
 			imports := make([]Import, 0)
@@ -318,16 +317,32 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					specifier = string(nextValue[1 : len(nextValue)-1])
 				}
 
-				if specifier != "" && (next == js.LineTerminatorToken || next == js.SemicolonToken) {
+				if foundSpecifier {
 					if currImport.ExportName != "" {
 						if currImport.LocalName == "" {
 							currImport.LocalName = currImport.ExportName
 						}
 						imports = append(imports, currImport)
 					}
+
+					assertions := ""
+
+					for {
+						next, nextValue := l.Next()
+						i += len(nextValue)
+						if next == js.IdentifierToken && strings.ToLower(string(nextValue)) == "assert" {
+							foundAssertion = true
+						} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
+							break
+						} else if foundAssertion && next != js.WhitespaceToken {
+							assertions += string(nextValue)
+						}
+					}
+
 					return i, ImportStatement{
-						Imports:   imports,
-						Specifier: specifier,
+						Imports:    imports,
+						Specifier:  specifier,
+						Assertions: assertions,
 					}
 				}
 
@@ -337,6 +352,12 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 
 				if next == js.OpenBraceToken {
 					importState = ImportNamed
+				}
+
+				// Special case for import assertions, probably should be tracking that this is inside of an import statement.
+				if token == js.IdentifierToken && string(value) == "assert" {
+					i += len(value)
+					continue
 				}
 
 				if next == js.CommaToken {
