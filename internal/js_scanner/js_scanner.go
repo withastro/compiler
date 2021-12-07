@@ -356,20 +356,6 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					assertion += string(nextValue)
 				}
 
-				if js.IsPunctuator(next) {
-					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
-						pairs[nextValue[0]]++
-					} else if nextValue[0] == '}' {
-						pairs['{']--
-					} else if nextValue[0] == ')' {
-						pairs['(']--
-					} else if nextValue[0] == ']' {
-						pairs['[']--
-					}
-
-					continue
-				}
-
 				if !foundAssertion && next == js.StringToken {
 					specifier = string(nextValue[1 : len(nextValue)-1])
 					foundSpecifier = true
@@ -406,6 +392,18 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 
 				if !foundAssertion && next == js.MulToken {
 					currImport.ExportName = string(nextValue)
+				}
+
+				if js.IsPunctuator(next) {
+					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
+						pairs[nextValue[0]]++
+					} else if nextValue[0] == '}' {
+						pairs['{']--
+					} else if nextValue[0] == ')' {
+						pairs['(']--
+					} else if nextValue[0] == ']' {
+						pairs['[']--
+					}
 				}
 
 				// if this is import.meta.*, ignore (watch for first dot)
