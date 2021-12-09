@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.6.0
+
+### Minor Changes
+
+- b9e2b4b: Adds option to make CSS be extracted statically
+
 ## 0.5.7
 
 ### Patch Changes
