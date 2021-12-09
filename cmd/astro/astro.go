@@ -53,7 +53,7 @@ const something = await Astro.fetchContent('../*.md');
 		Scope: hash,
 	})
 
-	result := printer.PrintToJS(source, doc, transform.TransformOptions{})
+	result := printer.PrintToJS(source, doc, 0, transform.TransformOptions{})
 
 	content, _ := json.Marshal(source)
 	sourcemap := `{ "version": 3, "sources": ["file.astro"], "names": [], "mappings": "` + string(result.SourceMapChunk.Buffer) + `", "sourcesContent": [` + string(content) + `] }`

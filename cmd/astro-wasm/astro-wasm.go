@@ -34,6 +34,13 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
+func jsBool(j js.Value) bool {
+	if j.IsUndefined() || j.IsNull() {
+		return false
+	}
+	return j.Bool()
+}
+
 func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
 	filename := jsString(options.Get("sourcefile"))
 	if filename == "" {
@@ -65,17 +72,23 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		projectRoot = "."
 	}
 
+	staticExtraction := false
+	if jsBool(options.Get("experimentalStaticExtraction")) {
+		staticExtraction = true
+	}
+
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		As:              as,
-		Scope:           hash,
-		Filename:        filename,
-		InternalURL:     internalURL,
-		SourceMap:       sourcemap,
-		Site:            site,
-		ProjectRoot:     projectRoot,
-		PreprocessStyle: preprocessStyle,
+		As:               as,
+		Scope:            hash,
+		Filename:         filename,
+		InternalURL:      internalURL,
+		SourceMap:        sourcemap,
+		Site:             site,
+		ProjectRoot:      projectRoot,
+		PreprocessStyle:  preprocessStyle,
+		StaticExtraction: staticExtraction,
 	}
 }
 
@@ -89,8 +102,9 @@ type RawSourceMap struct {
 }
 
 type TransformResult struct {
-	Code string `js:"code"`
-	Map  string `js:"map"`
+	Code string   `js:"code"`
+	Map  string   `js:"map"`
+	CSS  []string `js:"css"`
 }
 
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
@@ -168,21 +182,31 @@ func Transform() interface{} {
 			// Perform CSS and element scoping as needed
 			transform.Transform(doc, transformOptions)
 
-			result := printer.PrintToJS(source, doc, transformOptions)
+			css := []string{}
+			// Only perform static CSS extraction if the flag is passed in.
+			if transformOptions.StaticExtraction {
+				css_result := printer.PrintCSS(source, doc, transformOptions)
+				for _, bytes := range css_result.Output {
+					css = append(css, string(bytes))
+				}
+			}
+
+			result := printer.PrintToJS(source, doc, len(css), transformOptions)
 
 			switch transformOptions.SourceMap {
 			case "external":
-				resolve.Invoke(createExternalSourceMap(source, result, transformOptions))
+				resolve.Invoke(createExternalSourceMap(source, result, css, transformOptions))
 				return nil
 			case "both":
-				resolve.Invoke(createBothSourceMap(source, result, transformOptions))
+				resolve.Invoke(createBothSourceMap(source, result, css, transformOptions))
 				return nil
 			case "inline":
-				resolve.Invoke(createInlineSourceMap(source, result, transformOptions))
+				resolve.Invoke(createInlineSourceMap(source, result, css, transformOptions))
 				return nil
 			}
 
 			resolve.Invoke(vert.ValueOf(TransformResult{
+				CSS:  css,
 				Code: string(result.Output),
 				Map:  "",
 			}))
@@ -214,26 +238,29 @@ func createSourceMapString(source string, result printer.PrintResult, transformO
 }`, sourcemap.Sources[0], sourcemap.SourcesContent[0], sourcemap.Mappings)
 }
 
-func createExternalSourceMap(source string, result printer.PrintResult, transformOptions transform.TransformOptions) interface{} {
+func createExternalSourceMap(source string, result printer.PrintResult, css []string, transformOptions transform.TransformOptions) interface{} {
 	return vert.ValueOf(TransformResult{
+		CSS:  css,
 		Code: string(result.Output),
 		Map:  createSourceMapString(source, result, transformOptions),
 	})
 }
 
-func createInlineSourceMap(source string, result printer.PrintResult, transformOptions transform.TransformOptions) interface{} {
+func createInlineSourceMap(source string, result printer.PrintResult, css []string, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
+		CSS:  css,
 		Code: string(result.Output) + "\n" + inlineSourcemap,
 		Map:  "",
 	})
 }
 
-func createBothSourceMap(source string, result printer.PrintResult, transformOptions transform.TransformOptions) interface{} {
+func createBothSourceMap(source string, result printer.PrintResult, css []string, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
+		CSS:  css,
 		Code: string(result.Output) + "\n" + inlineSourcemap,
 		Map:  sourcemapString,
 	})

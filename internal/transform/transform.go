@@ -10,14 +10,15 @@ import (
 )
 
 type TransformOptions struct {
-	As              string
-	Scope           string
-	Filename        string
-	InternalURL     string
-	SourceMap       string
-	Site            string
-	ProjectRoot     string
-	PreprocessStyle interface{}
+	As               string
+	Scope            string
+	Filename         string
+	InternalURL      string
+	SourceMap        string
+	Site             string
+	ProjectRoot      string
+	PreprocessStyle  interface{}
+	StaticExtraction bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {

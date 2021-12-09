@@ -42,26 +42,28 @@ import (
 // text node would become a tree containing <html>, <head> and <body> elements.
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
-func PrintToJS(sourcetext string, n *Node, opts transform.TransformOptions) PrintResult {
+func PrintToJS(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
 	p := &printer{
 		opts:    opts,
 		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
-	return printToJs(p, n)
+	return printToJs(p, n, cssLen, opts)
 }
 
-func PrintToJSFragment(sourcetext string, n *Node, opts transform.TransformOptions) PrintResult {
+func PrintToJSFragment(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
 	p := &printer{
 		opts:    opts,
 		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
-	return printToJs(p, n)
+	return printToJs(p, n, cssLen, opts)
 }
 
 type RenderOptions struct {
-	isRoot       bool
-	isExpression bool
-	depth        int
+	isRoot           bool
+	isExpression     bool
+	depth            int
+	cssLen           int
+	staticExtraction bool
 }
 
 type ExtractedStatement struct {
@@ -69,11 +71,13 @@ type ExtractedStatement struct {
 	Loc     loc.Loc
 }
 
-func printToJs(p *printer, n *Node) PrintResult {
+func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
 	render1(p, n, RenderOptions{
-		isRoot:       true,
-		isExpression: false,
-		depth:        0,
+		cssLen:           cssLen,
+		isRoot:           true,
+		isExpression:     false,
+		depth:            0,
+		staticExtraction: opts.StaticExtraction,
 	})
 
 	return PrintResult{
@@ -88,6 +92,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL)
+		if opts.staticExtraction {
+			p.printCSSImports(opts.cssLen)
+		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			render1(p, c, RenderOptions{
@@ -108,6 +115,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
+				if opts.staticExtraction {
+					p.printCSSImports(opts.cssLen)
+				}
 
 				// This scanner returns a position where we should slice the frontmatter.
 				// If it encounters any `await`ed code or code that accesses the `Astro` global,
@@ -175,7 +185,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 				// Print empty just to ensure a newline
 				p.println("")
-				if len(n.Parent.Styles) > 0 {
+				if !opts.staticExtraction && len(n.Parent.Styles) > 0 {
 					p.println("const STYLES = [")
 					for _, style := range n.Parent.Styles {
 						p.printStyleOrScript(style)
@@ -217,7 +227,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.println("")
 
 		// If we haven't printed the funcPrelude but we do have Styles/Scripts, we need to print them!
-		if len(n.Parent.Styles) > 0 {
+		if !opts.staticExtraction && len(n.Parent.Styles) > 0 {
 			p.println("const STYLES = [")
 			for _, style := range n.Parent.Styles {
 				p.printStyleOrScript(style)
