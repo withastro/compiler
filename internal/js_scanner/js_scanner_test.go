@@ -71,8 +71,7 @@ import { fn } from "package" assert { it: 'works' };
 import {
   fn
 } from
-  "package"
-  assert {
+  "package" assert {
     it: 'works'
   };
 const b = await fetch();`,
@@ -80,8 +79,7 @@ const b = await fetch();`,
 import {
   fn
 } from
-  "package"
-  assert {
+  "package" assert {
     it: 'works'
   };
 `,

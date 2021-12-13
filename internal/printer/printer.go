@@ -288,6 +288,7 @@ func (p *printer) printTopLevelAstro() {
 
 func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 	var specs []string
+	var asrts []string
 
 	modCount := 1
 	loc, statement := js_scanner.NextImportStatement(source, 0)
@@ -344,8 +345,14 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 			}
 		}
 		if !isClientOnlyImport {
-			p.print(fmt.Sprintf("\nimport * as $$module%v from '%s';", modCount, statement.Specifier))
+			assertions := ""
+			if statement.Assertions != "" {
+				assertions += " assert "
+				assertions += statement.Assertions
+			}
+			p.print(fmt.Sprintf("\nimport * as $$module%v from '%s'%s;", modCount, statement.Specifier, assertions))
 			specs = append(specs, statement.Specifier)
+			asrts = append(asrts, statement.Assertions)
 			modCount++
 		}
 		loc, statement = js_scanner.NextImportStatement(source, loc)
@@ -364,7 +371,11 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 		if i > 1 {
 			p.print(", ")
 		}
-		p.print(fmt.Sprintf("{ module: $$module%v, specifier: '%s' }", i, specs[i-1]))
+		asrt := "{}"
+		if asrts[i-1] != "" {
+			asrt = asrts[i-1]
+		}
+		p.print(fmt.Sprintf("{ module: $$module%v, specifier: '%s', assert: %s }", i, specs[i-1], asrt))
 	}
 	p.print("]")
 
