@@ -1,6 +1,10 @@
 {
   "name": "@astrojs/compiler",
+  "author": "withastro",
+  "license": "MIT",
   "type": "module",
+  "bugs": "https://github.com/withastro/compiler/issues",
+  "homepage": "https://astro.build",
   "version": "0.6.0",
   "scripts": {
     "build": "tsc -p ."
