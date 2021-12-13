@@ -2799,8 +2799,8 @@ func ParseWithOptions(r io.Reader, opts ...ParseOption) (*Node, error) {
 	p := &parser{
 		tokenizer: NewTokenizer(r),
 		doc: &Node{
-			Type:             DocumentNode,
-			ClientDirectives: make(map[string]bool),
+			Type:                DocumentNode,
+			HydrationDirectives: make(map[string]bool),
 		},
 		scripting:        true,
 		framesetOK:       true,

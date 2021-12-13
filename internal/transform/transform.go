@@ -138,7 +138,7 @@ func AddComponentProps(doc *astro.Node, n *astro.Node) {
 				directive := parts[1]
 
 				// Add the hydration directive so it can be extracted statically.
-				doc.ClientDirectives[directive] = true
+				doc.HydrationDirectives[directive] = true
 
 				hydrationAttr := astro.Attribute{
 					Key: "client:component-hydration",

@@ -53,10 +53,10 @@ type want struct {
 }
 
 type metadata struct {
-	hoisted            []string
-	hydratedComponents []string
-	modules            []string
-	clientDirectives   []string
+	hoisted             []string
+	hydratedComponents  []string
+	modules             []string
+	hydrationDirectives []string
 }
 
 type testcase struct {
@@ -226,7 +226,7 @@ import Component from '../components';
 			want: want{
 				frontmatter: []string{"import Component from '../components';"},
 				metadata: metadata{
-					clientDirectives: []string{"only"},
+					hydrationDirectives: []string{"only"},
 				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
@@ -254,7 +254,7 @@ import { Component } from '../components';
 			want: want{
 				frontmatter: []string{"import { Component } from '../components';"},
 				metadata: metadata{
-					clientDirectives: []string{"only"},
+					hydrationDirectives: []string{"only"},
 				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
@@ -282,7 +282,7 @@ import * as components from '../components';
 			want: want{
 				frontmatter: []string{"import * as components from '../components';"},
 				metadata: metadata{
-					clientDirectives: []string{"only"},
+					hydrationDirectives: []string{"only"},
 				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
@@ -608,9 +608,9 @@ import Counter from '../components/Counter.jsx'`,
 // https://docs.astro.build/core-concepts/astro-components/`},
 				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				metadata: metadata{
-					modules:            []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
-					hydratedComponents: []string{`Counter`},
-					clientDirectives:   []string{"visible"},
+					modules:             []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
+					hydratedComponents:  []string{`Counter`},
+					hydrationDirectives: []string{"visible"},
 				},
 				code: `<html lang="en" class="astro-HMNNHVCQ">
   <head>
@@ -786,8 +786,8 @@ import 'custom-element';`,
 						`{ module: $$module2, specifier: 'two', assert: {} }`,
 						`{ module: $$module3, specifier: 'custom-element', assert: {} }`,
 					},
-					hydratedComponents: []string{"'my-element'", "Two", "One"},
-					clientDirectives:   []string{"load"},
+					hydratedComponents:  []string{"'my-element'", "Two", "One"},
+					hydrationDirectives: []string{"load"},
 				},
 				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-hydration":"load","client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
 ${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-hydration":"load","client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
@@ -1199,8 +1199,8 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
 						`{ module: $$module2, specifier: '../../components/Footer.astro', assert: {} }`,
 						`{ module: $$module3, specifier: '../../components/ProductPageContent.jsx', assert: {} }`,
 					},
-					hydratedComponents: []string{`ProductPageContent`},
-					clientDirectives:   []string{"visible"},
+					hydratedComponents:  []string{`ProductPageContent`},
+					hydrationDirectives: []string{"visible"},
 				},
 			},
 		},
@@ -1422,9 +1422,9 @@ const items = ["Dog", "Cat", "Platipus"];
 			}
 			metadata += "]"
 			// directives
-			metadata += ", clientDirectives: new Set(["
-			if len(tt.want.clientDirectives) > 0 {
-				for i, c := range tt.want.clientDirectives {
+			metadata += ", hydrationDirectives: new Set(["
+			if len(tt.want.hydrationDirectives) > 0 {
+				for i, c := range tt.want.hydrationDirectives {
 					if i > 0 {
 						metadata += ", "
 					}

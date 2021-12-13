@@ -392,9 +392,9 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 			p.print(node.Data)
 		}
 	}
-	p.print("], clientDirectives: new Set([")
+	p.print("], hydrationDirectives: new Set([")
 	i := 0
-	for directive := range doc.ClientDirectives {
+	for directive := range doc.HydrationDirectives {
 		if i > 0 {
 			p.print(", ")
 		}

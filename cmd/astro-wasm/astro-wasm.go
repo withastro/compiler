@@ -153,8 +153,8 @@ func Transform() interface{} {
 					fmt.Println(err)
 				}
 				doc = &astro.Node{
-					Type:             astro.DocumentNode,
-					ClientDirectives: make(map[string]bool),
+					Type:                astro.DocumentNode,
+					HydrationDirectives: make(map[string]bool),
 				}
 				for i := 0; i < len(nodes); i++ {
 					n := nodes[i]
