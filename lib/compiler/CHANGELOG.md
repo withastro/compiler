@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.6.2
+
+### Patch Changes
+
+- e785310: Fix issue with import assertions creating additional imports
+
 ## 0.6.1
 
 ### Patch Changes
