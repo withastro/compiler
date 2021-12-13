@@ -392,7 +392,16 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 			p.print(node.Data)
 		}
 	}
-	p.print("], hoisted: [")
+	p.print("], clientDirectives: new Set([")
+	i := 0
+	for directive := range doc.ClientDirectives {
+		if i > 0 {
+			p.print(", ")
+		}
+		p.print(fmt.Sprintf("'%s'", directive))
+		i++
+	}
+	p.print("]), hoisted: [")
 	for i, node := range doc.Scripts {
 		if i > 0 {
 			p.print(", ")
