@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.6.1
+
+### Patch Changes
+
+- e40ea9c: Include LICENSE information
+
 ## 0.6.0
 
 ### Minor Changes
