@@ -194,6 +194,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   ":root{padding:calc(var(--space) * 2);}",
 		},
 		{
+			name:   "grid-template-columns",
+			source: "div{grid-template-columns: [content-start] 1fr [content-end];}",
+			want:   "div.astro-XXXXXX{grid-template-columns:[content-start] 1fr [content-end];}",
+		},
+		{
 			name:   "charset",
 			source: "@charset \"utf-8\";",
 			want:   "@charset \"utf-8\";",

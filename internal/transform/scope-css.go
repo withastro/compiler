@@ -35,6 +35,7 @@ outer:
 
 		isKeyframes := false    // if we’re inside @keyframes, there’s nothing to scope
 		keyframeCurlyCount := 0 // keep track of open "{"s inside @keyframes
+		declaration := ""
 
 	walk:
 		for {
@@ -69,6 +70,7 @@ outer:
 					}
 				case css.DeclarationGrammar:
 					out += string(data) + ":"
+					declaration = string(data)
 				default:
 				}
 
@@ -122,8 +124,9 @@ outer:
 						isBracket = true
 						isElement = false
 						isPseudoState = false
-						// if there is no selector before an attribute selector, then assume "*"
-						if n == 0 {
+
+						// if there is no selector before an attribute selector and we're not in a delcaration, assume "*"
+						if n == 0 && declaration == "" {
 							out += scopeRule("", opts)
 						}
 						out += strVal
@@ -191,6 +194,7 @@ outer:
 						// reset state
 						isElement = true
 						isPseudoState = false
+						declaration = ""
 					}
 				}
 
