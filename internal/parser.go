@@ -2499,8 +2499,14 @@ func frontmatterIM(p *parser) bool {
 }
 
 func inExpressionIM(p *parser) bool {
-	// p.afe (active formatting elements) should be cleared when entering an expression
-	p.clearActiveFormattingElements()
+	// p.afe (active formatting elements) should be cleared to `<a>` tags when entering an expression
+	if p.afe.contains(a.A) {
+		for {
+			if n := p.afe.pop(); len(p.afe) == 0 || n.DataAtom == a.A {
+				break
+			}
+		}
+	}
 
 	switch p.tok.Type {
 	case ErrorToken:
