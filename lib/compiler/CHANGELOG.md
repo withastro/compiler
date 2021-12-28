@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.7.0
+
+### Minor Changes
+
+- 43cbac3: Adds metadata on hydration directives used by the component
+
 ## 0.6.2
 
 ### Patch Changes
