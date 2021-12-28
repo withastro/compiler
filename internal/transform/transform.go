@@ -13,6 +13,7 @@ type TransformOptions struct {
 	As               string
 	Scope            string
 	Filename         string
+	Pathname         string
 	InternalURL      string
 	SourceMap        string
 	Site             string

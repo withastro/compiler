@@ -59,11 +59,11 @@ func PrintToJSFragment(sourcetext string, n *Node, cssLen int, opts transform.Tr
 }
 
 type RenderOptions struct {
-	isRoot           bool
-	isExpression     bool
-	depth            int
-	cssLen           int
-	staticExtraction bool
+	isRoot       bool
+	isExpression bool
+	depth        int
+	cssLen       int
+	opts         transform.TransformOptions
 }
 
 type ExtractedStatement struct {
@@ -73,11 +73,11 @@ type ExtractedStatement struct {
 
 func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
 	render1(p, n, RenderOptions{
-		cssLen:           cssLen,
-		isRoot:           true,
-		isExpression:     false,
-		depth:            0,
-		staticExtraction: opts.StaticExtraction,
+		cssLen:       cssLen,
+		isRoot:       true,
+		isExpression: false,
+		depth:        0,
+		opts:         opts,
 	})
 
 	return PrintResult{
@@ -92,7 +92,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL)
-		if opts.staticExtraction {
+		if opts.opts.StaticExtraction {
 			p.printCSSImports(opts.cssLen)
 		}
 
@@ -101,6 +101,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				isRoot:       false,
 				isExpression: false,
 				depth:        depth + 1,
+				opts:         opts.opts,
 			})
 		}
 
@@ -115,7 +116,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
-				if opts.staticExtraction {
+				if opts.opts.StaticExtraction {
 					p.printCSSImports(opts.cssLen)
 				}
 
@@ -146,7 +147,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(strings.TrimSpace(c.Data))
 
 					// 3. The metadata object
-					p.printComponentMetadata(n.Parent, []byte(c.Data))
+					p.printComponentMetadata(n.Parent, opts.opts, []byte(c.Data))
 
 					// TODO: use the proper component name
 					p.printFuncPrelude("$$Component")
@@ -165,7 +166,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.println(strings.TrimSpace(importStatements))
 
 					// 1. Component imports, if any exist.
-					p.printComponentMetadata(n.Parent, []byte(importStatements))
+					p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
 					// 2. Top-level Astro global.
 					p.printTopLevelAstro()
 
@@ -185,7 +186,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 				// Print empty just to ensure a newline
 				p.println("")
-				if !opts.staticExtraction && len(n.Parent.Styles) > 0 {
+				if !opts.opts.StaticExtraction && len(n.Parent.Styles) > 0 {
 					p.println("const STYLES = [")
 					for _, style := range n.Parent.Styles {
 						p.printStyleOrScript(style)
@@ -211,13 +212,14 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					isRoot:       false,
 					isExpression: true,
 					depth:        depth + 1,
+					opts:         opts.opts,
 				})
 				p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
 			}
 		}
 		return
 	} else if !p.hasFuncPrelude {
-		p.printComponentMetadata(n.Parent, []byte{})
+		p.printComponentMetadata(n.Parent, opts.opts, []byte{})
 		p.printTopLevelAstro()
 
 		// Render func prelude. Will only run for the first non-frontmatter node
@@ -227,7 +229,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.println("")
 
 		// If we haven't printed the funcPrelude but we do have Styles/Scripts, we need to print them!
-		if !opts.staticExtraction && len(n.Parent.Styles) > 0 {
+		if !opts.opts.StaticExtraction && len(n.Parent.Styles) > 0 {
 			p.println("const STYLES = [")
 			for _, style := range n.Parent.Styles {
 				p.printStyleOrScript(style)
@@ -320,6 +322,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				isRoot:       false,
 				isExpression: true,
 				depth:        depth + 1,
+				opts:         opts.opts,
 			})
 			if c.NextSibling == nil || c.NextSibling.Type == TextNode {
 				p.printTemplateLiteralClose()
@@ -443,6 +446,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				render1(p, c, RenderOptions{
 					isRoot: false,
 					depth:  depth + 1,
+					opts:   opts.opts,
 				})
 			}
 		}
@@ -474,6 +478,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						isRoot:       false,
 						isExpression: opts.isExpression,
 						depth:        depth + 1,
+						opts:         opts.opts,
 					})
 				}
 				p.printTemplateLiteralClose()
@@ -515,6 +520,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							isRoot:       false,
 							isExpression: opts.isExpression,
 							depth:        depth + 1,
+							opts:         opts.opts,
 						})
 					}
 					p.printTemplateLiteralClose()
@@ -529,6 +535,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						isRoot:       false,
 						isExpression: opts.isExpression,
 						depth:        depth + 1,
+						opts:         opts.opts,
 					})
 				}
 				p.printTemplateLiteralClose()
@@ -538,6 +545,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						isRoot:       false,
 						isExpression: opts.isExpression,
 						depth:        depth + 1,
+						opts:         opts.opts,
 					})
 				}
 			}

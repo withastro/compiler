@@ -286,7 +286,7 @@ func (p *printer) printTopLevelAstro() {
 	p.println(fmt.Sprintf("const $$Astro = %s(import.meta.url, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, p.opts.Site, p.opts.ProjectRoot))
 }
 
-func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
+func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
 	var specs []string
 	var asrts []string
 
@@ -363,7 +363,13 @@ func (p *printer) printComponentMetadata(doc *astro.Node, source []byte) {
 	}
 
 	// Call createMetadata
-	p.print(fmt.Sprintf("\nexport const $$metadata = %s(import.meta.url, { ", CREATE_METADATA))
+	patharg := opts.Pathname
+	if patharg == "" {
+		patharg = "import.meta.url"
+	} else {
+		patharg = fmt.Sprintf("\"%s\"", patharg)
+	}
+	p.print(fmt.Sprintf("\nexport const $$metadata = %s(%s, { ", CREATE_METADATA, patharg))
 
 	// Add modules
 	p.print("modules: [")

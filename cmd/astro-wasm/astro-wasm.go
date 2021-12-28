@@ -47,6 +47,11 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		filename = "<stdin>"
 	}
 
+	pathname := jsString(options.Get("pathname"))
+	if pathname == "" {
+		pathname = "<stdin>"
+	}
+
 	as := jsString(options.Get("as"))
 	if as == "" {
 		as = "document"
@@ -83,6 +88,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		As:               as,
 		Scope:            hash,
 		Filename:         filename,
+		Pathname:         pathname,
 		InternalURL:      internalURL,
 		SourceMap:        sourcemap,
 		Site:             site,
