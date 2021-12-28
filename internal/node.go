@@ -60,6 +60,7 @@ type Node struct {
 	Styles, Scripts      []*Node
 	HydratedComponents   []*Node
 	ClientOnlyComponents []*Node
+	HydrationDirectives  map[string]bool
 
 	Type      NodeType
 	DataAtom  atom.Atom

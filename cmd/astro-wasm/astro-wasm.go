@@ -47,6 +47,11 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		filename = "<stdin>"
 	}
 
+	pathname := jsString(options.Get("pathname"))
+	if pathname == "" {
+		pathname = "<stdin>"
+	}
+
 	as := jsString(options.Get("as"))
 	if as == "" {
 		as = "document"
@@ -83,6 +88,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		As:               as,
 		Scope:            hash,
 		Filename:         filename,
+		Pathname:         pathname,
 		InternalURL:      internalURL,
 		SourceMap:        sourcemap,
 		Site:             site,
@@ -153,7 +159,8 @@ func Transform() interface{} {
 					fmt.Println(err)
 				}
 				doc = &astro.Node{
-					Type: astro.DocumentNode,
+					Type:                astro.DocumentNode,
+					HydrationDirectives: make(map[string]bool),
 				}
 				for i := 0; i < len(nodes); i++ {
 					n := nodes[i]

@@ -7,6 +7,7 @@ export interface TransformOptions {
   internalURL?: string;
   site?: string;
   sourcefile?: string;
+  pathname?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   as?: 'document' | 'fragment';
   projectRoot?: string;

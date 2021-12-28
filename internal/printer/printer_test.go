@@ -53,9 +53,10 @@ type want struct {
 }
 
 type metadata struct {
-	hoisted            []string
-	hydratedComponents []string
-	modules            []string
+	hoisted             []string
+	hydratedComponents  []string
+	modules             []string
+	hydrationDirectives []string
 }
 
 type testcase struct {
@@ -224,13 +225,16 @@ import Component from '../components';
 </html>`,
 			want: want{
 				frontmatter: []string{"import Component from '../components';"},
+				metadata: metadata{
+					hydrationDirectives: []string{"only"},
+				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
   <head>
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
   </body></html>`,
 			},
 		},
@@ -249,13 +253,16 @@ import { Component } from '../components';
 </html>`,
 			want: want{
 				frontmatter: []string{"import { Component } from '../components';"},
+				metadata: metadata{
+					hydrationDirectives: []string{"only"},
+				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
   <head>
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"Component"})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"Component"})}
   </body></html>`,
 			},
 		},
@@ -274,13 +281,16 @@ import * as components from '../components';
 </html>`,
 			want: want{
 				frontmatter: []string{"import * as components from '../components';"},
+				metadata: metadata{
+					hydrationDirectives: []string{"only"},
+				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
   <head>
     <title>Hello world</title>
   </head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"A"})}
+    ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"A"})}
   </body></html>`,
 			},
 		},
@@ -598,8 +608,9 @@ import Counter from '../components/Counter.jsx'`,
 // https://docs.astro.build/core-concepts/astro-components/`},
 				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
 				metadata: metadata{
-					modules:            []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
-					hydratedComponents: []string{`Counter`},
+					modules:             []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
+					hydratedComponents:  []string{`Counter`},
+					hydrationDirectives: []string{"visible"},
 				},
 				code: `<html lang="en" class="astro-HMNNHVCQ">
   <head>
@@ -610,7 +621,7 @@ import Counter from '../components/Counter.jsx'`,
   </head>
   <body>
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-path":($$metadata.getPath(Counter)),"client:component-export":($$metadata.getExport(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":($$metadata.getPath(Counter)),"client:component-export":($$metadata.getExport(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>`,
 			},
@@ -775,11 +786,12 @@ import 'custom-element';`,
 						`{ module: $$module2, specifier: 'two', assert: {} }`,
 						`{ module: $$module3, specifier: 'custom-element', assert: {} }`,
 					},
-					hydratedComponents: []string{"'my-element'", "Two", "One"},
+					hydratedComponents:  []string{"'my-element'", "Two", "One"},
+					hydrationDirectives: []string{"load"},
 				},
-				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
-${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
-${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}`,
+				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-hydration":"load","client:component-path":($$metadata.getPath(One)),"client:component-export":($$metadata.getExport(One))})}
+${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-hydration":"load","client:component-path":($$metadata.getPath(Two)),"client:component-export":($$metadata.getExport(Two))})}
+${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-hydration":"load","client:component-path":($$metadata.getPath('my-element')),"client:component-export":($$metadata.getExport('my-element'))})}`,
 			},
 		},
 		{
@@ -1156,7 +1168,7 @@ const { product } = Astro.props;
   ${$$renderComponent($$result,'Header',Header,{})}
   <div class="product-page">
     <article>
-      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-path":($$metadata.getPath(ProductPageContent)),"client:component-export":($$metadata.getExport(ProductPageContent))})}
+      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-hydration":"visible","client:component-path":($$metadata.getPath(ProductPageContent)),"client:component-export":($$metadata.getExport(ProductPageContent))})}
     </article>
   </div>
   ${$$renderComponent($$result,'Footer',Footer,{})}
@@ -1187,7 +1199,8 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
 						`{ module: $$module2, specifier: '../../components/Footer.astro', assert: {} }`,
 						`{ module: $$module3, specifier: '../../components/ProductPageContent.jsx', assert: {} }`,
 					},
-					hydratedComponents: []string{`ProductPageContent`},
+					hydratedComponents:  []string{`ProductPageContent`},
+					hydrationDirectives: []string{"visible"},
 				},
 			},
 		},
@@ -1408,6 +1421,17 @@ const items = ["Dog", "Cat", "Platipus"];
 				}
 			}
 			metadata += "]"
+			// directives
+			metadata += ", hydrationDirectives: new Set(["
+			if len(tt.want.hydrationDirectives) > 0 {
+				for i, c := range tt.want.hydrationDirectives {
+					if i > 0 {
+						metadata += ", "
+					}
+					metadata += fmt.Sprintf("'%s'", c)
+				}
+			}
+			metadata += "])"
 			// metadata.hoisted
 			metadata += ", hoisted: ["
 			if len(tt.want.metadata.hoisted) > 0 {

@@ -13,6 +13,7 @@ type TransformOptions struct {
 	As               string
 	Scope            string
 	Filename         string
+	Pathname         string
 	InternalURL      string
 	SourceMap        string
 	Site             string
@@ -134,6 +135,18 @@ func AddComponentProps(doc *astro.Node, n *astro.Node) {
 			}
 
 			if strings.HasPrefix(attr.Key, "client:") {
+				parts := strings.Split(attr.Key, ":")
+				directive := parts[1]
+
+				// Add the hydration directive so it can be extracted statically.
+				doc.HydrationDirectives[directive] = true
+
+				hydrationAttr := astro.Attribute{
+					Key: "client:component-hydration",
+					Val: directive,
+				}
+				n.Attr = append(n.Attr, hydrationAttr)
+
 				if attr.Key == "client:only" {
 					doc.ClientOnlyComponents = append([]*astro.Node{n}, doc.ClientOnlyComponents...)
 					break
