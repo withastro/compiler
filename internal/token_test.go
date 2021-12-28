@@ -45,6 +45,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken},
 		},
 		{
+			"noscript component",
+			`<noscript><Component /></noscript>`,
+			[]TokenType{StartTagToken, SelfClosingTagToken, EndTagToken},
+		},
+		{
 			"end tag",
 			`</html>`,
 			[]TokenType{EndTagToken},

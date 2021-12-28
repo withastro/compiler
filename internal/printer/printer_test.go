@@ -228,8 +228,7 @@ import * as ns from '../components';
 	<noscript>
 		${` + RENDER_COMPONENT + `($$result,'Component',Component,{})}
 	</noscript>
-  </body>
-</html>`,
+  </body></html>`,
 			},
 		},
 		{
