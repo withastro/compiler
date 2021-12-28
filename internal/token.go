@@ -793,7 +793,7 @@ find_next:
 }
 
 // read RegExp expressions and comments (starting from '/' byte)
-func (z *Tokenizer) readCommentOrRegExp() {
+func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 	c := z.readByte() // find next character after '/' to know how to handle it
 	switch c {
 	// single-line commment (ends on newline)
@@ -813,7 +813,7 @@ func (z *Tokenizer) readCommentOrRegExp() {
 	// RegExp
 	default:
 		z.raw.End--
-		z.readUntilChar([]byte{'/', '\r', '\n'})
+		z.readUntilChar(append([]byte{'/', '\r', '\n'}, boundaryChars...))
 	}
 }
 
@@ -1236,7 +1236,13 @@ func (z *Tokenizer) readTagAttrExpression() {
 				if next == '/' {
 					panic("Block comments (//) are not allowed inside of expressions")
 				}
-				z.readCommentOrRegExp()
+				// Also stop when we hit a '}' character (end of attribute expression)
+				z.readCommentOrRegExp([]byte{'}'})
+				// If we exit on a '}', ignore the final character here
+				lastChar := z.buf[z.data.End-1 : z.data.End][0]
+				if lastChar == '}' {
+					z.data.End--
+				}
 			} else {
 				z.readString(c)
 			}
@@ -1531,7 +1537,7 @@ frontmatter_loop:
 
 		// JS Comment or RegExp
 		if c == '/' {
-			z.readCommentOrRegExp()
+			z.readCommentOrRegExp([]byte{})
 			z.tt = TextToken
 			z.data.End = z.raw.End
 			return z.tt
@@ -1617,7 +1623,7 @@ expression_loop:
 
 		// JS Comment or RegExp
 		if c == '/' {
-			z.readCommentOrRegExp()
+			z.readCommentOrRegExp([]byte{})
 			z.tt = TextToken
 			z.data.End = z.raw.End
 			return z.tt

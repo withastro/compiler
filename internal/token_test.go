@@ -128,6 +128,16 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken},
 		},
 		{
+			"attribute expression with solidus",
+			`<div value={100 / 2} />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"attribute expression with solidus no spaces",
+			`<div value={(100/2)} />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
 			"attribute expression with quote",
 			`<div value={/* hello */} />`,
 			[]TokenType{SelfClosingTagToken},
