@@ -87,6 +87,17 @@ outer:
 
 					// if inside @keyframes, don’t transform what’s there
 					if isKeyframes {
+						if strVal == "{" {
+							keyframeCurlyCount++
+						} else if strVal == "}" {
+							keyframeCurlyCount--
+						}
+
+						// Inside of this case, we only want to break out when keyframeCurlyCount is -1
+						// since 0 is the default
+						if keyframeCurlyCount < 0 {
+							isKeyframes = false
+						}
 						out += strVal
 						continue
 					}
@@ -134,12 +145,16 @@ outer:
 						isBracket = false
 						out += strVal
 					case "{":
-						keyframeCurlyCount++
+						if isKeyframes {
+							keyframeCurlyCount++
+						}
 						isElement = true
 						isPseudoState = false
 						out += strVal
 					case "}":
-						keyframeCurlyCount--
+						if isKeyframes {
+							keyframeCurlyCount--
+						}
 						if keyframeCurlyCount == 0 {
 							isKeyframes = false
 						}

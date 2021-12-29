@@ -189,6 +189,21 @@ func TestScopeStyle(t *testing.T) {
 			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
 		},
 		{
+			name:   "keyframes start",
+			source: "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}} h1{} h2{}",
+			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}h1.astro-XXXXXX{}h2.astro-XXXXXX{}",
+		},
+		{
+			name:   "keyframes middle",
+			source: "h1{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}} h2{}",
+			want:   "h1.astro-XXXXXX{}@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}h2.astro-XXXXXX{}",
+		},
+		{
+			name:   "keyframes end",
+			source: "h1{} h2{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
+			want:   "h1.astro-XXXXXX{}h2.astro-XXXXXX{}@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
+		},
+		{
 			name:   "calc",
 			source: ":root{padding:calc(var(--space) * 2);}",
 			want:   ":root{padding:calc(var(--space) * 2);}",
