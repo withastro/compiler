@@ -211,6 +211,27 @@ import * as ns from '../components';
 			},
 		},
 		{
+			name: "noscript component",
+			source: `
+<html>
+  <head></head>
+  <body>
+	<noscript>
+		<Component />
+	</noscript>
+  </body>
+</html>`,
+			want: want{
+				code: `<html>
+  <head></head>
+  <body>
+	<noscript>
+		${` + RENDER_COMPONENT + `($$result,'Component',Component,{})}
+	</noscript>
+  </body></html>`,
+			},
+		},
+		{
 			name: "client:only component (default)",
 			source: `---
 import Component from '../components';
