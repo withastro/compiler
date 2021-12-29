@@ -128,6 +128,17 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"expression with multiple returns",
+			`<div>{() => {
+	let generate = (input) => {
+		let a = () => { return; };
+		let b = () => { return; };
+		let c = () => { return; };
+	};
+}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"attribute expression with quoted braces",
 			`<div value={"{"} />`,
 			[]TokenType{SelfClosingTagToken},

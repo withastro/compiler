@@ -1674,9 +1674,9 @@ expression_loop:
 				z.tt = TextToken
 				return z.tt
 			}
-			z.openBraceIsExpressionStart = true
 			z.expressionStack[len(z.expressionStack)-1]--
 			if z.expressionStack[len(z.expressionStack)-1] == -1 {
+				z.openBraceIsExpressionStart = true
 				z.expressionStack = z.expressionStack[0 : len(z.expressionStack)-1]
 				z.data.End = z.raw.End
 				z.tt = EndExpressionToken

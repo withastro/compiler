@@ -431,6 +431,34 @@ $$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
 			},
 		},
 		{
+			name: "expressions with multiple curly braces",
+			source: `
+<div>
+{
+	() => {
+		let generate = (input) => {
+			let a = () => { return; };
+			let b = () => { return; };
+			let c = () => { return; };
+		};
+	}
+}
+</div>`,
+			want: want{
+				code: `<html><head></head><body><div>
+${
+	() => {
+		let generate = (input) => {
+			let a = () => { return; };
+			let b = () => { return; };
+			let c = () => { return; };
+		};
+	}
+}
+</div></body></html>`,
+			},
+		},
+		{
 			name: "slots (basic)",
 			source: `---
 import Component from "test";
