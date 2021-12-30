@@ -1281,10 +1281,17 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:   "anchor expressions",
+			name:   "anchor inside expression",
 			source: `{true && <a>expr</a>}`,
 			want: want{
 				code: `<html><head></head><body>${true && $$render` + BACKTICK + `<a>expr</a>` + BACKTICK + `}</body></html>`,
+			},
+		},
+		{
+			name:   "anchor content",
+			source: `<a><div><h3></h3><ul><li>{expr}</li></ul></div></a>`,
+			want: want{
+				code: `<html><head></head><body><a><div><h3></h3><ul><li>${expr}</li></ul></div></a></body></html>`,
 			},
 		},
 		{
