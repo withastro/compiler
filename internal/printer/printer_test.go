@@ -1309,6 +1309,41 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "td expressions",
+			source: `<table><tr><td><h2>Row 1</h2></td><td>{title}</td></tr></table>`,
+			want: want{
+				code: `<html><head></head><body><table><tbody><tr><td><h2>Row 1</h2></td><td>${title}</td></tr></tbody></table></body></html>`,
+			},
+		},
+		{
+			name:   "th expressions",
+			source: `<table><thead><tr><th>{title}</th></tr></thead></table>`,
+			want: want{
+				code: `<html><head></head><body><table><thead><tr><th>${title}</th></tr></thead></table></body></html>`,
+			},
+		},
+		{
+			name:   "anchor expressions",
+			source: `<a>{expr}</a>`,
+			want: want{
+				code: `<html><head></head><body><a>${expr}</a></body></html>`,
+			},
+		},
+		{
+			name:   "anchor inside expression",
+			source: `{true && <a>expr</a>}`,
+			want: want{
+				code: `<html><head></head><body>${true && $$render` + BACKTICK + `<a>expr</a>` + BACKTICK + `}</body></html>`,
+			},
+		},
+		{
+			name:   "anchor content",
+			source: `<a><div><h3></h3><ul><li>{expr}</li></ul></div></a>`,
+			want: want{
+				code: `<html><head></head><body><a><div><h3></h3><ul><li>${expr}</li></ul></div></a></body></html>`,
+			},
+		},
+		{
 			name:   "escaped entity",
 			source: `<img alt="A person saying &#x22;hello&#x22;">`,
 			want: want{
