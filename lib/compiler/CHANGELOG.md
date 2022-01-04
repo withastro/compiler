@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 0.7.1
+
+### Patch Changes
+
+- fa039dd: Fix tokenization of attribute expression containing the solidus (`/`) character
+- e365c3c: Fix bug with expressions inside of <table> elements (without reverting a previous fix to expressions inside of <a> elements)
+- 7c5889f: Fix bug with `@keyframes` scoping
+- df74ab3: Fix bug where named grid columns (like `[content-start]`) would be scoped, producing invalid CSS
+- abe37ca: Fix handling of components and expressions inside of `<noscript>`
+- 8961cf4: Fix a logical error with expression tokenization when using nested functions. Previously, only the first brace pair would be respected and following pairs would be treated as expression boundaries.
+
 ## 0.7.0
 
 ### Minor Changes
