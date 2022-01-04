@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.7.2
+
+### Patch Changes
+
+- 899e48d: Fix issue with active formatting elements by marking expressions as unique scopes
+
 ## 0.7.1
 
 ### Patch Changes
