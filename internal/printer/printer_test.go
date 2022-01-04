@@ -1344,6 +1344,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "small expression",
+			source: `<div><small>{a}</small>{data.map(a => <Component value={a} />)}</div>`,
+			want: want{
+				code: `<html><head></head><body><div><small>${a}</small>${data.map(a => $$render` + BACKTICK + `${$$renderComponent($$result,'Component',Component,{"value":(a)})}` + BACKTICK + `)}</div></body></html>`,
+			},
+		},
+		{
 			name:   "escaped entity",
 			source: `<img alt="A person saying &#x22;hello&#x22;">`,
 			want: want{

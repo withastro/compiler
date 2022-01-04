@@ -728,6 +728,7 @@ func beforeHeadIM(p *parser) bool {
 	case StartExpressionToken:
 		p.parseImpliedToken(StartTagToken, a.Head, a.Head.String())
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		p.setOriginalIM()
 		p.im = inExpressionIM
 		return true
@@ -892,6 +893,7 @@ func inHeadIM(p *parser) bool {
 		return true
 	case StartExpressionToken:
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		p.setOriginalIM()
 		p.im = inExpressionIM
 		return true
@@ -1009,6 +1011,7 @@ func afterHeadIM(p *parser) bool {
 		return true
 	case StartExpressionToken:
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		return true
 	case EndExpressionToken:
 		p.addLoc()
@@ -1435,6 +1438,7 @@ func inBodyIM(p *parser) bool {
 		})
 	case StartExpressionToken:
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		p.originalIM = inBodyIM
 		p.im = inExpressionIM
 		return true
@@ -1699,6 +1703,7 @@ func inTableIM(p *parser) bool {
 		}
 	case StartExpressionToken:
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		p.originalIM = inTableIM
 		p.im = inExpressionIM
 		return true
@@ -2134,6 +2139,7 @@ func inSelectIM(p *parser) bool {
 		})
 	case StartExpressionToken:
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		p.setOriginalIM()
 		p.im = inExpressionIM
 		return true
@@ -2215,6 +2221,7 @@ func inTemplateIM(p *parser) bool {
 		}
 	case StartExpressionToken:
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		p.templateStack.pop()
 		p.templateStack = append(p.templateStack, inExpressionIM)
 		p.im = inExpressionIM
@@ -2499,15 +2506,6 @@ func frontmatterIM(p *parser) bool {
 }
 
 func inExpressionIM(p *parser) bool {
-	// p.afe (active formatting elements) should be cleared to `<a>` tags when entering an expression
-	if p.afe.contains(a.A) {
-		for {
-			if n := p.afe.pop(); len(p.afe) == 0 || n.DataAtom == a.A {
-				break
-			}
-		}
-	}
-
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
@@ -2652,6 +2650,7 @@ func parseForeignContent(p *parser) bool {
 		return true
 	case StartExpressionToken:
 		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
 		return true
 	case EndExpressionToken:
 		p.addLoc()
