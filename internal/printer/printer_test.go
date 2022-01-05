@@ -1309,6 +1309,17 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name: "tbody expressions 2",
+			source: `---
+const items = ["Dog", "Cat", "Platipus"];
+---
+<table><tr><td>Name</td></tr>{items.map(item => (<tr><td>{item}</td><td>{item + 's'}</td></tr>))}</table>`,
+			want: want{
+				frontmatter: []string{"", `const items = ["Dog", "Cat", "Platipus"];`},
+				code:        `<html><head></head><body><table><tbody><tr><td>Name</td></tr>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td><td>${item + 's'}</td></tr>` + BACKTICK + `))}</tbody></table></body></html>`,
+			},
+		},
+		{
 			name:   "td expressions",
 			source: `<table><tr><td><h2>Row 1</h2></td><td>{title}</td></tr></table>`,
 			want: want{
