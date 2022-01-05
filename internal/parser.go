@@ -1955,6 +1955,13 @@ func inTableBodyIM(p *parser) bool {
 			Loc:  p.generateLoc(),
 		})
 		return true
+	case StartExpressionToken:
+		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		return true
 	}
 
 	return inTableIM(p)
@@ -2006,6 +2013,13 @@ func inRowIM(p *parser) bool {
 			// Ignore the token.
 			return true
 		}
+	case StartExpressionToken:
+		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		return true
 	}
 
 	return inTableIM(p)
@@ -2014,6 +2028,13 @@ func inRowIM(p *parser) bool {
 // Section 12.2.6.4.15.
 func inCellIM(p *parser) bool {
 	switch p.tok.Type {
+	case StartExpressionToken:
+		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
 		case a.Caption, a.Col, a.Colgroup, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
