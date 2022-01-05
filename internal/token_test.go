@@ -382,6 +382,21 @@ func TestFrontmatter(t *testing.T) {
 			[]TokenType{FrontmatterFenceToken, TextToken, FrontmatterFenceToken},
 		},
 		{
+			"less than attr",
+			`<div aria-hidden={count < 1} />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"greater than attr",
+			`<div aria-hidden={count > 1} />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"greater than attr inside expression",
+			`{values.map(value => <div aria-hidden={count > 1} />)}`,
+			[]TokenType{StartExpressionToken, TextToken, SelfClosingTagToken, TextToken, EndExpressionToken},
+		},
+		{
 			"single-line comments",
 			`
 			---
@@ -612,9 +627,24 @@ func TestAttributes(t *testing.T) {
 			[]AttributeType{ExpressionAttribute},
 		},
 		{
+			"expression with apostrophe",
+			`<div a="fred's" />`,
+			[]AttributeType{QuotedAttribute},
+		},
+		{
 			"shorthand",
 			`<div {value} />`,
 			[]AttributeType{ShorthandAttribute},
+		},
+		{
+			"less than expression",
+			`<div a={a < b} />`,
+			[]AttributeType{ExpressionAttribute},
+		},
+		{
+			"greater than expression",
+			`<div a={a > b} />`,
+			[]AttributeType{ExpressionAttribute},
 		},
 		{
 			"spread",
