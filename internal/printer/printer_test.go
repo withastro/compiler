@@ -1287,6 +1287,13 @@ const value = 'test';
 			},
 		},
 		{
+			name:   "textarea inside expression",
+			source: `{bool && <textarea>{value}</textarea>} {!bool && <input>}`,
+			want: want{
+				code: `<html><head></head><body>${bool && $$render` + BACKTICK + `<textarea>${value}</textarea>` + BACKTICK + `} ${!bool && $$render` + BACKTICK + `<input>` + BACKTICK + `}</body></html>`,
+			},
+		},
+		{
 			name: "table expressions (no implicit tbody)",
 			source: `---
 const items = ["Dog", "Cat", "Platipus"];
