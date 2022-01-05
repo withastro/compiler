@@ -1260,7 +1260,7 @@ func inBodyIM(p *parser) bool {
 			return false
 		case a.Textarea:
 			p.addElement()
-			p.setOriginalIM()
+			p.originalIM = inBodyIM
 			p.framesetOK = false
 			p.im = textIM
 		case a.Xmp:

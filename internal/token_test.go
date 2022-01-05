@@ -169,6 +169,14 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"textarea inside expression",
+			`
+				{bool && <textarea>It was a dark and stormy night...</textarea>}
+				{bool && <input>}
+			`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken, TextToken, StartExpressionToken, TextToken, SelfClosingTagToken, EndExpressionToken, TextToken},
+		},
+		{
 			"Markdown Inside markdown backtick treated as a string",
 			"<Markdown>`{}`</Markdown>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
