@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.7.3
+
+### Patch Changes
+
+- cc24069: Fix some edge cases with expressions inside of `<table>` elements
+- 086275c: Fix edge case with textarea inside expression
+
 ## 0.7.2
 
 ### Patch Changes
