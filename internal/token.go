@@ -1227,7 +1227,6 @@ func (z *Tokenizer) readTagAttrExpression() {
 		if z.err != nil {
 			return
 		}
-		fmt.Println(string(c))
 		switch c {
 		// Handle comments, strings within attrs
 		case '/', '"', '\'', '`':
