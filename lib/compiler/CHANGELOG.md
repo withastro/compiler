@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.7.4
+
+### Patch Changes
+
+- afc1e82: Remove console log (sorry!)
+
 ## 0.7.3
 
 ### Patch Changes
