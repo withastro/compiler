@@ -931,18 +931,12 @@ loop:
 }
 
 func (z *Tokenizer) hasTag(s string) bool {
-loop:
 	for i := len(z.attr) - 1; i >= 0; i-- {
-
 		x := z.attr[i]
 		key := z.buf[x[0].Start:x[0].End]
-		for i := 0; i < len(key) && i < len(s); i++ {
-			c := key[i]
-			if c != s[i] {
-				continue loop
-			}
+		if string(key) == s {
+			return true
 		}
-		return true
 	}
 	return false
 }
@@ -1480,7 +1474,6 @@ loop:
 			return z.tt
 		}
 	}
-
 	if z.raw.Start < z.raw.End {
 		// We're scanning Text, so open braces should be ignored
 		z.openBraceIsExpressionStart = false

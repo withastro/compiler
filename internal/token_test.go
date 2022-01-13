@@ -97,14 +97,14 @@ func TestBasic(t *testing.T) {
 		{
 			"SVG with style",
 			`<svg><style>
-		#fire {
-			fill: orange;
-			stroke: purple;
-		}
-		.wordmark {
-			fill: black;
-		}
-</style><path id="#fire" d="M0,0 M340,29"></path><path class="wordmark" d="M0,0 M340,29"></path></svg>`,
+				#fire {
+					fill: orange;
+					stroke: purple;
+				}
+				.wordmark {
+					fill: black;
+				}
+		</style><path id="#fire" d="M0,0 M340,29"></path><path class="wordmark" d="M0,0 M340,29"></path></svg>`,
 			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, StartTagToken, EndTagToken, StartTagToken, EndTagToken, EndTagToken},
 		},
 		{
@@ -128,14 +128,34 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"expression inside component",
+			`<Component>{items.map(item => <div>{item}</div>)}</Component>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"expression inside component with quoted attr",
+			`<Component a="b">{items.map(item => <div>{item}</div>)}</Component>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"expression inside component with expression attr",
+			`<Component data={data}>{items.map(item => <div>{item}</div>)}</Component>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"expression inside component with named expression attr",
+			`<Component named={data}>{items.map(item => <div>{item}</div>)}</Component>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"expression with multiple returns",
 			`<div>{() => {
-	let generate = (input) => {
-		let a = () => { return; };
-		let b = () => { return; };
-		let c = () => { return; };
-	};
-}}</div>`,
+			let generate = (input) => {
+				let a = () => { return; };
+				let b = () => { return; };
+				let c = () => { return; };
+			};
+		}}</div>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
@@ -171,9 +191,9 @@ func TestBasic(t *testing.T) {
 		{
 			"textarea inside expression",
 			`
-				{bool && <textarea>It was a dark and stormy night...</textarea>}
-				{bool && <input>}
-			`,
+						{bool && <textarea>It was a dark and stormy night...</textarea>}
+						{bool && <input>}
+					`,
 			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken, TextToken, StartExpressionToken, TextToken, SelfClosingTagToken, EndExpressionToken, TextToken},
 		},
 		{
@@ -197,9 +217,19 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"data-astro-raw allows other attributes",
+			"<span data-raw={true} data-astro-raw>function foo() { }</span>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
 			"Doesn't throw on other data attributes",
 			"<span data-foo></span>",
 			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
+			"Doesn't work if attr is named data",
+			"<span data>{Hello}</span>",
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
 			"Supports <style> inside of <svg>",
@@ -239,10 +269,10 @@ func TestBasic(t *testing.T) {
 		{
 			"Markdown codeblock",
 			fmt.Sprintf(`<Markdown>
-%s%s%s
-open brace {
-%s%s%s
-</Markdown>`, "`", "`", "`", "`", "`", "`"),
+		%s%s%s
+		open brace {
+		%s%s%s
+		</Markdown>`, "`", "`", "`", "`", "`", "`"),
 			[]TokenType{StartTagToken, TextToken, TextToken, TextToken, TextToken, EndTagToken},
 		},
 		{
