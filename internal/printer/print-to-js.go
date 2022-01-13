@@ -135,7 +135,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					preprocessed := js_scanner.HoistExports([]byte(c.Data))
 
 					// 1. After imports put in the top-level Astro.
-					p.printTopLevelAstro()
+					p.printTopLevelAstro(opts.opts)
 
 					if len(preprocessed.Hoisted) > 0 {
 						for _, hoisted := range preprocessed.Hoisted {
@@ -168,7 +168,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// 1. Component imports, if any exist.
 					p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
 					// 2. Top-level Astro global.
-					p.printTopLevelAstro()
+					p.printTopLevelAstro(opts.opts)
 
 					if len(preprocessed.Hoisted) > 0 {
 						for _, hoisted := range preprocessed.Hoisted {
@@ -220,7 +220,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		return
 	} else if !p.hasFuncPrelude {
 		p.printComponentMetadata(n.Parent, opts.opts, []byte{})
-		p.printTopLevelAstro()
+		p.printTopLevelAstro(opts.opts)
 
 		// Render func prelude. Will only run for the first non-frontmatter node
 		// TODO: use the proper component name

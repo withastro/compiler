@@ -282,8 +282,15 @@ func (p *printer) addNilSourceMapping() {
 	p.builder.AddSourceMapping(loc.Loc{Start: 0}, p.output)
 }
 
-func (p *printer) printTopLevelAstro() {
-	p.println(fmt.Sprintf("const $$Astro = %s(import.meta.url, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, p.opts.Site, p.opts.ProjectRoot))
+func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
+	patharg := opts.Pathname
+	if patharg == "" {
+		patharg = "import.meta.url"
+	} else {
+		patharg = fmt.Sprintf("\"%s\"", patharg)
+	}
+
+	p.println(fmt.Sprintf("const $$Astro = %s(%s, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, patharg, p.opts.Site, p.opts.ProjectRoot))
 }
 
 func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
