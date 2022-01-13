@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.8.0
+
+### Minor Changes
+
+- 3690968: Passes the Pathname to createAstro instead of import.meta.url
+
 ## 0.7.4
 
 ### Patch Changes
