@@ -490,6 +490,16 @@ import Component from 'test';
 			},
 		},
 		{
+			name: "slots (expression)",
+			source: `
+<Component {data}>
+	{items.map(item => <div>{item}</div>)}
+</Component>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Component',Component,{"data":(data)},{"default": () => $$render` + BACKTICK + `${items.map(item => $$render` + BACKTICK + `<div>${item}</div>` + BACKTICK + `)}` + BACKTICK + `,})}`,
+			},
+		},
+		{
 			name: "head expression",
 			source: `---
 const name = "world";

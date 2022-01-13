@@ -931,18 +931,12 @@ loop:
 }
 
 func (z *Tokenizer) hasTag(s string) bool {
-loop:
 	for i := len(z.attr) - 1; i >= 0; i-- {
-
 		x := z.attr[i]
 		key := z.buf[x[0].Start:x[0].End]
-		for i := 0; i < len(key) && i < len(s); i++ {
-			c := key[i]
-			if c != s[i] {
-				continue loop
-			}
+		if string(key) == s {
+			return true
 		}
-		return true
 	}
 	return false
 }
@@ -973,6 +967,7 @@ func (z *Tokenizer) readStartTag() TokenType {
 	if raw {
 		z.rawTag = string(z.buf[z.data.Start:z.data.End])
 	}
+	fmt.Println("raw", raw)
 
 	// HTML void tags list: https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#syntax-elements
 	// Note: self-closing tags in SVG and MathML work differently; handled below
@@ -1098,6 +1093,7 @@ func (z *Tokenizer) readTagAttrKey() {
 			z.pendingAttrType = ShorthandAttribute
 			z.attrExpressionStack = 1
 			z.readTagAttrExpression()
+			z.pendingAttr[0].End = z.raw.End - 1
 			pendingAttr := z.buf[z.pendingAttr[0].Start:]
 			if len(pendingAttr) > 3 {
 				if strings.TrimSpace(string(pendingAttr))[0:3] == "..." {
@@ -1480,7 +1476,6 @@ loop:
 			return z.tt
 		}
 	}
-
 	if z.raw.Start < z.raw.End {
 		// We're scanning Text, so open braces should be ignored
 		z.openBraceIsExpressionStart = false
@@ -1617,6 +1612,7 @@ raw_with_expression_loop:
 expression_loop:
 	for {
 		c := z.readByte()
+		fmt.Println("expression loop", string(c))
 		if z.err != nil {
 			break expression_loop
 		}
