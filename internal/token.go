@@ -967,7 +967,6 @@ func (z *Tokenizer) readStartTag() TokenType {
 	if raw {
 		z.rawTag = string(z.buf[z.data.Start:z.data.End])
 	}
-	fmt.Println("raw", raw)
 
 	// HTML void tags list: https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#syntax-elements
 	// Note: self-closing tags in SVG and MathML work differently; handled below
@@ -1093,7 +1092,6 @@ func (z *Tokenizer) readTagAttrKey() {
 			z.pendingAttrType = ShorthandAttribute
 			z.attrExpressionStack = 1
 			z.readTagAttrExpression()
-			z.pendingAttr[0].End = z.raw.End - 1
 			pendingAttr := z.buf[z.pendingAttr[0].Start:]
 			if len(pendingAttr) > 3 {
 				if strings.TrimSpace(string(pendingAttr))[0:3] == "..." {
@@ -1612,7 +1610,6 @@ raw_with_expression_loop:
 expression_loop:
 	for {
 		c := z.readByte()
-		fmt.Println("expression loop", string(c))
 		if z.err != nil {
 			break expression_loop
 		}
