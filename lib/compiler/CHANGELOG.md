@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.8.1
+
+### Patch Changes
+
+- cd277e2: Fix bug with data-astro-raw detection
+
 ## 0.8.0
 
 ### Minor Changes
