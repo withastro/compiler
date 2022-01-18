@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.8.2
+
+### Patch Changes
+
+- 502f8b8: Adds a new property, `scripts`, to `TransformResult`
+
 ## 0.8.1
 
 ### Patch Changes
