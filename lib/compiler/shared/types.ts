@@ -18,7 +18,7 @@ export interface TransformOptions {
 export interface HoistedScript {
   src?: string;
   code?: string;
-  type: 'external' | 'inline'
+  type: 'external' | 'inline';
 }
 
 export interface TransformResult {
