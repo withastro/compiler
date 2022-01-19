@@ -1570,7 +1570,7 @@ raw_with_expression_loop:
 		}
 
 		// handle string
-		if c == '\'' || c == '"' || c == '`' {
+		if c == '`' {
 			z.readString(c)
 			z.tt = TextToken
 			z.data.End = z.raw.End
