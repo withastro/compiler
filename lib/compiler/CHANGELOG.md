@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.9.0
+
+### Minor Changes
+
+- c1a0172: changing raw_with_expression_loop in tokenizer to only handle string that has '`' differently otherwise it should treat it as normal string
+
+### Patch Changes
+
+- 1fa2162: Improved types for TransformResult with hoisted scripts
+
 ## 0.8.2
 
 ### Patch Changes
