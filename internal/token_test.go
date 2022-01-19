@@ -189,6 +189,16 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"quotes within title",
+			`<title>Astro's</title>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
+			"quotes within title",
+			`<title>My Astro "Website"</title>`,
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
 			"textarea inside expression",
 			`
 						{bool && <textarea>It was a dark and stormy night...</textarea>}
