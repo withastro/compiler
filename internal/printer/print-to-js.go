@@ -196,7 +196,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
 				}
 
-				if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
+				if len(n.Parent.Scripts) > 0 {
 					p.println("const SCRIPTS = [")
 					for _, script := range n.Parent.Scripts {
 						p.printStyleOrScript(script)
@@ -238,7 +238,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			p.addNilSourceMapping()
 			p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
 		}
-		if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
+		if len(n.Parent.Scripts) > 0 {
 			p.println("const SCRIPTS = [")
 			for _, script := range n.Parent.Scripts {
 				p.printStyleOrScript(script)

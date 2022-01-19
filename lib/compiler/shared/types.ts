@@ -15,20 +15,8 @@ export interface TransformOptions {
   experimentalStaticExtraction?: boolean;
 }
 
-export type HoistedScript = { type: string } & (
-  | {
-      type: 'external';
-      src: string;
-    }
-  | {
-      type: 'inline';
-      code: string;
-    }
-);
-
 export interface TransformResult {
   css: string[];
-  scripts: HoistedScript[];
   code: string;
   map: string;
 }
