@@ -189,7 +189,7 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
-			"quotes within title",
+			"apostrophe within title",
 			`<title>Astro's</title>`,
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
