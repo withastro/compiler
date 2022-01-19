@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.9.1
+
+### Patch Changes
+
+- 85d35a5: Revert previous change that broke Windows
+
 ## 0.9.0
 
 ### Minor Changes
