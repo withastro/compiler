@@ -11,7 +11,6 @@ import (
 	"sync"
 	"syscall/js"
 
-	"github.com/lithammer/dedent"
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/printer"
@@ -219,7 +218,7 @@ func Transform() interface{} {
 						script.Src = src.Val
 					} else if node.FirstChild != nil {
 						script.Type = "inline"
-						script.Code = dedent.Dedent(strings.TrimLeft(node.FirstChild.Data, "\r\n"))
+						script.Code = node.FirstChild.Data
 					}
 					scripts = append(scripts, script)
 				}
