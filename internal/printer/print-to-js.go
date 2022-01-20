@@ -214,7 +214,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					depth:        depth + 1,
 					opts:         opts.opts,
 				})
-				p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
+				if len(n.Loc) > 1 {
+					p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
+				}
 			}
 		}
 		return
@@ -339,6 +341,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	isComponent := isFragment || n.Component || n.CustomElement
 	isClientOnly := isComponent && transform.HasAttr(n, "client:only")
 	isSlot := n.DataAtom == atom.Slot
+	isImplicit := false
+	for _, a := range n.Attr {
+		if transform.IsImplictNodeMarker(a) {
+			isImplicit = true
+			break
+		}
+	}
 
 	p.addSourceMapping(n.Loc[0])
 	switch true {
@@ -348,6 +357,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, n.Data))
 	case isSlot:
 		p.print(fmt.Sprintf("${%s(%s,%s[", RENDER_SLOT, RESULT, SLOTS))
+	case isImplicit:
+		// do nothing
 	default:
 		p.print("<")
 
@@ -361,12 +372,14 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print("null")
 	case !isSlot && n.CustomElement:
 		p.print(fmt.Sprintf("'%s'", n.Data))
-	case !isSlot:
+	case !isSlot && !isImplicit:
 		p.print(n.Data)
 	}
 
 	p.addSourceMapping(n.Loc[0])
-	if isComponent {
+	if isImplicit {
+		// do nothing
+	} else if isComponent {
 		p.print(",")
 		p.printAttributesToObject(n)
 	} else if isSlot {
@@ -559,7 +572,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 	if isComponent || isSlot {
 		p.print(")}")
-	} else {
+	} else if !isImplicit {
 		p.print(`</` + n.Data + `>`)
 	}
 }
