@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.9.2
+
+### Patch Changes
+
+- 92cc76b: Fix wasm build for use in Astro
+
 ## 0.9.1
 
 ### Patch Changes
