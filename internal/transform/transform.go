@@ -145,27 +145,3 @@ func walk(doc *astro.Node, cb func(*astro.Node)) {
 	}
 	f(doc)
 }
-
-func hasSiblings(n *astro.Node) bool {
-	if n.NextSibling == nil && n.PrevSibling == nil {
-		return false
-	}
-
-	var flag bool
-	if n.Parent != nil {
-		for c := n.Parent.FirstChild; c != nil; c = c.NextSibling {
-			if c == n {
-				continue
-			}
-			if c.Type == astro.TextNode && strings.TrimSpace(c.Data) == "" {
-				continue
-			}
-			if c.Type == astro.CommentNode {
-				continue
-			}
-			flag = true
-		}
-	}
-
-	return flag
-}
