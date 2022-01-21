@@ -16,6 +16,7 @@ import (
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
 	FRAGMENT,
 	"render as " + TEMPLATE_TAG,
+	"renderHead as " + RENDER_HEAD,
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
