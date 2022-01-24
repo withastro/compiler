@@ -52,11 +52,6 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		pathname = "<stdin>"
 	}
 
-	as := jsString(options.Get("as"))
-	if as == "" {
-		as = "document"
-	}
-
 	internalURL := jsString(options.Get("internalURL"))
 	if internalURL == "" {
 		internalURL = "astro/internal"
@@ -85,7 +80,6 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		As:               as,
 		Scope:            hash,
 		Filename:         filename,
 		Pathname:         pathname,
@@ -149,30 +143,21 @@ func Transform() interface{} {
 			resolve := args[0]
 
 			var doc *astro.Node
-
-			if transformOptions.As == "document" {
-				docNode, err := astro.Parse(strings.NewReader(source))
-				doc = docNode
-				if err != nil {
-					fmt.Println(err)
-				}
-			} else if transformOptions.As == "fragment" {
-				nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-					Type:     astro.ElementNode,
-					Data:     atom.Template.String(),
-					DataAtom: atom.Template,
-				})
-				if err != nil {
-					fmt.Println(err)
-				}
-				doc = &astro.Node{
-					Type:                astro.DocumentNode,
-					HydrationDirectives: make(map[string]bool),
-				}
-				for i := 0; i < len(nodes); i++ {
-					n := nodes[i]
-					doc.AppendChild(n)
-				}
+			nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+				Type:     astro.ElementNode,
+				Data:     atom.Template.String(),
+				DataAtom: atom.Template,
+			})
+			if err != nil {
+				fmt.Println(err)
+			}
+			doc = &astro.Node{
+				Type:                astro.DocumentNode,
+				HydrationDirectives: make(map[string]bool),
+			}
+			for i := 0; i < len(nodes); i++ {
+				n := nodes[i]
+				doc.AppendChild(n)
 			}
 
 			// Hoist styles and scripts to the top-level

@@ -142,12 +142,12 @@ func TestFullTransform(t *testing.T) {
 		{
 			name:   "respects explicitly authored elements 2",
 			source: `<head></head><Component />`,
-			want:   `<html><head></head><Component></Component></html>`,
+			want:   `<head></head><Component></Component>`,
 		},
 		{
 			name:   "respects explicitly authored elements 3",
 			source: `<body><Component /></body>`,
-			want:   `<html><head></head><body><Component></Component></body></html>`,
+			want:   `<body><Component></Component></body>`,
 		},
 		{
 			name:   "removes implicitly generated elements",
@@ -165,10 +165,10 @@ func TestFullTransform(t *testing.T) {
 <span />
 <Component />
 <span />`,
-			want: `<html><head><title>Title</title>
-</head><body><span></span>
+			want: `<title>Title</title>
+<span></span>
 <Component></Component>
-<span></span></body></html>`,
+<span></span>`,
 		},
 	}
 	var b strings.Builder
