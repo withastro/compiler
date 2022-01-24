@@ -11,7 +11,6 @@ import (
 )
 
 type TransformOptions struct {
-	As               string
 	Scope            string
 	Filename         string
 	Pathname         string
@@ -37,42 +36,6 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	// Important! Remove scripts from original location *after* walking the doc
 	for _, script := range doc.Scripts {
 		script.Parent.RemoveChild(script)
-	}
-
-	// Sometimes files have leading <script hoist> or <style>...
-	// Since we can't detect a "component-only" file until after `parse`, we need to handle
-	// them here. The component will be hoisted to the root of the document, `html` and `head` will be removed.
-	if opts.As != "fragment" {
-		var onlyComponent *astro.Node
-		var rootNode *astro.Node
-		walk(doc, func(n *astro.Node) {
-			if p := n.Parent; n.Component && p != nil && (p.DataAtom == a.Head || p.DataAtom == a.Body) {
-				if !hasSiblings(n) {
-					onlyComponent = n
-				}
-				return
-			}
-			if n.DataAtom == a.Html && (!IsImplictNode(n) || childCount(n) == 1) {
-				rootNode = n
-				return
-			}
-		})
-
-		if rootNode == nil {
-			rootNode = doc
-		}
-
-		if onlyComponent != nil {
-			p := onlyComponent.Parent
-			if IsImplictNode(p) {
-				onlyComponent.Parent.RemoveChild(onlyComponent)
-				rootNode.AppendChild(onlyComponent)
-				rootNode.RemoveChild(onlyComponent.PrevSibling)
-				if rootNode.FirstChild != nil && IsImplictNode(rootNode.FirstChild) {
-					rootNode.RemoveChild(rootNode.FirstChild)
-				}
-			}
-		}
 	}
 
 	// If we've emptied out all the nodes, this was a Fragment that only contained hoisted elements
@@ -246,28 +209,4 @@ func walk(doc *astro.Node, cb func(*astro.Node)) {
 		}
 	}
 	f(doc)
-}
-
-func hasSiblings(n *astro.Node) bool {
-	if n.NextSibling == nil && n.PrevSibling == nil {
-		return false
-	}
-
-	var flag bool
-	if n.Parent != nil {
-		for c := n.Parent.FirstChild; c != nil; c = c.NextSibling {
-			if c == n {
-				continue
-			}
-			if c.Type == astro.TextNode && strings.TrimSpace(c.Data) == "" {
-				continue
-			}
-			if c.Type == astro.CommentNode {
-				continue
-			}
-			flag = true
-		}
-	}
-
-	return flag
 }

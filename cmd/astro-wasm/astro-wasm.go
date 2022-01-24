@@ -54,11 +54,6 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		pathname = "<stdin>"
 	}
 
-	as := jsString(options.Get("as"))
-	if as == "" {
-		as = "document"
-	}
-
 	internalURL := jsString(options.Get("internalURL"))
 	if internalURL == "" {
 		internalURL = "astro/internal"
@@ -87,7 +82,6 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		As:               as,
 		Scope:            hash,
 		Filename:         filename,
 		Pathname:         pathname,
@@ -150,31 +144,36 @@ func Transform() interface{} {
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
 
-			go func() {
-				var doc *astro.Node
+			var doc *astro.Node
+			nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+				Type:     astro.ElementNode,
+				Data:     atom.Template.String(),
+				DataAtom: atom.Template,
+			})
+			if err != nil {
+				fmt.Println(err)
+			}
+			doc = &astro.Node{
+				Type:                astro.DocumentNode,
+				HydrationDirectives: make(map[string]bool),
+			}
+			for i := 0; i < len(nodes); i++ {
+				n := nodes[i]
+				doc.AppendChild(n)
+			}
 
-				if transformOptions.As == "document" {
-					docNode, err := astro.Parse(strings.NewReader(source))
-					doc = docNode
-					if err != nil {
-						fmt.Println(err)
-					}
-				} else if transformOptions.As == "fragment" {
-					nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-						Type:     astro.ElementNode,
-						Data:     atom.Template.String(),
-						DataAtom: atom.Template,
-					})
-					if err != nil {
-						fmt.Println(err)
-					}
-					doc = &astro.Node{
-						Type:                astro.DocumentNode,
-						HydrationDirectives: make(map[string]bool),
-					}
-					for i := 0; i < len(nodes); i++ {
-						n := nodes[i]
-						doc.AppendChild(n)
+			// Hoist styles and scripts to the top-level
+			transform.ExtractStyles(doc)
+
+			// Pre-process styles
+			// Important! These goroutines need to be spawned from this file or they don't work
+			var wg sync.WaitGroup
+			if len(doc.Styles) > 0 {
+				if transformOptions.PreprocessStyle.(js.Value).IsUndefined() != true {
+					for i, style := range doc.Styles {
+						wg.Add(1)
+						i := i
+						go preprocessStyle(i, style, transformOptions, wg.Done)
 					}
 				}
 
