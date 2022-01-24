@@ -570,6 +570,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if isComponent || isSlot {
 		p.print(")}")
 	} else if !isImplicit {
+		if n.DataAtom == atom.Head {
+			p.printRenderHead()
+		}
 		p.print(`</` + n.Data + `>`)
 	}
 }
