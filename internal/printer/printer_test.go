@@ -16,6 +16,7 @@ import (
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
 	FRAGMENT,
 	"render as " + TEMPLATE_TAG,
+	"renderHead as " + RENDER_HEAD,
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
@@ -38,6 +39,7 @@ var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE);\
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build', '.');\nconst Astro = $$Astro;"
+var RENDER_HEAD_RESULT = fmt.Sprintf("${%s(%s)}", RENDER_HEAD, RESULT)
 
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
@@ -177,7 +179,7 @@ import VueComponent from '../components/Vue.vue';
 				code: `<html>
   <head>
     <title>Hello world</title>
-  </head>
+  ` + RENDER_HEAD_RESULT + `</head>
   <body>
     ${` + RENDER_COMPONENT + `($$result,'VueComponent',VueComponent,{})}
   </body></html>
@@ -204,7 +206,7 @@ import * as ns from '../components';
 				code: `<html>
   <head>
     <title>Hello world</title>
-  </head>
+  ` + RENDER_HEAD_RESULT + `</head>
   <body>
     ${` + RENDER_COMPONENT + `($$result,'ns.Component',ns.Component,{})}
   </body></html>
@@ -224,7 +226,7 @@ import * as ns from '../components';
 </html>`,
 			want: want{
 				code: `<html>
-  <head></head>
+  <head>` + RENDER_HEAD_RESULT + `</head>
   <body>
 	<noscript>
 		${` + RENDER_COMPONENT + `($$result,'Component',Component,{})}
@@ -255,7 +257,7 @@ import Component from '../components';
 				code: `<html>
   <head>
     <title>Hello world</title>
-  </head>
+  ` + RENDER_HEAD_RESULT + `</head>
   <body>
     ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
   </body></html>`,
@@ -283,7 +285,7 @@ import { Component } from '../components';
 				code: `<html>
   <head>
     <title>Hello world</title>
-  </head>
+  ` + RENDER_HEAD_RESULT + `</head>
   <body>
     ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"Component"})}
   </body></html>`,
@@ -311,7 +313,7 @@ import * as components from '../components';
 				code: `<html>
   <head>
     <title>Hello world</title>
-  </head>
+  ` + RENDER_HEAD_RESULT + `</head>
   <body>
     ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"A"})}
   </body></html>`,
@@ -519,7 +521,7 @@ const name = "world";
 				code: `<html>
   <head>
     <title>Hello ${name}</title>
-  </head>
+  ` + RENDER_HEAD_RESULT + `</head>
   <body>
     <div></div>
   </body></html>
@@ -601,7 +603,7 @@ const name = "world";
 
   <link rel="stylesheet" href="css/styles.css?v=1.0">
 
-</head>
+` + RENDER_HEAD_RESULT + `</head>
 
 <body>
   <!-- your content here... -->
@@ -677,8 +679,8 @@ import Counter from '../components/Counter.jsx'`,
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
-  </head>
+  
+  ` + RENDER_HEAD_RESULT + `</head>
   <body>
     <main class="astro-HMNNHVCQ">
       ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":($$metadata.getPath(Counter)),"client:component-export":($$metadata.getExport(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
@@ -709,7 +711,7 @@ import Widget2 from '../components/Widget2.astro';`},
 				code: `<html lang="en">
   <head>
     <script type="module" src="/regular_script.js"></script>
-  </head></html>`,
+  ` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
 		},
 		{
@@ -873,14 +875,14 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Self-closing script in head works",
 			source: `<html><head><script /></head><html>`,
 			want: want{
-				code: `<html><head><script></script></head></html>`,
+				code: `<html><head><script></script>` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
 		},
 		{
 			name:   "Self-closing components in head can have siblings",
 			source: `<html><head><BaseHead /><link href="test"></head><html>`,
 			want: want{
-				code: `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test"></head></html>`,
+				code: `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
 		},
 		{
@@ -1125,7 +1127,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green;}`}",
 					"{props:{\"global\":true},children:`div { color: red }`}",
 				},
-				code: "<head>\n\n\n\n\n\n\n</head>\n<div class=\"astro-EX5CHM4O\"></div>",
+				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-EX5CHM4O\"></div>",
 			},
 		},
 		{
@@ -1224,7 +1226,7 @@ const { product } = Astro.props;
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/style/global.css">
-</head>
+` + RENDER_HEAD_RESULT + `</head>
 <body>
   ${$$renderComponent($$result,'Header',Header,{})}
   <div class="product-page">
