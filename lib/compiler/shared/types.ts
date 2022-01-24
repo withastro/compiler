@@ -9,6 +9,9 @@ export interface TransformOptions {
   sourcefile?: string;
   pathname?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
+  /**
+   * @deprecated "as" has been removed and no longer has any effect!
+   */
   as?: 'document' | 'fragment';
   projectRoot?: string;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<PreprocessorResult>;
