@@ -3,6 +3,8 @@ package printer
 import (
 	"regexp"
 	"strings"
+
+	"github.com/iancoleman/strcase"
 )
 
 func escapeText(src string) string {
@@ -11,6 +13,22 @@ func escapeText(src string) string {
 			escapeExistingEscapes(src),
 		),
 	)
+}
+
+func getComponentName(pathname string) string {
+	if len(pathname) == 0 {
+		return "$$Component"
+	}
+	parts := strings.Split(pathname, "/")
+	part := parts[len(parts)-1]
+	if len(part) == 0 {
+		return "$$Component"
+	}
+	basename := strcase.ToCamel(strings.Split(part, ".")[0])
+	if basename == "Astro" {
+		return "$$Component"
+	}
+	return strings.Join([]string{"$$", basename}, "")
 }
 
 func escapeExistingEscapes(src string) string {
