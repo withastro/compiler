@@ -29,7 +29,8 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, %s) => {
-const Astro = $$result.createAstro($$Astro, $$props, %s);%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
+const Astro = $$result.createAstro($$Astro, $$props, %s);
+Astro.self = $$Component;%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });

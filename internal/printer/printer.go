@@ -149,18 +149,21 @@ func (p *printer) printDefineVars(n *astro.Node) {
 	}
 }
 
-func (p *printer) printFuncPrelude(componentName string) {
+func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 	if p.hasFuncPrelude {
 		return
 	}
+	componentName := getComponentName(opts.Pathname)
 	p.addNilSourceMapping()
 	p.println("\n//@ts-ignore")
 	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
 	p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
+	p.println(fmt.Sprintf("Astro.self = %s;", componentName))
 	p.hasFuncPrelude = true
 }
 
-func (p *printer) printFuncSuffix(componentName string) {
+func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
+	componentName := getComponentName(opts.Pathname)
 	p.addNilSourceMapping()
 	p.println("});")
 	p.println(fmt.Sprintf("export default %s;", componentName))
