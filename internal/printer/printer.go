@@ -30,6 +30,7 @@ var TEMPLATE_TAG = "$$render"
 var CREATE_ASTRO = "$$createAstro"
 var CREATE_COMPONENT = "$$createComponent"
 var RENDER_COMPONENT = "$$renderComponent"
+var ESCAPE_HTML = "$$escapeHTML"
 var RENDER_SLOT = "$$renderSlot"
 var ADD_ATTRIBUTE = "$$addAttribute"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
@@ -60,6 +61,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print("createAstro as " + CREATE_ASTRO + ",\n  ")
 	p.print("createComponent as " + CREATE_COMPONENT + ",\n  ")
 	p.print("renderComponent as " + RENDER_COMPONENT + ",\n  ")
+	p.print("escapeHTML as " + ESCAPE_HTML + ",\n  ")
 	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
 	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
 	p.print("spreadAttributes as " + SPREAD_ATTRIBUTES + ",\n  ")
@@ -165,6 +167,9 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 		if i != 0 {
 			p.print(",")
 		}
+		if a.Key == "set:text" || a.Key == "set:html" {
+			continue
+		}
 		switch a.Type {
 		case astro.QuotedAttribute:
 			p.addSourceMapping(a.KeyLoc)
@@ -221,7 +226,7 @@ func (p *printer) printStyleOrScript(n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute) {
-	if attr.Key == "define:vars" {
+	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" {
 		return
 	}
 

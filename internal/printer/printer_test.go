@@ -19,6 +19,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
+	"escapeHTML as " + ESCAPE_HTML,
 	"renderSlot as " + RENDER_SLOT,
 	"addAttribute as " + ADD_ATTRIBUTE,
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
@@ -1466,84 +1467,99 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('article',{},(content))}</body>`,
+				code: `<html><head></head><body><article>${content}</article></body></html>`,
 			},
 		},
 		{
-			name:   "set:test",
+			name:   "set:text",
 			source: "<article set:text={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('article',{"set:html":escapeHTML(content)})}</body>`,
+				code: `<html><head></head><body><article>${$$escapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on Component",
 			source: "<Component set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${content}`" + `})}</body>`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${content}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:text on Component",
 			source: "<Component set:text={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${escapeHTML(content)}`" + `})}</body>`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${$$escapeHTML(content)}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:html on custom-element",
 			source: "<custom-element set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${content}`" + `})}</body>`,
+				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${content}`," + `})}</body></html>`,
 			},
 		},
 		{
 			name:   "set:text on custom-element",
 			source: "<custom-element set:text={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${escapeHTML(content)}`" + `})}</body>`,
+				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$escapeHTML(content)}`," + `})}</body></html>`,
 			},
 		},
 		{
 			name:   "set:html on self-closing tag",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('article',{},(content))}</body>`,
+				code: `<html><head></head><body><article>${content}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html with other attributes",
 			source: "<article set:html={content} cool=\"true\" />",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('article',{"cool":"true"},(content))}</body>`,
+				code: `<html><head></head><body><article cool="true">${content}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on empty tag",
 			source: "<article set:html={content}></article>",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('article',{},(content))}</body>`,
+				code: `<html><head></head><body><article>${content}</article></body></html>`,
+			},
+		},
+		{
+			// If both "set:*" directives are passed, we only respect the first one
+			name:   "set:html and set:text",
+			source: "<article set:html={content} set:text={content} />",
+			want: want{
+				code: `<html><head></head><body><article>${content}</article></body></html>`,
+			},
+		},
+		{
+			name:   "set:html on tag with children",
+			source: "<article set:html={content}>!!!</article>",
+			want: want{
+				code: `<html><head></head><body><article>${content}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on tag with empty whitespace",
 			source: "<article set:html={content}>   </article>",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('article',{},(content))}</body>`,
+				code: `<html><head></head><body><article>${content}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on script",
 			source: "<script set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('script',{},(content))}</body>`,
+				code: `<html><head><script>${content}</script></head><body></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on style",
 			source: "<style set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderElement('style',{},(content))}</body>`,
+				code: `<html><head><style>${content}</style></head><body></body></html>`,
 			},
 		},
 	}
