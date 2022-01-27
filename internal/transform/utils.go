@@ -16,6 +16,10 @@ func hasTruthyAttr(n *astro.Node, key string) bool {
 	return false
 }
 
+func HasSetDirective(n *astro.Node) bool {
+	return HasAttr(n, "set:html") || HasAttr(n, "set:text")
+}
+
 func HasAttr(n *astro.Node, key string) bool {
 	for _, attr := range n.Attr {
 		if attr.Key == key {

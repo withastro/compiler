@@ -92,6 +92,9 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 func ExtractStyles(doc *astro.Node) {
 	walk(doc, func(n *astro.Node) {
 		if n.Type == astro.ElementNode && n.DataAtom == a.Style {
+			if HasSetDirective(n) {
+				return
+			}
 			// Do not extract <style> inside of SVGs
 			if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
 				return
@@ -118,6 +121,9 @@ func ExtractStyles(doc *astro.Node) {
 
 func ExtractScript(doc *astro.Node, n *astro.Node) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
+		if HasSetDirective(n) {
+			return
+		}
 		// if <script hoist>, hoist to the document root
 		if hasTruthyAttr(n, "hoist") {
 			// prepend node to maintain authored order
