@@ -106,8 +106,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 
 		p.printReturnClose()
-		// TODO: use proper component name
-		p.printFuncSuffix("$$Component")
+		p.printFuncSuffix(opts.opts)
 		return
 	}
 
@@ -149,8 +148,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					// 3. The metadata object
 					p.printComponentMetadata(n.Parent, opts.opts, []byte(c.Data))
 
-					// TODO: use the proper component name
-					p.printFuncPrelude("$$Component")
+					p.printFuncPrelude(opts.opts)
 				} else {
 					importStatements := c.Data[0:renderBodyStart]
 					content := c.Data[renderBodyStart:]
@@ -176,8 +174,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						}
 					}
 
-					// TODO: use the proper component name
-					p.printFuncPrelude("$$Component")
+					p.printFuncPrelude(opts.opts)
 					if len(c.Loc) > 0 {
 						p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
 					}
@@ -223,8 +220,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.printTopLevelAstro(opts.opts)
 
 		// Render func prelude. Will only run for the first non-frontmatter node
-		// TODO: use the proper component name
-		p.printFuncPrelude("$$Component")
+		p.printFuncPrelude(opts.opts)
 		// This just ensures a newline
 		p.println("")
 
