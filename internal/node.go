@@ -161,7 +161,6 @@ func (n *Node) RemoveAttribute(key string) {
 			return
 		}
 	}
-	return
 }
 
 // reparentChildren reparents all of src's child nodes to dst.
