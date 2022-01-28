@@ -72,15 +72,32 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.hasInternalImports = true
 }
 
-func (p *printer) printCSSImports(cssLen int) {
+func getStyleType(style *astro.Node) string {
+	for _, attr := range style.Attr {
+		switch attr.Type {
+		case astro.QuotedAttribute:
+			if attr.Key == "lang" {
+				return attr.Val
+			}
+		}
+	}
+	return "css"
+}
+
+func (p *printer) printCSSImports(doc *astro.Node) {
 	if p.hasCSSImports {
 		return
 	}
 	i := 0
-	for i < cssLen {
-		// import '/src/pages/index.astro?astro&type=style&index=0&lang.css';
-		p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.css\";", p.opts.Filename, i))
-		i++
+	if len(doc.Styles) > 0 {
+		for _, style := range doc.Styles {
+			if style.FirstChild != nil && strings.TrimSpace(style.FirstChild.Data) != "" {
+				// import '/src/pages/index.astro?astro&type=style&index=0&lang.css';
+				stype := getStyleType(style)
+				p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.%v\";", p.opts.Filename, i, stype))
+				i++
+			}
+		}
 	}
 	p.print("\n")
 	p.hasCSSImports = true

@@ -61,10 +61,11 @@ type metadata struct {
 }
 
 type testcase struct {
-	name   string
-	source string
-	only   bool
-	want   want
+	name             string
+	source           string
+	staticExtraction bool
+	only             bool
+	want             want
 }
 
 func TestPrinter(t *testing.T) {
@@ -1463,6 +1464,17 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `<html><head></head><body${$$addAttribute((void 0), "attr")}></body></html>`,
 			},
 		},
+		{
+			name:             "Static build adds right import for scss",
+			source:           "<style lang=\"scss\">body{color:green;}</style>",
+			staticExtraction: true,
+			want: want{
+				code: `<html class="astro-H25ZX7J3"><head></head><body></body></html>`,
+				frontmatter: []string{
+					`import "?astro&type=style&index=0&lang.scss";`,
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1492,7 +1504,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				Site:             "https://astro.build",
 				InternalURL:      "http://localhost:3000/",
 				ProjectRoot:      ".",
-				StaticExtraction: false,
+				StaticExtraction: tt.staticExtraction,
 			})
 			output := string(result.Output)
 

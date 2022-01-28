@@ -93,7 +93,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL)
 		if opts.opts.StaticExtraction {
-			p.printCSSImports(opts.cssLen)
+			p.printCSSImports(n)
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -116,7 +116,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
 				if opts.opts.StaticExtraction {
-					p.printCSSImports(opts.cssLen)
+					p.printCSSImports(n)
 				}
 
 				// This scanner returns a position where we should slice the frontmatter.
