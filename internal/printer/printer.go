@@ -31,6 +31,7 @@ var CREATE_ASTRO = "$$createAstro"
 var CREATE_COMPONENT = "$$createComponent"
 var RENDER_COMPONENT = "$$renderComponent"
 var ESCAPE_HTML = "$$escapeHTML"
+var UNESCAPE_HTML = "$$unescapeHTML"
 var RENDER_SLOT = "$$renderSlot"
 var ADD_ATTRIBUTE = "$$addAttribute"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
@@ -62,6 +63,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print("createComponent as " + CREATE_COMPONENT + ",\n  ")
 	p.print("renderComponent as " + RENDER_COMPONENT + ",\n  ")
 	p.print("escapeHTML as " + ESCAPE_HTML + ",\n  ")
+	p.print("unescapeHTML as " + UNESCAPE_HTML + ",\n  ")
 	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
 	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
 	p.print("spreadAttributes as " + SPREAD_ATTRIBUTES + ",\n  ")

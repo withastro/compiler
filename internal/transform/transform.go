@@ -131,14 +131,17 @@ func NormalizeSetDirectives(doc *astro.Node) {
 			directive := directives[i]
 			n.RemoveAttribute(directive.Key)
 			expr := &astro.Node{
-				Type:          astro.ElementNode,
-				Data:          "astro:expression",
-				Expression:    true,
-				RawExpression: true,
+				Type:       astro.ElementNode,
+				Data:       "astro:expression",
+				Expression: true,
 			}
 			loc := make([]loc.Loc, 1)
 			loc = append(loc, directive.ValLoc)
 			data := directive.Val
+			if directive.Key == "set:html" {
+				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
+			}
+			// TODO: remove this explicit escape call when it becomes the default
 			if directive.Key == "set:text" {
 				data = fmt.Sprintf("$$escapeHTML(%s)", data)
 			}

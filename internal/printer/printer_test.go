@@ -20,6 +20,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
 	"escapeHTML as " + ESCAPE_HTML,
+	"unescapeHTML as " + UNESCAPE_HTML,
 	"renderSlot as " + RENDER_SLOT,
 	"addAttribute as " + ADD_ATTRIBUTE,
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
@@ -1467,7 +1468,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<html><head></head><body><article>${content}</article></body></html>`,
+				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
@@ -1481,7 +1482,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on Component",
 			source: "<Component set:html={content} />",
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${content}`," + `})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}`,
 			},
 		},
 		{
@@ -1495,7 +1496,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on custom-element",
 			source: "<custom-element set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${content}`," + `})}</body></html>`,
+				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}</body></html>`,
 			},
 		},
 		{
@@ -1509,21 +1510,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on self-closing tag",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<html><head></head><body><article>${content}</article></body></html>`,
+				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html with other attributes",
 			source: "<article set:html={content} cool=\"true\" />",
 			want: want{
-				code: `<html><head></head><body><article cool="true">${content}</article></body></html>`,
+				code: `<html><head></head><body><article cool="true">${$$unescapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on empty tag",
 			source: "<article set:html={content}></article>",
 			want: want{
-				code: `<html><head></head><body><article>${content}</article></body></html>`,
+				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
@@ -1531,35 +1532,35 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html and set:text",
 			source: "<article set:html={content} set:text={content} />",
 			want: want{
-				code: `<html><head></head><body><article>${content}</article></body></html>`,
+				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on tag with children",
 			source: "<article set:html={content}>!!!</article>",
 			want: want{
-				code: `<html><head></head><body><article>${content}</article></body></html>`,
+				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on tag with empty whitespace",
 			source: "<article set:html={content}>   </article>",
 			want: want{
-				code: `<html><head></head><body><article>${content}</article></body></html>`,
+				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on script",
 			source: "<script set:html={content} />",
 			want: want{
-				code: `<html><head><script>${content}</script></head><body></body></html>`,
+				code: `<html><head><script>${$$unescapeHTML(content)}</script></head><body></body></html>`,
 			},
 		},
 		{
 			name:   "set:html on style",
 			source: "<style set:html={content} />",
 			want: want{
-				code: `<html><head><style>${content}</style></head><body></body></html>`,
+				code: `<html><head><style>${$$unescapeHTML(content)}</style></head><body></body></html>`,
 			},
 		},
 	}
