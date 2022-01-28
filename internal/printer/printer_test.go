@@ -1465,6 +1465,17 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:             "Static build adds import for css",
+			source:           "<style>body{color:green;}</style>",
+			staticExtraction: true,
+			want: want{
+				code: `<html class="astro-BIUKII5Q"><head></head><body></body></html>`,
+				frontmatter: []string{
+					`import "?astro&type=style&index=0&lang.css";`,
+				},
+			},
+		},
+		{
 			name:             "Static build adds right import for scss",
 			source:           "<style lang=\"scss\">body{color:green;}</style>",
 			staticExtraction: true,
