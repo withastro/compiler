@@ -7,6 +7,10 @@ export const transform: typeof types.transform = async (input, options) => {
   return ensureServiceIsRunning().then((service) => service.transform(input, options));
 };
 
+export const parse: typeof types.parse = async (input, options) => {
+  return ensureServiceIsRunning().then((service) => service.parse(input, options));
+};
+
 export const compile = async (template: string): Promise<string> => {
   const { default: mod } = await import(`data:text/javascript;charset=utf-8;base64,${Buffer.from(template).toString('base64')}`);
   return mod;
@@ -14,6 +18,7 @@ export const compile = async (template: string): Promise<string> => {
 
 interface Service {
   transform: typeof types.transform;
+  parse: typeof types.parse;
 }
 
 let longLivedService: Service | undefined;
@@ -40,7 +45,7 @@ const startRunningService = async () => {
   const wasm = await instantiateWASM(fileURLToPath(new URL('../astro.wasm', import.meta.url)), go.importObject);
   go.run(wasm.instance);
 
-  const apiKeys = new Set(['transform']);
+  const apiKeys = new Set(['transform', 'parse']);
   const service: any = Object.create(null);
 
   for (const key of apiKeys.values()) {
@@ -51,6 +56,7 @@ const startRunningService = async () => {
 
   longLivedService = {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),
+    parse: (input, options) => new Promise((resolve) => resolve(service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
   };
   return longLivedService;
 };

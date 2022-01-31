@@ -1,6 +1,14 @@
+import { RootNode } from './ast';
+export * from './ast';
+
 export interface PreprocessorResult {
   code: string;
   map?: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ParseOptions {
+  position?: boolean;
 }
 
 export interface TransformOptions {
@@ -36,6 +44,10 @@ export interface TransformResult {
   map: string;
 }
 
+export interface ParseResult {
+  ast: RootNode;
+}
+
 // This function transforms a single JavaScript file. It can be used to minify
 // JavaScript, convert TypeScript/JSX to JavaScript, or convert newer JavaScript
 // to older JavaScript. It returns a promise that is either resolved with a
@@ -44,6 +56,8 @@ export interface TransformResult {
 // Works in node: yes
 // Works in browser: yes
 export declare function transform(input: string, options?: TransformOptions): Promise<TransformResult>;
+
+export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before
