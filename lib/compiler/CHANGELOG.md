@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.10.0
+
+### Minor Changes
+
+- 02d41a8: Adds support for `Astro.self` (as accepted in the [Recursive Components RFC](https://github.com/withastro/rfcs/blob/main/active-rfcs/0000-recursive-components.md)).
+
+### Patch Changes
+
+- 4fe522b: Fixes inclusion of define:vars scripts/styles using the StaticExtraction flag
+
 ## 0.9.2
 
 ### Patch Changes
