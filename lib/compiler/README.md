@@ -16,7 +16,7 @@ _Note: Public APIs are likely to change before 1.0! Use at your own discretion._
 
 #### Transform `.astro` to valid TypeScript
 
-The Astro compiler can convert `.astro` syntax to a JavaScript Module whose default export generates HTML.
+The Astro compiler can convert `.astro` syntax to a TypeScript Module whose default export generates HTML.
 
 **Some notes**...
 - TypeScript is valid `.astro` syntax! The output code may need an additional post-processing step to generate valid JavaScript.
