@@ -1563,9 +1563,9 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: "<style set:html={content} />",
 			want: want{
 				code: `<html><head><style>${$$unescapeHTML(content)}</style></head><body></body></html>`,
-      }
-    },
-    {
+			},
+		},
+		{
 			name:             "define:vars on style with StaticExpression turned on",
 			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color);}</style><h1>testing</h1>",
 			staticExtraction: true,
