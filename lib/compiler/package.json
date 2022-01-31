@@ -10,7 +10,7 @@
     "build": "tsc -p ."
   },
   "main": "./node/index.js",
-  "types": "./shared/types.d.ts",
+  "types": "./node",
   "repository": {
     "type": "git",
     "url": "https://github.com/withastro/compiler.git"
@@ -20,6 +20,11 @@
       "browser": "./browser/index.js",
       "import": "./node/index.js",
       "default": "./browser/index.js"
+    },
+    "./utils": {
+      "browser": "./browser/utils.js",
+      "import": "./node/utils.js",
+      "default": "./browser/utils.js"
     },
     "./astro.wasm": "./astro.wasm"
   },

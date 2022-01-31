@@ -14,6 +14,7 @@ import (
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/printer"
+	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 	"golang.org/x/net/html/atom"
@@ -23,6 +24,7 @@ var done chan bool
 
 func main() {
 	js.Global().Set("__astro_transform", Transform())
+	js.Global().Set("__astro_parse", Parse())
 	// This ensures that the WASM doesn't exit early
 	<-make(chan bool)
 }
@@ -39,6 +41,19 @@ func jsBool(j js.Value) bool {
 		return false
 	}
 	return j.Bool()
+}
+
+func makeParseOptions(options js.Value) t.ParseOptions {
+	position := true
+
+	pos := options.Get("position")
+	if !pos.IsNull() && !pos.IsUndefined() {
+		position = pos.Bool()
+	}
+
+	return t.ParseOptions{
+		Position: position,
+	}
 }
 
 func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
@@ -107,6 +122,10 @@ type HoistedScript struct {
 	Type string `js:"type"`
 }
 
+type ParseResult struct {
+	AST string `js:"ast"`
+}
+
 type TransformResult struct {
 	Code    string          `js:"code"`
 	Map     string          `js:"map"`
@@ -131,6 +150,36 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 		return
 	}
 	style.FirstChild.Data = str
+}
+
+func Parse() interface{} {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		source := jsString(args[0])
+		parseOptions := makeParseOptions(js.Value(args[1]))
+
+		var doc *astro.Node
+		nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+			Type:     astro.ElementNode,
+			Data:     atom.Template.String(),
+			DataAtom: atom.Template,
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+		doc = &astro.Node{
+			Type: astro.DocumentNode,
+		}
+		for i := 0; i < len(nodes); i++ {
+			n := nodes[i]
+			doc.AppendChild(n)
+		}
+
+		result := printer.PrintToJSON(source, doc, parseOptions)
+
+		return vert.ValueOf(ParseResult{
+			AST: string(result.Output),
+		})
+	})
 }
 
 func Transform() interface{} {

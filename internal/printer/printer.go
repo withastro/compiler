@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -49,6 +50,11 @@ func (p *printer) print(text string) {
 
 func (p *printer) println(text string) {
 	p.output = append(p.output, (text + "\n")...)
+}
+
+func (p *printer) printKeyValue(key string, value interface{}) {
+	v, _ := json.Marshal(value)
+	p.print(fmt.Sprintf(`"%s":%s`, key, v))
 }
 
 func (p *printer) printInternalImports(importSpecifier string) {

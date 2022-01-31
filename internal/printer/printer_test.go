@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	astro "github.com/withastro/compiler/internal"
+	types "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/test_utils"
 	"github.com/withastro/compiler/internal/transform"
 )
@@ -67,6 +68,12 @@ type testcase struct {
 	source string
 	only   bool
 	want   want
+}
+
+type jsonTestcase struct {
+	name   string
+	source string
+	want   []ASTNode
 }
 
 func TestPrinter(t *testing.T) {
@@ -1606,6 +1613,76 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
+				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+			}
+		})
+	}
+}
+
+func TestPrintToJSON(t *testing.T) {
+	tests := []jsonTestcase{
+		{
+			name:   "basic",
+			source: `<h1>Hello world!</h1>`,
+			want:   []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}},
+		},
+		{
+			name:   "expression",
+			source: `<h1>Hello {world}</h1>`,
+			want:   []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello "}, {Type: "expression", Children: []ASTNode{{Type: "text", Value: "world"}}}}}},
+		},
+		{
+			name:   "Component",
+			source: `<Component />`,
+			want:   []ASTNode{{Type: "component", Name: "Component"}},
+		},
+		{
+			name:   "custom-element",
+			source: `<custom-element />`,
+			want:   []ASTNode{{Type: "custom-element", Name: "custom-element"}},
+		},
+		{
+			name:   "Doctype",
+			source: `<!DOCTYPE html />`,
+			want:   []ASTNode{{Type: "doctype", Value: "html"}},
+		},
+		{
+			name:   "Comment",
+			source: `<!--hello-->`,
+			want:   []ASTNode{{Type: "comment", Value: "hello"}},
+		},
+		{
+			name:   "Comment preserves whitespace",
+			source: `<!-- hello -->`,
+			want:   []ASTNode{{Type: "comment", Value: " hello "}},
+		},
+		{
+			name: "Frontmatter",
+			source: `---
+const a = "hey"
+---
+<div>{a}</div>`,
+			want: []ASTNode{{Type: "frontmatter", Value: "\nconst a = \"hey\"\n"}, {Type: "element", Name: "div", Children: []ASTNode{{Type: "expression", Children: []ASTNode{{Type: "text", Value: "a"}}}}}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// transform output from source
+			code := test_utils.Dedent(tt.source)
+
+			doc, err := astro.Parse(strings.NewReader(code))
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			root := ASTNode{Type: "root", Children: tt.want}
+			toMatch := root.String()
+
+			result := PrintToJSON(code, doc, types.ParseOptions{Position: false})
+
+			if diff := test_utils.ANSIDiff(test_utils.Dedent(string(toMatch)), test_utils.Dedent(string(result.Output))); diff != "" {
 				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
 			}
 		})

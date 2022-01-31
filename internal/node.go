@@ -30,6 +30,29 @@ const (
 	ExpressionNode
 )
 
+func (t NodeType) String() string {
+	switch t {
+	case ErrorNode:
+		return "error"
+	case TextNode:
+		return "text"
+	case DocumentNode:
+		return "root"
+	case ElementNode:
+		return "element"
+	case CommentNode:
+		return "comment"
+	case DoctypeNode:
+		return "doctype"
+	case FrontmatterNode:
+		return "frontmatter"
+	case ExpressionNode:
+		return "expression"
+	default:
+		return ""
+	}
+}
+
 // Used as an Attribute Key to mark implicit nodes
 const ImplicitNodeMarker = "\x00implicit"
 
