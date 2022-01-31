@@ -607,6 +607,36 @@ func MakeChunkBuilder(inputSourceMap *SourceMap, lineOffsetTables []LineOffsetTa
 	}
 }
 
+func (b *ChunkBuilder) GetLineAndColumnForLocation(location loc.Loc) []int {
+	b.prevLoc = location
+
+	// Binary search to find the line
+	lineOffsetTables := b.lineOffsetTables
+	count := len(lineOffsetTables)
+	originalLine := 0
+	for count > 0 {
+		step := count / 2
+		i := originalLine + step
+		if lineOffsetTables[i].byteOffsetToStartOfLine <= location.Start {
+			originalLine = i + 1
+			count = count - step - 1
+		} else {
+			count = step
+		}
+	}
+	originalLine--
+
+	// Use the line to compute the column
+	line := &lineOffsetTables[originalLine]
+	originalColumn := int(location.Start - line.byteOffsetToStartOfLine)
+	if line.columnsForNonASCII != nil && originalColumn >= int(line.byteOffsetToFirstNonASCII) {
+		originalColumn = int(line.columnsForNonASCII[originalColumn-int(line.byteOffsetToFirstNonASCII)])
+	}
+
+	// 1-based line, 1-based column
+	return []int{originalLine + 1, originalColumn + 1}
+}
+
 func (b *ChunkBuilder) AddSourceMapping(location loc.Loc, output []byte) {
 	if location == b.prevLoc {
 		return

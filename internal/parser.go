@@ -365,6 +365,7 @@ func (p *parser) addFrontmatter(empty bool) {
 		}
 		if empty {
 			p.frontmatterState = FrontmatterClosed
+			p.fm.Attr = append(p.fm.Attr, Attribute{Key: ImplicitNodeMarker, Type: EmptyAttribute})
 		} else {
 			p.frontmatterState = FrontmatterOpen
 			p.oe = append(p.oe, p.fm)
