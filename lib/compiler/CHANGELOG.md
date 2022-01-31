@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.10.1
+
+### Patch Changes
+
+- 38ae39a: Add support for `set:html` and `set:text` directives, as designed in the [`set:html` RFC](https://github.com/withastro/rfcs/blob/main/active-rfcs/0000-set-html.md).
+
 ## 0.10.0
 
 ### Minor Changes
