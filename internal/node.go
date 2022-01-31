@@ -152,6 +152,15 @@ func GetAttribute(n *Node, key string) *Attribute {
 	return nil
 }
 
+func (n *Node) RemoveAttribute(key string) {
+	for i, attr := range n.Attr {
+		if attr.Key == key {
+			n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
+			return
+		}
+	}
+}
+
 // reparentChildren reparents all of src's child nodes to dst.
 func reparentChildren(dst, src *Node) {
 	for {

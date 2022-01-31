@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/loc"
 	"golang.org/x/net/html/atom"
 	a "golang.org/x/net/html/atom"
 )
@@ -31,6 +32,7 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 			ScopeElement(n, opts)
 		}
 	})
+	NormalizeSetDirectives(doc)
 
 	// Important! Remove scripts from original location *after* walking the doc
 	for _, script := range doc.Scripts {
@@ -92,6 +94,9 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 func ExtractStyles(doc *astro.Node) {
 	walk(doc, func(n *astro.Node) {
 		if n.Type == astro.ElementNode && n.DataAtom == a.Style {
+			if HasSetDirective(n) {
+				return
+			}
 			// Do not extract <style> inside of SVGs
 			if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
 				return
@@ -103,6 +108,62 @@ func ExtractStyles(doc *astro.Node) {
 	// Important! Remove styles from original location *after* walking the doc
 	for _, style := range doc.Styles {
 		style.Parent.RemoveChild(style)
+	}
+}
+
+func NormalizeSetDirectives(doc *astro.Node) {
+	var nodes []*astro.Node
+	var directives []*astro.Attribute
+	walk(doc, func(n *astro.Node) {
+		if n.Type == astro.ElementNode && HasSetDirective(n) {
+			for _, attr := range n.Attr {
+				if attr.Key == "set:html" || attr.Key == "set:text" {
+					nodes = append(nodes, n)
+					directives = append(directives, &attr)
+					return
+				}
+			}
+		}
+	})
+
+	if len(nodes) > 0 {
+		for i, n := range nodes {
+			directive := directives[i]
+			n.RemoveAttribute(directive.Key)
+			expr := &astro.Node{
+				Type:       astro.ElementNode,
+				Data:       "astro:expression",
+				Expression: true,
+			}
+			loc := make([]loc.Loc, 1)
+			loc = append(loc, directive.ValLoc)
+			data := directive.Val
+			if directive.Key == "set:html" {
+				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
+			}
+			// TODO: remove this explicit escape call when it becomes the default
+			if directive.Key == "set:text" {
+				data = fmt.Sprintf("$$escapeHTML(%s)", data)
+			}
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: data,
+				Loc:  loc,
+			})
+
+			shouldWarn := false
+			// Remove all existing children
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if !shouldWarn {
+					shouldWarn = c.Type == astro.CommentNode || (c.Type == astro.TextNode && len(strings.TrimSpace(c.Data)) != 0)
+				}
+				n.RemoveChild(c)
+			}
+			if shouldWarn {
+				fmt.Printf("<%s> uses the \"%s\" directive, but has child nodes which will be overwritten. Remove the child nodes to suppress this warning.\n", n.Data, directive.Key)
+			}
+			n.AppendChild(expr)
+		}
 	}
 }
 
@@ -118,6 +179,9 @@ func ExtractStyles(doc *astro.Node) {
 
 func ExtractScript(doc *astro.Node, n *astro.Node) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
+		if HasSetDirective(n) {
+			return
+		}
 		// if <script hoist>, hoist to the document root
 		// If also using define:vars, that overrides the hoist tag.
 		if hasTruthyAttr(n, "hoist") && !HasAttr(n, "define:vars") {
