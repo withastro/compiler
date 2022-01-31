@@ -5,8 +5,13 @@ export const transform: typeof types.transform = (input, options) => {
   return ensureServiceIsRunning().transform(input, options);
 };
 
+export const parse: typeof types.parse = (input, options) => {
+  return ensureServiceIsRunning().parse(input, options);
+};
+
 interface Service {
   transform: typeof types.transform;
+  parse: typeof types.parse;
 }
 
 let initializePromise: Promise<Service> | undefined;
@@ -58,5 +63,6 @@ const startRunningService = async (wasmURL: string): Promise<Service> => {
 
   return {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),
+    parse: (input, options) => new Promise((resolve) => resolve(service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
   };
 };

@@ -67,6 +67,24 @@ const (
 // AttributeType is the type of an Attribute
 type AttributeType uint32
 
+func (t AttributeType) String() string {
+	switch t {
+	case QuotedAttribute:
+		return "quoted"
+	case EmptyAttribute:
+		return "empty"
+	case ExpressionAttribute:
+		return "expression"
+	case SpreadAttribute:
+		return "spread"
+	case ShorthandAttribute:
+		return "shorthand"
+	case TemplateLiteralAttribute:
+		return "template-literal"
+	}
+	return "Invalid(" + strconv.Itoa(int(t)) + ")"
+}
+
 const (
 	QuotedAttribute AttributeType = iota
 	EmptyAttribute
@@ -1297,7 +1315,7 @@ func (z *Tokenizer) readTagAttrExpression() {
 }
 
 func (z *Tokenizer) Loc() loc.Loc {
-	return loc.Loc{Start: z.raw.Start}
+	return loc.Loc{Start: z.data.Start}
 }
 
 // An expression boundary means the next tokens should be treated as a JS expression

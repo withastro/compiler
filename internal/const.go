@@ -4,6 +4,8 @@
 
 package astro
 
+import a "golang.org/x/net/html/atom"
+
 // Section 12.2.4.2 of the HTML5 specification says "The following elements
 // have varying levels of special parsing rules".
 // https://html.spec.whatwg.org/multipage/syntax.html#the-stack-of-open-elements
@@ -106,6 +108,29 @@ func isSpecialElement(element *Node) bool {
 		case "foreignObject", "desc", "title":
 			return true
 		}
+	}
+	return false
+}
+
+var knownDirectiveMap = map[string]bool{
+	"client:load":    true,
+	"client:idle":    true,
+	"client:visible": true,
+	"client:only":    true,
+	"class:list":     true,
+	"set:text":       true,
+	"set:html":       true,
+}
+
+func IsKnownDirective(element *Node, attr *Attribute) bool {
+	if knownDirectiveMap[attr.Key] {
+		return true
+	}
+	if element.DataAtom == a.Script {
+		return attr.Key == "hoist"
+	}
+	if element.DataAtom == a.Style {
+		return attr.Key == "global"
 	}
 	return false
 }
