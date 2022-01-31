@@ -30,7 +30,8 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`//@ts-ignore
 const $$Component = %s(async ($$result, $$props, %s) => {
-const Astro = $$result.createAstro($$Astro, $$props, %s);%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
+const Astro = $$result.createAstro($$Astro, $$props, %s);
+Astro.self = $$Component;%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
@@ -62,10 +63,11 @@ type metadata struct {
 }
 
 type testcase struct {
-	name   string
-	source string
-	only   bool
-	want   want
+	name             string
+	source           string
+	only             bool
+	staticExtraction bool
+	want             want
 }
 
 func TestPrinter(t *testing.T) {
@@ -1561,6 +1563,32 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: "<style set:html={content} />",
 			want: want{
 				code: `<html><head><style>${$$unescapeHTML(content)}</style></head><body></body></html>`,
+      }
+    },
+    {
+			name:             "define:vars on style with StaticExpression turned on",
+			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color);}</style><h1>testing</h1>",
+			staticExtraction: true,
+			want: want{
+				code: `<html class="astro-BDWJYR3C"><head></head><body><h1 class="astro-BDWJYR3C">testing</h1></body></html>`,
+				styles: []string{
+					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"BDWJYR3C\"},children:`h1.astro-BDWJYR3C{color:var(--color);}`}",
+				},
+			},
+		},
+		{
+			name: "define:vars on script with StaticExpression turned on",
+			// 1. A regular inline script - right
+			// 2. A hoisted script - wrong, shown up in scripts.add
+			// 3. A define:vars module script - right
+			// 4. A define:vars hoisted script - wrong, not inlined
+			source:           `<script>var one = 'one';</script><script type="module" hoist>var two = 'two';</script><script type="module" define:vars={{foo:'bar'}}>var three = foo;</script><script type="module" define:vars={{foo:'bar'}} hoist>var four = foo;</script>`,
+			staticExtraction: true,
+			want: want{
+				code: `<html><head><script>var one = 'one';</script><script type="module">${$$defineScriptVars({foo:'bar'})}var three = foo;</script><script type="module" hoist>${$$defineScriptVars({foo:'bar'})}var four = foo;</script></head><body></body></html>`,
+				metadata: metadata{
+					hoisted: []string{"{ type: 'inline', value: `var two = 'two';` }"},
+				},
 			},
 		},
 	}
@@ -1592,7 +1620,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				Site:             "https://astro.build",
 				InternalURL:      "http://localhost:3000/",
 				ProjectRoot:      ".",
-				StaticExtraction: false,
+				StaticExtraction: tt.staticExtraction,
 			})
 			output := string(result.Output)
 

@@ -183,7 +183,8 @@ func ExtractScript(doc *astro.Node, n *astro.Node) {
 			return
 		}
 		// if <script hoist>, hoist to the document root
-		if hasTruthyAttr(n, "hoist") {
+		// If also using define:vars, that overrides the hoist tag.
+		if hasTruthyAttr(n, "hoist") && !HasAttr(n, "define:vars") {
 			// prepend node to maintain authored order
 			doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
 		}

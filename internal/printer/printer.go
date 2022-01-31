@@ -146,18 +146,21 @@ func (p *printer) printDefineVars(n *astro.Node) {
 	}
 }
 
-func (p *printer) printFuncPrelude(componentName string) {
+func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 	if p.hasFuncPrelude {
 		return
 	}
+	componentName := getComponentName(opts.Pathname)
 	p.addNilSourceMapping()
 	p.println("\n//@ts-ignore")
 	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
 	p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
+	p.println(fmt.Sprintf("Astro.self = %s;", componentName))
 	p.hasFuncPrelude = true
 }
 
-func (p *printer) printFuncSuffix(componentName string) {
+func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
+	componentName := getComponentName(opts.Pathname)
 	p.addNilSourceMapping()
 	p.println("});")
 	p.println(fmt.Sprintf("export default %s;", componentName))
@@ -213,10 +216,27 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 	p.print("}")
 }
 
-func (p *printer) printStyleOrScript(n *astro.Node) {
+func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
+	// If this is using the StaticExtraction option, only define:vars
+	// styles should be included in the STYLES array
+	transformOpts := opts.opts
+	if transformOpts.StaticExtraction {
+		hasDefineVars := false
+		for _, attr := range n.Attr {
+			if attr.Key == "define:vars" {
+				hasDefineVars = true
+			}
+		}
+
+		if !hasDefineVars {
+			return
+		}
+	}
+
 	p.addNilSourceMapping()
 	p.print("{props:")
 	p.printAttributesToObject(n)
+
 	if n.FirstChild != nil && strings.TrimSpace(n.FirstChild.Data) != "" {
 		p.print(",children:`")
 		p.addSourceMapping(n.Loc[0])
@@ -224,6 +244,7 @@ func (p *printer) printStyleOrScript(n *astro.Node) {
 		p.addNilSourceMapping()
 		p.print("`")
 	}
+
 	p.print("},\n")
 }
 
