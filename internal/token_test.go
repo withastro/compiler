@@ -227,8 +227,23 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"is:raw allows children to be parsed as Text",
+			"<span is:raw>function foo() { }</span>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
+			"is:raw treats all children as raw text",
+			"<Fragment is:raw><ul></ue></Fragment>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
+			"is:raw treats all children as raw text",
+			"<Fragment is:raw><ul></ue></Fragment>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
 			"data-astro-raw allows other attributes",
-			"<span data-raw={true} data-astro-raw>function foo() { }</span>",
+			"<span data-raw={true} is:raw><%= Hi =%></span>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
