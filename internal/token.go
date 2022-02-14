@@ -252,11 +252,12 @@ type Tokenizer struct {
 	// pendingAttr is the attribute key and value currently being tokenized.
 	// When complete, pendingAttr is pushed onto attr. nAttrReturned is
 	// incremented on each call to TagAttr.
-	pendingAttr         [2]loc.Span
-	pendingAttrType     AttributeType
-	attr                [][2]loc.Span
-	attrTypes           []AttributeType
-	attrExpressionStack int
+	pendingAttr              [2]loc.Span
+	pendingAttrType          AttributeType
+	attr                     [][2]loc.Span
+	attrTypes                []AttributeType
+	attrExpressionStack      int
+	attrTemplateLiteralStack []int
 
 	nAttrReturned int
 	dashCount     int
@@ -755,7 +756,8 @@ func (z *Tokenizer) readString(c byte) {
 	// template literal
 	case '`':
 		// Note that we DO NOT have to handle `${}` here because our expression
-		// behavior already handles `{}`. Technically incorrect, but it works.
+		// behavior already handles `{}` and `z.readTagAttrExpression()` handles
+		// template literals seperately.
 		z.readUntilChar([]byte{'`'})
 	}
 }
@@ -1027,6 +1029,7 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 	z.attr = z.attr[:0]
 	z.attrTypes = z.attrTypes[:0]
 	z.attrExpressionStack = 0
+	z.attrTemplateLiteralStack = make([]int, 0)
 	z.nAttrReturned = 0
 	// Read the tag name and attribute key/value pairs.
 	z.readTagName()
@@ -1091,6 +1094,7 @@ func (z *Tokenizer) readTagAttrKey() {
 			z.pendingAttr[0].Start = z.raw.End
 			z.pendingAttrType = ShorthandAttribute
 			z.attrExpressionStack = 1
+			z.attrTemplateLiteralStack = append(z.attrTemplateLiteralStack, 0)
 			z.readTagAttrExpression()
 			pendingAttr := z.buf[z.pendingAttr[0].Start:]
 			if len(pendingAttr) > 3 {
@@ -1185,6 +1189,7 @@ func (z *Tokenizer) readTagAttrVal() {
 		z.pendingAttr[1].Start = z.raw.End
 		z.pendingAttrType = ExpressionAttribute
 		z.attrExpressionStack = 1
+		z.attrTemplateLiteralStack = append(z.attrTemplateLiteralStack, 0)
 		z.readTagAttrExpression()
 		z.pendingAttr[1].End = z.raw.End - 1
 		return
@@ -1212,6 +1217,16 @@ func (z *Tokenizer) readTagAttrVal() {
 	}
 }
 
+func (z *Tokenizer) allTagAttrExpressionsClosed() bool {
+	for i := len(z.attrTemplateLiteralStack); i > 0; i-- {
+		item := z.attrTemplateLiteralStack[i-1]
+		if item != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func (z *Tokenizer) readTagAttrExpression() {
 	if z.err != nil {
 		return
@@ -1222,14 +1237,23 @@ func (z *Tokenizer) readTagAttrExpression() {
 			return
 		}
 		switch c {
+		case '`':
+			current := 0
+			if len(z.attrTemplateLiteralStack) >= z.attrExpressionStack {
+				current = z.attrTemplateLiteralStack[z.attrExpressionStack-1]
+			}
+			if current > 0 {
+				z.attrTemplateLiteralStack[z.attrExpressionStack-1]--
+			} else {
+				z.attrTemplateLiteralStack[z.attrExpressionStack-1]++
+			}
 		// Handle comments, strings within attrs
-		case '/', '"', '\'', '`':
+		case '/', '"', '\'':
+			if len(z.attrTemplateLiteralStack) != 0 && c == '/' {
+				continue
+			}
 			end := z.data.End
 			if c == '/' {
-				next := z.readByte()
-				if next == '/' {
-					panic("Block comments (//) are not allowed inside of expressions")
-				}
 				// Also stop when we hit a '}' character (end of attribute expression)
 				z.readCommentOrRegExp([]byte{'}'})
 				// If we exit on a '}', ignore the final character here
@@ -1244,9 +1268,10 @@ func (z *Tokenizer) readTagAttrExpression() {
 			z.data.End = end
 		case '{':
 			z.attrExpressionStack++
+			z.attrTemplateLiteralStack = append(z.attrTemplateLiteralStack, 0)
 		case '}':
 			z.attrExpressionStack--
-			if z.attrExpressionStack == 0 {
+			if z.attrExpressionStack == 0 && z.allTagAttrExpressionsClosed() {
 				return
 			}
 		}
