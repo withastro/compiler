@@ -1467,6 +1467,20 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "is:raw",
+			source: "<article is:raw><% awesome %></article>",
+			want: want{
+				code: `<html><head></head><body><article><% awesome %></article></body></html>`,
+			},
+		},
+		{
+			name:   "Component is:raw",
+			source: "<Component is:raw>{<% awesome %>}</Component>",
+			want: want{
+				code: "${$$renderComponent($$result,'Component',Component,{},{\"default\": () => $$render`{<% awesome %>}`,})}",
+			},
+		},
+		{
 			name:   "set:html",
 			source: "<article set:html={content} />",
 			want: want{
