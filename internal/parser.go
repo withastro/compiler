@@ -1205,9 +1205,19 @@ func inBodyIM(p *parser) bool {
 			}
 			p.reconstructActiveFormattingElements()
 			p.addFormattingElement()
+			if p.hasSelfClosingToken {
+				p.afe.pop()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 		case a.B, a.Big, a.Code, a.Em, a.Font, a.I, a.S, a.Small, a.Strike, a.Strong, a.Tt, a.U:
 			p.reconstructActiveFormattingElements()
 			p.addFormattingElement()
+			if p.hasSelfClosingToken {
+				p.afe.pop()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 		case a.Nobr:
 			p.reconstructActiveFormattingElements()
 			if p.elementInScope(defaultScope, a.Nobr) {
@@ -1215,6 +1225,11 @@ func inBodyIM(p *parser) bool {
 				p.reconstructActiveFormattingElements()
 			}
 			p.addFormattingElement()
+			if p.hasSelfClosingToken {
+				p.afe.pop()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 		case a.Applet, a.Marquee, a.Object:
 			p.reconstructActiveFormattingElements()
 			p.addElement()
