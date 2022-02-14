@@ -128,6 +128,16 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"expression with solidus inside element",
+			`<div>{ 16 / 4 }</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"expression with strings inside element",
+			`<div>{ "string" + 16 / 4 + "}" }</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"expression inside component",
 			`<Component>{items.map(item => <div>{item}</div>)}</Component>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
