@@ -194,6 +194,16 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken},
 		},
 		{
+			"attribute expression with solidus inside template literal",
+			"<div value={attr ? `a/b` : \"c\"} />",
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
+			"complex attribute expression",
+			"<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} awesome`} />",
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
 			"attribute expression with solidus no spaces",
 			`<div value={(100/2)} />`,
 			[]TokenType{SelfClosingTagToken},
@@ -331,11 +341,6 @@ To fix this, please change
   < slot="named">
 to use the longhand Fragment syntax:
   <Fragment slot="named">`,
-		},
-		{
-			"block comment in attribute",
-			`<div {// uhh} />`,
-			`Block comments (//) are not allowed inside of expressions`,
 		},
 	}
 	runPanicTest(t, Panics)
@@ -742,6 +747,16 @@ func TestAttributes(t *testing.T) {
 		{
 			"expression with quoted braces",
 			`<div value={ "{" } />`,
+			[]AttributeType{ExpressionAttribute},
+		},
+		{
+			"attribute expression with solidus inside template literal",
+			"<div value={attr ? `a/b` : \"c\"} />",
+			[]AttributeType{ExpressionAttribute},
+		},
+		{
+			"attribute expression with solidus inside template literal with trailing text",
+			"<div value={`${attr ? `a/b` : \"c\"} awesome`} />",
 			[]AttributeType{ExpressionAttribute},
 		},
 	}

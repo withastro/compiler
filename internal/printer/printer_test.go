@@ -162,6 +162,27 @@ import data from "test" assert { type: 'json' };
 			},
 		},
 		{
+			name:   "solidus in template literal expression",
+			source: "<div value={`${attr ? `a/b` : \"c\"} awesome`} />",
+			want: want{
+				code: "<html><head></head><body><div${$$addAttribute(`${attr ? `a/b` : \"c\"} awesome`, \"value\")}></div></body></html>",
+			},
+		},
+		{
+			name:   "nested template literal expression",
+			source: "<div value={`${attr ? `a/b ${`c`}` : \"d\"} awesome`} />",
+			want: want{
+				code: "<html><head></head><body><div${$$addAttribute(`${attr ? `a/b ${`c`}` : \"d\"} awesome`, \"value\")}></div></body></html>",
+			},
+		},
+		{
+			name:   "complex nested template literal expression",
+			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
+			want: want{
+				code: "<html><head></head><body><div${$$addAttribute(`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`, \"value\")}></div></body></html>",
+			},
+		},
+		{
 			name: "component",
 			source: `---
 import VueComponent from '../components/Vue.vue';
