@@ -886,6 +886,28 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			},
 		},
 		{
+			name:   "Self-closing formatting elements",
+			source: `<div id="1"><div id="2"><div id="3"><i/><i/><i/></div></div></div>`,
+			want: want{
+				code: `<html><head></head><body><div id="1"><div id="2"><div id="3"><i></i><i></i><i></i></div></div></div></body></html>`,
+			},
+		},
+		{
+			name: "Self-closing formatting elements 2",
+			source: `<body>
+  <div id="1"><div id="2"><div id="3"><i id="a" /></div></div></div>
+  <div id="4"><div id="5"><div id="6"><i id="b" /></div></div></div>
+  <div id="7"><div id="8"><div id="9"><i id="c" /></div></div></div>
+</body>`,
+			want: want{
+				code: `<html><head></head><body>
+  <div id="1"><div id="2"><div id="3"><i id="a"></i></div></div></div>
+  <div id="4"><div id="5"><div id="6"><i id="b"></i></div></div></div>
+  <div id="7"><div id="8"><div id="9"><i id="c"></i></div></div></div>
+</body></html>`,
+			},
+		},
+		{
 			name: "Nested HTML in expressions, wrapped in parens",
 			source: `---
 const image = './penguin.png';
