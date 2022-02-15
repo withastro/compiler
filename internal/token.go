@@ -269,6 +269,10 @@ type Tokenizer struct {
 	// token: one that treats "<p>" as text instead of an element.
 	// rawTag's contents are lower-cased.
 	rawTag string
+	// noExpressionTag is the "math" in "<math>". If non-empty, any instances
+	// of "{" will be treated as raw text rather than an StartExpressionToken.
+	// noExpressionTag's contents are lower-cased.
+	noExpressionTag string
 	// stringStartChar is the character that opened the last string: ', ", or `
 	// stringStartChar byte
 	// stringIsOpen will be true while in the context of a string
@@ -331,6 +335,9 @@ func (z *Tokenizer) NextIsNotRawText() {
 	if z.rawTag != "style" {
 		z.rawTag = ""
 	}
+	if z.noExpressionTag != "" {
+		z.noExpressionTag = ""
+	}
 }
 
 // Err returns the error associated with the most recent ErrorToken token.
@@ -386,12 +393,14 @@ func (z *Tokenizer) readRawOrRCDATA() {
 	if z.Token().Type == SelfClosingTagToken {
 		z.data.End = z.raw.End
 		z.rawTag = ""
+		z.noExpressionTag = ""
 		return
 	}
 	if z.rawTag == "script" {
 		z.readScript()
 		z.textIsRaw = true
 		z.rawTag = ""
+		z.noExpressionTag = ""
 		return
 	}
 loop:
@@ -946,12 +955,14 @@ func (z *Tokenizer) hasTag(s string) bool {
 func (z *Tokenizer) readStartTag() TokenType {
 	z.readTag(true)
 	// Several tags flag the tokenizer's next token as raw.
-	c, raw := z.buf[z.data.Start], false
+	c, raw, noExpression := z.buf[z.data.Start], false, false
 	switch c {
 	case 'i':
 		raw = z.startTagIn("iframe")
 	case 'n':
 		raw = z.startTagIn("noembed", "noframes")
+	case 'm':
+		noExpression = z.startTagIn("math")
 	case 'p':
 		raw = z.startTagIn("plaintext")
 	case 's':
@@ -966,6 +977,10 @@ func (z *Tokenizer) readStartTag() TokenType {
 	}
 	if raw {
 		z.rawTag = string(z.buf[z.data.Start:z.data.End])
+	}
+	if noExpression {
+		z.noExpressionTag = string(z.buf[z.data.Start:z.data.End])
+		z.openBraceIsExpressionStart = false
 	}
 
 	// HTML void tags list: https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#syntax-elements
@@ -1380,7 +1395,7 @@ loop:
 		}
 
 		// We're in an element again, so open braces should open an expression
-		z.openBraceIsExpressionStart = true
+		z.openBraceIsExpressionStart = z.noExpressionTag == ""
 		switch {
 		case 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z':
 			tokenType = StartTagToken
@@ -1519,7 +1534,7 @@ frontmatter_loop:
 				z.dashCount = 0
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
-				z.openBraceIsExpressionStart = true
+				z.openBraceIsExpressionStart = z.noExpressionTag == ""
 				return z.tt
 			}
 		}
@@ -1675,7 +1690,7 @@ expression_loop:
 			}
 			z.expressionStack[len(z.expressionStack)-1]--
 			if z.expressionStack[len(z.expressionStack)-1] == -1 {
-				z.openBraceIsExpressionStart = true
+				z.openBraceIsExpressionStart = z.noExpressionTag == ""
 				z.expressionStack = z.expressionStack[0 : len(z.expressionStack)-1]
 				z.data.End = z.raw.End
 				z.tt = EndExpressionToken
