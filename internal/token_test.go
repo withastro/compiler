@@ -242,7 +242,7 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
-			"data-astro-raw allows other attributes",
+			"is:raw allows other attributes",
 			"<span data-raw={true} is:raw><%= Hi =%></span>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
