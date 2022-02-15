@@ -941,7 +941,7 @@ loop:
 	return false
 }
 
-func (z *Tokenizer) hasTag(s string) bool {
+func (z *Tokenizer) hasAttribute(s string) bool {
 	for i := len(z.attr) - 1; i >= 0; i-- {
 		x := z.attr[i]
 		key := z.buf[x[0].Start:x[0].End]
@@ -975,7 +975,10 @@ func (z *Tokenizer) readStartTag() TokenType {
 		raw = z.startTagIn("xmp")
 	}
 	if !raw {
-		raw = z.hasTag("data-astro-raw")
+		raw = z.hasAttribute("data-astro-raw")
+	}
+	if !raw {
+		raw = z.hasAttribute("is:raw")
 	}
 	if raw {
 		z.rawTag = string(z.buf[z.data.Start:z.data.End])

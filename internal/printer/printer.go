@@ -172,7 +172,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 		if i != 0 {
 			p.print(",")
 		}
-		if a.Key == "set:text" || a.Key == "set:html" {
+		if a.Key == "set:text" || a.Key == "set:html" || a.Key == "is:raw" {
 			continue
 		}
 		switch a.Type {
@@ -249,7 +249,7 @@ func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute) {
-	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" {
+	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
 		return
 	}
 
