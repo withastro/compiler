@@ -85,6 +85,21 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken, StartTagToken, EndTagToken, SelfClosingTagToken},
 		},
 		{
+			"No expressions inside math",
+			`<math>{test}</math>`,
+			[]TokenType{StartTagToken, TextToken, TextToken, TextToken, EndTagToken},
+		},
+		{
+			"No expressions inside math (complex)",
+			`<math xmlns="http://www.w3.org/1998/Math/MathML"><annotation encoding="application/x-tex">\sqrt{2}</annotation></math>`,
+			[]TokenType{StartTagToken, StartTagToken, TextToken, TextToken, TextToken, TextToken, EndTagToken, EndTagToken},
+		},
+		{
+			"Expression attributes allowed inside math",
+			`<math set:html={test} />`,
+			[]TokenType{SelfClosingTagToken},
+		},
+		{
 			"SVG (self-closing)",
 			`<svg><path/></svg>`,
 			[]TokenType{StartTagToken, SelfClosingTagToken, EndTagToken},
