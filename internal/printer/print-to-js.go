@@ -440,9 +440,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.print(escapeText(c.Data))
 			} else {
 				render1(p, c, RenderOptions{
-					isRoot: false,
-					depth:  depth + 1,
-					opts:   opts.opts,
+					isRoot:       false,
+					isExpression: opts.isExpression,
+					depth:        depth + 1,
+					opts:         opts.opts,
 				})
 			}
 		}
