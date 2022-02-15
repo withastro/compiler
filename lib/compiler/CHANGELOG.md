@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 0.11.0-next.0
+
+### Minor Changes
+
+- 083d604: Do not render implicit tags created during the parsing process
+- d188c74: Remove "as" option, treats all documents as fragments that generate no implicit tags
+- c4b6b05: Add `parse` function which generates an AST
+- d84c3a2: Adds support for `Astro.self` (as accepted in the [Recursive Components RFC](https://github.com/withastro/rfcs/blob/main/active-rfcs/0000-recursive-components.md)).
+
 ## 0.10.1
 
 ### Patch Changes
