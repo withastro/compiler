@@ -173,21 +173,21 @@ import data from "test" assert { type: 'json' };
 			name:   "solidus in template literal expression",
 			source: "<div value={`${attr ? `a/b` : \"c\"} awesome`} />",
 			want: want{
-				code: "<html><head></head><body><div${$$addAttribute(`${attr ? `a/b` : \"c\"} awesome`, \"value\")}></div></body></html>",
+				code: "<div${$$addAttribute(`${attr ? `a/b` : \"c\"} awesome`, \"value\")}></div>",
 			},
 		},
 		{
 			name:   "nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c`}` : \"d\"} awesome`} />",
 			want: want{
-				code: "<html><head></head><body><div${$$addAttribute(`${attr ? `a/b ${`c`}` : \"d\"} awesome`, \"value\")}></div></body></html>",
+				code: "<div${$$addAttribute(`${attr ? `a/b ${`c`}` : \"d\"} awesome`, \"value\")}></div>",
 			},
 		},
 		{
 			name:   "complex nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
 			want: want{
-				code: "<html><head></head><body><div${$$addAttribute(`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`, \"value\")}></div></body></html>",
+				code: "<div${$$addAttribute(`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`, \"value\")}></div>",
 			},
 		},
 		{
@@ -956,7 +956,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Self-closing formatting elements",
 			source: `<div id="1"><div id="2"><div id="3"><i/><i/><i/></div></div></div>`,
 			want: want{
-				code: `<html><head></head><body><div id="1"><div id="2"><div id="3"><i></i><i></i><i></i></div></div></div></body></html>`,
+				code: `<div id="1"><div id="2"><div id="3"><i></i><i></i><i></i></div></div></div>`,
 			},
 		},
 		{
@@ -967,11 +967,11 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
   <div id="7"><div id="8"><div id="9"><i id="c" /></div></div></div>
 </body>`,
 			want: want{
-				code: `<html><head></head><body>
+				code: `<body>
   <div id="1"><div id="2"><div id="3"><i id="a"></i></div></div></div>
   <div id="4"><div id="5"><div id="6"><i id="b"></i></div></div></div>
   <div id="7"><div id="8"><div id="9"><i id="c"></i></div></div></div>
-</body></html>`,
+</body>`,
 			},
 		},
 		{
@@ -1483,7 +1483,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "division inside expression",
 			source: `<div>{16 / 4}</div>`,
 			want: want{
-				code: `<html><head></head><body><div>${16 / 4}</div></body></html>`,
+				code: `<div>${16 / 4}</div>`,
 			},
 		},
 		{
@@ -1570,7 +1570,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "is:raw",
 			source: "<article is:raw><% awesome %></article>",
 			want: want{
-				code: `<html><head></head><body><article><% awesome %></article></body></html>`,
+				code: `<article><% awesome %></article>`,
 			},
 		},
 		{
