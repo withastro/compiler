@@ -1570,14 +1570,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
+				code: `<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:text",
 			source: "<article set:text={content} />",
 			want: want{
-				code: `<html><head></head><body><article>${$$escapeHTML(content)}</article></body></html>`,
+				code: `<article>${$$escapeHTML(content)}</article>`,
 			},
 		},
 		{
@@ -1598,35 +1598,35 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on custom-element",
 			source: "<custom-element set:html={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}</body></html>`,
+				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:text on custom-element",
 			source: "<custom-element set:text={content} />",
 			want: want{
-				code: `<html><head></head><body>${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$escapeHTML(content)}`," + `})}</body></html>`,
+				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$escapeHTML(content)}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:html on self-closing tag",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
+				code: `<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html with other attributes",
 			source: "<article set:html={content} cool=\"true\" />",
 			want: want{
-				code: `<html><head></head><body><article cool="true">${$$unescapeHTML(content)}</article></body></html>`,
+				code: `<article cool="true">${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html on empty tag",
 			source: "<article set:html={content}></article>",
 			want: want{
-				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
+				code: `<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
@@ -1634,35 +1634,35 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html and set:text",
 			source: "<article set:html={content} set:text={content} />",
 			want: want{
-				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
+				code: `<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with children",
 			source: "<article set:html={content}>!!!</article>",
 			want: want{
-				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
+				code: `<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with empty whitespace",
 			source: "<article set:html={content}>   </article>",
 			want: want{
-				code: `<html><head></head><body><article>${$$unescapeHTML(content)}</article></body></html>`,
+				code: `<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html on script",
 			source: "<script set:html={content} />",
 			want: want{
-				code: `<html><head><script>${$$unescapeHTML(content)}</script></head><body></body></html>`,
+				code: `<script>${$$unescapeHTML(content)}</script>`,
 			},
 		},
 		{
 			name:   "set:html on style",
 			source: "<style set:html={content} />",
 			want: want{
-				code: `<html><head><style>${$$unescapeHTML(content)}</style></head><body></body></html>`,
+				code: `<style>${$$unescapeHTML(content)}</style>`,
 			},
 		},
 		{
@@ -1670,7 +1670,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color);}</style><h1>testing</h1>",
 			staticExtraction: true,
 			want: want{
-				code: `<html class="astro-BDWJYR3C"><head></head><body><h1 class="astro-BDWJYR3C">testing</h1></body></html>`,
+				code: `<h1 class="astro-BDWJYR3C">testing</h1>`,
 				styles: []string{
 					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"BDWJYR3C\"},children:`h1.astro-BDWJYR3C{color:var(--color);}`}",
 				},
@@ -1685,7 +1685,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           `<script>var one = 'one';</script><script type="module" hoist>var two = 'two';</script><script type="module" define:vars={{foo:'bar'}}>var three = foo;</script><script type="module" define:vars={{foo:'bar'}} hoist>var four = foo;</script>`,
 			staticExtraction: true,
 			want: want{
-				code: `<html><head><script>var one = 'one';</script><script type="module">${$$defineScriptVars({foo:'bar'})}var three = foo;</script><script type="module" hoist>${$$defineScriptVars({foo:'bar'})}var four = foo;</script></head><body></body></html>`,
+				code: `<script>var one = 'one';</script><script type="module">${$$defineScriptVars({foo:'bar'})}var three = foo;</script><script type="module" hoist>${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
 				metadata: metadata{
 					hoisted: []string{"{ type: 'inline', value: `var two = 'two';` }"},
 				},
