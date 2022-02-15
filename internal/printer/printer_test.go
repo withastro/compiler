@@ -1405,6 +1405,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "division inside expression",
+			source: `<div>{16 / 4}</div>`,
+			want: want{
+				code: `<html><head></head><body><div>${16 / 4}</div></body></html>`,
+			},
+		},
+		{
 			name:   "escaped entity",
 			source: `<img alt="A person saying &#x22;hello&#x22;">`,
 			want: want{

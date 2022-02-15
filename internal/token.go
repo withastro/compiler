@@ -1631,10 +1631,19 @@ expression_loop:
 
 		// JS Comment or RegExp
 		if c == '/' {
-			z.readCommentOrRegExp([]byte{})
-			z.tt = TextToken
+			boundaryChars := []byte{'{', '}', '\'', '"', '`'}
+			z.readCommentOrRegExp(boundaryChars)
+			// If we exit on a '}', ignore the final character here
+			lastChar := z.buf[z.data.End-1 : z.data.End][0]
+			for _, c := range boundaryChars {
+				if lastChar == c {
+					z.raw.End--
+				}
+			}
 			z.data.End = z.raw.End
+			z.tt = TextToken
 			return z.tt
+
 		}
 
 		// handle string
