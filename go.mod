@@ -13,4 +13,4 @@ require (
 
 require github.com/iancoleman/strcase v0.2.0 // indirect
 
-replace github.com/norunners/vert => github.com/natemoo-re/vert v0.0.0-natemoo-re.7
+replace github.com/norunners/vert => github.com/natemoo-re/vert v0.0.0-natemoo-re.8
