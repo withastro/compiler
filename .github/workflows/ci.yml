@@ -48,7 +48,7 @@ jobs:
 
       - name: Build WASM
         run: |
-          tinygo build -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
+          tinygo build -gc leaking -scheduler asyncify -no-debug -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
           cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
 
       - name: Install NPM Dependencies
