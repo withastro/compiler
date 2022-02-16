@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.10.2
+
+### Patch Changes
+
+- 7f7c65c: Fix conditional rendering for special elements like `iframe` and `noscript`
+- 9d789c9: Fix handling of nested template literals inside of expressions
+- 5fa9e53: Fix handling of special characters inside of expressions
+- 8aaa956: Formalize support for magic `data-astro-raw` attribute with new, official `is:raw` directive
+- c698350: Improve MathML support. `{}` inside of `<math>` is now treated as raw text rather than an expression construct.
+
 ## 0.10.1
 
 ### Patch Changes
