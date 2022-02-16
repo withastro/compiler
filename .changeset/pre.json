@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "next--wasm",
+  "initialVersions": {
+    "@astrojs/compiler": "0.10.1"
+  },
+  "changesets": []
+}
