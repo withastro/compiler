@@ -22,7 +22,7 @@ import (
 var done chan bool
 
 func main() {
-	js.Global().Set("@astrojs/compiler", make(map[string]interface{}))
+	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
 	module := js.Global().Get("@astrojs/compiler")
 	module.Set("transform", Transform())
 
