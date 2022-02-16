@@ -355,7 +355,7 @@ import * as components from '../components';
 			name:   "iframe",
 			source: `<iframe src="something" />`,
 			want: want{
-				code: "<html><head></head><body><iframe src=\"something\"></iframe></body></html>",
+				code: "<iframe src=\"something\"></iframe>",
 			},
 		},
 		{
@@ -369,14 +369,14 @@ import * as components from '../components';
 			name:   "conditional noscript",
 			source: `{mode === "production" && <noscript>Hello</noscript>}`,
 			want: want{
-				code: "<html><head>${mode === \"production\" && $$render`<noscript>Hello</noscript>`}</head><body></body></html>",
+				code: "${mode === \"production\" && $$render`<noscript>Hello</noscript>`}",
 			},
 		},
 		{
 			name:   "conditional iframe",
 			source: `{bool && <iframe src="something">content</iframe>}`,
 			want: want{
-				code: "<html><head></head><body>${bool && $$render`<iframe src=\"something\">content</iframe>`}</body></html>",
+				code: "${bool && $$render`<iframe src=\"something\">content</iframe>`}",
 			},
 		},
 		{
