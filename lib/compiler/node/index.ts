@@ -40,14 +40,7 @@ const startRunningService = async () => {
   const wasm = await instantiateWASM(fileURLToPath(new URL('../astro.wasm', import.meta.url)), go.importObject);
   go.run(wasm.instance);
 
-  const apiKeys = new Set(['transform']);
-  const service: any = Object.create(null);
-
-  for (const key of apiKeys.values()) {
-    const globalKey = `__astro_${key}`;
-    service[key] = (globalThis as any)[globalKey];
-    delete (globalThis as any)[globalKey];
-  }
+  const service: any = (globalThis as any)['@astrojs/compiler'];
 
   longLivedService = {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),

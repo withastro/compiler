@@ -22,20 +22,22 @@ import (
 var done chan bool
 
 func main() {
-	js.Global().Set("__astro_transform", Transform())
-	// This ensures that the WASM doesn't exit early
-	<-make(chan bool)
+	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
+	module := js.Global().Get("@astrojs/compiler")
+	module.Set("transform", Transform())
+
+	<-make(chan struct{})
 }
 
 func jsString(j js.Value) string {
-	if j.IsUndefined() || j.IsNull() {
+	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
 		return ""
 	}
 	return j.String()
 }
 
 func jsBool(j js.Value) bool {
-	if j.IsUndefined() || j.IsNull() {
+	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
 		return false
 	}
 	return j.Bool()
@@ -129,7 +131,7 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	attrs := wasm_utils.GetAttrs(style)
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
 	// note: Rollup (and by extension our Astro Vite plugin) allows for "undefined" and "null" responses if a transform wishes to skip this occurrence
-	if data[0].IsUndefined() || data[0].IsNull() {
+	if data[0].Equal(js.Undefined()) || data[0].Equal(js.Null()) {
 		return
 	}
 	str := jsString(data[0].Get("code"))
@@ -148,102 +150,104 @@ func Transform() interface{} {
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
 
-			var doc *astro.Node
+			go func() {
+				var doc *astro.Node
 
-			if transformOptions.As == "document" {
-				docNode, err := astro.Parse(strings.NewReader(source))
-				doc = docNode
-				if err != nil {
-					fmt.Println(err)
-				}
-			} else if transformOptions.As == "fragment" {
-				nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-					Type:     astro.ElementNode,
-					Data:     atom.Template.String(),
-					DataAtom: atom.Template,
-				})
-				if err != nil {
-					fmt.Println(err)
-				}
-				doc = &astro.Node{
-					Type:                astro.DocumentNode,
-					HydrationDirectives: make(map[string]bool),
-				}
-				for i := 0; i < len(nodes); i++ {
-					n := nodes[i]
-					doc.AppendChild(n)
-				}
-			}
-
-			// Hoist styles and scripts to the top-level
-			transform.ExtractStyles(doc)
-
-			// Pre-process styles
-			// Important! These goroutines need to be spawned from this file or they don't work
-			var wg sync.WaitGroup
-			if len(doc.Styles) > 0 {
-				if transformOptions.PreprocessStyle.(js.Value).IsUndefined() != true {
-					for i, style := range doc.Styles {
-						wg.Add(1)
-						i := i
-						go preprocessStyle(i, style, transformOptions, wg.Done)
+				if transformOptions.As == "document" {
+					docNode, err := astro.Parse(strings.NewReader(source))
+					doc = docNode
+					if err != nil {
+						fmt.Println(err)
+					}
+				} else if transformOptions.As == "fragment" {
+					nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
+						Type:     astro.ElementNode,
+						Data:     atom.Template.String(),
+						DataAtom: atom.Template,
+					})
+					if err != nil {
+						fmt.Println(err)
+					}
+					doc = &astro.Node{
+						Type:                astro.DocumentNode,
+						HydrationDirectives: make(map[string]bool),
+					}
+					for i := 0; i < len(nodes); i++ {
+						n := nodes[i]
+						doc.AppendChild(n)
 					}
 				}
-			}
-			// Wait for all the style goroutines to finish
-			wg.Wait()
 
-			// Perform CSS and element scoping as needed
-			transform.Transform(doc, transformOptions)
+				// Hoist styles and scripts to the top-level
+				transform.ExtractStyles(doc)
 
-			css := []string{}
-			scripts := []HoistedScript{}
-			// Only perform static CSS extraction if the flag is passed in.
-			if transformOptions.StaticExtraction {
-				css_result := printer.PrintCSS(source, doc, transformOptions)
-				for _, bytes := range css_result.Output {
-					css = append(css, string(bytes))
+				// Pre-process styles
+				// Important! These goroutines need to be spawned from this file or they don't work
+				var wg sync.WaitGroup
+				if len(doc.Styles) > 0 {
+					if transformOptions.PreprocessStyle.(js.Value).Type() == js.TypeFunction {
+						for i, style := range doc.Styles {
+							wg.Add(1)
+							i := i
+							go preprocessStyle(i, style, transformOptions, wg.Done)
+						}
+					}
+				}
+				// Wait for all the style goroutines to finish
+				wg.Wait()
+
+				// Perform CSS and element scoping as needed
+				transform.Transform(doc, transformOptions)
+
+				css := []string{}
+				scripts := []HoistedScript{}
+				// Only perform static CSS extraction if the flag is passed in.
+				if transformOptions.StaticExtraction {
+					css_result := printer.PrintCSS(source, doc, transformOptions)
+					for _, bytes := range css_result.Output {
+						css = append(css, string(bytes))
+					}
+
+					// Append hoisted scripts
+					for _, node := range doc.Scripts {
+						src := astro.GetAttribute(node, "src")
+						script := HoistedScript{
+							Src:  "",
+							Code: "",
+							Type: "",
+						}
+						if src != nil {
+							script.Type = "external"
+							script.Src = src.Val
+						} else if node.FirstChild != nil {
+							script.Type = "inline"
+							script.Code = node.FirstChild.Data
+						}
+						scripts = append(scripts, script)
+					}
 				}
 
-				// Append hoisted scripts
-				for _, node := range doc.Scripts {
-					src := astro.GetAttribute(node, "src")
-					script := HoistedScript{
-						Src:  "",
-						Code: "",
-						Type: "",
-					}
-					if src != nil {
-						script.Type = "external"
-						script.Src = src.Val
-					} else if node.FirstChild != nil {
-						script.Type = "inline"
-						script.Code = node.FirstChild.Data
-					}
-					scripts = append(scripts, script)
+				result := printer.PrintToJS(source, doc, len(css), transformOptions)
+
+				var value interface{}
+				switch transformOptions.SourceMap {
+				case "external":
+					value = createExternalSourceMap(source, result, css, &scripts, transformOptions)
+				case "both":
+					value = createBothSourceMap(source, result, css, &scripts, transformOptions)
+				case "inline":
+					value = createInlineSourceMap(source, result, css, &scripts, transformOptions)
+				default:
+					value = vert.ValueOf(TransformResult{
+						CSS:     css,
+						Code:    string(result.Output),
+						Map:     "",
+						Scripts: scripts,
+					})
 				}
-			}
 
-			result := printer.PrintToJS(source, doc, len(css), transformOptions)
-
-			switch transformOptions.SourceMap {
-			case "external":
-				resolve.Invoke(createExternalSourceMap(source, result, css, &scripts, transformOptions))
-				return nil
-			case "both":
-				resolve.Invoke(createBothSourceMap(source, result, css, &scripts, transformOptions))
-				return nil
-			case "inline":
-				resolve.Invoke(createInlineSourceMap(source, result, css, &scripts, transformOptions))
-				return nil
-			}
-
-			resolve.Invoke(vert.ValueOf(TransformResult{
-				CSS:     css,
-				Code:    string(result.Output),
-				Map:     "",
-				Scripts: scripts,
-			}))
+				resolve.Invoke(value)
+			}()
 
 			return nil
 		})

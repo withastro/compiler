@@ -41,15 +41,8 @@ jobs:
           node-version: 14
           cache: 'yarn'
 
-      - name: Get tinygo runtime
-        run: |
-          wget -P /tmp/ https://github.com/tinygo-org/tinygo/releases/download/v0.20.0/tinygo_0.20.0_amd64.deb
-          sudo dpkg -i /tmp/tinygo_0.20.0_amd64.deb
-
       - name: Build WASM
-        run: |
-          tinygo build -o ./lib/compiler/astro.wasm -target wasm ./cmd/astro-wasm/astro-wasm.go
-          cp ./lib/compiler/astro.wasm ./lib/compiler/deno/astro.wasm
+        run: make wasm
 
       - name: Install NPM Dependencies
         run: yarn install --prefer-offline --frozen-lockfile --ignore-engines
