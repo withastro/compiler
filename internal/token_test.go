@@ -257,6 +257,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"iframe allows attributes",
+			"<iframe src=\"https://google.com\"></iframe>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
 			"data-astro-raw allows children to be parsed as Text",
 			"<span data-astro-raw>function foo() { }</span>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
@@ -773,6 +778,11 @@ func TestAttributes(t *testing.T) {
 			"attribute expression with solidus inside template literal with trailing text",
 			"<div value={`${attr ? `a/b` : \"c\"} awesome`} />",
 			[]AttributeType{ExpressionAttribute},
+		},
+		{
+			"iframe allows attributes",
+			"<iframe src=\"https://google.com\"></iframe>",
+			[]AttributeType{QuotedAttribute},
 		},
 	}
 

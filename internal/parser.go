@@ -2763,7 +2763,7 @@ func (p *parser) parseCurrentToken() {
 		if p.inForeignContent() {
 			consumed = parseForeignContent(p)
 		} else {
-			if p.im == nil && p.context != nil {
+			if p.im == nil {
 				p.im = inBodyIM
 			}
 			consumed = p.im(p)

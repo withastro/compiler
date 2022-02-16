@@ -341,10 +341,31 @@ import * as components from '../components';
 			},
 		},
 		{
+			name:   "iframe",
+			source: `<iframe src="something" />`,
+			want: want{
+				code: "<html><head></head><body><iframe src=\"something\"></iframe></body></html>",
+			},
+		},
+		{
 			name:   "conditional render",
 			source: `<body>{false ? <div>#f</div> : <div>#t</div>}</body>`,
 			want: want{
 				code: "<html><head></head><body>${false ? $$render`<div>#f</div>` : $$render`<div>#t</div>`}</body></html>",
+			},
+		},
+		{
+			name:   "conditional noscript",
+			source: `{mode === "production" && <noscript>Hello</noscript>}`,
+			want: want{
+				code: "<html><head>${mode === \"production\" && $$render`<noscript>Hello</noscript>`}</head><body></body></html>",
+			},
+		},
+		{
+			name:   "conditional iframe",
+			source: `{bool && <iframe src="something">content</iframe>}`,
+			want: want{
+				code: "<html><head></head><body>${bool && $$render`<iframe src=\"something\">content</iframe>`}</body></html>",
 			},
 		},
 		{
