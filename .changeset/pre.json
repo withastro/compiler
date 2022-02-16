@@ -4,5 +4,7 @@
   "initialVersions": {
     "@astrojs/compiler": "0.10.1"
   },
-  "changesets": []
+  "changesets": [
+    "shy-bananas-glow"
+  ]
 }
