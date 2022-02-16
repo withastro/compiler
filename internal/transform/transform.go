@@ -20,11 +20,12 @@ type TransformOptions struct {
 	Site             string
 	ProjectRoot      string
 	PreprocessStyle  interface{}
+	ExternalScoping  bool
 	StaticExtraction bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
-	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
+	shouldScope := opts.ExternalScoping || len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	walk(doc, func(n *astro.Node) {
 		ExtractScript(doc, n)
 		AddComponentProps(doc, n)

@@ -79,6 +79,11 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		projectRoot = "."
 	}
 
+	externalScoping := false
+	if jsBool(options.Get("externalScoping")) {
+		externalScoping = true
+	}
+
 	staticExtraction := false
 	if jsBool(options.Get("experimentalStaticExtraction")) {
 		staticExtraction = true
@@ -96,6 +101,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		Site:             site,
 		ProjectRoot:      projectRoot,
 		PreprocessStyle:  preprocessStyle,
+		ExternalScoping:  externalScoping,
 		StaticExtraction: staticExtraction,
 	}
 }
@@ -129,7 +135,7 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 		return
 	}
 	attrs := wasm_utils.GetAttrs(style)
-	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
+	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs, transformOptions))
 	// note: Rollup (and by extension our Astro Vite plugin) allows for "undefined" and "null" responses if a transform wishes to skip this occurrence
 	if data[0].Equal(js.Undefined()) || data[0].Equal(js.Null()) {
 		return
