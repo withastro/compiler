@@ -280,6 +280,7 @@ export default class Go {
               let iov_ptr = iovs_ptr + iovs_i * 8; // assuming wasm32
               let ptr = mem().getUint32(iov_ptr + 0, true);
               let len = mem().getUint32(iov_ptr + 4, true);
+              nwritten += len;
               for (let i = 0; i < len; i++) {
                 let c = mem().getUint8(ptr + i);
                 if (c == 13) {
@@ -302,6 +303,9 @@ export default class Go {
           mem().setUint32(nwritten_ptr, nwritten, true);
           return 0;
         },
+        fd_close: () => 0, // dummy
+        fd_fdstat_get: () => 0, // dummy
+        fd_seek: () => 0, // dummy
         proc_exit: (code) => {
           if (globalThis.process) {
             // Node.js
@@ -310,6 +314,10 @@ export default class Go {
             // Can't exit in a browser.
             throw 'trying to exit with code ' + code;
           }
+        },
+        random_get: (bufPtr, bufLen) => {
+          crypto.getRandomValues(loadSlice(bufPtr, bufLen));
+          return 0;
         },
       },
       env: {

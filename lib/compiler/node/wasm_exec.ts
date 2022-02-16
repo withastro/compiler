@@ -11,33 +11,43 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { TextEncoder, TextDecoder } from 'util';
 
-Object.defineProperties(globalThis, {
-  fs: {
+if (!globalThis.fs) {
+  Object.defineProperty(globalThis, 'fs', {
     value: fs,
-    enumerable: true,
-  },
-  crypto: {
+  });
+}
+
+if (!globalThis.process) {
+  Object.defineProperties(globalThis, 'process', {
+    value: process,
+  });
+}
+
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
     value: {
       getRandomValues(b) {
         crypto.randomFillSync(b);
       },
     },
-    enumerable: true,
-  },
-  performance: {
+  });
+}
+
+if (!globalThis.performance) {
+  Object.defineProperty(globalThis, 'performance', {
     value: {
       now() {
         const [sec, nsec] = process.hrtime();
         return sec * 1000 + nsec / 1000000;
       },
     },
-    enumerable: true,
-  },
-});
+  });
+}
+// End of polyfills for common API.
 
 const encoder = new TextEncoder('utf-8');
 const decoder = new TextDecoder('utf-8');
-let logLine: any[] = [];
+var logLine = [];
 
 export default class Go {
   importObject: Record<string, any>;
@@ -164,6 +174,7 @@ export default class Go {
               let iov_ptr = iovs_ptr + iovs_i * 8; // assuming wasm32
               let ptr = mem().getUint32(iov_ptr + 0, true);
               let len = mem().getUint32(iov_ptr + 4, true);
+              nwritten += len;
               for (let i = 0; i < len; i++) {
                 let c = mem().getUint8(ptr + i);
                 if (c == 13) {
@@ -186,6 +197,9 @@ export default class Go {
           mem().setUint32(nwritten_ptr, nwritten, true);
           return 0;
         },
+        fd_close: () => 0, // dummy
+        fd_fdstat_get: () => 0, // dummy
+        fd_seek: () => 0, // dummy
         proc_exit: (code) => {
           if (globalThis.process) {
             // Node.js
@@ -194,6 +208,10 @@ export default class Go {
             // Can't exit in a browser.
             throw 'trying to exit with code ' + code;
           }
+        },
+        random_get: (bufPtr, bufLen) => {
+          crypto.getRandomValues(loadSlice(bufPtr, bufLen));
+          return 0;
         },
       },
       env: {
