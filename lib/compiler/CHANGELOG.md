@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.11.1
+
+### Patch Changes
+
+- 4039682: Fixes hoist script tracking when passed a variable
+
 ## 0.11.0
 
 ### Minor Changes
