@@ -86,7 +86,9 @@ func (p *printer) printCSSImports(cssLen int) {
 		p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.css\";", p.opts.Filename, i))
 		i++
 	}
-	p.print("\n")
+	if cssLen > 0 {
+		p.print("\n")
+	}
 	p.hasCSSImports = true
 }
 
@@ -448,9 +450,16 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 			p.print(", ")
 		}
 
-		src := astro.GetAttribute(node, "src")
-		if src != nil {
-			p.print(fmt.Sprintf("{ type: 'remote', src: '%s' }", escapeSingleQuote(src.Val)))
+		srcAttr := astro.GetAttribute(node, "src")
+		if srcAttr != nil {
+			var src string
+			switch srcAttr.Type {
+			case astro.ExpressionAttribute:
+				src = srcAttr.Val
+			default:
+				src = fmt.Sprintf("'%s'", escapeSingleQuote(srcAttr.Val))
+			}
+			p.print(fmt.Sprintf("{ type: 'remote', src: %s }", src))
 		} else if node.FirstChild != nil {
 			p.print(fmt.Sprintf("{ type: 'inline', value: `%s` }", escapeInterpolation(escapeBackticks(node.FirstChild.Data))))
 		}

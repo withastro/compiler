@@ -1676,6 +1676,23 @@ const items = ["Dog", "Cat", "Platipus"];
 				},
 			},
 		},
+		{
+			name: "hoisted script taking a var",
+			source: `---
+
+import scriptUrl from '../scripts/script.js?url';
+---
+<script type="module" src={scriptUrl} hoist></script>`,
+			staticExtraction: true,
+			want: want{
+				code:        `<html><head></head><body></body></html>`,
+				frontmatter: []string{`import scriptUrl from '../scripts/script.js?url';`},
+				metadata: metadata{
+					modules: []string{`{ module: $$module1, specifier: '../scripts/script.js?url', assert: {} }`},
+					hoisted: []string{"{ type: 'remote', src: scriptUrl }"},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
