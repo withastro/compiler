@@ -9,26 +9,28 @@ interface Service {
   transform: typeof types.transform;
 }
 
-let initializePromise: Promise<void> | undefined;
+let initializePromise: Promise<Service> | undefined;
 let longLivedService: Service | undefined;
 
-export const initialize: typeof types.initialize = (options) => {
+export const initialize: typeof types.initialize = async (options) => {
   let wasmURL = options.wasmURL;
   if (!wasmURL) throw new Error('Must provide the "wasmURL" option');
   wasmURL += '';
-  if (initializePromise) throw new Error('Cannot call "initialize" more than once');
-  initializePromise = startRunningService(wasmURL);
-  initializePromise.catch(() => {
-    // Let the caller try again if this fails
-    initializePromise = void 0;
-  });
-  return initializePromise;
+  if (!initializePromise) {
+    initializePromise = startRunningService(wasmURL).catch((err) => {
+      // Let the caller try again if this fails.
+      initializePromise = void 0;
+      // But still, throw the error back up the caller.
+      throw err;
+    });
+  }
+  longLivedService = longLivedService || (await initializePromise);
 };
 
 let ensureServiceIsRunning = (): Service => {
-  if (longLivedService) return longLivedService;
-  if (initializePromise) throw new Error('You need to wait for the promise returned from "initialize" to be resolved before calling this');
-  throw new Error('You need to call "initialize" before calling this');
+  if (!initializePromise) throw new Error('You need to call "initialize" before calling this');
+  if (!longLivedService) throw new Error('You need to wait for the promise returned from "initialize" to be resolved before calling this');
+  return longLivedService;
 };
 
 const instantiateWASM = async (wasmURL: string, importObject: Record<string, any>): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
@@ -47,14 +49,14 @@ const instantiateWASM = async (wasmURL: string, importObject: Record<string, any
   return response;
 };
 
-const startRunningService = async (wasmURL: string) => {
+const startRunningService = async (wasmURL: string): Promise<Service> => {
   const go = new Go();
   const wasm = await instantiateWASM(wasmURL, go.importObject);
   go.run(wasm.instance);
 
   const service: any = (globalThis as any)['@astrojs/compiler'];
 
-  longLivedService = {
+  return {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),
   };
 };

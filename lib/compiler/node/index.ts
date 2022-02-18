@@ -4,7 +4,7 @@ import Go from './wasm_exec.js';
 import { fileURLToPath } from 'url';
 
 export const transform: typeof types.transform = async (input, options) => {
-  return ensureServiceIsRunning().then((service) => service.transform(input, options));
+  return getService().then((service) => service.transform(input, options));
 };
 
 export const compile = async (template: string): Promise<string> => {
@@ -16,11 +16,18 @@ interface Service {
   transform: typeof types.transform;
 }
 
-let longLivedService: Service | undefined;
+let longLivedService: Promise<Service> | undefined;
 
-let ensureServiceIsRunning = (): Promise<Service> => {
-  if (longLivedService) return Promise.resolve(longLivedService);
-  return startRunningService();
+let getService = (): Promise<Service> => {
+  if (!longLivedService) {
+    longLivedService = startRunningService().catch((err) => {
+      // Let the caller try again if this fails.
+      longLivedService = void 0;
+      // But still, throw the error back up the caller.
+      throw err;
+    });
+  }
+  return longLivedService;
 };
 
 const instantiateWASM = async (wasmURL: string, importObject: Record<string, any>): Promise<WebAssembly.WebAssemblyInstantiatedSource> => {
@@ -35,15 +42,12 @@ const instantiateWASM = async (wasmURL: string, importObject: Record<string, any
   return response;
 };
 
-const startRunningService = async () => {
+const startRunningService = async (): Promise<Service> => {
   const go = new Go();
   const wasm = await instantiateWASM(fileURLToPath(new URL('../astro.wasm', import.meta.url)), go.importObject);
   go.run(wasm.instance);
-
-  const service: any = (globalThis as any)['@astrojs/compiler'];
-
-  longLivedService = {
-    transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),
+  const _service: any = (globalThis as any)['@astrojs/compiler'];
+  return {
+    transform: (input, options) => new Promise((resolve) => resolve(_service.transform(input, options || {}))),
   };
-  return longLivedService;
 };
