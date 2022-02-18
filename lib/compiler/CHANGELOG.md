@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.11.3
+
+### Patch Changes
+
+- dcf15bf: Fixes bug causing a crash when using Astro.resolve on a hoisted script
+
 ## 0.11.2
 
 ### Patch Changes
