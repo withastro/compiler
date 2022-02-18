@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.11.2
+
+### Patch Changes
+
+- 41cc6ef: Fix memory issue caused by duplicate WASM instantiations
+
 ## 0.11.1
 
 ### Patch Changes
