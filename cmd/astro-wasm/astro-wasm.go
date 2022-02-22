@@ -295,7 +295,7 @@ func Transform() interface{} {
 				}
 
 				resolve.Invoke(value)
-			}()
+			}
 
 			return nil
 		})
