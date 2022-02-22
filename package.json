@@ -7,7 +7,7 @@
     "url": "https://github.com/withastro/compiler.git"
   },
   "scripts": {
-    "build": "make astro-wasm && lerna run build --scope @astrojs/compiler",
+    "build": "make wasm && lerna run build --scope @astrojs/compiler",
     "build:compiler": "lerna run build --scope @astrojs/compiler",
     "lint": "eslint \"lib/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
     "format": "prettier -w .",
