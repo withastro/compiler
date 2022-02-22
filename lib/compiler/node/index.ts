@@ -8,7 +8,7 @@ export const transform: typeof types.transform = async (input, options) => {
 };
 
 export const parse: typeof types.parse = async (input, options) => {
-  return ensureServiceIsRunning().then((service) => service.parse(input, options));
+  return getService().then((service) => service.parse(input, options));
 };
 
 export const compile = async (template: string): Promise<string> => {
