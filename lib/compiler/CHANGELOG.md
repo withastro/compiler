@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.1
+
+### Patch Changes
+
+- a539d53: Update exposed types
+
 ## 0.12.0-next.0
 
 ### Minor Changes
