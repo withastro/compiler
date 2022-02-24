@@ -921,6 +921,20 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			},
 		},
 		{
+			name:   "Self-closing title",
+			source: `<title />`,
+			want: want{
+				code: `<html><head><title></title></head><body></body></html>`,
+			},
+		},
+		{
+			name:   "Self-closing title II",
+			source: `<html><head><title /></head><body></body></html>`,
+			want: want{
+				code: `<html><head><title></title></head><body></body></html>`,
+			},
+		},
+		{
 			name:   "Self-closing components in head can have siblings",
 			source: `<html><head><BaseHead /><link href="test"></head><html>`,
 			want: want{
