@@ -935,14 +935,14 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Self-closing title",
 			source: `<title />`,
 			want: want{
-				code: `<html><head><title></title></head><body></body></html>`,
+				code: `<title></title>`,
 			},
 		},
 		{
 			name:   "Self-closing title II",
 			source: `<html><head><title /></head><body></body></html>`,
 			want: want{
-				code: `<html><head><title></title></head><body></body></html>`,
+				code: `<html><head><title></title>${$$renderHead($$result)}</head><body></body></html>`,
 			},
 		},
 		{
