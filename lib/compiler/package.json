@@ -26,7 +26,8 @@
       "import": "./node/utils.js",
       "default": "./browser/utils.js"
     },
-    "./astro.wasm": "./astro.wasm"
+    "./astro.wasm": "./astro.wasm",
+    "./types.d.ts": "./types.d.ts"
   },
   "dependencies": {
     "typescript": "^4.3.5"
