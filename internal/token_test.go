@@ -60,6 +60,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken},
 		},
 		{
+			"self-closing title",
+			`<title set:html={} /><div></div>`,
+			[]TokenType{SelfClosingTagToken, StartTagToken, EndTagToken},
+		},
+		{
 			"self-closing tag (no slash)",
 			`<img width="480" height="320">`,
 			[]TokenType{SelfClosingTagToken},
