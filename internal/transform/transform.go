@@ -25,7 +25,7 @@ type TransformOptions struct {
 func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	walk(doc, func(n *astro.Node) {
-		ExtractScript(doc, n)
+		ExtractScript(doc, n, &opts)
 		AddComponentProps(doc, n)
 		if shouldScope {
 			ScopeElement(n, opts)
@@ -140,7 +140,7 @@ func NormalizeSetDirectives(doc *astro.Node) {
 // 	}
 // }
 
-func ExtractScript(doc *astro.Node, n *astro.Node) {
+func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
 		if HasSetDirective(n) {
 			return
@@ -148,8 +148,23 @@ func ExtractScript(doc *astro.Node, n *astro.Node) {
 		// if <script hoist>, hoist to the document root
 		// If also using define:vars, that overrides the hoist tag.
 		if hasTruthyAttr(n, "hoist") && !HasAttr(n, "define:vars") {
+			shouldAdd := true
+			for _, attr := range n.Attr {
+				if attr.Key == "src" {
+					if attr.Type == astro.ExpressionAttribute {
+						if opts.StaticExtraction {
+							shouldAdd = false
+							fmt.Printf("%s: <script hoist> uses the expression {%s} on the src attribute and will be ignored. Use a string literal on the src attribute instead.\n", opts.Filename, attr.Val)
+						}
+						break
+					}
+				}
+			}
+
 			// prepend node to maintain authored order
-			doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
+			if shouldAdd {
+				doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
+			}
 		}
 	}
 }
