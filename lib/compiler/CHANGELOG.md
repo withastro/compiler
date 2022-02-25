@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.3
+
+### Patch Changes
+
+- ef69b74: Export `./types` rather than `./types.d.ts`
+
 ## 0.12.0-next.2
 
 ### Patch Changes
