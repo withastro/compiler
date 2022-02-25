@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.2
+
+### Patch Changes
+
+- 073b0f1: Adds a warning when using an expression with a hoisted script
+
 ## 0.12.0-next.1
 
 ### Patch Changes
