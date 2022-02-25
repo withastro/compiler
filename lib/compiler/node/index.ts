@@ -1,3 +1,4 @@
+export * from '../shared/types';
 import type * as types from '../shared/types';
 import { promises as fs } from 'fs';
 import Go from './wasm_exec.js';
