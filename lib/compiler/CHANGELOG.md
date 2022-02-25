@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.4
+
+### Patch Changes
+
+- e2061dd: Export all types from shared types
+
 ## 0.12.0-next.3
 
 ### Patch Changes
