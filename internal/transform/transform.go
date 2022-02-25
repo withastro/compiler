@@ -154,7 +154,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 					if attr.Type == astro.ExpressionAttribute {
 						if opts.StaticExtraction {
 							shouldAdd = false
-							fmt.Printf("%s: <script hoist> uses the expression {%s} on the src attribute and will be ignore. Use a static string on the src attribute instead.\n", opts.Filename, attr.Val)
+							fmt.Printf("%s: <script hoist> uses the expression {%s} on the src attribute and will be ignored. Use a string literal on the src attribute instead.\n", opts.Filename, attr.Val)
 						}
 						break
 					}
