@@ -1,4 +1,4 @@
-export * from '../shared/types';
+export type { PreprocessorResult, ParseOptions, TransformOptions, HoistedScript, TransformResult, ParseResult } from '../shared/types';
 import type * as types from '../shared/types';
 import { promises as fs } from 'fs';
 import Go from './wasm_exec.js';
