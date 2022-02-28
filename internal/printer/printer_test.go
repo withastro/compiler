@@ -59,10 +59,11 @@ type want struct {
 }
 
 type metadata struct {
-	hoisted             []string
-	hydratedComponents  []string
-	modules             []string
-	hydrationDirectives []string
+	hoisted              []string
+	hydratedComponents   []string
+	clientOnlyComponents []string
+	modules              []string
+	hydrationDirectives  []string
 }
 
 type testcase struct {
@@ -283,7 +284,8 @@ import Component from '../components';
 			want: want{
 				frontmatter: []string{"import Component from '../components';"},
 				metadata: metadata{
-					hydrationDirectives: []string{"only"},
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components"},
 				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
@@ -311,7 +313,8 @@ import { Component } from '../components';
 			want: want{
 				frontmatter: []string{"import { Component } from '../components';"},
 				metadata: metadata{
-					hydrationDirectives: []string{"only"},
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components"},
 				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
@@ -339,7 +342,8 @@ import * as components from '../components';
 			want: want{
 				frontmatter: []string{"import * as components from '../components';"},
 				metadata: metadata{
-					hydrationDirectives: []string{"only"},
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components"},
 				},
 				// Specifically do NOT render any metadata here, we need to skip this import
 				code: `<html>
@@ -1780,6 +1784,17 @@ const items = ["Dog", "Cat", "Platipus"];
 						metadata += ", "
 					}
 					metadata += c
+				}
+			}
+			metadata += "]"
+			// metadata.clientOnlyComponents
+			metadata += ", clientOnlyComponents: ["
+			if len(tt.want.metadata.clientOnlyComponents) > 0 {
+				for i, c := range tt.want.clientOnlyComponents {
+					if i > 0 {
+						metadata += ", "
+					}
+					metadata += fmt.Sprintf("'%s'", c)
 				}
 			}
 			metadata += "]"
