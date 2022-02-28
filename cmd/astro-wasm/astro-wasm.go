@@ -196,21 +196,9 @@ func Transform() interface{} {
 			go func() {
 				var doc *astro.Node
 
-				nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-					Type:     astro.ElementNode,
-					Data:     atom.Template.String(),
-					DataAtom: atom.Template,
-				})
+				doc, err := astro.Parse(strings.NewReader(source))
 				if err != nil {
 					fmt.Println(err)
-				}
-				doc = &astro.Node{
-					Type:                astro.DocumentNode,
-					HydrationDirectives: make(map[string]bool),
-				}
-				for i := 0; i < len(nodes); i++ {
-					n := nodes[i]
-					doc.AppendChild(n)
 				}
 
 				// Hoist styles and scripts to the top-level
