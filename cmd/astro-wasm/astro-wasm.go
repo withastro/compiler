@@ -17,7 +17,6 @@ import (
 	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
-	"golang.org/x/net/html/atom"
 )
 
 var done chan bool
@@ -160,22 +159,10 @@ func Parse() interface{} {
 		parseOptions := makeParseOptions(js.Value(args[1]))
 
 		var doc *astro.Node
-		nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-			Type:     astro.ElementNode,
-			Data:     atom.Template.String(),
-			DataAtom: atom.Template,
-		})
+		doc, err := astro.Parse(strings.NewReader(source))
 		if err != nil {
 			fmt.Println(err)
 		}
-		doc = &astro.Node{
-			Type: astro.DocumentNode,
-		}
-		for i := 0; i < len(nodes); i++ {
-			n := nodes[i]
-			doc.AppendChild(n)
-		}
-
 		result := printer.PrintToJSON(source, doc, parseOptions)
 
 		return vert.ValueOf(ParseResult{
