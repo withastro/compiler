@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.5
+
+### Patch Changes
+
+- 97cf66b: Adds metadata on client:only components
+
 ## 0.12.0-next.4
 
 ### Patch Changes

@@ -5,6 +5,7 @@
     "@astrojs/compiler": "0.9.2"
   },
   "changesets": [
+    "chilled-colts-kick",
     "long-kids-wait",
     "modern-dots-destroy",
     "short-tips-begin",
