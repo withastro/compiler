@@ -60,7 +60,7 @@ func (n ASTNode) String() string {
 	if n.Name != "" {
 		str += fmt.Sprintf(`,"name":"%s"`, escapeForJSON(n.Name))
 	} else if n.Type == "fragment" {
-		str += fmt.Sprintf(`,"name":""`)
+		str += fmt.Sprint(`,"name":""`)
 	}
 	if n.Value != "" || n.Type == "attribute" {
 		str += fmt.Sprintf(`,"value":"%s"`, escapeForJSON(n.Value))
