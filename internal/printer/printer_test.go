@@ -1245,6 +1245,20 @@ import { Container, Col, Row } from 'react-bootstrap';
 			},
 		},
 		{
+			name:   "Fragment shorthand only",
+			source: `<>Hello</>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `Hello` + BACKTICK + `,})}`,
+			},
+		},
+		{
+			name:   "Fragment literal only",
+			source: `<Fragment>world</Fragment>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `world` + BACKTICK + `,})}`,
+			},
+		},
+		{
 			name:   "Fragment slotted",
 			source: `<body><Component><><div>Default</div><div>Named</div></></Component></body>`,
 			want: want{
@@ -1904,6 +1918,16 @@ func TestPrintToJSON(t *testing.T) {
 			name:   "Comment preserves whitespace",
 			source: `<!-- hello -->`,
 			want:   []ASTNode{{Type: "comment", Value: " hello "}},
+		},
+		{
+			name:   "Fragment Shorthand",
+			source: `<>Hello</>`,
+			want:   []ASTNode{{Type: "fragment", Name: "", Children: []ASTNode{{Type: "text", Value: "Hello"}}}},
+		},
+		{
+			name:   "Fragment Literal",
+			source: `<Fragment>World</Fragment>`,
+			want:   []ASTNode{{Type: "fragment", Name: "Fragment", Children: []ASTNode{{Type: "text", Value: "World"}}}},
 		},
 		{
 			name: "Frontmatter",

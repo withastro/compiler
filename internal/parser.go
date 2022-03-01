@@ -750,6 +750,9 @@ func inHeadIM(p *parser) bool {
 				return true
 			}
 			p.tok.Data = s
+		} else if p.oe.top() != nil && (isComponent(p.oe.top().Data) || isFragment((p.oe.top().Data))) {
+			p.addText(p.tok.Data)
+			return true
 		}
 	case StartTagToken:
 		// Allow components in Head
