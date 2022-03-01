@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.7
+
+### Patch Changes
+
+- e26b9d6: Fix edge case with Fragment parsing in head, add `fragment` node to AST output
+
 ## 0.12.0-next.6
 
 ### Patch Changes
