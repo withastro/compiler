@@ -95,6 +95,13 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "basic renderHead",
+			source: `<html><head><title>Ah</title></head></html>`,
+			want: want{
+				code: `<html><head><title>Ah</title>${$$renderHead($$result)}</head></html>`,
+			},
+		},
+		{
 			name: "basic (frontmatter)",
 			source: `---
 const href = '/about';
