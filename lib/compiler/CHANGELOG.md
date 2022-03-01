@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.6
+
+### Patch Changes
+
+- 37ef1c1: Fix `head` behavior and a bug related to ParseFragment
+
 ## 0.12.0-next.5
 
 ### Patch Changes
