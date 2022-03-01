@@ -1,5 +1,5 @@
-export type ParentNode = RootNode | ElementNode | ComponentNode | CustomElementNode | ExpressionNode;
-export type Node = RootNode | ElementNode | ComponentNode | CustomElementNode | ExpressionNode | TextNode | FrontmatterNode | DoctypeNode | CommentNode;
+export type ParentNode = RootNode | ElementNode | ComponentNode | CustomElementNode | FragmentNode | ExpressionNode;
+export type Node = RootNode | ElementNode | ComponentNode | CustomElementNode | FragmentNode | ExpressionNode | TextNode | FrontmatterNode | DoctypeNode | CommentNode;
 
 export interface Position {
   start: Point;
@@ -19,7 +19,7 @@ export interface BaseNode {
 }
 
 export interface ParentLikeNode extends BaseNode {
-  type: 'element' | 'component' | 'custom-element' | 'expression' | 'root';
+  type: 'element' | 'component' | 'custom-element' | 'fragment' | 'expression' | 'root';
   children: Node[];
 }
 
@@ -49,6 +49,13 @@ export interface TextNode extends LiteralNode {
 
 export interface ElementNode extends ParentLikeNode {
   type: 'element';
+  name: string;
+  attributes: AttributeNode[];
+  directives: DirectiveNode[];
+}
+
+export interface FragmentNode extends ParentLikeNode {
+  type: 'fragment';
   name: string;
   attributes: AttributeNode[];
   directives: DirectiveNode[];

@@ -5,6 +5,7 @@ import {
   ElementNode,
   CustomElementNode,
   ComponentNode,
+  FragmentNode,
   LiteralNode,
   ExpressionNode,
   TextNode,
@@ -29,7 +30,7 @@ export const is = {
     return typeof (node as any).value === 'string';
   },
   tag(node: Node): node is ElementNode | CustomElementNode | ComponentNode {
-    return node.type === 'element' || node.type === 'custom-element' || node.type === 'component';
+    return node.type === 'element' || node.type === 'custom-element' || node.type === 'component' || node.type === 'fragment';
   },
   whitespace(node: Node): node is TextNode {
     return node.type === 'text' && node.value.trim().length === 0;
@@ -38,6 +39,7 @@ export const is = {
   element: guard<ElementNode>('element'),
   customElement: guard<CustomElementNode>('custom-element'),
   component: guard<ComponentNode>('component'),
+  fragment: guard<FragmentNode>('fragment'),
   expression: guard<ExpressionNode>('expression'),
   text: guard<TextNode>('text'),
   doctype: guard<DoctypeNode>('doctype'),
