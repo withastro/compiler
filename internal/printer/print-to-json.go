@@ -25,7 +25,7 @@ type ASTPoint struct {
 
 type ASTNode struct {
 	Type       string      `json:"type"`
-	Name       string      `json:"name,omitempty"`
+	Name       string      `json:"name"`
 	Value      string      `json:"value,omitempty"`
 	Attributes []ASTNode   `json:"attributes,omitempty"`
 	Directives []ASTNode   `json:"directives,omitempty"`
@@ -59,6 +59,8 @@ func (n ASTNode) String() string {
 	}
 	if n.Name != "" {
 		str += fmt.Sprintf(`,"name":"%s"`, escapeForJSON(n.Name))
+	} else if n.Type == "fragment" {
+		str += `,"name":""`
 	}
 	if n.Value != "" || n.Type == "attribute" {
 		str += fmt.Sprintf(`,"value":"%s"`, escapeForJSON(n.Value))
@@ -201,6 +203,8 @@ func renderNode(p *printer, parent *ASTNode, n *Node, opts t.ParseOptions) {
 				node.Type = "component"
 			} else if n.CustomElement {
 				node.Type = "custom-element"
+			} else if n.Fragment {
+				node.Type = "fragment"
 			} else {
 				node.Type = "element"
 			}
