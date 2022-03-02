@@ -1,13 +1,9 @@
 /* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-/* eslint-disable no-console */
 
 import { transform } from '@astrojs/compiler';
 
 async function run() {
-  const result = await transform(
+  await transform(
     `---
 import CartItems from './CartItems.astro';
 ---
