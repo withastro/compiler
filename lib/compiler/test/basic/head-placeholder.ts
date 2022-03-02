@@ -9,7 +9,7 @@ test.before(async () => {
   result = await transform(FIXTURE);
 });
 
-test.skip('head placeholder', () => {
+test('head placeholder', () => {
   assert.not.match(result.code, '<!--astro:head-->', 'Expected output to contain <!--astro:head--> placeholder');
 });
 
