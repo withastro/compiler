@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.12.0-next.8
+
+### Patch Changes
+
+- 4497628: Improve head injection behavior
+
 ## 0.12.0-next.7
 
 ### Patch Changes
