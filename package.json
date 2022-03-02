@@ -13,7 +13,8 @@
     "format": "prettier -w .",
     "prerelease": "yarn build:compiler",
     "release": "changeset publish",
-    "test": "node ./lib/compiler/test/test.mjs"
+    "test": "tsm node_modules/uvu/bin.js lib test -i utils -i stress",
+    "test:stress": "tsm lib/compiler/test/stress/index.ts"
   },
   "workspaces": [
     "lib/*"
