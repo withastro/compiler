@@ -17,17 +17,17 @@ test.before(async () => {
 
 test('ast', () => {
   assert.type(result, 'object', `Expected "parse" to return an object!`);
-  assert.equal(result.ast.type, "root", `Expected "ast" root node to be of type "root"`);
+  assert.equal(result.ast.type, 'root', `Expected "ast" root node to be of type "root"`);
 });
 
 test('frontmatter', () => {
   const [frontmatter] = result.ast.children;
-  assert.equal(frontmatter.type, "frontmatter", `Expected first child node to be of type "frontmatter"`);
+  assert.equal(frontmatter.type, 'frontmatter', `Expected first child node to be of type "frontmatter"`);
 });
 
 test('element', () => {
-  const [_, element] = result.ast.children;
-  assert.equal(element.type, "element", `Expected first child node to be of type "element"`);
+  const [, element] = result.ast.children;
+  assert.equal(element.type, 'element', `Expected first child node to be of type "element"`);
 });
 
 test.run();

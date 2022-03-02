@@ -16,7 +16,7 @@ test('fragment shorthand', () => {
 });
 
 test('fragment literal', () => {
-  const [_, second] = result.ast.children;
+  const [, second] = result.ast.children;
   assert.equal(second.type, 'fragment', 'Expected second child to be of type "fragment"');
   assert.equal(second.name, 'Fragment', 'Expected second child to have name of ""');
 });

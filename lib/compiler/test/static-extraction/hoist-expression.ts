@@ -11,11 +11,11 @@ const url = 'foo';
 
 let result;
 test.before(async () => {
-  result = await transform(FIXTURE, { experimentalStaticExtraction: true })
+  result = await transform(FIXTURE, { experimentalStaticExtraction: true });
 });
 
 test('logs warning with hoisted expression', () => {
-  assert.ok(result.code)
+  assert.ok(result.code);
 });
 
-test.run()
+test.run();

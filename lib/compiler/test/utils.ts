@@ -22,4 +22,3 @@ export function transformSass(value: string) {
     });
   });
 }
-
