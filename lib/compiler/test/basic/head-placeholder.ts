@@ -10,7 +10,7 @@ test.before(async () => {
 });
 
 test('head placeholder', () => {
-  assert.not.match(result.code, '<!--astro:head-->', 'Expected output to contain <!--astro:head--> placeholder');
+  assert.match(result.code, '<!--astro:head-->', 'Expected output to contain <!--astro:head--> placeholder');
 });
 
 test.run();
