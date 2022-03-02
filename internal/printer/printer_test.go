@@ -17,7 +17,6 @@ import (
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
 	FRAGMENT,
 	"render as " + TEMPLATE_TAG,
-	"renderHead as " + RENDER_HEAD,
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
@@ -43,7 +42,7 @@ var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE);\
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build', '.');\nconst Astro = $$Astro;"
-var RENDER_HEAD_RESULT = fmt.Sprintf("${%s(%s)}", RENDER_HEAD, RESULT)
+var RENDER_HEAD_RESULT = "<!--astro:head-->"
 
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
@@ -98,7 +97,7 @@ func TestPrinter(t *testing.T) {
 			name:   "basic renderHead",
 			source: `<html><head><title>Ah</title></head></html>`,
 			want: want{
-				code: `<html><head><title>Ah</title>${$$renderHead($$result)}</head></html>`,
+				code: `<html><head><title>Ah</title>` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
 		},
 		{
@@ -953,7 +952,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Self-closing title II",
 			source: `<html><head><title /></head><body></body></html>`,
 			want: want{
-				code: `<html><head><title></title>${$$renderHead($$result)}</head><body></body></html>`,
+				code: `<html><head><title></title>` + RENDER_HEAD_RESULT + `</head><body></body></html>`,
 			},
 		},
 		{
@@ -1755,7 +1754,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
-				Scope:            "astro-XXXX",
+				Scope:            "XXXX",
 				Site:             "https://astro.build",
 				InternalURL:      "http://localhost:3000/",
 				ProjectRoot:      ".",

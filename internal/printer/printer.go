@@ -37,7 +37,6 @@ var ADD_ATTRIBUTE = "$$addAttribute"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
-var RENDER_HEAD = "$$renderHead"
 var CREATE_METADATA = "$$createMetadata"
 var METADATA = "$$metadata"
 var RESULT = "$$result"
@@ -60,7 +59,6 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print("import {\n  ")
 	p.print(FRAGMENT + ",\n  ")
 	p.print("render as " + TEMPLATE_TAG + ",\n  ")
-	p.print("renderHead as " + RENDER_HEAD + ",\n  ")
 	p.print("createAstro as " + CREATE_ASTRO + ",\n  ")
 	p.print("createComponent as " + CREATE_COMPONENT + ",\n  ")
 	p.print("renderComponent as " + RENDER_COMPONENT + ",\n  ")
@@ -94,7 +92,7 @@ func (p *printer) printCSSImports(cssLen int) {
 
 func (p *printer) printRenderHead() {
 	p.addNilSourceMapping()
-	p.print(fmt.Sprintf("${%s(%s)}", RENDER_HEAD, RESULT))
+	p.print("<!--astro:head-->")
 }
 
 func (p *printer) printReturnOpen() {
