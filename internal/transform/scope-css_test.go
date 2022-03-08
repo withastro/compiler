@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	astro "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/test_utils"
+	astro "astro.build/x/compiler/internal"
+	"astro.build/x/compiler/internal/test_utils"
 )
 
 func TestScopeStyle(t *testing.T) {

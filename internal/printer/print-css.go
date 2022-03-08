@@ -3,9 +3,9 @@ package printer
 import (
 	"strings"
 
-	. "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/sourcemap"
-	"github.com/withastro/compiler/internal/transform"
+	. "astro.build/x/compiler/internal"
+	"astro.build/x/compiler/internal/sourcemap"
+	"astro.build/x/compiler/internal/transform"
 )
 
 type PrintCSSResult struct {

@@ -6,8 +6,8 @@ import (
 
 	// "strings"
 
+	astro "astro.build/x/compiler/internal"
 	"github.com/tdewolff/parse/css"
-	astro "github.com/withastro/compiler/internal"
 	a "golang.org/x/net/html/atom"
 )
 

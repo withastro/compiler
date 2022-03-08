@@ -10,7 +10,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/withastro/compiler/internal/loc"
+	"astro.build/x/compiler/internal/loc"
 	a "golang.org/x/net/html/atom"
 )
 

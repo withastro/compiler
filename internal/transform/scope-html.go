@@ -1,7 +1,7 @@
 package transform
 
 import (
-	astro "github.com/withastro/compiler/internal"
+	astro "astro.build/x/compiler/internal"
 )
 
 func ScopeElement(n *astro.Node, opts TransformOptions) {

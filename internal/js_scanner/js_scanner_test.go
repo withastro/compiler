@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/withastro/compiler/internal/test_utils"
+	"astro.build/x/compiler/internal/test_utils"
 )
 
 type testcase struct {

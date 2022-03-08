@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	astro "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/loc"
+	astro "astro.build/x/compiler/internal"
+	"astro.build/x/compiler/internal/loc"
 	"golang.org/x/net/html/atom"
 	a "golang.org/x/net/html/atom"
 )

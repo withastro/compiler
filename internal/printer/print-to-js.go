@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	. "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/js_scanner"
-	"github.com/withastro/compiler/internal/loc"
-	"github.com/withastro/compiler/internal/sourcemap"
-	"github.com/withastro/compiler/internal/transform"
+	. "astro.build/x/compiler/internal"
+	"astro.build/x/compiler/internal/js_scanner"
+	"astro.build/x/compiler/internal/loc"
+	"astro.build/x/compiler/internal/sourcemap"
+	"astro.build/x/compiler/internal/transform"
 	"golang.org/x/net/html/atom"
 )
 

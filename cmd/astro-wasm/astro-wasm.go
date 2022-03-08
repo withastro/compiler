@@ -11,12 +11,12 @@ import (
 	"sync"
 	"syscall/js"
 
+	astro "astro.build/x/compiler/internal"
+	"astro.build/x/compiler/internal/printer"
+	t "astro.build/x/compiler/internal/t"
+	"astro.build/x/compiler/internal/transform"
+	wasm_utils "astro.build/x/compiler/internal_wasm/utils"
 	"github.com/norunners/vert"
-	astro "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/printer"
-	t "github.com/withastro/compiler/internal/t"
-	"github.com/withastro/compiler/internal/transform"
-	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 )
 
 var done chan bool

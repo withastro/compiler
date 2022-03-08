@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"unicode/utf8"
 
-	"github.com/withastro/compiler/internal/helpers"
-	"github.com/withastro/compiler/internal/loc"
+	"astro.build/x/compiler/internal/helpers"
+	"astro.build/x/compiler/internal/loc"
 )
 
 type Mapping struct {

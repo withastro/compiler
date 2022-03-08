@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	astro "github.com/withastro/compiler/internal"
+	astro "astro.build/x/compiler/internal"
 	"golang.org/x/net/html/atom"
 )
 

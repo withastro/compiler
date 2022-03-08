@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	astro "github.com/withastro/compiler/internal"
-	types "github.com/withastro/compiler/internal/t"
-	"github.com/withastro/compiler/internal/test_utils"
-	"github.com/withastro/compiler/internal/transform"
+	astro "astro.build/x/compiler/internal"
+	types "astro.build/x/compiler/internal/t"
+	"astro.build/x/compiler/internal/test_utils"
+	"astro.build/x/compiler/internal/transform"
 )
 
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{

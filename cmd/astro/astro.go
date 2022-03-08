@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	astro "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/printer"
-	"github.com/withastro/compiler/internal/transform"
+	astro "astro.build/x/compiler/internal"
+	"astro.build/x/compiler/internal/printer"
+	"astro.build/x/compiler/internal/transform"
 )
 
 func main() {

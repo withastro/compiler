@@ -3,7 +3,7 @@ package wasm_utils
 import (
 	"syscall/js"
 
-	astro "github.com/withastro/compiler/internal"
+	astro "astro.build/x/compiler/internal"
 )
 
 // See https://stackoverflow.com/questions/68426700/how-to-wait-a-js-async-function-from-golang-wasm

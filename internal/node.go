@@ -5,7 +5,7 @@
 package astro
 
 import (
-	"github.com/withastro/compiler/internal/loc"
+	"astro.build/x/compiler/internal/loc"
 	"golang.org/x/net/html/atom"
 )
 

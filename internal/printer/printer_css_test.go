@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	astro "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/test_utils"
-	"github.com/withastro/compiler/internal/transform"
+	astro "astro.build/x/compiler/internal"
+	"astro.build/x/compiler/internal/test_utils"
+	"astro.build/x/compiler/internal/transform"
 )
 
 func TestPrinterCSS(t *testing.T) {
