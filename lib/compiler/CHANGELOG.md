@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.12.0-next.9
+
+### Patch Changes
+
+- 95ec808: Fix <slot> behavior inside of head
+- 95ec808: Remove usage of `escapeHTML` util
+
 ## 0.12.0-next.8
 
 ### Patch Changes
