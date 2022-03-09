@@ -20,7 +20,6 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
-	"escapeHTML as " + ESCAPE_HTML,
 	"unescapeHTML as " + UNESCAPE_HTML,
 	"renderSlot as " + RENDER_SLOT,
 	"addAttribute as " + ADD_ATTRIBUTE,
@@ -98,6 +97,13 @@ func TestPrinter(t *testing.T) {
 			source: `<html><head><title>Ah</title></head></html>`,
 			want: want{
 				code: `<html><head><title>Ah</title>` + RENDER_HEAD_RESULT + `</head></html>`,
+			},
+		},
+		{
+			name:   "head slot",
+			source: `<html><head><slot /></html>`,
+			want: want{
+				code: `<html><head>${$$renderSlot($$result,$$slots["default"])}` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
 		},
 		{
@@ -1615,7 +1621,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:text",
 			source: "<article set:text={content} />",
 			want: want{
-				code: `<article>${$$escapeHTML(content)}</article>`,
+				code: `<article>${content}</article>`,
 			},
 		},
 		{
@@ -1629,7 +1635,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:text on Component",
 			source: "<Component set:text={content} />",
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${$$escapeHTML(content)}`," + `})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${content}`," + `})}`,
 			},
 		},
 		{
@@ -1643,14 +1649,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:text on custom-element",
 			source: "<custom-element set:text={content} />",
 			want: want{
-				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$escapeHTML(content)}`," + `})}`,
+				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${content}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:html on self-closing tag",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<article>${$$unescapeHTML(content)}</article>`,
+				code: `<article>${content}</article>`,
 			},
 		},
 		{

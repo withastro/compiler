@@ -773,6 +773,16 @@ func inHeadIM(p *parser) bool {
 			p.oe.pop()
 			p.acknowledgeSelfClosingTag()
 			return true
+		case a.Slot:
+			p.addElement()
+			p.setOriginalIM()
+			p.im = inBodyIM
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Noscript:
 			if p.scripting {
 				p.parseGenericRawTextElement()

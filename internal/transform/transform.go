@@ -104,10 +104,6 @@ func NormalizeSetDirectives(doc *astro.Node) {
 			if directive.Key == "set:html" {
 				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
 			}
-			// TODO: remove this explicit escape call when it becomes the default
-			if directive.Key == "set:text" {
-				data = fmt.Sprintf("$$escapeHTML(%s)", data)
-			}
 			expr.AppendChild(&astro.Node{
 				Type: astro.TextNode,
 				Data: data,
