@@ -1,5 +1,30 @@
 # @astrojs/compiler
 
+## 0.12.0
+
+### Minor Changes
+
+- c6dd41d: Do not render implicit tags created during the parsing process
+- c6dd41d: Remove "as" option, treats all documents as fragments that generate no implicit tags
+- c6dd41d: Add `parse` function which generates an AST
+- c6dd41d: Adds support for `Astro.self` (as accepted in the [Recursive Components RFC](https://github.com/withastro/rfcs/blob/main/active-rfcs/0000-recursive-components.md)).
+
+### Patch Changes
+
+- c6dd41d: Add `fragment` node types to AST definitions, expose Fragment helper to utils
+- c6dd41d: Adds metadata on client:only components
+- c6dd41d: Expose AST types via `@astrojs/compiler/types`
+- c6dd41d: Export `./types` rather than `./types.d.ts`
+- c6dd41d: Fix edge case with Fragment parsing in head, add `fragment` node to AST output
+- c6dd41d: Fix <slot> behavior inside of head
+- c6dd41d: Improve head injection behavior
+- ef0b4b3: Move `typescript` dependency to development dependencies, as it is not needed in the package runtime.
+- c6dd41d: Update exposed types
+- c6dd41d: Remove usage of `escapeHTML` util
+- c6dd41d: Export all types from shared types
+- c6dd41d: Fix `head` behavior and a bug related to ParseFragment
+- c6dd41d: Adds a warning when using an expression with a hoisted script
+
 ## 0.12.0-next.9
 
 ### Patch Changes
