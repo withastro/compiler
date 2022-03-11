@@ -1,3 +1,4 @@
+export type { PreprocessorResult, ParseOptions, TransformOptions, HoistedScript, TransformResult, ParseResult } from '../shared/types';
 import type * as types from '../shared/types';
 import { promises as fs } from 'fs';
 import Go from './wasm_exec.js';
@@ -7,6 +8,10 @@ export const transform: typeof types.transform = async (input, options) => {
   return getService().then((service) => service.transform(input, options));
 };
 
+export const parse: typeof types.parse = async (input, options) => {
+  return getService().then((service) => service.parse(input, options));
+};
+
 export const compile = async (template: string): Promise<string> => {
   const { default: mod } = await import(`data:text/javascript;charset=utf-8;base64,${Buffer.from(template).toString('base64')}`);
   return mod;
@@ -14,6 +19,7 @@ export const compile = async (template: string): Promise<string> => {
 
 interface Service {
   transform: typeof types.transform;
+  parse: typeof types.parse;
 }
 
 let longLivedService: Promise<Service> | undefined;
@@ -49,5 +55,6 @@ const startRunningService = async (): Promise<Service> => {
   const _service: any = (globalThis as any)['@astrojs/compiler'];
   return {
     transform: (input, options) => new Promise((resolve) => resolve(_service.transform(input, options || {}))),
+    parse: (input, options) => new Promise((resolve) => resolve(_service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
   };
 };

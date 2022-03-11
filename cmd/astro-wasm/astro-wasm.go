@@ -14,9 +14,9 @@ import (
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/printer"
+	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
-	"golang.org/x/net/html/atom"
 )
 
 var done chan bool
@@ -25,6 +25,7 @@ func main() {
 	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
 	module := js.Global().Get("@astrojs/compiler")
 	module.Set("transform", Transform())
+	module.Set("parse", Parse())
 
 	<-make(chan struct{})
 }
@@ -43,6 +44,19 @@ func jsBool(j js.Value) bool {
 	return j.Bool()
 }
 
+func makeParseOptions(options js.Value) t.ParseOptions {
+	position := true
+
+	pos := options.Get("position")
+	if !pos.IsNull() && !pos.IsUndefined() {
+		position = pos.Bool()
+	}
+
+	return t.ParseOptions{
+		Position: position,
+	}
+}
+
 func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
 	filename := jsString(options.Get("sourcefile"))
 	if filename == "" {
@@ -52,11 +66,6 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	pathname := jsString(options.Get("pathname"))
 	if pathname == "" {
 		pathname = "<stdin>"
-	}
-
-	as := jsString(options.Get("as"))
-	if as == "" {
-		as = "document"
 	}
 
 	internalURL := jsString(options.Get("internalURL"))
@@ -87,7 +96,6 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		As:               as,
 		Scope:            hash,
 		Filename:         filename,
 		Pathname:         pathname,
@@ -113,6 +121,10 @@ type HoistedScript struct {
 	Code string `js:"code"`
 	Src  string `js:"src"`
 	Type string `js:"type"`
+}
+
+type ParseResult struct {
+	AST string `js:"ast"`
 }
 
 type TransformResult struct {
@@ -141,6 +153,24 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	style.FirstChild.Data = str
 }
 
+func Parse() interface{} {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		source := jsString(args[0])
+		parseOptions := makeParseOptions(js.Value(args[1]))
+
+		var doc *astro.Node
+		doc, err := astro.Parse(strings.NewReader(source))
+		if err != nil {
+			fmt.Println(err)
+		}
+		result := printer.PrintToJSON(source, doc, parseOptions)
+
+		return vert.ValueOf(ParseResult{
+			AST: string(result.Output),
+		})
+	})
+}
+
 func Transform() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		source := jsString(args[0])
@@ -153,29 +183,9 @@ func Transform() interface{} {
 			go func() {
 				var doc *astro.Node
 
-				if transformOptions.As == "document" {
-					docNode, err := astro.Parse(strings.NewReader(source))
-					doc = docNode
-					if err != nil {
-						fmt.Println(err)
-					}
-				} else if transformOptions.As == "fragment" {
-					nodes, err := astro.ParseFragment(strings.NewReader(source), &astro.Node{
-						Type:     astro.ElementNode,
-						Data:     atom.Template.String(),
-						DataAtom: atom.Template,
-					})
-					if err != nil {
-						fmt.Println(err)
-					}
-					doc = &astro.Node{
-						Type:                astro.DocumentNode,
-						HydrationDirectives: make(map[string]bool),
-					}
-					for i := 0; i < len(nodes); i++ {
-						n := nodes[i]
-						doc.AppendChild(n)
-					}
+				doc, err := astro.Parse(strings.NewReader(source))
+				if err != nil {
+					fmt.Println(err)
 				}
 
 				// Hoist styles and scripts to the top-level

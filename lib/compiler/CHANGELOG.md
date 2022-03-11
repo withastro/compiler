@@ -1,5 +1,73 @@
 # @astrojs/compiler
 
+## 0.12.0-next.9
+
+### Patch Changes
+
+- 95ec808: Fix <slot> behavior inside of head
+- 95ec808: Remove usage of `escapeHTML` util
+
+## 0.12.0-next.8
+
+### Patch Changes
+
+- 4497628: Improve head injection behavior
+
+## 0.12.0-next.7
+
+### Patch Changes
+
+- e26b9d6: Fix edge case with Fragment parsing in head, add `fragment` node to AST output
+
+## 0.12.0-next.6
+
+### Patch Changes
+
+- 37ef1c1: Fix `head` behavior and a bug related to ParseFragment
+
+## 0.12.0-next.5
+
+### Patch Changes
+
+- 97cf66b: Adds metadata on client:only components
+
+## 0.12.0-next.4
+
+### Patch Changes
+
+- e2061dd: Export all types from shared types
+
+## 0.12.0-next.3
+
+### Patch Changes
+
+- ef69b74: Export `./types` rather than `./types.d.ts`
+
+## 0.12.0-next.2
+
+### Patch Changes
+
+- 073b0f1: Adds a warning when using an expression with a hoisted script
+
+## 0.12.0-next.1
+
+### Patch Changes
+
+- a539d53: Update exposed types
+
+## 0.12.0-next.0
+
+### Minor Changes
+
+- 8ce39c7: Do not render implicit tags created during the parsing process
+- 41b825a: Remove "as" option, treats all documents as fragments that generate no implicit tags
+- 483b34b: Add `parse` function which generates an AST
+- 9e5e2f8: Adds support for `Astro.self` (as accepted in the [Recursive Components RFC](https://github.com/withastro/rfcs/blob/main/active-rfcs/0000-recursive-components.md)).
+
+### Patch Changes
+
+- 16b167c: Expose AST types via `@astrojs/compiler/types`
+
 ## 0.11.4
 
 ### Patch Changes

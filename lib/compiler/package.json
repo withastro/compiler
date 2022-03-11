@@ -5,12 +5,12 @@
   "type": "module",
   "bugs": "https://github.com/withastro/compiler/issues",
   "homepage": "https://astro.build",
-  "version": "0.11.4",
+  "version": "0.12.0-next.9",
   "scripts": {
     "build": "tsc -p ."
   },
   "main": "./node/index.js",
-  "types": "./shared/types.d.ts",
+  "types": "./node",
   "repository": {
     "type": "git",
     "url": "https://github.com/withastro/compiler.git"
@@ -21,10 +21,21 @@
       "import": "./node/index.js",
       "default": "./browser/index.js"
     },
-    "./astro.wasm": "./astro.wasm"
+    "./utils": {
+      "browser": "./browser/utils.js",
+      "import": "./node/utils.js",
+      "default": "./browser/utils.js"
+    },
+    "./astro.wasm": "./astro.wasm",
+    "./types": "./types.d.ts"
+  },
+  "dependencies": {
+    "tsm": "^2.2.1",
+    "uvu": "^0.5.3"
   },
   "devDependencies": {
     "@types/node": "^16.4.12",
+    "@types/sass": "^1.43.1",
     "typescript": "^4.4.3"
   },
   "volta": {

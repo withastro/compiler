@@ -30,7 +30,6 @@ var TEMPLATE_TAG = "$$render"
 var CREATE_ASTRO = "$$createAstro"
 var CREATE_COMPONENT = "$$createComponent"
 var RENDER_COMPONENT = "$$renderComponent"
-var ESCAPE_HTML = "$$escapeHTML"
 var UNESCAPE_HTML = "$$unescapeHTML"
 var RENDER_SLOT = "$$renderSlot"
 var ADD_ATTRIBUTE = "$$addAttribute"
@@ -62,7 +61,6 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print("createAstro as " + CREATE_ASTRO + ",\n  ")
 	p.print("createComponent as " + CREATE_COMPONENT + ",\n  ")
 	p.print("renderComponent as " + RENDER_COMPONENT + ",\n  ")
-	p.print("escapeHTML as " + ESCAPE_HTML + ",\n  ")
 	p.print("unescapeHTML as " + UNESCAPE_HTML + ",\n  ")
 	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
 	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
@@ -88,6 +86,11 @@ func (p *printer) printCSSImports(cssLen int) {
 	}
 	p.print("\n")
 	p.hasCSSImports = true
+}
+
+func (p *printer) printRenderHead() {
+	p.addNilSourceMapping()
+	p.print("<!--astro:head-->")
 }
 
 func (p *printer) printReturnOpen() {
@@ -324,6 +327,7 @@ func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
 func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
 	var specs []string
 	var asrts []string
+	var conlyspecs []string
 
 	modCount := 1
 	loc, statement := js_scanner.NextImportStatement(source, 0)
@@ -344,6 +348,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 							Type: astro.ExpressionAttribute,
 						}
 						n.Attr = append(n.Attr, pathAttr)
+						conlyspecs = append(conlyspecs, statement.Specifier)
 
 						exportAttr := astro.Attribute{
 							Key:  "client:component-export",
@@ -363,6 +368,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 						Type: astro.ExpressionAttribute,
 					}
 					n.Attr = append(n.Attr, pathAttr)
+					conlyspecs = append(conlyspecs, statement.Specifier)
 
 					exportAttr := astro.Attribute{
 						Key:  "client:component-export",
@@ -433,6 +439,14 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 			p.print(node.Data)
 		}
 	}
+	// Client-Only Components
+	p.print("], clientOnlyComponents: [")
+	for i, spec := range conlyspecs {
+		if i > 0 {
+			p.print(", ")
+		}
+		p.print(fmt.Sprintf("'%s'", spec))
+	}
 	p.print("], hydrationDirectives: new Set([")
 	i := 0
 	for directive := range doc.HydrationDirectives {
@@ -442,6 +456,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 		p.print(fmt.Sprintf("'%s'", directive))
 		i++
 	}
+	// Hoisted scripts
 	p.print("]), hoisted: [")
 	for i, node := range doc.Scripts {
 		if i > 0 {
@@ -455,5 +470,6 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 			p.print(fmt.Sprintf("{ type: 'inline', value: `%s` }", escapeInterpolation(escapeBackticks(node.FirstChild.Data))))
 		}
 	}
+
 	p.print("] });\n\n")
 }

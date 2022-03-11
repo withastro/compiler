@@ -1,0 +1,24 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "@astrojs/compiler": "0.9.2"
+  },
+  "changesets": [
+    "chilled-colts-kick",
+    "long-kids-wait",
+    "modern-dots-destroy",
+    "poor-maps-fly",
+    "purple-jobs-retire",
+    "quick-lamps-stare",
+    "short-tips-begin",
+    "strange-humans-roll",
+    "stupid-colts-grab",
+    "tasty-garlics-call",
+    "thirty-jobs-jam",
+    "unlucky-swans-destroy",
+    "wicked-forks-do",
+    "wise-shrimps-knock",
+    "yellow-numbers-leave"
+  ]
+}

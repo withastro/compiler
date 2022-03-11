@@ -365,6 +365,7 @@ func (p *parser) addFrontmatter(empty bool) {
 		}
 		if empty {
 			p.frontmatterState = FrontmatterClosed
+			p.fm.Attr = append(p.fm.Attr, Attribute{Key: ImplicitNodeMarker, Type: EmptyAttribute})
 		} else {
 			p.frontmatterState = FrontmatterOpen
 			p.oe = append(p.oe, p.fm)
@@ -749,6 +750,9 @@ func inHeadIM(p *parser) bool {
 				return true
 			}
 			p.tok.Data = s
+		} else if p.oe.top() != nil && (isComponent(p.oe.top().Data) || isFragment((p.oe.top().Data))) {
+			p.addText(p.tok.Data)
+			return true
 		}
 	case StartTagToken:
 		// Allow components in Head
@@ -768,6 +772,16 @@ func inHeadIM(p *parser) bool {
 			p.addElement()
 			p.oe.pop()
 			p.acknowledgeSelfClosingTag()
+			return true
+		case a.Slot:
+			p.addElement()
+			p.setOriginalIM()
+			p.im = inBodyIM
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 			return true
 		case a.Noscript:
 			if p.scripting {

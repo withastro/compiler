@@ -7,13 +7,15 @@
     "url": "https://github.com/withastro/compiler.git"
   },
   "scripts": {
-    "build": "make astro-wasm && lerna run build --scope @astrojs/compiler",
+    "build": "make wasm && lerna run build --scope @astrojs/compiler",
     "build:compiler": "lerna run build --scope @astrojs/compiler",
     "lint": "eslint \"lib/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
     "format": "prettier -w .",
     "prerelease": "yarn build:compiler",
     "release": "changeset publish",
-    "test": "node ./lib/compiler/test/test.mjs"
+    "test": "tsm node_modules/uvu/bin.js lib test -i utils -i stress",
+    "test:stress": "tsm lib/compiler/test/stress/index.ts",
+    "test:ci": "yarn test && yarn test:stress"
   },
   "workspaces": [
     "lib/*"
