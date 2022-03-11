@@ -1656,7 +1656,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on self-closing tag",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<article>${content}</article>`,
+				code: `<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
