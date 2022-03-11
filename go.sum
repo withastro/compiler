@@ -4,8 +4,6 @@ github.com/iancoleman/strcase v0.2.0 h1:05I4QRnGpI0m37iZQRuskXh+w77mr6Z41lwQzuHL
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/lithammer/dedent v1.1.0 h1:VNzHMVCBNG1j0fh3OrsFRkVUwStdDArbgBWoPAffktY=
 github.com/lithammer/dedent v1.1.0/go.mod h1:jrXYCQtgg0nJiN+StA2KgR7w6CiQNv9Fd/Z9BP0jIOc=
-github.com/natemoo-re/vert v0.0.0-natemoo-re.7 h1:nhfKslS16o2Uruqt8Bwv8ZFYUuf+PW9iC2M5HI/Bs6U=
-github.com/natemoo-re/vert v0.0.0-natemoo-re.7/go.mod h1:67MuD9cDWe6pmhyQrElFlSNMMzL0CMUdFURKxJSvxUM=
 github.com/natemoo-re/vert v0.0.0-natemoo-re.8 h1:RCxCOL0e2bvB0wrmF/77X8/uewz/K7iU4TjVqpZm/T4=
 github.com/natemoo-re/vert v0.0.0-natemoo-re.8/go.mod h1:67MuD9cDWe6pmhyQrElFlSNMMzL0CMUdFURKxJSvxUM=
 github.com/tdewolff/parse v2.3.4+incompatible h1:x05/cnGwIMf4ceLuDMBOdQ1qGniMoxpP46ghf0Qzh38=

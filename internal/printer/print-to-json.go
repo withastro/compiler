@@ -75,6 +75,11 @@ func (n ASTNode) String() string {
 		}
 		str += `]`
 	}
+	if len(n.Attributes) == 0 {
+		if n.Type == "element" || n.Type == "component" || n.Type == "custom-element" {
+			str += `,"attributes":[]`
+		}
+	}
 	if len(n.Directives) > 0 {
 		str += `,"directives":[`
 		for i, attr := range n.Directives {
