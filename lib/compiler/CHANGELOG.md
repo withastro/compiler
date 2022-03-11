@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.12.0-next.10
+
+### Patch Changes
+
+- d10088a: Add `fragment` node types to AST definitions, expose Fragment helper to utils
+- ef0b4b3: Move `typescript` dependency to development dependencies, as it is not needed in the package runtime.
+
 ## 0.12.0-next.9
 
 ### Patch Changes
