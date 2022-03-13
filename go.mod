@@ -9,6 +9,7 @@ require (
 	github.com/tdewolff/parse v2.3.4+incompatible
 	github.com/tdewolff/parse/v2 v2.5.22
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff
+	golang.org/x/sys v0.0.0-20210423082822-04245dca01da
 )
 
 require github.com/iancoleman/strcase v0.2.0
