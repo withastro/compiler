@@ -1,1 +1,1 @@
-./lib/compiler/README.md
+README.md
