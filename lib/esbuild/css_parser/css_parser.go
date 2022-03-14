@@ -679,6 +679,9 @@ var specialAtRules = map[string]atRuleKind{
 	"scope":    atRuleInheritContext,
 	"supports": atRuleInheritContext,
 
+	// Reference: https://github.com/w3c/csswg-drafts/issues?q=is%3Aissue+label%3Acss-contain-3+
+	"container": atRuleInheritContext,
+
 	// Reference: https://drafts.csswg.org/css-nesting-1/
 	"nest": atRuleDeclarations,
 }

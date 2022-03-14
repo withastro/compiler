@@ -319,6 +319,7 @@ func (p *printer) printComplexSelectors(selectors []css_ast.ComplexSelector, ind
 }
 
 func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bool, isLast bool) {
+	scoped := false
 	if !isFirst && sel.Combinator == "" {
 		// A space is required in between compound selectors if there is no
 		// combinator in the middle. It's fine to convert "a + b" into "a+b"
@@ -328,6 +329,7 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 
 	if sel.NestingSelector == css_ast.NestingSelectorPrefix {
 		p.print("&")
+		scoped = true
 	}
 
 	if sel.Combinator != "" {
@@ -339,7 +341,6 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			p.print(" ")
 		}
 	}
-	scoped := false
 
 	if sel.TypeSelector != nil {
 		whitespace := mayNeedWhitespaceAfter
@@ -348,8 +349,21 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			// class selector
 			whitespace = canDiscardWhitespaceAfter
 		}
-		fmt.Println(sel.TypeSelector.Name)
-		p.printNamespacedName(*sel.TypeSelector, whitespace)
+		if sel.TypeSelector.Name.Text == "*" {
+			p.print(fmt.Sprintf(".astro-%s", p.options.Scope))
+			scoped = true
+		} else {
+			p.printNamespacedName(*sel.TypeSelector, whitespace)
+		}
+		switch sel.TypeSelector.Name.Text {
+		case "body", "html":
+			scoped = true
+		default:
+			if !scoped {
+				p.print(fmt.Sprintf(".astro-%s", p.options.Scope))
+				scoped = true
+			}
+		}
 	}
 
 	for i, sub := range sel.SubclassSelectors {
@@ -368,19 +382,23 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			// "In <id-selector>, the <hash-token>'s value must be an identifier."
 			p.printIdent(s.Name, identNormal, whitespace)
 			if !scoped {
-				p.print(fmt.Sprintf(":where([data-astro-scope=\"%s\"])", p.options.Scope))
+				p.print(fmt.Sprintf(".astro-%s", p.options.Scope))
 				scoped = true
 			}
 
 		case *css_ast.SSClass:
 			p.print(".")
 			p.printIdent(s.Name, identNormal, whitespace)
-			if shouldScope && !scoped {
-				p.print(fmt.Sprintf(":where([data-astro-scope=\"%s\"])", p.options.Scope))
+			if !scoped {
+				p.print(fmt.Sprintf(".astro-%s", p.options.Scope))
 				scoped = true
 			}
 
 		case *css_ast.SSAttribute:
+			if !scoped {
+				p.print(fmt.Sprintf(".astro-%s", p.options.Scope))
+				scoped = true
+			}
 			p.print("[")
 			p.printNamespacedName(s.NamespacedName, canDiscardWhitespaceAfter)
 			if s.MatcherOp != "" {
@@ -409,18 +427,17 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 				p.print(string(rune(s.MatcherModifier)))
 			}
 			p.print("]")
-			if !scoped {
-				p.print(fmt.Sprintf(":where([data-astro-scope=\"%s\"])", p.options.Scope))
-				scoped = true
-			}
 
 		case *css_ast.SSPseudoClass:
 			p.printPseudoClassSelector(*s, whitespace)
+			if s.Name == "global" || s.Name == "root" {
+				scoped = true
+			}
 		}
 	}
 
 	if !scoped {
-		p.print(fmt.Sprintf(":where([data-astro-scope=\"%s\"])", p.options.Scope))
+		p.print(fmt.Sprintf(".astro-%s", p.options.Scope))
 	}
 
 	// It doesn't matter where the "&" goes since all non-prefix cases are

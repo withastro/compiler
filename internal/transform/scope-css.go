@@ -30,24 +30,12 @@ outer:
 		if n.FirstChild == nil {
 			continue
 		}
-		tree := css_parser.Parse(logger.Log{}, logger.Source{Contents: n.FirstChild.Data}, css_parser.Options{MinifySyntax: false, MinifyWhitespace: false})
+		// Use vendored version of esbuild internals to parse AST
+		tree := css_parser.Parse(logger.Log{AddMsg: func(msg logger.Msg) {}}, logger.Source{Contents: n.FirstChild.Data}, css_parser.Options{MinifySyntax: false, MinifyWhitespace: true})
+		// esbuild's internal `css_printer` has been modified to emit Astro scoped styles
 		result := css_printer.Print(tree, css_printer.Options{MinifyWhitespace: true, Scope: opts.Scope})
 		n.FirstChild.Data = string(result.CSS)
-		return didScope
 	}
 
 	return didScope
-}
-
-// Turn ".foo" into ".foo.astro-XXXXXX"
-func scopeRule(id string, opts TransformOptions) string {
-	return id + ".astro-" + opts.Scope
-}
-
-// Get list of elements that should be scoped
-func globalElement(id string) bool {
-	if NeverScopedElements[id] || NeverScopedSelectors[id] {
-		return true
-	}
-	return false
 }

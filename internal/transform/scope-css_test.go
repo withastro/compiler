@@ -257,13 +257,18 @@ func TestScopeStyle(t *testing.T) {
 			want:   ".header.astro-XXXXXX{background-color:white;&.dark{background-color:blue}}",
 		},
 		{
-			name: "container",
+			name: "@container",
 			source: `@container (min-width: 200px) and (min-height: 200px) {
         h1 {
           font-size: 30px;
         }
       }`,
 			want: "@container (min-width: 200px) and (min-height: 200px){h1.astro-XXXXXX{font-size:30px}}",
+		},
+		{
+			name:   "@layer",
+			source: "@layer theme, layout, utilities; @layer special { .item { color: rebeccapurple; }}",
+			want:   "@layer theme,layout,utilities;@layer special{.item.astro-XXXXXX{color:rebeccapurple}}",
 		},
 	}
 	for _, tt := range tests {
