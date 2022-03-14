@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.12.1
+
+### Patch Changes
+
+- 097ac47: Parser: Always output the `attribute` property in an element node, even if empty
+- ad62437: Add `serialize` util
+- eb7eb95: Parse: fix escaping of `&` characters in AST output
+
 ## 0.12.0
 
 ### Minor Changes
