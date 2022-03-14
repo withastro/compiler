@@ -8,6 +8,7 @@ let value = 'world';
 ---
 
 <h1 name="value" empty {shorthand} expression={true} literal=\`tags\`>Hello {value}</h1>
+<div>lorem</div>
 `;
 
 let result;
@@ -28,6 +29,11 @@ test('frontmatter', () => {
 test('element', () => {
   const [, element] = result.ast.children;
   assert.equal(element.type, 'element', `Expected first child node to be of type "element"`);
+});
+
+test('element with no attributes', () => {
+  const [, , , element] = result.ast.children;
+  assert.equal(element.attributes, [], `Expected the "attribute" property to be empty`);
 });
 
 test.run();
