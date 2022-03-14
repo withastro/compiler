@@ -66,3 +66,28 @@ export function walk(node: ParentNode, callback: Visitor): void {
   const walker = new Walker(callback);
   walker.visit(node);
 }
+
+export function serialize(root: Node): string {
+  let output = '';
+  function visitor(node: Node) {
+    if (is.root(node)) {
+      node.children.forEach((child) => visitor(child));
+    } else if (is.frontmatter(node)) {
+      output += `---${node.value}---\n\n`;
+    } else if (is.comment(node)) {
+      output += `<!--${node.value}-->`;
+    } else if (is.expression(node)) {
+      output += `{`;
+      node.children.forEach((child) => visitor(child));
+      output += `}`;
+    } else if (is.literal(node)) {
+      output += node.value;
+    } else if (is.tag(node)) {
+      output += `<${node.name}>`;
+      node.children.forEach((child) => visitor(child));
+      output += `</${node.name}>`;
+    }
+  }
+  visitor(root);
+  return output;
+}
