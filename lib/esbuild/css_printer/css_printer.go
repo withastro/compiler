@@ -375,7 +375,7 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 		case *css_ast.SSClass:
 			p.print(".")
 			p.printIdent(s.Name, identNormal, whitespace)
-			if shouldScope && !scoped {
+			if !scoped {
 				p.print(fmt.Sprintf(":where([data-astro-scope=\"%s\"])", p.options.Scope))
 				scoped = true
 			}
