@@ -1005,7 +1005,7 @@ const someProps = {
 					hydratedComponents:  []string{`Counter`},
 					hydrationDirectives: []string{"visible"},
 				},
-				code: `<html lang="en" class="astro-HMNNHVCQ">
+				code: `<html lang="en" data-astro-scope="HMNNHVCQ">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
@@ -1501,8 +1501,8 @@ import { Container, Col, Row } from 'react-bootstrap';
 <div />`,
 			want: want{
 				styles: []string{
-					"{props:{\"data-astro-id\":\"LASNTLJA\"},children:`div.astro-LASNTLJA{color:blue}`}",
-					"{props:{\"is:scoped\":true,\"data-astro-id\":\"LASNTLJA\"},children:`div.astro-LASNTLJA{color:green}`}",
+					"{props:{\"data-astro-id\":\"LASNTLJA\"},children:`div:where(.astro-LASNTLJA){color:blue}`}",
+					"{props:{\"is:scoped\":true,\"data-astro-id\":\"LASNTLJA\"},children:`div:where(.astro-LASNTLJA){color:green}`}",
 					"{props:{\"is:global\":true},children:`div { color: red }`}",
 				},
 				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-LASNTLJA\"></div>",
@@ -2139,7 +2139,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 				styles: []string{
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1.astro-VFS5OEMV{color:var(--color)}`}",
+					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1:where([data-astro-scope=\"VFS5OEMV\"]){color:var(--color)}`}",
 				},
 			},
 		},
