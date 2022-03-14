@@ -41,8 +41,6 @@ func escapeForJSON(value string) string {
 	value = newlines.ReplaceAllString(value, `\n`)
 	doublequotes := regexp.MustCompile(`"`)
 	value = doublequotes.ReplaceAllString(value, `\"`)
-	amp := regexp.MustCompile(`&`)
-	value = amp.ReplaceAllString(value, `\&`)
 	r := regexp.MustCompile(`\r`)
 	value = r.ReplaceAllString(value, `\r`)
 	t := regexp.MustCompile(`\t`)
