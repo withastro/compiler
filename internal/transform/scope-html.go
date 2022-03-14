@@ -88,11 +88,11 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 		}
 
 		// If we find an existing class attribute, append the scoped class
-		if attr.Key == "class" || (n.Component && attr.Key == "className") {
+		if attr.Key == "data-astro-scope" {
 			switch attr.Type {
 			case astro.ShorthandAttribute:
 				if n.Component {
-					attr.Val = attr.Key + ` + " astro-` + opts.Scope + `"`
+					attr.Val = fmt.Sprintf(`%s + "%s"`, attr.Key, opts.Scope)
 					attr.Type = astro.ExpressionAttribute
 					n.Attr[i] = attr
 					return
@@ -100,17 +100,17 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 			case astro.EmptyAttribute:
 				// instead of an empty string
 				attr.Type = astro.QuotedAttribute
-				attr.Val = "astro-" + opts.Scope
+				attr.Val = opts.Scope
 				n.Attr[i] = attr
 				return
 			case astro.QuotedAttribute, astro.TemplateLiteralAttribute:
 				// as a plain string
-				attr.Val = attr.Val + " astro-" + opts.Scope
+				attr.Val = fmt.Sprintf(`%s %s`, attr.Val, opts.Scope)
 				n.Attr[i] = attr
 				return
 			case astro.ExpressionAttribute:
 				// as an expression
-				attr.Val = "(" + attr.Val + `) + " astro-` + opts.Scope + `"`
+				attr.Val = fmt.Sprintf(`(%s) + " %s"`, attr.Val, opts.Scope)
 				n.Attr[i] = attr
 				return
 			}
@@ -144,7 +144,8 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 	}
 	// If we didn't find an existing class attribute, let's add one
 	n.Attr = append(n.Attr, astro.Attribute{
-		Key: "class",
-		Val: "astro-" + opts.Scope,
+		Key:  "data-astro-scope",
+		Type: astro.QuotedAttribute,
+		Val:  opts.Scope,
 	})
 }
