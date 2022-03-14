@@ -613,7 +613,7 @@ const name = "world";
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px;}.body.astro-DPOHFLYM{font-size:1em;}`}"},
+				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px}.body.astro-DPOHFLYM{font-size:1em}`}"},
 				code: "\n\n\t\t" + `<h1 class="title astro-DPOHFLYM">Page Title</h1>
 		<p class="body astro-DPOHFLYM">I’m a page</p>`,
 			},
@@ -737,7 +737,7 @@ import Counter from '../components/Counter.jsx'`,
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`},
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0;}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em;}.children{display:grid;place-items:center;margin-bottom:2em;}%s}`, BACKTICK, BACKTICK)},
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em}.children{display:grid;place-items:center;margin-bottom:2em}%s}`, BACKTICK, BACKTICK)},
 				metadata: metadata{
 					modules:             []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
 					hydratedComponents:  []string{`Counter`},
@@ -1228,8 +1228,8 @@ import { Container, Col, Row } from 'react-bootstrap';
 <div />`,
 			want: want{
 				styles: []string{
-					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:blue;}`}",
-					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green;}`}",
+					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:blue}`}",
+					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green}`}",
 					"{props:{\"global\":true},children:`div { color: red }`}",
 				},
 				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-EX5CHM4O\"></div>",
@@ -1552,7 +1552,7 @@ const items = ["Dog", "Cat", "Platipus"];
 </style><div class="container">My Text</div>`,
 
 			want: want{
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"SJ3WYE6H"},children:%s/* comment */.container.astro-SJ3WYE6H{padding:2rem;}%s}`, BACKTICK, BACKTICK)},
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"SJ3WYE6H"},children:%s.container.astro-SJ3WYE6H{padding:2rem}%s}`, BACKTICK, BACKTICK)},
 				code:   `<div class="container astro-SJ3WYE6H">My Text</div>`,
 			},
 		},
@@ -1711,12 +1711,12 @@ const items = ["Dog", "Cat", "Platipus"];
 		},
 		{
 			name:             "define:vars on style with StaticExpression turned on",
-			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color);}</style><h1>testing</h1>",
+			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			staticExtraction: true,
 			want: want{
-				code: `<h1 class="astro-BDWJYR3C">testing</h1>`,
+				code: `<h1 class="astro-VFS5OEMV">testing</h1>`,
 				styles: []string{
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"BDWJYR3C\"},children:`h1.astro-BDWJYR3C{color:var(--color);}`}",
+					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1.astro-VFS5OEMV{color:var(--color)}`}",
 				},
 			},
 		},
