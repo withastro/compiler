@@ -1,0 +1,93 @@
+import {
+  Node,
+  ParentNode,
+  RootNode,
+  ElementNode,
+  CustomElementNode,
+  ComponentNode,
+  FragmentNode,
+  LiteralNode,
+  ExpressionNode,
+  TextNode,
+  CommentNode,
+  DoctypeNode,
+  FrontmatterNode,
+} from '../shared/ast';
+
+export interface Visitor {
+  (node: Node, parent?: ParentNode, index?: number): void | Promise<void>;
+}
+
+function guard<Type extends Node>(type: string) {
+  return (node: Node): node is Type => node.type === type;
+}
+
+export const is = {
+  parent(node: Node): node is ParentNode {
+    return Array.isArray((node as any).children);
+  },
+  literal(node: Node): node is LiteralNode {
+    return typeof (node as any).value === 'string';
+  },
+  tag(node: Node): node is ElementNode | CustomElementNode | ComponentNode {
+    return node.type === 'element' || node.type === 'custom-element' || node.type === 'component' || node.type === 'fragment';
+  },
+  whitespace(node: Node): node is TextNode {
+    return node.type === 'text' && node.value.trim().length === 0;
+  },
+  root: guard<RootNode>('root'),
+  element: guard<ElementNode>('element'),
+  customElement: guard<CustomElementNode>('custom-element'),
+  component: guard<ComponentNode>('component'),
+  fragment: guard<FragmentNode>('fragment'),
+  expression: guard<ExpressionNode>('expression'),
+  text: guard<TextNode>('text'),
+  doctype: guard<DoctypeNode>('doctype'),
+  comment: guard<CommentNode>('comment'),
+  frontmatter: guard<FrontmatterNode>('frontmatter'),
+};
+
+class Walker {
+  constructor(private callback: Visitor) {}
+  async visit(node: Node, parent?: ParentNode, index?: number): Promise<void> {
+    await this.callback(node, parent, index);
+    if (is.parent(node)) {
+      let promises = [];
+      for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        promises.push(this.callback(child, node as ParentNode, i));
+      }
+      await Promise.all(promises);
+    }
+  }
+}
+
+export function walk(node: ParentNode, callback: Visitor): void {
+  const walker = new Walker(callback);
+  walker.visit(node);
+}
+
+export function serialize(root: Node): string {
+  let output = '';
+  function visitor(node: Node) {
+    if (is.root(node)) {
+      node.children.forEach((child) => visitor(child));
+    } else if (is.frontmatter(node)) {
+      output += `---${node.value}---\n\n`;
+    } else if (is.comment(node)) {
+      output += `<!--${node.value}-->`;
+    } else if (is.expression(node)) {
+      output += `{`;
+      node.children.forEach((child) => visitor(child));
+      output += `}`;
+    } else if (is.literal(node)) {
+      output += node.value;
+    } else if (is.tag(node)) {
+      output += `<${node.name}>`;
+      node.children.forEach((child) => visitor(child));
+      output += `</${node.name}>`;
+    }
+  }
+  visitor(root);
+  return output;
+}

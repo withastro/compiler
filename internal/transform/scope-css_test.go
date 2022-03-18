@@ -50,7 +50,7 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "attr",
 			source: "a[aria-current=\"page\"]{}",
-			want:   "a.astro-XXXXXX[aria-current=\"page\"]{}",
+			want:   "a.astro-XXXXXX[aria-current=page]{}",
 		},
 		{
 			name:   "attr universal implied",
@@ -171,47 +171,47 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "attributes",
 			source: "body{background-image:url('/assets/bg.jpg');clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%);}",
-			want:   "body{background-image:url('/assets/bg.jpg');clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%);}",
+			want:   "body{background-image:url(/assets/bg.jpg);clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%)}",
 		},
 		{
 			name:   "variables",
 			source: "body{--bg:red;background:var(--bg);color:black;}",
-			want:   "body{--bg:red;background:var(--bg);color:black;}",
+			want:   "body{--bg:red;background:var(--bg);color:black}",
 		},
 		{
 			name:   "keyframes",
 			source: "@keyframes shuffle{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}",
-			want:   "@keyframes shuffle{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}",
+			want:   "@keyframes shuffle{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}",
 		},
 		{
 			name:   "keyframes 2",
-			source: "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
-			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
+			source: "@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}",
+			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}",
 		},
 		{
 			name:   "keyframes start",
-			source: "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}} h1{} h2{}",
-			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}h1.astro-XXXXXX{}h2.astro-XXXXXX{}",
+			source: "@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}} h1{} h2{}",
+			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}h1.astro-XXXXXX{}h2.astro-XXXXXX{}",
 		},
 		{
 			name:   "keyframes middle",
-			source: "h1{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}} h2{}",
-			want:   "h1.astro-XXXXXX{}@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}h2.astro-XXXXXX{}",
+			source: "h1{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}} h2{}",
+			want:   "h1.astro-XXXXXX{}@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}h2.astro-XXXXXX{}",
 		},
 		{
 			name:   "keyframes end",
-			source: "h1{} h2{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
-			want:   "h1.astro-XXXXXX{}h2.astro-XXXXXX{}@keyframes shuffle{0%{transform:rotate(0deg);color:blue;}100%{transform:rotate(360deg};}}",
+			source: "h1{} h2{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}",
+			want:   "h1.astro-XXXXXX{}h2.astro-XXXXXX{}@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}",
 		},
 		{
 			name:   "calc",
 			source: ":root{padding:calc(var(--space) * 2);}",
-			want:   ":root{padding:calc(var(--space) * 2);}",
+			want:   ":root{padding:calc(var(--space) * 2)}",
 		},
 		{
 			name:   "grid-template-columns",
 			source: "div{grid-template-columns: [content-start] 1fr [content-end];}",
-			want:   "div.astro-XXXXXX{grid-template-columns:[content-start] 1fr [content-end];}",
+			want:   "div.astro-XXXXXX{grid-template-columns:[content-start] 1fr [content-end]}",
 		},
 		{
 			name:   "charset",
@@ -221,12 +221,12 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "import (plain)",
 			source: "@import \"./my-file.css\";",
-			want:   "@import \"./my-file.css\";",
+			want:   "@import\"./my-file.css\";",
 		},
 		{
 			name:   "import (url)",
 			source: "@import url(\"./my-file.css\");",
-			want:   "@import url(\"./my-file.css\");",
+			want:   "@import\"./my-file.css\";",
 		},
 		{
 			name:   "valid CSS, madeup syntax",
@@ -239,7 +239,36 @@ func TestScopeStyle(t *testing.T) {
   color: blue
   font-size: 18px;
 }`,
-			want: `.foo.astro-XXXXXX{color:blue font-size:18px;}`,
+			want: `.foo.astro-XXXXXX{color:blue font-size: 18px}`,
+		},
+		{
+			name:   "nesting media",
+			source: ":global(html) { @media (min-width: 640px) { color: blue } }html { background-color: lime }",
+			want:   "html{@media (min-width: 640px){color:blue}}html{background-color:lime}",
+		},
+		{
+			name:   "nesting combinator",
+			source: "div { & span { color: blue } }",
+			want:   "div.astro-XXXXXX{& span.astro-XXXXXX{color:blue}}",
+		},
+		{
+			name:   "nesting modifier",
+			source: ".header { background-color: white; &.dark { background-color: blue; }}",
+			want:   ".header.astro-XXXXXX{background-color:white;&.dark{background-color:blue}}",
+		},
+		{
+			name: "@container",
+			source: `@container (min-width: 200px) and (min-height: 200px) {
+        h1 {
+          font-size: 30px;
+        }
+      }`,
+			want: "@container (min-width: 200px) and (min-height: 200px){h1.astro-XXXXXX{font-size:30px}}",
+		},
+		{
+			name:   "@layer",
+			source: "@layer theme, layout, utilities; @layer special { .item { color: rebeccapurple; }}",
+			want:   "@layer theme,layout,utilities;@layer special{.item.astro-XXXXXX{color:rebeccapurple}}",
 		},
 	}
 	for _, tt := range tests {

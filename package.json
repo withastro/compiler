@@ -9,16 +9,16 @@
   "scripts": {
     "build": "make wasm && lerna run build --scope @astrojs/compiler",
     "build:compiler": "lerna run build --scope @astrojs/compiler",
-    "lint": "eslint \"lib/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
+    "lint": "eslint \"packages/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
     "format": "prettier -w .",
     "prerelease": "yarn build:compiler",
     "release": "changeset publish",
-    "test": "tsm node_modules/uvu/bin.js lib test -i utils -i stress",
-    "test:stress": "tsm lib/compiler/test/stress/index.ts",
+    "test": "tsm node_modules/uvu/bin.js packages test -i utils -i stress",
+    "test:stress": "tsm packages/compiler/test/stress/index.ts",
     "test:ci": "yarn test && yarn test:stress"
   },
   "workspaces": [
-    "lib/*"
+    "packages/*"
   ],
   "volta": {
     "node": "14.18.1",
