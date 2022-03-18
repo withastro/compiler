@@ -98,6 +98,11 @@ func (n ASTNode) String() string {
 		}
 		str += `]`
 	}
+	if len(n.Children) == 0 {
+		if n.Type == "element" || n.Type == "component" || n.Type == "custom-element" {
+			str += `,"children":[]`
+		}
+	}
 	if n.Position.Start.Line != 0 {
 		str += `,"position":{`
 		str += fmt.Sprintf(`"start":{"line":%d,"column":%d,"offset":%d}`, n.Position.Start.Line, n.Position.Start.Column, n.Position.Start.Offset)
