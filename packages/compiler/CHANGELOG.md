@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.13.0
+
+### Minor Changes
+
+- ce3f1a5: Update CSS parser to use `esbuild`, adding support for CSS nesting, `@container`, `@layer`, and other modern syntax features
+
+### Patch Changes
+
+- 24a1185: Parser: Always output the `children` property in an element node, even if it has no children
+
 ## 0.12.1
 
 ### Patch Changes
