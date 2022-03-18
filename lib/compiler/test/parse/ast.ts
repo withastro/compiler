@@ -8,7 +8,7 @@ let value = 'world';
 ---
 
 <h1 name="value" empty {shorthand} expression={true} literal=\`tags\`>Hello {value}</h1>
-<div>lorem</div>
+<div></div>
 `;
 
 let result;
@@ -33,7 +33,12 @@ test('element', () => {
 
 test('element with no attributes', () => {
   const [, , , element] = result.ast.children;
-  assert.equal(element.attributes, [], `Expected the "attribute" property to be empty`);
+  assert.equal(element.attributes, [], `Expected the "attributes" property to be an empty array`);
+});
+
+test('element with no children', () => {
+  const [, , , element] = result.ast.children;
+  assert.equal(element.children, [], `Expected the "children" property to be an empty array`);
 });
 
 test.run();
