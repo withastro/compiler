@@ -7,6 +7,7 @@ import {
   ComponentNode,
   FragmentNode,
   LiteralNode,
+  TagLikeNode,
   ExpressionNode,
   TextNode,
   CommentNode,
@@ -29,7 +30,7 @@ export const is = {
   literal(node: Node): node is LiteralNode {
     return typeof (node as any).value === 'string';
   },
-  tag(node: Node): node is ElementNode | CustomElementNode | ComponentNode {
+  tag(node: Node): node is TagLikeNode {
     return node.type === 'element' || node.type === 'custom-element' || node.type === 'component' || node.type === 'fragment';
   },
   whitespace(node: Node): node is TextNode {
@@ -67,6 +68,40 @@ export function walk(node: ParentNode, callback: Visitor): void {
   walker.visit(node);
 }
 
+function serializeAttributes(node: TagLikeNode): string {
+  let output = '';
+  for (const attr of node.attributes) {
+    output += ' ';
+    switch (attr.kind) {
+      case 'empty': {
+        output += `${attr.name}`;
+        break;
+      }
+      case 'expression': {
+        output += `${attr.name}={${attr.value}}`;
+        break;
+      }
+      case 'quoted': {
+        output += `${attr.name}="${attr.value}"`;
+        break;
+      }
+      case 'template-literal': {
+        output += `${attr.name}=\`${attr.value}\``;
+        break;
+      }
+      case 'shorthand': {
+        output += `{${attr.name}}`;
+        break;
+      }
+      case 'spread': {
+        output += `{...${attr.value}}`;
+        break;
+      }
+    }
+  }
+  return output;
+}
+
 export function serialize(root: Node): string {
   let output = '';
   function visitor(node: Node) {
@@ -83,7 +118,9 @@ export function serialize(root: Node): string {
     } else if (is.literal(node)) {
       output += node.value;
     } else if (is.tag(node)) {
-      output += `<${node.name}>`;
+      output += `<${node.name}`;
+      output += serializeAttributes(node);
+      output += '>';
       node.children.forEach((child) => visitor(child));
       output += `</${node.name}>`;
     }
