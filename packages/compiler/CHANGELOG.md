@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.13.1
+
+### Patch Changes
+
+- 2f8334c: Update `parse` and `serialize` functions to combine `attributes` and `directives`, fix issue with `serialize` not respecting `attributes`.
+- b308955: Add self-close option to serialize util
+
 ## 0.13.0
 
 ### Minor Changes
