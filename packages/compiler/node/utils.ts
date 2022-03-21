@@ -102,11 +102,11 @@ function serializeAttributes(node: TagLikeNode): string {
   return output;
 }
 
-type options = {
+export interface SerializeOtions {
   selfClose: boolean;
-};
+}
 
-export function serialize(root: Node, opts: options = { selfClose: true }): string {
+export function serialize(root: Node, opts: SerializeOtions = { selfClose: true }): string {
   let output = '';
   function visitor(node: Node) {
     if (is.root(node)) {
@@ -122,13 +122,11 @@ export function serialize(root: Node, opts: options = { selfClose: true }): stri
     } else if (is.literal(node)) {
       output += node.value;
     } else if (is.tag(node)) {
+      output += `<${node.name}`;
+      output += serializeAttributes(node);
       if (node.children.length == 0 && opts.selfClose) {
-        output += `<${node.name}`;
-        output += serializeAttributes(node);
         output += ` />`;
       } else {
-        output += `<${node.name}`;
-        output += serializeAttributes(node);
         output += '>';
         node.children.forEach((child) => visitor(child));
         output += `</${node.name}>`;
