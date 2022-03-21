@@ -39,10 +39,6 @@ export interface AttributeNode extends BaseNode {
   value: string;
 }
 
-export interface DirectiveNode extends Omit<AttributeNode, 'type'> {
-  type: 'directive';
-}
-
 export interface TextNode extends LiteralNode {
   type: 'text';
 }
@@ -51,29 +47,27 @@ export interface ElementNode extends ParentLikeNode {
   type: 'element';
   name: string;
   attributes: AttributeNode[];
-  directives: DirectiveNode[];
 }
 
 export interface FragmentNode extends ParentLikeNode {
   type: 'fragment';
   name: string;
   attributes: AttributeNode[];
-  directives: DirectiveNode[];
 }
 
 export interface ComponentNode extends ParentLikeNode {
   type: 'component';
   name: string;
   attributes: AttributeNode[];
-  directives: DirectiveNode[];
 }
 
 export interface CustomElementNode extends ParentLikeNode {
   type: 'custom-element';
   name: string;
   attributes: AttributeNode[];
-  directives: DirectiveNode[];
 }
+
+export type TagLikeNode = ElementNode | FragmentNode | ComponentNode | CustomElementNode;
 
 export interface DoctypeNode extends LiteralNode {
   type: 'doctype';

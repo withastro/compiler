@@ -72,21 +72,8 @@ func (n ASTNode) String() string {
 			}
 		}
 		str += `]`
-	}
-	if len(n.Attributes) == 0 {
-		if n.Type == "element" || n.Type == "component" || n.Type == "custom-element" {
-			str += `,"attributes":[]`
-		}
-	}
-	if len(n.Directives) > 0 {
-		str += `,"directives":[`
-		for i, attr := range n.Directives {
-			str += attr.String()
-			if i < len(n.Directives)-1 {
-				str += ","
-			}
-		}
-		str += `]`
+	} else if n.Type == "element" || n.Type == "component" || n.Type == "custom-element" || n.Type == "fragment" {
+		str += `,"attributes":[]`
 	}
 	if len(n.Children) > 0 {
 		str += `,"children":[`
@@ -97,11 +84,8 @@ func (n ASTNode) String() string {
 			}
 		}
 		str += `]`
-	}
-	if len(n.Children) == 0 {
-		if n.Type == "element" || n.Type == "component" || n.Type == "custom-element" {
-			str += `,"children":[]`
-		}
+	} else if n.Type == "element" || n.Type == "component" || n.Type == "custom-element" || n.Type == "fragment" {
+		str += `,"children":[]`
 	}
 	if n.Position.Start.Line != 0 {
 		str += `,"position":{`
@@ -225,12 +209,7 @@ func renderNode(p *printer, parent *ASTNode, n *Node, opts t.ParseOptions) {
 					Name:     attr.Key,
 					Value:    attr.Val,
 				}
-				if IsKnownDirective(n, &attr) {
-					attrNode.Type = "directive"
-					node.Directives = append(node.Directives, attrNode)
-				} else {
-					node.Attributes = append(node.Attributes, attrNode)
-				}
+				node.Attributes = append(node.Attributes, attrNode)
 			}
 		}
 	} else {
