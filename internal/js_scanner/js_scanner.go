@@ -28,9 +28,6 @@ func FindRenderBody(source []byte) int {
 		}
 		openPairs := pairs['{'] > 0 || pairs['('] > 0 || pairs['['] > 0
 		if token == js.ErrorToken {
-			if l.Err() != io.EOF {
-				return -1
-			}
 			break
 		}
 
