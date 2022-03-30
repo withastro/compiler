@@ -131,6 +131,15 @@ export async function getStaticPaths() {
 }; `,
 		},
 		{
+			name: "getStaticPaths with RegExp escape",
+			source: `export async function getStaticPaths() {
+  const pattern = /\.md$/g.test('value');
+}`,
+			want: `export async function getStaticPaths() {
+  const pattern = /\.md$/g.test('value');
+}`,
+		},
+		{
 			name: "multiple imports",
 			source: `import { a } from "a";
 import { b } from "b";
@@ -149,7 +158,7 @@ import { c } from "c";
 		{
 			name: "RegExp is not a comment",
 			source: `import { a } from "a";
-/import { b } from "b";
+/import \{ b \} from "b";/;
 import { c } from "c";`,
 			want: `import { a } from "a";
 `,

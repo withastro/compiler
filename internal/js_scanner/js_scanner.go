@@ -23,8 +23,10 @@ func FindRenderBody(source []byte) int {
 	// Let's lex the script until we find what we need!
 	for {
 		token, value := l.Next()
+		if token == js.DivToken || token == js.DivEqToken {
+			token, value = l.RegExp()
+		}
 		openPairs := pairs['{'] > 0 || pairs['('] > 0 || pairs['['] > 0
-
 		if token == js.ErrorToken {
 			if l.Err() != io.EOF {
 				return -1
@@ -46,6 +48,12 @@ func FindRenderBody(source []byte) int {
 			foundAssertion := false
 			for {
 				next, nextValue := l.Next()
+				if token == js.DivToken || token == js.DivEqToken {
+					next, nextValue = l.RegExp()
+				}
+				if next == js.ErrorToken {
+					break
+				}
 				i += len(nextValue)
 				if next == js.StringToken {
 					foundSpecifier = true
@@ -79,6 +87,12 @@ func FindRenderBody(source []byte) int {
 			i += len(value)
 			for {
 				next, nextValue := l.Next()
+				if next == js.DivToken || next == js.DivEqToken {
+					next, nextValue = l.RegExp()
+				}
+				if next == js.ErrorToken {
+					break
+				}
 				i += len(nextValue)
 				if js.IsIdentifier(next) {
 					foundIdentifier = true

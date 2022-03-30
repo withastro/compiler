@@ -8,6 +8,8 @@ github.com/natemoo-re/vert v0.0.0-natemoo-re.8 h1:RCxCOL0e2bvB0wrmF/77X8/uewz/K7
 github.com/natemoo-re/vert v0.0.0-natemoo-re.8/go.mod h1:67MuD9cDWe6pmhyQrElFlSNMMzL0CMUdFURKxJSvxUM=
 github.com/tdewolff/parse/v2 v2.5.22 h1:KXMHTyx4VTL6Zu9a94SULQalDMvtP5FQq10mnSfaoGs=
 github.com/tdewolff/parse/v2 v2.5.22/go.mod h1:WzaJpRSbwq++EIQHYIRTpbYKNA3gn9it1Ik++q4zyho=
+github.com/tdewolff/parse/v2 v2.5.27 h1:PL3LzzXaOpmdrknnOlIeO2muIBHAwiKp6TxN1RbU5gI=
+github.com/tdewolff/parse/v2 v2.5.27/go.mod h1:WzaJpRSbwq++EIQHYIRTpbYKNA3gn9it1Ik++q4zyho=
 github.com/tdewolff/test v1.0.6 h1:76mzYJQ83Op284kMT+63iCNCI7NEERsIN8dLM+RiKr4=
 github.com/tdewolff/test v1.0.6/go.mod h1:6DAvZliBAAnD7rhVgwaM7DE5/d9NMOAJ09SqYqeK4QE=
 golang.org/x/net v0.0.0-20210716203947-853a461950ff h1:j2EK/QoxYNBsXI4R7fQkkRUk8y6wnOBI+6hgPdP/6Ds=
