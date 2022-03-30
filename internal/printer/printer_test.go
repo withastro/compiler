@@ -169,6 +169,17 @@ const b = 0;`},
 			},
 		},
 		{
+			name: "export member does not panic",
+			source: `---
+mod.export();
+---
+<div />`,
+			want: want{
+				frontmatter: []string{``, `mod.export();`},
+				code:        `<div></div>`,
+			},
+		},
+		{
 			name: "import assertions",
 			source: `---
 import data from "test" assert { type: 'json' };
