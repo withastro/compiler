@@ -526,6 +526,16 @@ const RegExp = /---< > > { }; import thing from "thing"; /
 			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, FrontmatterFenceToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken},
 		},
 		{
+			"RegExp with Escape",
+			`---
+export async function getStaticPaths() {
+  const pattern = /\.md$/g;
+}
+---
+<div />`,
+			[]TokenType{FrontmatterFenceToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, FrontmatterFenceToken, SelfClosingTagToken},
+		},
+		{
 			"textarea",
 			`<textarea>{html}</textarea>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken},
