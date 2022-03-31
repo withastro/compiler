@@ -1,6 +1,7 @@
 package js_scanner
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/tdewolff/parse/v2"
@@ -145,6 +146,7 @@ func FindRenderBody(source []byte) int {
 
 func HasExports(source []byte) bool {
 	l := js.NewLexer(parse.NewInputBytes(source))
+	var prevToken js.TokenType
 	for {
 		token, _ := l.Next()
 		if token == js.ErrorToken {
@@ -152,8 +154,10 @@ func HasExports(source []byte) bool {
 			return false
 		}
 		if token == js.ExportToken {
+			fmt.Println(prevToken, token)
 			return true
 		}
+		prevToken = token
 	}
 }
 

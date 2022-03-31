@@ -5,7 +5,6 @@
 package printer
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -153,11 +152,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					importStatements := c.Data[0:renderBodyStart]
 					content := c.Data[renderBodyStart:]
 					preprocessed := js_scanner.HoistExports([]byte(content))
-					renderBody := preprocessed.Body
 
-					if js_scanner.HasExports(renderBody) {
-						panic(errors.New("Export statements must be placed at the top of .astro files!"))
-					}
 					if len(c.Loc) > 0 {
 						p.addSourceMapping(c.Loc[0])
 					}
