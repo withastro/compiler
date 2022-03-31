@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.13.2
+
+### Patch Changes
+
+- 014370d: Fix issue with named slots in <head> element
+- da831c1: Fix handling of RegExp literals in frontmatter
+
 ## 0.13.1
 
 ### Patch Changes
