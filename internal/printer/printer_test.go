@@ -1747,7 +1747,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script type="module">var three = foo;</script><script type="module" define:vars={{foo:'bar'}}>var four = foo;</script>`,
 			staticExtraction: true,
 			want: want{
-				code: `<script>var one = 'one';</script><script type="module">${$$defineScriptVars({foo:'bar'})}var three = foo;</script><script type="module">${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
+				code: `<script>var one = 'one';</script><script type="module">var three = foo;</script><script type="module">${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
 				metadata: metadata{
 					hoisted: []string{"{ type: 'inline', value: `var two = 'two';` }"},
 				},
