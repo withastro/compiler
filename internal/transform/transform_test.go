@@ -25,7 +25,7 @@ func TestTransformScoping(t *testing.T) {
 		{
 			name: "global empty",
 			source: `
-				<style global>div { color: red }</style>
+				<style is:global>div { color: red }</style>
 				<div />
 			`,
 			want: `<div></div>`,
@@ -33,7 +33,7 @@ func TestTransformScoping(t *testing.T) {
 		{
 			name: "global true",
 			source: `
-				<style global={true}>div { color: red }</style>
+				<style is:global={true}>div { color: red }</style>
 				<div />
 			`,
 			want: `<div></div>`,
@@ -41,7 +41,7 @@ func TestTransformScoping(t *testing.T) {
 		{
 			name: "global string",
 			source: `
-				<style global="">div { color: red }</style>
+				<style is:global="">div { color: red }</style>
 				<div />
 			`,
 			want: `<div></div>`,
@@ -49,7 +49,7 @@ func TestTransformScoping(t *testing.T) {
 		{
 			name: "global string true",
 			source: `
-				<style global="true">div { color: red }</style>
+				<style is:global="true">div { color: red }</style>
 				<div />
 			`,
 			want: `<div></div>`,
@@ -66,8 +66,8 @@ func TestTransformScoping(t *testing.T) {
 		{
 			name: "global multiple",
 			source: `
-				<style global>div { color: red }</style>
-				<style global>div { color: green }</style>
+				<style is:global>div { color: red }</style>
+				<style is:global>div { color: green }</style>
 				<div />
 			`,
 			want: `<div></div>`,
@@ -76,7 +76,7 @@ func TestTransformScoping(t *testing.T) {
 			name: "mixed multiple",
 			source: `
 				<style>div { color: red }</style>
-				<style global>div { color: green }</style>
+				<style is:global>div { color: green }</style>
 				<div />
 			`,
 			want: `<div class="astro-XXXXXX"></div>`,
@@ -89,6 +89,14 @@ func TestTransformScoping(t *testing.T) {
 				<div />
 			`,
 			want: `<div class="astro-XXXXXX"></div>`,
+		},
+		{
+			name: "inline does not scope",
+			source: `
+				<style is:inline>div{}</style>
+				<div />
+			`,
+			want: `<div></div>`,
 		},
 	}
 	var b strings.Builder

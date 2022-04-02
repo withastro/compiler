@@ -57,7 +57,7 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 func ExtractStyles(doc *astro.Node) {
 	walk(doc, func(n *astro.Node) {
 		if n.Type == astro.ElementNode && n.DataAtom == a.Style {
-			if HasSetDirective(n) {
+			if HasSetDirective(n) || HasInlineDirective(n) {
 				return
 			}
 			// Do not extract <style> inside of SVGs
@@ -138,19 +138,23 @@ func NormalizeSetDirectives(doc *astro.Node) {
 
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
-		if HasSetDirective(n) {
+		if HasSetDirective(n) || HasInlineDirective(n) {
 			return
 		}
-		// if <script hoist>, hoist to the document root
+
+		// if <script>, hoist to the document root
 		// If also using define:vars, that overrides the hoist tag.
-		if hasTruthyAttr(n, "hoist") && !HasAttr(n, "define:vars") {
+		if (hasTruthyAttr(n, "hoist") && !HasAttr(n, "define:vars")) || len(n.Attr) == 0 {
 			shouldAdd := true
 			for _, attr := range n.Attr {
+				if attr.Key == "hoist" {
+					fmt.Println("<script hoist> is no longer needed")
+				}
 				if attr.Key == "src" {
 					if attr.Type == astro.ExpressionAttribute {
 						if opts.StaticExtraction {
 							shouldAdd = false
-							fmt.Printf("%s: <script hoist> uses the expression {%s} on the src attribute and will be ignored. Use a string literal on the src attribute instead.\n", opts.Filename, attr.Val)
+							fmt.Printf("%s: <script> uses the expression {%s} on the src attribute and will be ignored. Use a string literal on the src attribute instead.\n", opts.Filename, attr.Val)
 						}
 						break
 					}

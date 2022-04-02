@@ -843,8 +843,8 @@ import Widget2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
-			name:   "script nohoist",
-			source: `<main><script type="module">console.log("Hello");</script>`,
+			name:   "script inline",
+			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
 			want: want{
 				code: `<main><script type="module">console.log("Hello");</script></main>`,
 			},
@@ -960,7 +960,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 		},
 		{
 			name:   "Self-closing script in head works",
-			source: `<html><head><script /></head><html>`,
+			source: `<html><head><script is:inline /></head><html>`,
 			want: want{
 				code: `<html><head><script></script>` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
@@ -1155,7 +1155,7 @@ const title = 'icon';
 <script type="module" src="/make-scrollable-code-focusable.js" />
 
 <!-- This is intentionally inlined to avoid FOUC -->
-<script>
+<script is:inline>
   const root = document.documentElement;
   const theme = localStorage.getItem('theme');
   if (theme === 'dark' || (!theme) && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -1239,18 +1239,18 @@ import { Container, Col, Row } from 'react-bootstrap';
 		{
 			name: "Mixed style siblings",
 			source: `<head>
-	<style global>div { color: red }</style>
-	<style>div { color: green }</style>
+	<style is:global>div { color: red }</style>
+	<style is:scoped>div { color: green }</style>
 	<style>div { color: blue }</style>
 </head>
 <div />`,
 			want: want{
 				styles: []string{
-					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:blue}`}",
-					"{props:{\"data-astro-id\":\"EX5CHM4O\"},children:`div.astro-EX5CHM4O{color:green}`}",
-					"{props:{\"global\":true},children:`div { color: red }`}",
+					"{props:{\"data-astro-id\":\"LASNTLJA\"},children:`div.astro-LASNTLJA{color:blue}`}",
+					"{props:{\"is:scoped\":true,\"data-astro-id\":\"LASNTLJA\"},children:`div.astro-LASNTLJA{color:green}`}",
+					"{props:{\"is:global\":true},children:`div { color: red }`}",
 				},
-				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-EX5CHM4O\"></div>",
+				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-LASNTLJA\"></div>",
 			},
 		},
 		{
@@ -1595,9 +1595,9 @@ const items = ["Dog", "Cat", "Platipus"];
 		},
 		{
 			name:   "XElement",
-			source: `<XElement {...attrs}></XElement>{onLoadString ? <script></script> : null }`,
+			source: `<XElement {...attrs}></XElement>{onLoadString ? <script data-something></script> : null }`,
 			want: want{
-				code: fmt.Sprintf(`${$$renderComponent($$result,'XElement',XElement,{...(attrs)})}${onLoadString ? $$render%s<script></script>%s : null }`, BACKTICK, BACKTICK),
+				code: fmt.Sprintf(`${$$renderComponent($$result,'XElement',XElement,{...(attrs)})}${onLoadString ? $$render%s<script data-something></script>%s : null }`, BACKTICK, BACKTICK),
 			},
 		},
 		{
@@ -1740,14 +1740,14 @@ const items = ["Dog", "Cat", "Platipus"];
 		},
 		{
 			name: "define:vars on script with StaticExpression turned on",
-			// 1. A regular inline script - right
+			// 1. An inline script with is:inline - right
 			// 2. A hoisted script - wrong, shown up in scripts.add
 			// 3. A define:vars module script - right
 			// 4. A define:vars hoisted script - wrong, not inlined
-			source:           `<script>var one = 'one';</script><script type="module" hoist>var two = 'two';</script><script type="module" define:vars={{foo:'bar'}}>var three = foo;</script><script type="module" define:vars={{foo:'bar'}} hoist>var four = foo;</script>`,
+			source:           `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script type="module">var three = foo;</script><script type="module" define:vars={{foo:'bar'}}>var four = foo;</script>`,
 			staticExtraction: true,
 			want: want{
-				code: `<script>var one = 'one';</script><script type="module">${$$defineScriptVars({foo:'bar'})}var three = foo;</script><script type="module" hoist>${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
+				code: `<script>var one = 'one';</script><script type="module">var three = foo;</script><script type="module">${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
 				metadata: metadata{
 					hoisted: []string{"{ type: 'inline', value: `var two = 'two';` }"},
 				},

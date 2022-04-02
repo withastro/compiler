@@ -4,6 +4,8 @@ import (
 
 	// "strings"
 
+	"fmt"
+
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/lib/esbuild/css_parser"
 	"github.com/withastro/compiler/lib/esbuild/css_printer"
@@ -20,6 +22,10 @@ outer:
 			continue
 		}
 		if hasTruthyAttr(n, "global") {
+			fmt.Printf("Found `<style global>` in %s! Please migrate to the `is:global` directive.\n", opts.Filename)
+			continue outer
+		}
+		if hasTruthyAttr(n, "is:global") {
 			continue outer
 		}
 		didScope = true

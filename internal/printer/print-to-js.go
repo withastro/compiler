@@ -401,7 +401,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(`]`)
 	} else {
 		for _, a := range n.Attr {
-			if transform.IsImplictNodeMarker(a) {
+			if transform.IsImplictNodeMarker(a) || a.Key == "is:inline" {
 				continue
 			}
 			if a.Key == "slot" {
