@@ -149,7 +149,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 			shouldAdd := true
 			for _, attr := range n.Attr {
 				if attr.Key == "hoist" {
-					fmt.Println("<script hoist> is no longer needed")
+					fmt.Printf("%s: <script hoist> is no longer needed. You may remove the `hoist` attribute.\n", opts.Filename)
 				}
 				if attr.Key == "src" {
 					if attr.Type == astro.ExpressionAttribute {
