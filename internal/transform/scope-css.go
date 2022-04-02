@@ -4,6 +4,8 @@ import (
 
 	// "strings"
 
+	"fmt"
+
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/lib/esbuild/css_parser"
 	"github.com/withastro/compiler/lib/esbuild/css_printer"
@@ -18,6 +20,10 @@ outer:
 	for _, n := range styles {
 		if n.DataAtom != a.Style {
 			continue
+		}
+		if hasTruthyAttr(n, "global") {
+			fmt.Printf("Found `<style global>` in %s!\nPlease migrate to the `is:global` directive.", opts.Filename)
+			continue outer
 		}
 		if hasTruthyAttr(n, "is:global") {
 			continue outer
