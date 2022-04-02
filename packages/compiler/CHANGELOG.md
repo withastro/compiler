@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.14.1
+
+### Patch Changes
+
+- 1a82892: Fix bug with `<script src>` not being hoisted
+
 ## 0.14.0
 
 ### Minor Changes
