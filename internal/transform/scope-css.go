@@ -22,7 +22,7 @@ outer:
 			continue
 		}
 		if hasTruthyAttr(n, "global") {
-			fmt.Printf("Found `<style global>` in %s!\nPlease migrate to the `is:global` directive.", opts.Filename)
+			fmt.Printf("Found `<style global>` in %s! Please migrate to the `is:global` directive.\n", opts.Filename)
 			continue outer
 		}
 		if hasTruthyAttr(n, "is:global") {
