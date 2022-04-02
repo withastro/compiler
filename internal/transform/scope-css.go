@@ -19,7 +19,7 @@ outer:
 		if n.DataAtom != a.Style {
 			continue
 		}
-		if hasTruthyAttr(n, "global") {
+		if hasTruthyAttr(n, "is:global") {
 			continue outer
 		}
 		didScope = true
