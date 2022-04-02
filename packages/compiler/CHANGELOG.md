@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.14.0
+
+### Minor Changes
+
+- c0da4fe: Implements [RFC0016](https://github.com/withastro/rfcs/blob/main/proposals/0016-style-script-defaults.md), the new `script` and `style` behavior.
+
 ## 0.13.2
 
 ### Patch Changes
