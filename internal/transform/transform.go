@@ -144,7 +144,8 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 
 		// if <script>, hoist to the document root
 		// If also using define:vars, that overrides the hoist tag.
-		if (hasTruthyAttr(n, "hoist") && !HasAttr(n, "define:vars")) || len(n.Attr) == 0 {
+		if (hasTruthyAttr(n, "hoist") && !HasAttr(n, "define:vars")) ||
+			len(n.Attr) == 0 || (len(n.Attr) == 1 && n.Attr[0].Key == "src") {
 			shouldAdd := true
 			for _, attr := range n.Attr {
 				if attr.Key == "hoist" {
