@@ -665,7 +665,7 @@ const name = "world";
 
 <body>
   <!-- your content here... -->
-  <script src="js/scripts.js"></script>
+  <script is:inline src="js/scripts.js"></script>
   </body>
 </html>`,
 			want: want{
