@@ -208,6 +208,20 @@ import data from "test" assert { type: 'json' };
 			},
 		},
 		{
+			name:   "expression with valid markup",
+			source: "{Object.keys(importedAuthors).map(author => <div>{author}</div>)}",
+			want: want{
+				code: "${Object.keys(importedAuthors).map(author => $$render`<div>${author}</div>`)}",
+			},
+		},
+		{
+			name:   "expression with invalid markup",
+			source: "{Object.keys(importedAuthors).map(author => <p><div>{author}</div></p>)}",
+			want: want{
+				code: "${Object.keys(importedAuthors).map(author => $$render`<p></p><div>${author}</div>`)}",
+			},
+		},
+		{
 			name:   "nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c`}` : \"d\"} awesome`} />",
 			want: want{

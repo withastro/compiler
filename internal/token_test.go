@@ -105,6 +105,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken},
 		},
 		{
+			"Expression with invalid markup",
+			`{Object.keys(importedAuthors).map(author => <p><div>{author}</div></p>)}`,
+			[]TokenType{StartExpressionToken, TextToken, StartTagToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndTagToken, TextToken, EndExpressionToken},
+		},
+		{
 			"SVG (self-closing)",
 			`<svg><path/></svg>`,
 			[]TokenType{StartTagToken, SelfClosingTagToken, EndTagToken},
