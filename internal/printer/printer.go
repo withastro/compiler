@@ -333,6 +333,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	loc, statement := js_scanner.NextImportStatement(source, 0)
 	for loc != -1 {
 		isClientOnlyImport := false
+	component_loop:
 		for _, n := range doc.ClientOnlyComponents {
 			for _, imported := range statement.Imports {
 				if imported.ExportName == "*" {
@@ -358,7 +359,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 						n.Attr = append(n.Attr, exportAttr)
 
 						isClientOnlyImport = true
-						break
+						continue component_loop
 					}
 				} else if imported.LocalName == n.Data {
 					// Inject metadata attributes to `client:only` Component
@@ -378,11 +379,11 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					n.Attr = append(n.Attr, exportAttr)
 
 					isClientOnlyImport = true
-					break
+					continue component_loop
 				}
 			}
 			if isClientOnlyImport {
-				break
+				continue component_loop
 			}
 		}
 		if !isClientOnlyImport {
@@ -441,20 +442,30 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	}
 	// Client-Only Components
 	p.print("], clientOnlyComponents: [")
-	for i, spec := range conlyspecs {
+	uniquespecs := make([]string, 0)
+	i := 0
+conly_loop:
+	for _, spec := range conlyspecs {
+		for _, uniq := range uniquespecs {
+			if uniq == spec {
+				continue conly_loop
+			}
+		}
 		if i > 0 {
 			p.print(", ")
 		}
 		p.print(fmt.Sprintf("'%s'", spec))
+		i++
+		uniquespecs = append(uniquespecs, spec)
 	}
 	p.print("], hydrationDirectives: new Set([")
-	i := 0
+	j := 0
 	for directive := range doc.HydrationDirectives {
-		if i > 0 {
+		if j > 0 {
 			p.print(", ")
 		}
 		p.print(fmt.Sprintf("'%s'", directive))
-		i++
+		j++
 	}
 	// Hoisted scripts
 	p.print("]), hoisted: [")
