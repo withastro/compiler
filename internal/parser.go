@@ -2156,6 +2156,8 @@ func inSelectIM(p *parser) bool {
 			p.tokenizer.NextIsNotRawText()
 			// Ignore the token.
 			return true
+		default:
+			return inBodyIM(p)
 		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
@@ -2195,7 +2197,7 @@ func inSelectIM(p *parser) bool {
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
-		return true
+		return inBodyIM(p)
 	case DoctypeToken:
 		// Ignore the token.
 		return true

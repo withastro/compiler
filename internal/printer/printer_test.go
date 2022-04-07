@@ -1435,6 +1435,13 @@ const value = 'test';
 			},
 		},
 		{
+			name:   "select map expression",
+			source: `<select>{[1, 2, 3].map(num => <option>{num}</option>)}</select><div>Hello world!</div>`,
+			want: want{
+				code: `<select>${[1, 2, 3].map(num => $$render` + BACKTICK + `<option>${num}</option>` + BACKTICK + `)}</select><div>Hello world!</div>`,
+			},
+		},
+		{
 			name: "textarea",
 			source: `---
 const value = 'test';

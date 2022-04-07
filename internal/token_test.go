@@ -337,6 +337,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"select with expression",
+			`<select>{[1, 2, 3].map(num => <option>{num}</option>)}</select>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"Markdown codeblock",
 			fmt.Sprintf(`<Markdown>
 		%s%s%s
