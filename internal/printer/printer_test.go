@@ -386,6 +386,39 @@ import * as components from '../components';
 			},
 		},
 		{
+			name: "client:only component (multiple)",
+			source: `---
+import Component from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component test="a" client:only />
+	<Component test="b" client:only />
+	<Component test="c" client:only />
+  </body>
+</html>`,
+			want: want{
+				frontmatter: []string{"import Component from '../components';"},
+				metadata: metadata{
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components"},
+				},
+				// Specifically do NOT render any metadata here, we need to skip this import
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  ` + RENDER_HEAD_RESULT + `</head>
+  <body>
+    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"test":"a","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+	${` + RENDER_COMPONENT + `($$result,'Component',null,{"test":"b","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+	${` + RENDER_COMPONENT + `($$result,'Component',null,{"test":"c","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+  </body></html>`,
+			},
+		},
+		{
 			name:   "iframe",
 			source: `<iframe src="something" />`,
 			want: want{
