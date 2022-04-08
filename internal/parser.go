@@ -1365,8 +1365,6 @@ func inBodyIM(p *parser) bool {
 				p.im = inHeadIM
 				return true
 			}
-		case a.Caption, a.Col, a.Colgroup, a.Frame, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
-			// Ignore the token.
 		default:
 			p.reconstructActiveFormattingElements()
 			p.addElement()

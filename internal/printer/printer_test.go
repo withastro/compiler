@@ -1533,6 +1533,20 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "tr only",
+			source: `<tr><td>col 1</td><td>col 2</td><td>{foo}</td></tr>`,
+			want: want{
+				code: `<tr><td>col 1</td><td>col 2</td><td>${foo}</td></tr>`,
+			},
+		},
+		{
+			name:   "caption only",
+			source: `<caption>Hello world!</caption>`,
+			want: want{
+				code: `<caption>Hello world!</caption>`,
+			},
+		},
+		{
 			name:   "anchor expressions",
 			source: `<a>{expr}</a>`,
 			want: want{
