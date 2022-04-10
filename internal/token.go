@@ -1436,6 +1436,9 @@ loop:
 			break loop
 		}
 
+		// We're in an element again, so open braces should open an expression
+		z.openBraceIsExpressionStart = z.noExpressionTag == ""
+
 		// Empty <> Fragment start tag
 		if c == '>' {
 			if x := z.raw.End - len("<>"); z.raw.Start < x {
@@ -1448,8 +1451,6 @@ loop:
 			return z.tt
 		}
 
-		// We're in an element again, so open braces should open an expression
-		z.openBraceIsExpressionStart = z.noExpressionTag == ""
 		switch {
 		case 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z':
 			tokenType = StartTagToken

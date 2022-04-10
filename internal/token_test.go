@@ -337,6 +337,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"fragment shorthand in nested expression",
+			`<div>{x.map((x) => (<>{x ? "truthy" : "falsy"}</>))}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"select with expression",
 			`<select>{[1, 2, 3].map(num => <option>{num}</option>)}</select>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
