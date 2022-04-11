@@ -200,7 +200,6 @@ func NormalizeFlowComponents(doc *astro.Node) {
 				})
 			}
 			onAttr := GetAttr(n, "on")
-			fmt.Println(onAttr)
 			if onAttr == "" {
 				onAttr = "true"
 			}
