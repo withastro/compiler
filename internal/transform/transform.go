@@ -32,6 +32,7 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 		}
 	})
 	NormalizeSetDirectives(doc)
+	NormalizeFlowComponents(doc)
 
 	// Important! Remove scripts from original location *after* walking the doc
 	for _, script := range doc.Scripts {
@@ -122,6 +123,292 @@ func NormalizeSetDirectives(doc *astro.Node) {
 				fmt.Printf("<%s> uses the \"%s\" directive, but has child nodes which will be overwritten. Remove the child nodes to suppress this warning.\n", n.Data, directive.Key)
 			}
 			n.AppendChild(expr)
+		}
+	}
+}
+
+func createFragment(src *astro.Node) *astro.Node {
+	fragment := &astro.Node{
+		Type:      astro.ElementNode,
+		Data:      "Fragment",
+		Component: true,
+		Fragment:  true,
+		Loc:       make([]loc.Loc, 1),
+	}
+	for {
+		child := src.FirstChild
+		if child == nil {
+			break
+		}
+		src.RemoveChild(child)
+		fragment.AppendChild(child)
+	}
+	return fragment
+}
+
+type SwitchCase struct {
+	name    string
+	content *astro.Node
+}
+
+func NormalizeFlowComponents(doc *astro.Node) {
+	var switches []*astro.Node
+	var ifs []*astro.Node
+	var fors []*astro.Node
+	var withs []*astro.Node
+
+	walk(doc, func(n *astro.Node) {
+		if n.Type == astro.ElementNode {
+			switch n.Data {
+			case "Switch":
+				switches = append(switches, n)
+			case "If":
+				ifs = append(ifs, n)
+			case "For":
+				fors = append(fors, n)
+			case "With":
+				withs = append(withs, n)
+			}
+		}
+	})
+
+	if len(switches) > 0 {
+		for _, n := range switches {
+			expr := &astro.Node{
+				Type:       astro.ElementNode,
+				Data:       "astro:expression",
+				Expression: true,
+			}
+			loc := make([]loc.Loc, 1)
+			cases := make([]SwitchCase, 0)
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if c.Type != astro.ElementNode {
+					continue
+				}
+				if c.Data != "Case" && c.Data != "Default" {
+					fmt.Printf("<%s> found as a child of <Switch>, but only <Case> and <Default> are supported!\n", c.Data)
+					continue
+				}
+				content := createFragment(c)
+				name := GetAttr(c, "is")
+				if c.Data == "Default" {
+					name = "default"
+				}
+				cases = append(cases, SwitchCase{
+					name:    name,
+					content: content,
+				})
+			}
+			onAttr := GetAttr(n, "on")
+			fmt.Println(onAttr)
+			if onAttr == "" {
+				onAttr = "true"
+			}
+			open := fmt.Sprintf(`() => { switch (%s) {`, onAttr)
+			close := `}}`
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: open,
+				Loc:  loc,
+			})
+			for _, c := range cases {
+				if c.name == "default" {
+					expr.AppendChild(&astro.Node{
+						Type: astro.TextNode,
+						Data: "default: return (",
+						Loc:  loc,
+					})
+				} else {
+					expr.AppendChild(&astro.Node{
+						Type: astro.TextNode,
+						Data: fmt.Sprintf("case %s: return (", c.name),
+						Loc:  loc,
+					})
+				}
+				expr.AppendChild(c.content)
+				expr.AppendChild(&astro.Node{
+					Type: astro.TextNode,
+					Data: ");",
+					Loc:  loc,
+				})
+			}
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: close,
+				Loc:  loc,
+			})
+			n.Parent.InsertBefore(expr, n)
+			n.Parent.RemoveChild(n)
+		}
+	}
+
+	if len(ifs) > 0 {
+		for _, n := range ifs {
+			expr := &astro.Node{
+				Type:       astro.ElementNode,
+				Data:       "astro:expression",
+				Expression: true,
+			}
+			loc := make([]loc.Loc, 1)
+			cases := make([]SwitchCase, 0)
+			toRemove := make([]*astro.Node, 0)
+			for s := n; s != nil; s = s.NextSibling {
+				if s.Type != astro.ElementNode {
+					continue
+				}
+				if s.Data != "If" && s.Data != "Else" {
+					break
+				}
+				content := createFragment(s)
+				name := GetAttr(s, "is")
+				if s.Data == "Else" {
+					name = GetAttr(s, "if")
+				}
+				cases = append(cases, SwitchCase{
+					name:    name,
+					content: content,
+				})
+				if s.Data == "Else" {
+					toRemove = append(toRemove, s)
+				}
+			}
+			isAttr := GetAttr(n, "is")
+			open := "() => {\n"
+			close := `}`
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: open,
+				Loc:  loc,
+			})
+			for i, c := range cases {
+				if i == 0 {
+					expr.AppendChild(&astro.Node{
+						Type: astro.TextNode,
+						Data: fmt.Sprintf(`if (%s) return (`, isAttr),
+						Loc:  loc,
+					})
+				} else if c.name == "" {
+					expr.AppendChild(&astro.Node{
+						Type: astro.TextNode,
+						Data: "else return (",
+						Loc:  loc,
+					})
+				} else {
+					expr.AppendChild(&astro.Node{
+						Type: astro.TextNode,
+						Data: fmt.Sprintf("else if (%s) return (", c.name),
+						Loc:  loc,
+					})
+				}
+				expr.AppendChild(c.content)
+				expr.AppendChild(&astro.Node{
+					Type: astro.TextNode,
+					Data: ")\n",
+					Loc:  loc,
+				})
+			}
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: close,
+				Loc:  loc,
+			})
+			n.Parent.InsertBefore(expr, n)
+			n.Parent.RemoveChild(n)
+			for _, s := range toRemove {
+				s.Parent.RemoveChild(s)
+			}
+		}
+	}
+
+	if len(fors) > 0 {
+		for _, n := range fors {
+			content := createFragment(n)
+			expr := &astro.Node{
+				Type:       astro.ElementNode,
+				Data:       "astro:expression",
+				Expression: true,
+			}
+			loc := make([]loc.Loc, 1)
+			args := make([]string, 0)
+
+			for _, a := range n.Attr {
+				if len(a.Key) > 4 && a.Key[0:4] == "let:" {
+					args = append(args, a.Key[4:])
+				}
+			}
+
+			ofAttr := GetAttr(n, "of")
+			inAttr := GetAttr(n, "in")
+			fromAttr := GetAttr(n, "from")
+			toAttr := GetAttr(n, "to")
+			stepAttr := GetAttr(n, "step")
+			open := `() => { const $$res = [];`
+			loop := ""
+			if ofAttr != "" {
+				loop = fmt.Sprintf("for (let %s of %s) { $$res.push(", args[0], ofAttr)
+			}
+			if inAttr != "" {
+				loop = fmt.Sprintf("for (let %s in %s) { $$res.push(", args[0], inAttr)
+			}
+			if fromAttr != "" && toAttr != "" {
+				if stepAttr == "" {
+					stepAttr = "1"
+				}
+				loop = fmt.Sprintf("const $$from = %s;const $$to = %s;const $$step = %s;const $$dir = $$to > $$from ? 1 : -1; for (const %s of Array.from({ length: Math.floor(Math.abs(($$to - $$from)) / $$step) + 1 }, (_, i) => $$from + (i * $$step * $$dir))) { $$res.push(", fromAttr, toAttr, stepAttr, args[0])
+			}
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: open,
+				Loc:  loc,
+			})
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: loop,
+				Loc:  loc,
+			})
+			expr.AppendChild(content)
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: `)} return $$res; }`,
+				Loc:  loc,
+			})
+
+			n.Parent.InsertBefore(expr, n)
+			n.Parent.RemoveChild(n)
+		}
+	}
+
+	if len(withs) > 0 {
+		for _, n := range withs {
+			keys := make([]string, 0)
+			values := make([]string, 0)
+			for _, a := range n.Attr {
+				if len(a.Key) > 4 && a.Key[0:4] == "let:" {
+					keys = append(keys, a.Key[4:])
+					values = append(values, GetAttr(n, a.Key))
+				}
+			}
+			content := createFragment(n)
+			expr := &astro.Node{
+				Type:       astro.ElementNode,
+				Data:       "astro:expression",
+				Expression: true,
+			}
+			loc := make([]loc.Loc, 1)
+			open := fmt.Sprintf(`() => function(%s) { return (`, strings.Join(keys, ", "))
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: open,
+				Loc:  loc,
+			})
+			expr.AppendChild(content)
+			expr.AppendChild(&astro.Node{
+				Type: astro.TextNode,
+				Data: fmt.Sprintf(`)}.call(null, %s)`, strings.Join(values, ", ")),
+				Loc:  loc,
+			})
+			n.Parent.InsertBefore(expr, n)
+			n.Parent.RemoveChild(n)
 		}
 	}
 }

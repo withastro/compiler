@@ -1,6 +1,9 @@
 package transform
 
 import (
+	"fmt"
+	"strings"
+
 	astro "github.com/withastro/compiler/internal"
 )
 
@@ -48,6 +51,32 @@ func GetQuotedAttr(n *astro.Node, key string) string {
 				return attr.Val
 			}
 			return ""
+		}
+	}
+	return ""
+}
+
+func GetAttr(n *astro.Node, key string) string {
+	for _, a := range n.Attr {
+		if a.Key != key {
+			continue
+		}
+		switch a.Type {
+		case astro.QuotedAttribute:
+			return fmt.Sprintf(`"%s"`, a.Val)
+		case astro.EmptyAttribute:
+			return `true`
+		case astro.ExpressionAttribute:
+			if a.Val == "" {
+				return `(void 0)`
+			}
+			return fmt.Sprintf(`(%s)`, a.Val)
+		case astro.SpreadAttribute:
+			return fmt.Sprintf(`...(%s)`, a.Key)
+		case astro.ShorthandAttribute:
+			return fmt.Sprintf(`(%s)`, strings.TrimSpace(a.Val))
+		case astro.TemplateLiteralAttribute:
+			return fmt.Sprintf("`%s`", a.Key)
 		}
 	}
 	return ""
