@@ -323,7 +323,7 @@ import Component from '../components';
     <title>Hello world</title>
   ` + RENDER_HEAD_RESULT + `</head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',Component,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
   </body></html>`,
 			},
 		},
@@ -352,7 +352,7 @@ import { Component } from '../components';
     <title>Hello world</title>
   ` + RENDER_HEAD_RESULT + `</head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"Component"})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',Component,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"Component"})}
   </body></html>`,
 			},
 		},
@@ -381,7 +381,7 @@ import * as components from '../components';
     <title>Hello world</title>
   ` + RENDER_HEAD_RESULT + `</head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"A"})}
+    ${` + RENDER_COMPONENT + `($$result,'components.A',components.A,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"A"})}
   </body></html>`,
 			},
 		},
@@ -412,9 +412,9 @@ import Component from '../components';
     <title>Hello world</title>
   ` + RENDER_HEAD_RESULT + `</head>
   <body>
-    ${` + RENDER_COMPONENT + `($$result,'Component',null,{"test":"a","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
-	${` + RENDER_COMPONENT + `($$result,'Component',null,{"test":"b","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
-	${` + RENDER_COMPONENT + `($$result,'Component',null,{"test":"c","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+    ${` + RENDER_COMPONENT + `($$result,'Component',Component,{"test":"a","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+	${` + RENDER_COMPONENT + `($$result,'Component',Component,{"test":"b","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+	${` + RENDER_COMPONENT + `($$result,'Component',Component,{"test":"c","client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
   </body></html>`,
 			},
 		},
