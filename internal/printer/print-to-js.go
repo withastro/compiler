@@ -330,7 +330,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	isFragment := n.Fragment
 	isComponent := isFragment || n.Component || n.CustomElement
-	isClientOnly := isComponent && transform.HasAttr(n, "client:only")
 	isSlot := n.DataAtom == atom.Slot
 	isImplicit := false
 	for _, a := range n.Attr {
