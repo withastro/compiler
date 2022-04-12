@@ -359,8 +359,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	switch true {
 	case isFragment:
 		p.print("Fragment")
-	case isClientOnly:
-		p.print("null")
 	case !isSlot && n.CustomElement:
 		p.print(fmt.Sprintf("'%s'", n.Data))
 	case !isSlot && !isImplicit:
