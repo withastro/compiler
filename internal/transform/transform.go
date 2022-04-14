@@ -328,32 +328,38 @@ func NormalizeFlowComponents(doc *astro.Node) {
 				Expression: true,
 			}
 			loc := make([]loc.Loc, 1)
-			args := make([]string, 0)
 
-			for _, a := range n.Attr {
-				if len(a.Key) > 4 && a.Key[0:4] == "let:" {
-					args = append(args, a.Key[4:])
-				}
-			}
-
+			args := GetQuotedAttr(n, "let")
 			ofAttr := GetAttr(n, "of")
 			inAttr := GetAttr(n, "in")
 			fromAttr := GetAttr(n, "from")
 			toAttr := GetAttr(n, "to")
+			repeatAttr := GetAttr(n, "repeat")
 			stepAttr := GetAttr(n, "step")
 			open := `() => { const $$res = [];`
+			callParams := ""
 			loop := ""
 			if ofAttr != "" {
-				loop = fmt.Sprintf("for (let %s of %s) { $$res.push(", args[0], ofAttr)
+				loop = fmt.Sprintf("let $$index = -1; for (const $$value of %s) { $$index++; $$res.push(((%s) => { return ", ofAttr, args)
+				callParams = "$$value, $$index"
 			}
 			if inAttr != "" {
-				loop = fmt.Sprintf("for (let %s in %s) { $$res.push(", args[0], inAttr)
+				loop = fmt.Sprintf("for (const $$key in %s) { const $$value = %s[$$key]; $$res.push(((%s) => { return ", inAttr, inAttr, args)
+				callParams = "$$key, $$value"
 			}
-			if fromAttr != "" && toAttr != "" {
+			if toAttr != "" {
+				if fromAttr == "" {
+					fromAttr = "0"
+				}
 				if stepAttr == "" {
 					stepAttr = "1"
 				}
-				loop = fmt.Sprintf("const $$from = %s;const $$to = %s;const $$step = %s;const $$dir = $$to > $$from ? 1 : -1; for (const %s of Array.from({ length: Math.floor(Math.abs(($$to - $$from)) / $$step) + 1 }, (_, i) => $$from + (i * $$step * $$dir))) { $$res.push(", fromAttr, toAttr, stepAttr, args[0])
+				loop = fmt.Sprintf("const $$from = %s; const $$to = %s; const $$step = %s; const $$dir = $$to > $$from ? 1 : -1; for (const $$index of Array.from({ length: Math.floor(Math.abs(($$to - $$from)) / $$step) + 1 }, (_, i) => $$from + (i * $$step * $$dir))) { $$res.push(((%s) => { return ", fromAttr, toAttr, stepAttr, args)
+				callParams = "$$index"
+			}
+			if repeatAttr != "" {
+				loop = fmt.Sprintf("for (const $$index of Array.from({ length: %s }, (_, i) => i)) { $$res.push(((%s) => { return ", repeatAttr, args)
+				callParams = "$$index"
 			}
 			expr.AppendChild(&astro.Node{
 				Type: astro.TextNode,
@@ -368,7 +374,7 @@ func NormalizeFlowComponents(doc *astro.Node) {
 			expr.AppendChild(content)
 			expr.AppendChild(&astro.Node{
 				Type: astro.TextNode,
-				Data: `)} return $$res; }`,
+				Data: fmt.Sprintf(`}).call(null, %s))} return $$res; }`, callParams),
 				Loc:  loc,
 			})
 
@@ -382,10 +388,12 @@ func NormalizeFlowComponents(doc *astro.Node) {
 			keys := make([]string, 0)
 			values := make([]string, 0)
 			for _, a := range n.Attr {
-				if len(a.Key) > 4 && a.Key[0:4] == "let:" {
-					keys = append(keys, a.Key[4:])
-					values = append(values, GetAttr(n, a.Key))
+				if a.Type == astro.SpreadAttribute {
+					fmt.Printf("<With> does not support spread attributes! Please replace `{...%s}`\n", a.Key)
+					continue
 				}
+				keys = append(keys, a.Key)
+				values = append(values, GetAttr(n, a.Key))
 			}
 			content := createFragment(n)
 			expr := &astro.Node{
