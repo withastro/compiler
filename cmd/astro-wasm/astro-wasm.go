@@ -89,9 +89,9 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		projectRoot = "."
 	}
 
-	mode := jsString(options.Get("mode"))
-	if mode == "" {
-		mode = "development"
+	compact := false
+	if jsBool(options.Get("compact")) {
+		compact = true
 	}
 
 	staticExtraction := false
@@ -109,7 +109,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		SourceMap:        sourcemap,
 		Site:             site,
 		ProjectRoot:      projectRoot,
-		Mode:             mode,
+		Compact:          compact,
 		PreprocessStyle:  preprocessStyle,
 		StaticExtraction: staticExtraction,
 	}

@@ -306,7 +306,7 @@ func TestProductionTransform(t *testing.T) {
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
 			Transform(doc, TransformOptions{
-				Mode: "production",
+				Compact: true,
 			})
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())

@@ -17,7 +17,7 @@ export interface TransformOptions {
   sourcefile?: string;
   pathname?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
-  mode?: 'development' | 'production';
+  compact?: boolean;
   /**
    * @deprecated "as" has been removed and no longer has any effect!
    */
