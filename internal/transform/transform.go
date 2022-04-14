@@ -21,6 +21,7 @@ type TransformOptions struct {
 	SourceMap        string
 	Site             string
 	ProjectRoot      string
+	Mode             string
 	PreprocessStyle  interface{}
 	StaticExtraction bool
 }
@@ -55,6 +56,9 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	}
 
 	TrimTrailingSpace(doc)
+	if opts.Mode == "production" {
+		cleanWhitespace(doc)
+	}
 
 	return doc
 }
@@ -158,15 +162,51 @@ func TrimTrailingSpace(doc *astro.Node) {
 	}
 }
 
-// TODO: cleanup sibling whitespace after removing scripts/styles
-// func removeSiblingWhitespace(n *astro.Node) {
-// 	if c := n.NextSibling; c != nil && c.Type == astro.TextNode {
-// 		content := strings.TrimSpace(c.Data)
-// 		if len(content) == 0 {
-// 			c.Parent.RemoveChild(c)
-// 		}
-// 	}
-// }
+func isRawElement(n *astro.Node) bool {
+	if n.Type == astro.FrontmatterNode {
+		return true
+	}
+	rawTags := []string{"Markdown", "pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
+	for _, tag := range rawTags {
+		if n.Data == tag {
+			return true
+		}
+		for _, attr := range n.Attr {
+			if attr.Key == "is:raw" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func cleanWhitespace(doc *astro.Node) {
+	walk(doc, func(n *astro.Node) {
+		if n.Type == astro.TextNode {
+			if n.Closest(isRawElement) != nil {
+				return
+			}
+			if n.PrevSibling == nil {
+				n.Data = strings.TrimLeft(n.Data, "\t \n")
+			} else if !n.PrevSibling.Expression {
+				originalLen := len(n.Data)
+				n.Data = strings.TrimLeft(n.Data, "\t \n")
+				if originalLen != len(n.Data) {
+					n.Data = " " + n.Data
+				}
+			}
+			if n.NextSibling == nil {
+				n.Data = strings.TrimRight(n.Data, "\t \n")
+			} else if !n.NextSibling.Expression {
+				originalLen := len(n.Data)
+				n.Data = strings.TrimRight(n.Data, "\t \n")
+				if originalLen != len(n.Data) {
+					n.Data = n.Data + " "
+				}
+			}
+		}
+	})
+}
 
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {

@@ -246,3 +246,73 @@ func TestTransformTrailingSpace(t *testing.T) {
 		})
 	}
 }
+
+func TestProductionTransform(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "trims whitespace",
+			source: `<div>    Test     </div>`,
+			want:   `<div>Test</div>`,
+		},
+		{
+			name:   "pre",
+			source: `<pre>  Test  </pre>`,
+			want:   `<pre>  Test  </pre>`,
+		},
+		{
+			name:   "textarea",
+			source: `<textarea>  Test  </textarea>`,
+			want:   `<textarea>  Test  </textarea>`,
+		},
+		{
+			name:   "deep pre",
+			source: `<pre>  <div> Test </div>  </pre>`,
+			want:   `<pre>  <div> Test </div>  </pre>`,
+		},
+		{
+			name:   "minify",
+			source: `<head>  <script>console.log("hoisted")</script>  <head>  <div> COOL </div>`,
+			want:   `<head></head><div>COOL</div>`,
+		},
+		{
+			name:   "attributes",
+			source: `<div    a="1"    b={0} />`,
+			want:   `<div a="1" b={0}></div>`,
+		},
+		{
+			name:   "expression quoted",
+			source: "<div test={\n`  test  `\n} />",
+			want:   "<div test={`  test  `}></div>",
+		},
+		{
+			name:   "expression math",
+			source: "<div test={ a + b } />",
+			want:   "<div test={a + b}></div>",
+		},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			ExtractStyles(doc)
+			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
+			doc.Styles = make([]*astro.Node, 0)
+			Transform(doc, TransformOptions{
+				Mode: "production",
+			})
+			astro.PrintToSource(&b, doc)
+			got := strings.TrimSpace(b.String())
+			if tt.want != got {
+				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
+			}
+		})
+	}
+}
