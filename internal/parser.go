@@ -775,7 +775,9 @@ func inHeadIM(p *parser) bool {
 			return true
 		case a.Slot:
 			p.addElement()
-			p.setOriginalIM()
+			if p.originalIM == nil {
+				p.setOriginalIM()
+			}
 			if p.hasSelfClosingToken {
 				p.addLoc()
 				p.oe.pop()
