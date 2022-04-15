@@ -56,8 +56,9 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	}
 
 	TrimTrailingSpace(doc)
+
 	if opts.Compact {
-		compactWhitespace(doc)
+		collapseWhitespace(doc)
 	}
 
 	return doc
@@ -180,27 +181,39 @@ func isRawElement(n *astro.Node) bool {
 	return false
 }
 
-func compactWhitespace(doc *astro.Node) {
+func collapseWhitespace(doc *astro.Node) {
 	walk(doc, func(n *astro.Node) {
 		if n.Type == astro.TextNode {
 			if n.Closest(isRawElement) != nil {
 				return
 			}
-			if n.PrevSibling == nil {
-				n.Data = strings.TrimLeft(n.Data, "\t \n")
-			} else if !n.PrevSibling.Expression {
-				originalLen := len(n.Data)
-				n.Data = strings.TrimLeft(n.Data, "\t \n")
-				if originalLen != len(n.Data) {
+			originalLen := len(n.Data)
+			hasNewline := false
+			n.Data = strings.TrimLeftFunc(n.Data, func(r rune) bool {
+				if r == '\n' {
+					hasNewline = true
+				}
+				return unicode.IsSpace(r)
+			})
+			if originalLen != len(n.Data) {
+				if hasNewline {
+					n.Data = "\n" + n.Data
+				} else {
 					n.Data = " " + n.Data
 				}
 			}
-			if n.NextSibling == nil {
-				n.Data = strings.TrimRight(n.Data, "\t \n")
-			} else if !n.NextSibling.Expression {
-				originalLen := len(n.Data)
-				n.Data = strings.TrimRight(n.Data, "\t \n")
-				if originalLen != len(n.Data) {
+			hasNewline = false
+			originalLen = len(n.Data)
+			n.Data = strings.TrimRightFunc(n.Data, func(r rune) bool {
+				if r == '\n' {
+					hasNewline = true
+				}
+				return unicode.IsSpace(r)
+			})
+			if originalLen != len(n.Data) {
+				if hasNewline {
+					n.Data = n.Data + "\n"
+				} else {
 					n.Data = n.Data + " "
 				}
 			}

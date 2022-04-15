@@ -3,11 +3,13 @@ import * as assert from 'uvu/assert';
 import { transform } from '@astrojs/compiler';
 
 async function minify(input: string) {
-  return (await transform(input, { compact: true })).code;
+  const code = (await transform(input, { compact: true })).code;
+  return code;
 }
 
 test('basic', async () => {
-  assert.match(await minify(`    <div>Hello {value}</div>      `), '$$render`<div>Hello ${value}</div>`');
+  assert.match(await minify(`    <div>Hello {value}</div>      `), '$$render`<div>Hello ${value}</div> `');
+  assert.match(await minify(`    <div> Hello {value} </div>      `), '$$render`<div> Hello ${value} </div> `');
 });
 
 test('preservation', async () => {
@@ -17,8 +19,9 @@ test('preservation', async () => {
 });
 
 test('collapsing', async () => {
-  assert.ok(await minify(`<span> inline </span>`), '$$render`<span>inline</span>`');
-  assert.ok(await minify(`<span> inline { expression }</span>`), '$$render`<span>inline ${expression}</span>`');
+  assert.ok(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
+  assert.ok(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span> inline ${ expression } </span>`');
+  assert.ok(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${ expression }</span>`');
 });
 
 test('space normalization between attributes', async () => {
@@ -36,6 +39,19 @@ test('space normalization around text', async () => {
   assert.match(await minify('<p>foo<img>bar</p>'), '<p>foo<img>bar</p>');
   assert.match(await minify('<p>foo <img>bar</p>'), '<p>foo <img>bar</p>');
   assert.match(await minify('<p>foo<img> bar</p>'), '<p>foo<img> bar</p>');
+  assert.match(await minify('<p>foo <wbr> bar</p>'), '<p>foo <wbr> bar</p>');
+  assert.match(await minify('<p>foo<wbr>bar</p>'), '<p>foo<wbr>bar</p>');
+  assert.match(await minify('<p>foo <wbr>bar</p>'), '<p>foo <wbr>bar</p>');
+  assert.match(await minify('<p>foo<wbr> bar</p>'), '<p>foo<wbr> bar</p>');
+  assert.match(await minify('<p>foo <wbr baz moo=""> bar</p>'), '<p>foo <wbr baz moo=""> bar</p>');
+  assert.match(await minify('<p>foo<wbr baz moo="">bar</p>'), '<p>foo<wbr baz moo="">bar</p>');
+  assert.match(await minify('<p>foo <wbr baz moo="">bar</p>'), '<p>foo <wbr baz moo="">bar</p>');
+  assert.match(await minify('<p>foo<wbr baz moo=""> bar</p>'), '<p>foo<wbr baz moo=""> bar</p>');
+  assert.match(await minify('<p>  <a href="#">  <code>foo</code></a> bar</p>'), '<p> <a href="#"> <code>foo</code></a> bar</p>');
+  assert.match(await minify('<p><a href="#"><code>foo  </code></a> bar</p>'), '<p><a href="#"><code>foo </code></a> bar</p>');
+  assert.match(await minify('<p>  <a href="#">  <code>   foo</code></a> bar   </p>'), '<p> <a href="#"> <code> foo</code></a> bar </p>');
+  assert.match(await minify('<div> Empty <!-- or --> not </div>'), '<div> Empty <!-- or --> not </div>');
+  assert.match(await minify('<div> a <input><!-- b --> c </div>'), '<div> a <input><!-- b --> c </div>');
   await Promise.all(
     [
       'a',
@@ -68,82 +84,70 @@ test('space normalization around text', async () => {
       assert.match(await minify(`foo${open}baz${close}bar`), `foo${open}baz${close}bar`);
       assert.match(await minify(`foo ${open}baz${close}bar`), `foo ${open}baz${close}bar`);
       assert.match(await minify(`foo${open}baz${close} bar`), `foo${open}baz${close} bar`);
-      // assert.match(await minify(`foo ${open} baz ${close} bar`), `foo ${open}baz ${close}bar`);
-      // assert.match(await minify(`foo${open} baz ${close}bar`), `foo${open} baz ${close}bar`);
-      // assert.match(await minify(`foo ${open} baz ${close}bar`), `foo ${open}baz ${close}bar`);
-      // assert.match(await minify(`foo${open} baz ${close} bar`), `foo${open} baz ${close}bar`);
-      // assert.match(await minify('<div>foo <' + el + '>baz</' + el + '> bar</div>'), '<div>foo <' + el + '>baz</' + el + '> bar</div>');
-      // assert.match(await minify('<div>foo<' + el + '>baz</' + el + '>bar</div>'), '<div>foo<' + el + '>baz</' + el + '>bar</div>');
-      // assert.match(await minify('<div>foo <' + el + '>baz</' + el + '>bar</div>'), '<div>foo <' + el + '>baz</' + el + '>bar</div>');
-      // assert.match(await minify('<div>foo<' + el + '>baz</' + el + '> bar</div>'), '<div>foo<' + el + '>baz</' + el + '> bar</div>');
-      // assert.match(await minify('<div>foo <' + el + '> baz </' + el + '> bar</div>'), '<div>foo <' + el + '>baz </' + el + '>bar</div>');
-      // assert.match(await minify('<div>foo<' + el + '> baz </' + el + '>bar</div>'), '<div>foo<' + el + '> baz </' + el + '>bar</div>');
-      // assert.match(await minify('<div>foo <' + el + '> baz </' + el + '>bar</div>'), '<div>foo <' + el + '>baz </' + el + '>bar</div>');
-      // assert.match(await minify('<div>foo<' + el + '> baz </' + el + '> bar</div>'), '<div>foo<' + el + '> baz </' + el + '>bar</div>');
+      assert.match(await minify(`foo ${open} baz ${close} bar`), `foo ${open} baz ${close} bar`);
+      assert.match(await minify(`foo${open} baz ${close}bar`), `foo${open} baz ${close}bar`);
+      assert.match(await minify(`foo ${open} baz ${close}bar`), `foo ${open} baz ${close}bar`);
+      assert.match(await minify(`foo${open} baz ${close} bar`), `foo${open} baz ${close} bar`);
+      assert.match(await minify(`<div>foo ${open}baz${close} bar</div>`), `<div>foo ${open}baz${close} bar</div>`);
+      assert.match(await minify(`<div>foo${open}baz${close}bar</div>`), `<div>foo${open}baz${close}bar</div>`);
+      assert.match(await minify(`<div>foo ${open}baz${close}bar</div>`), `<div>foo ${open}baz${close}bar</div>`);
+      assert.match(await minify(`<div>foo${open}baz${close} bar</div>`), `<div>foo${open}baz${close} bar</div>`);
+      assert.match(await minify(`<div>foo ${open} baz ${close} bar</div>`), `<div>foo ${open} baz ${close} bar</div>`);
+      assert.match(await minify(`<div>foo${open} baz ${close}bar</div>`), `<div>foo${open} baz ${close}bar</div>`);
+      assert.match(await minify(`<div>foo ${open} baz ${close}bar</div>`), `<div>foo ${open} baz ${close}bar</div>`);
+      assert.match(await minify(`<div>foo${open} baz ${close} bar</div>`), `<div>foo${open} baz ${close} bar</div>`);
     })
   );
   // Don't trim whitespace around element, but do trim within
-  // await Promise.all(
-  //   ['bdi', 'bdo', 'button', 'cite', 'code', 'dfn', 'math', 'q', 'rt', 'rtc', 'ruby', 'svg'].map(async function (el) {
-  //     assert.match(await minify('foo <' + el + '>baz</' + el + '> bar'), 'foo <' + el + '>baz</' + el + '> bar');
-  //     assert.match(await minify('foo<' + el + '>baz</' + el + '>bar'), 'foo<' + el + '>baz</' + el + '>bar');
-  //     assert.match(await minify('foo <' + el + '>baz</' + el + '>bar'), 'foo <' + el + '>baz</' + el + '>bar');
-  //     assert.match(await minify('foo<' + el + '>baz</' + el + '> bar'), 'foo<' + el + '>baz</' + el + '> bar');
-  //     assert.match(await minify('foo <' + el + '> baz </' + el + '> bar'), 'foo <' + el + '>baz</' + el + '> bar');
-  //     assert.match(await minify('foo<' + el + '> baz </' + el + '>bar'), 'foo<' + el + '>baz</' + el + '>bar');
-  //     assert.match(await minify('foo <' + el + '> baz </' + el + '>bar'), 'foo <' + el + '>baz</' + el + '>bar');
-  //     assert.match(await minify('foo<' + el + '> baz </' + el + '> bar'), 'foo<' + el + '>baz</' + el + '> bar');
-  //     assert.match(await minify('<div>foo <' + el + '>baz</' + el + '> bar</div>'), '<div>foo <' + el + '>baz</' + el + '> bar</div>');
-  //     assert.match(await minify('<div>foo<' + el + '>baz</' + el + '>bar</div>'), '<div>foo<' + el + '>baz</' + el + '>bar</div>');
-  //     assert.match(await minify('<div>foo <' + el + '>baz</' + el + '>bar</div>'), '<div>foo <' + el + '>baz</' + el + '>bar</div>');
-  //     assert.match(await minify('<div>foo<' + el + '>baz</' + el + '> bar</div>'), '<div>foo<' + el + '>baz</' + el + '> bar</div>');
-  //     assert.match(await minify('<div>foo <' + el + '> baz </' + el + '> bar</div>'), '<div>foo <' + el + '>baz</' + el + '> bar</div>');
-  //     assert.match(await minify('<div>foo<' + el + '> baz </' + el + '>bar</div>'), '<div>foo<' + el + '>baz</' + el + '>bar</div>');
-  //     assert.match(await minify('<div>foo <' + el + '> baz </' + el + '>bar</div>'), '<div>foo <' + el + '>baz</' + el + '>bar</div>');
-  //     assert.match(await minify('<div>foo<' + el + '> baz </' + el + '> bar</div>'), '<div>foo<' + el + '>baz</' + el + '> bar</div>');
-  //   })
-  // );
-  // await Promise.all(
-  //   [
-  //     ['<span> foo </span>', '<span>foo</span>'],
-  //     [' <span> foo </span> ', '<span>foo</span>'],
-  //     ['<nobr>a</nobr>', '<nobr>a</nobr>'],
-  //     ['<nobr>a </nobr>', '<nobr>a</nobr>'],
-  //     ['<nobr> a</nobr>', '<nobr>a</nobr>'],
-  //     ['<nobr> a </nobr>', '<nobr>a</nobr>'],
-  //     ['a<nobr>b</nobr>c', 'a<nobr>b</nobr>c'],
-  //     ['a<nobr>b </nobr>c', 'a<nobr>b </nobr>c'],
-  //     ['a<nobr> b</nobr>c', 'a<nobr> b</nobr>c'],
-  //     ['a<nobr> b </nobr>c', 'a<nobr> b </nobr>c'],
-  //     ['a<nobr>b</nobr> c', 'a<nobr>b</nobr> c'],
-  //     ['a<nobr>b </nobr> c', 'a<nobr>b</nobr> c'],
-  //     ['a<nobr> b</nobr> c', 'a<nobr> b</nobr> c'],
-  //     ['a<nobr> b </nobr> c', 'a<nobr> b</nobr> c'],
-  //     ['a <nobr>b</nobr>c', 'a <nobr>b</nobr>c'],
-  //     ['a <nobr>b </nobr>c', 'a <nobr>b </nobr>c'],
-  //     ['a <nobr> b</nobr>c', 'a <nobr>b</nobr>c'],
-  //     ['a <nobr> b </nobr>c', 'a <nobr>b </nobr>c'],
-  //     ['a <nobr>b</nobr> c', 'a <nobr>b</nobr> c'],
-  //     ['a <nobr>b </nobr> c', 'a <nobr>b</nobr> c'],
-  //     ['a <nobr> b</nobr> c', 'a <nobr>b</nobr> c'],
-  //     ['a <nobr> b </nobr> c', 'a <nobr>b</nobr> c'],
-  //   ].map(async ([input, output]) => {
-  //     assert.match(await minify(input), output);
-  //   })
-  // );
-  // assert.match(await minify('<p>foo <wbr> bar</p>'), '<p>foo<wbr> bar</p>');
-  // assert.match(await minify('<p>foo<wbr>bar</p>'), '<p>foo<wbr>bar</p>');
-  // assert.match(await minify('<p>foo <wbr>bar</p>'), '<p>foo <wbr>bar</p>');
-  // assert.match(await minify('<p>foo<wbr> bar</p>'), '<p>foo<wbr> bar</p>');
-  // assert.match(await minify('<p>foo <wbr baz moo=""> bar</p>'), '<p>foo<wbr baz moo=""> bar</p>');
-  // assert.match(await minify('<p>foo<wbr baz moo="">bar</p>'), '<p>foo<wbr baz moo="">bar</p>');
-  // assert.match(await minify('<p>foo <wbr baz moo="">bar</p>'), '<p>foo <wbr baz moo="">bar</p>');
-  // assert.match(await minify('<p>foo<wbr baz moo=""> bar</p>'), '<p>foo<wbr baz moo=""> bar</p>');
-  // assert.match(await minify('<p>  <a href="#">  <code>foo</code></a> bar</p>'), '<p><a href="#"><code>foo</code></a> bar</p>');
-  // assert.match(await minify('<p><a href="#"><code>foo  </code></a> bar</p>'), '<p><a href="#"><code>foo</code></a> bar</p>');
-  // assert.match(await minify('<p>  <a href="#">  <code>   foo</code></a> bar   </p>'), '<p><a href="#"><code>foo</code></a> bar</p>');
-  // assert.match(await minify('<div> Empty <!-- or --> not </div>'), '<div>Empty<!-- or --> not</div>');
-  // assert.match(await minify('<div> a <input><!-- b --> c </div>'), '<div>a <input> c</div>');
+  await Promise.all(
+    ['bdi', 'bdo', 'button', 'cite', 'code', 'dfn', 'math', 'q', 'rt', 'rtc', 'ruby', 'svg'].map(async (el) => {
+      const [open, close] = [`<${el}>`, `</${el}>`];
+      assert.match(await minify(`foo ${open}baz${close} bar`), `foo ${open}baz${close} bar`);
+      assert.match(await minify(`foo${open}baz${close}bar`), `foo${open}baz${close}bar`);
+      assert.match(await minify(`foo ${open}baz${close}bar`), `foo ${open}baz${close}bar`);
+      assert.match(await minify(`foo${open}baz${close} bar`), `foo${open}baz${close} bar`);
+      assert.match(await minify(`foo ${open} baz ${close} bar`), `foo ${open} baz ${close} bar`);
+      assert.match(await minify(`foo${open} baz ${close}bar`), `foo${open} baz ${close}bar`);
+      assert.match(await minify(`foo ${open} baz ${close}bar`), `foo ${open} baz ${close}bar`);
+      assert.match(await minify(`foo${open} baz ${close} bar`), `foo${open} baz ${close} bar`);
+      assert.match(await minify(`<div>foo ${open}baz${close} bar</div>`), `<div>foo ${open}baz${close} bar</div>`);
+      assert.match(await minify(`<div>foo${open}baz${close}bar</div>`), `<div>foo${open}baz${close}bar</div>`);
+      assert.match(await minify(`<div>foo ${open}baz${close}bar</div>`), `<div>foo ${open}baz${close}bar</div>`);
+      assert.match(await minify(`<div>foo${open}baz${close} bar</div>`), `<div>foo${open}baz${close} bar</div>`);
+      assert.match(await minify(`<div>foo ${open} baz ${close} bar</div>`), `<div>foo ${open} baz ${close} bar</div>`);
+      assert.match(await minify(`<div>foo${open} baz ${close}bar</div>`), `<div>foo${open} baz ${close}bar</div>`);
+      assert.match(await minify(`<div>foo ${open} baz ${close}bar</div>`), `<div>foo ${open} baz ${close}bar</div>`);
+      assert.match(await minify(`<div>foo${open} baz ${close} bar</div>`), `<div>foo${open} baz ${close} bar</div>`);
+    })
+  );
+  await Promise.all(
+    [
+      ['<span> foo </span>', '<span> foo </span>'],
+      [' <span> foo </span> ', '<span> foo </span>'],
+      ['<nobr>a</nobr>', '<nobr>a</nobr>'],
+      ['<nobr>a </nobr>', '<nobr>a </nobr>'],
+      ['<nobr> a</nobr>', '<nobr> a</nobr>'],
+      ['<nobr> a </nobr>', '<nobr> a </nobr>'],
+      ['a<nobr>b</nobr>c', 'a<nobr>b</nobr>c'],
+      ['a<nobr>b </nobr>c', 'a<nobr>b </nobr>c'],
+      ['a<nobr> b</nobr>c', 'a<nobr> b</nobr>c'],
+      ['a<nobr> b </nobr>c', 'a<nobr> b </nobr>c'],
+      ['a<nobr>b</nobr> c', 'a<nobr>b</nobr> c'],
+      ['a<nobr>b </nobr> c', 'a<nobr>b </nobr> c'],
+      ['a<nobr> b</nobr> c', 'a<nobr> b</nobr> c'],
+      ['a<nobr> b </nobr> c', 'a<nobr> b </nobr> c'],
+      ['a <nobr>b</nobr>c', 'a <nobr>b</nobr>c'],
+      ['a <nobr>b </nobr>c', 'a <nobr>b </nobr>c'],
+      ['a <nobr> b</nobr>c', 'a <nobr> b</nobr>c'],
+      ['a <nobr> b </nobr>c', 'a <nobr> b </nobr>c'],
+      ['a <nobr>b</nobr> c', 'a <nobr>b</nobr> c'],
+      ['a <nobr>b </nobr> c', 'a <nobr>b </nobr> c'],
+      ['a <nobr> b</nobr> c', 'a <nobr> b</nobr> c'],
+      ['a <nobr> b </nobr> c', 'a <nobr> b </nobr> c'],
+    ].map(async ([input, output]) => {
+      assert.match(await minify(input), output);
+    })
+  );
   // await Promise.all([
   //   ' a <? b ?> c ',
   //   '<!-- d --> a <? b ?> c ',
