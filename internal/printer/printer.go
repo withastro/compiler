@@ -170,14 +170,16 @@ func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
 }
 
 func (p *printer) printAttributesToObject(n *astro.Node) {
+	lastAttributeSkipped := false
 	p.print("{")
 	for i, a := range n.Attr {
-		if i != 0 {
+		if i != 0 && !lastAttributeSkipped {
 			p.print(",")
 		}
 		if a.Key == "set:text" || a.Key == "set:html" || a.Key == "is:raw" {
 			continue
 		}
+		lastAttributeSkipped = false
 		switch a.Type {
 		case astro.QuotedAttribute:
 			p.addSourceMapping(a.KeyLoc)
@@ -204,8 +206,13 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
 			p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
 		case astro.ShorthandAttribute:
+			withoutComments := removeComments(a.Key)
+			if len(withoutComments) == 0 {
+				lastAttributeSkipped = true
+				continue
+			}
 			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+			p.print(`"` + withoutComments + `"`)
 			p.print(":")
 			p.addSourceMapping(a.KeyLoc)
 			p.print(`(` + strings.TrimSpace(a.Key) + `)`)
@@ -284,18 +291,22 @@ func (p *printer) printAttribute(attr astro.Attribute) {
 			p.print(strings.TrimSpace(attr.Val))
 		}
 		p.addSourceMapping(attr.KeyLoc)
-		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
+		p.print(`, "` + removeComments(attr.Key) + `")}`)
 	case astro.SpreadAttribute:
 		p.print(fmt.Sprintf("${%s(", SPREAD_ATTRIBUTES))
 		p.addSourceMapping(loc.Loc{Start: attr.KeyLoc.Start - 3})
 		p.print(strings.TrimSpace(attr.Key))
 		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
 	case astro.ShorthandAttribute:
+		withoutComments := removeComments(attr.Key)
+		if len(withoutComments) == 0 {
+			return
+		}
 		p.print(fmt.Sprintf("${%s(", ADD_ATTRIBUTE))
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(strings.TrimSpace(attr.Key))
 		p.addSourceMapping(attr.KeyLoc)
-		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
+		p.print(`, "` + withoutComments + `")}`)
 	case astro.TemplateLiteralAttribute:
 		p.print(fmt.Sprintf("${%s(`", ADD_ATTRIBUTE))
 		p.addSourceMapping(attr.ValLoc)

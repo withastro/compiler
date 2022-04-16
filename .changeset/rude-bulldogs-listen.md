@@ -2,4 +2,4 @@
 '@astrojs/compiler': patch
 ---
 
-Add support for commenting out attributes or props with `//` or `/* */`
+Add support for block comment only expressions and block comments in element attributes/props

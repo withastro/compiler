@@ -821,58 +821,6 @@ find_next:
 	}
 }
 
-// skips past any chars until first char is encountered from given splice
-func (z *Tokenizer) skipUntilChar(chars []byte) {
-find_next:
-	for {
-		c := z.readByte()
-		// fail on error
-		if z.err != nil {
-			z.data.End = z.raw.End - 1
-			return
-		}
-		// handle escape char \
-		if c == '\\' {
-			z.raw.End++
-			c = z.buf[z.data.Start : z.data.Start+1][0]
-			// if this is a match but it’s escaped, skip and move to the next char
-			for _, v := range chars {
-				if c == v {
-					z.raw.End++
-					continue find_next
-				}
-			}
-		}
-		// match found!
-		for _, v := range chars {
-			if c == v {
-				return
-			}
-		}
-	}
-}
-
-// skip past an attribute that is commented out with // or /*
-func (z *Tokenizer) skipCommentedAttribute() {
-	c := z.readByte()
-	switch c {
-	case '/':
-		z.skipUntilChar([]byte{'\r', '\n'})
-	case '*':
-		for {
-			z.skipUntilChar([]byte{'*'})
-			c = z.readByte()
-			if c == '/' {
-				return
-			}
-			if z.err == io.EOF {
-				panic("unterminated comment")
-			}
-			z.raw.End--
-		}
-	}
-}
-
 // read RegExp expressions and comments (starting from '/' byte)
 func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 	c := z.readByte() // find next character after '/' to know how to handle it
@@ -1137,9 +1085,6 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 	}
 	for {
 		c := z.readByte()
-		if z.err != nil || c == '/' {
-			z.skipCommentedAttribute()
-		}
 		if z.err != nil || c == '>' {
 			break
 		}
@@ -1351,7 +1296,7 @@ func (z *Tokenizer) readTagAttrExpression() {
 			}
 		// Handle comments, strings within attrs
 		case '/', '"', '\'':
-			if len(z.attrTemplateLiteralStack) != 0 && c == '/' {
+			if z.attrTemplateLiteralStack[z.attrExpressionStack-1] != 0 && c == '/' {
 				continue
 			}
 			end := z.data.End

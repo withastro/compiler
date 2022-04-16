@@ -379,7 +379,7 @@ to use the longhand Fragment syntax:
 		},
 		{
 			"unterminated comment block",
-			"/*",
+			"{/*",
 			"unterminated comment",
 		},
 		{
@@ -389,7 +389,7 @@ to use the longhand Fragment syntax:
 		},
 		{
 			"unterminated comment block in attribute list",
-			`<div a="1" /* b="2" />`,
+			`<div a="1" {/* b="2" />`,
 			"unterminated comment",
 		},
 	}
@@ -825,23 +825,14 @@ func TestAttributes(t *testing.T) {
 			[]AttributeType{QuotedAttribute},
 		},
 		{
-			"attribute commented out with line comment",
-			`<div
-				// value="a"
-				anotherValue="b"
-				/>`,
-			[]AttributeType{QuotedAttribute},
+			"shorthand attribute with comment",
+			"<div {/* a comment */ value} />",
+			[]AttributeType{ShorthandAttribute},
 		},
 		{
-			"attribute commented out with block comment",
-			`<div /* value="a" */ anotherValue="b" />`,
-			[]AttributeType{QuotedAttribute},
-		},
-		{
-			"attributes commented out with multiline block comment",
-			`<div /* value="a"
-				value="b" */ anotherValue="b" />`,
-			[]AttributeType{QuotedAttribute},
+			"expression with comment",
+			"<div a={/* a comment */ value} />",
+			[]AttributeType{ExpressionAttribute},
 		},
 	}
 

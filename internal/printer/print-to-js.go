@@ -85,6 +85,17 @@ func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions)
 	}
 }
 
+const whitespace = " \t\r\n\f"
+
+// Returns true if the expression only contains a comment block (e.g. {/* a comment */})
+func expressionOnlyHasCommentBlock(n *Node) bool {
+	return n.FirstChild.NextSibling == nil &&
+		n.FirstChild.Type == TextNode &&
+		// removeComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* before iterating
+		strings.HasPrefix(strings.TrimLeft(n.FirstChild.Data, whitespace), "/*") &&
+		len(removeComments(n.FirstChild.Data)) == 0
+}
+
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
@@ -296,10 +307,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Tip! Comment this block out to debug expressions
 	if n.Expression {
-		if n.FirstChild != nil {
-			p.print("${")
-		} else {
+		if n.FirstChild == nil {
 			p.print("${(void 0)")
+		} else if expressionOnlyHasCommentBlock(n) {
+			// we do not print expressions that only contain comment blocks
+			return
+		} else {
+			p.print("${")
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
