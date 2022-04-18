@@ -291,7 +291,7 @@ func (p *printer) printAttribute(attr astro.Attribute) {
 			p.print(strings.TrimSpace(attr.Val))
 		}
 		p.addSourceMapping(attr.KeyLoc)
-		p.print(`, "` + removeComments(attr.Key) + `")}`)
+		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
 	case astro.SpreadAttribute:
 		p.print(fmt.Sprintf("${%s(", SPREAD_ATTRIBUTES))
 		p.addSourceMapping(loc.Loc{Start: attr.KeyLoc.Start - 3})
