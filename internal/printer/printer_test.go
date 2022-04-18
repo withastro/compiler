@@ -1829,8 +1829,8 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:   "comment blocks are removed",
-			source: `<h1>{/* a comment */}Hello</h1>`,
+			name:   "comment only expressions are removed",
+			source: `{/* a comment 1 */}<h1>{/* a comment 2*/}Hello</h1>`,
 			want: want{
 				code: `<h1>Hello</h1>`,
 			},
