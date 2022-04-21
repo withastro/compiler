@@ -1807,6 +1807,34 @@ const items = ["Dog", "Cat", "Platipus"];
 				},
 			},
 		},
+		{
+			name:   "comments removed from attribute list",
+			source: `<div><h1 {/* comment 1 */} value="1" {/* comment 2 */}>Hello</h1><Component {/* comment 1 */} value="1" {/* comment 2 */} /></div>`,
+			want: want{
+				code: `<div><h1 value="1">Hello</h1>${$$renderComponent($$result,'Component',Component,{"value":"1",})}</div>`,
+			},
+		},
+		{
+			name:   "includes comments for shorthand attribute",
+			source: `<div><h1 {/* comment 1 */ id /* comment 2 */}>Hello</h1><Component {/* comment 1 */ id /* comment 2 */}/></div>`,
+			want: want{
+				code: `<div><h1${$$addAttribute(/* comment 1 */ id /* comment 2 */, "id")}>Hello</h1>${$$renderComponent($$result,'Component',Component,{"id":(/* comment 1 */ id /* comment 2 */)})}</div>`,
+			},
+		},
+		{
+			name:   "includes comments for expression attribute",
+			source: `<div><h1 attr={/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */}>Hello</h1><Component attr={/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */}/></div>`,
+			want: want{
+				code: `<div><h1${$$addAttribute(/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */, "attr")}>Hello</h1>${$$renderComponent($$result,'Component',Component,{"attr":(/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */)})}</div>`,
+			},
+		},
+		{
+			name:   "comment only expressions are removed",
+			source: `{/* a comment 1 */}<h1>{/* a comment 2*/}Hello</h1>`,
+			want: want{
+				code: `<h1>Hello</h1>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

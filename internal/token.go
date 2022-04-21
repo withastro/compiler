@@ -838,6 +838,9 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 				z.data.End = z.raw.End
 				return
 			}
+			if z.err == io.EOF {
+				panic("unterminated comment")
+			}
 		}
 	// RegExp
 	default:
@@ -1293,7 +1296,7 @@ func (z *Tokenizer) readTagAttrExpression() {
 			}
 		// Handle comments, strings within attrs
 		case '/', '"', '\'':
-			if len(z.attrTemplateLiteralStack) != 0 && c == '/' {
+			if z.attrTemplateLiteralStack[z.attrExpressionStack-1] != 0 && c == '/' {
 				continue
 			}
 			end := z.data.End

@@ -377,6 +377,21 @@ To fix this, please change
 to use the longhand Fragment syntax:
   <Fragment slot="named">`,
 		},
+		{
+			"unterminated comment block",
+			"{/*",
+			"unterminated comment",
+		},
+		{
+			"unterminated comment block in expression",
+			"<div>{/*}</div>",
+			"unterminated comment",
+		},
+		{
+			"unterminated comment block in attribute list",
+			`<div a="1" {/* b="2" />`,
+			"unterminated comment",
+		},
 	}
 	runPanicTest(t, Panics)
 }
@@ -808,6 +823,16 @@ func TestAttributes(t *testing.T) {
 			"iframe allows attributes",
 			"<iframe src=\"https://google.com\"></iframe>",
 			[]AttributeType{QuotedAttribute},
+		},
+		{
+			"shorthand attribute with comment",
+			"<div {/* a comment */ value} />",
+			[]AttributeType{ShorthandAttribute},
+		},
+		{
+			"expression with comment",
+			"<div a={/* a comment */ value} />",
+			[]AttributeType{ExpressionAttribute},
 		},
 	}
 
