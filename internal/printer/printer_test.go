@@ -1504,6 +1504,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "table caption expression",
+			source: `<table><caption>{title}</caption><tr><td>Hello</td></tr></table>`,
+			want: want{
+				code: `<table><caption>${title}</caption><tr><td>Hello</td></tr></table>`,
+			},
+		},
+		{
 			name: "tbody expressions",
 			source: `---
 const items = ["Dog", "Cat", "Platipus"];
