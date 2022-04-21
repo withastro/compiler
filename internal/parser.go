@@ -1869,6 +1869,13 @@ func inCaptionIM(p *parser) bool {
 			// Ignore the token.
 			return true
 		}
+	case StartExpressionToken:
+		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		return true
 	}
 	return inBodyIM(p)
 }
@@ -1924,6 +1931,13 @@ func inColumnGroupIM(p *parser) bool {
 		}
 	case ErrorToken:
 		return inBodyIM(p)
+	case StartExpressionToken:
+		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
+		return true
+	case EndExpressionToken:
+		p.oe.pop()
+		return true
 	}
 	if p.oe.top().DataAtom != a.Colgroup {
 		return true
