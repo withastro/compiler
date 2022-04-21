@@ -527,9 +527,6 @@ type insertionMode func(*parser) bool
 // inTableText insertion mode.
 // Section 12.2.4.1, "using the rules for".
 func (p *parser) setOriginalIM() {
-	if p.originalIM != nil {
-		panic("html: bad parser state: originalIM was set twice")
-	}
 	p.originalIM = p.im
 }
 
@@ -794,9 +791,7 @@ func inHeadIM(p *parser) bool {
 			return true
 		case a.Script, a.Title:
 			p.addElement()
-			if p.originalIM == nil {
-				p.setOriginalIM()
-			}
+			p.setOriginalIM()
 			p.im = textIM
 			if p.hasSelfClosingToken {
 				p.addLoc()
