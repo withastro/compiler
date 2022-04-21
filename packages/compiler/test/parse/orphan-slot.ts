@@ -22,6 +22,7 @@ test.before(async () => {
 
 test('orphan slot', () => {
   assert.ok(result.code, 'able to parse');
+  console.log(result.code);
 });
 
 test.run();

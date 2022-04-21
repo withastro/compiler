@@ -114,6 +114,20 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "head slot III",
+			source: `<html><head><slot name="baseHeadExtension"><meta property="test2" content="test2"/></slot></head>`,
+			want: want{
+				code: `<html><head>${$$renderSlot($$result,$$slots["baseHeadExtension"],$$render` + BACKTICK + `<meta property="test2" content="test2">` + BACKTICK + `)}` + RENDER_HEAD_RESULT + `</head></html>`,
+			},
+		},
+		{
+			name:   "orphan slot",
+			source: `<slot />`,
+			want: want{
+				code: `${$$renderSlot($$result,$$slots["default"])}`,
+			},
+		},
+		{
 			name: "basic (frontmatter)",
 			source: `---
 const href = '/about';
