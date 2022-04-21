@@ -1,5 +1,18 @@
 # @astrojs/compiler
 
+## 0.14.2
+
+### Patch Changes
+
+- 6f30e2e: Fix edge case with nested expression inside `<>`
+- 15e3ff8: Fix panic when using a `<slot />` in `head`
+- c048567: Fix edge case with `select` elements and expression children
+- 13d2fc2: Fix #340, fixing behavior of content after an expression inside of <select>
+- 9e37a72: Fix issue when multiple client-only components are used
+- 67993d5: Add support for block comment only expressions, block comment only shorthand attributes and block comments in shorthand attributes
+- 59fbea2: Fix #343, edge case with <tr> inside component
+- 049dadf: Fix usage of expressions inside `caption` and `colgroup` elements
+
 ## 0.14.1
 
 ### Patch Changes
