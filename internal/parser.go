@@ -2205,7 +2205,7 @@ func inSelectIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.afe = append(p.afe, &scopeMarker)
-		p.setOriginalIM()
+		p.originalIM = inBodyIM
 		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:

@@ -1624,6 +1624,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "select in form",
+			source: `<form><select>{options.map((option) => (<option value={option.id}>{option.title}</option>))}</select><div><label>Title 3</label><input type="text" /></div><button type="submit">Submit</button></form>`,
+			want: want{
+				code: `<form><select>${options.map((option) => ($$render` + BACKTICK + `<option${$$addAttribute(option.id, "value")}>${option.title}</option>` + BACKTICK + `))}</select><div><label>Title 3</label><input type="text"></div><button type="submit">Submit</button></form>`,
+			},
+		},
+		{
 			name:   "slot inside of Base",
 			source: `<Base title="Home"><div>Hello</div></Base>`,
 			want: want{
