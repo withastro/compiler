@@ -256,12 +256,17 @@ func TestAnnotation(t *testing.T) {
 		{
 			name:   "basic",
 			source: `<div>Hello world!</div>`,
-			want:   `<div data-astro-sourcefile="test">Hello world!</div>`,
+			want:   `<div data-astro-source-file="/test.astro">Hello world!</div>`,
 		},
 		{
 			name:   "no components",
 			source: `<Component>Hello world!</Component>`,
 			want:   `<Component>Hello world!</Component>`,
+		},
+		{
+			name:   "injects root",
+			source: `<html></html>`,
+			want:   `<html data-astro-source-root="file://"></html>`,
 		},
 	}
 	var b strings.Builder
@@ -274,7 +279,8 @@ func TestAnnotation(t *testing.T) {
 			}
 			Transform(doc, TransformOptions{
 				AnnotateSourceFile: true,
-				Filename:           "test",
+				Pathname:           "/test.astro",
+				ProjectRoot:        "file://",
 			})
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
