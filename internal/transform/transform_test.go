@@ -246,3 +246,41 @@ func TestTransformTrailingSpace(t *testing.T) {
 		})
 	}
 }
+
+func TestAnnotation(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "basic",
+			source: `<div>Hello world!</div>`,
+			want:   `<div data-astro-sourcefile="test">Hello world!</div>`,
+		},
+		{
+			name:   "no components",
+			source: `<Component>Hello world!</Component>`,
+			want:   `<Component>Hello world!</Component>`,
+		},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			Transform(doc, TransformOptions{
+				AnnotateSourceFile: true,
+				Filename:           "test",
+			})
+			astro.PrintToSource(&b, doc)
+			got := strings.TrimSpace(b.String())
+			if tt.want != got {
+				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
+			}
+		})
+	}
+}
