@@ -37,7 +37,13 @@ var NeverScopedSelectors map[string]bool = map[string]bool{
 }
 
 func injectScopedClass(n *astro.Node, opts TransformOptions) {
+	hasSpreadAttr := false
 	for i, attr := range n.Attr {
+		if !hasSpreadAttr && attr.Type == astro.SpreadAttribute {
+			// We only handle this special case on built-in elements
+			hasSpreadAttr = n.Component == false
+		}
+
 		// If we find an existing class attribute, append the scoped class
 		if attr.Key == "class" || (n.Component && attr.Key == "className") {
 			switch attr.Type {
@@ -66,6 +72,11 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 				return
 			}
 		}
+	}
+	// If there's a spread attribute, `class` might be there, so do not inject `class` here
+	// `class` will be injected by the `spreadAttributes` helper
+	if hasSpreadAttr {
+		return
 	}
 	// If we didn't find an existing class attribute, let's add one
 	n.Attr = append(n.Attr, astro.Attribute{

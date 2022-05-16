@@ -47,6 +47,10 @@ func (p *printer) print(text string) {
 	p.output = append(p.output, text...)
 }
 
+func (p *printer) printf(format string, a ...interface{}) {
+	p.output = append(p.output, []byte(fmt.Sprintf(format, a...))...)
+}
+
 func (p *printer) println(text string) {
 	p.output = append(p.output, (text + "\n")...)
 }
@@ -258,7 +262,7 @@ func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
 	p.print("},\n")
 }
 
-func (p *printer) printAttribute(attr astro.Attribute) {
+func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
 		return
 	}
@@ -293,10 +297,29 @@ func (p *printer) printAttribute(attr astro.Attribute) {
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
 	case astro.SpreadAttribute:
+		injectClass := false
+		for p := n.Parent; p != nil; p = p.Parent {
+			if p.Parent == nil && len(p.Styles) != 0 {
+				injectClass = true
+				break
+			}
+		}
+		if injectClass {
+			for _, a := range n.Attr {
+				if a.Key == "class" || a.Key == "class:list" {
+					injectClass = false
+					break
+				}
+			}
+		}
 		p.print(fmt.Sprintf("${%s(", SPREAD_ATTRIBUTES))
 		p.addSourceMapping(loc.Loc{Start: attr.KeyLoc.Start - 3})
 		p.print(strings.TrimSpace(attr.Key))
-		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
+		if !injectClass {
+			p.printf(`,"%s")}`, strings.TrimSpace(attr.Key))
+		} else {
+			p.printf(`,"%s",{"class":"astro-%s"})}`, strings.TrimSpace(attr.Key), p.opts.Scope)
+		}
 	case astro.ShorthandAttribute:
 		withoutComments := removeComments(attr.Key)
 		if len(withoutComments) == 0 {
