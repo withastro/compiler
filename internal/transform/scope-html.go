@@ -41,7 +41,7 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 	for i, attr := range n.Attr {
 		if !hasSpreadAttr && attr.Type == astro.SpreadAttribute {
 			// We only handle this special case on built-in elements
-			hasSpreadAttr = n.Component == false
+			hasSpreadAttr = !n.Component
 		}
 
 		// If we find an existing class attribute, append the scoped class
