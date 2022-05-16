@@ -1556,6 +1556,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "tbody expressions 3",
+			source: `<table><tbody>{rows.map(row => (<tr><td><strong>{row}</strong></td></tr>))}</tbody></table>`,
+			want: want{
+				code: `<table><tbody>${rows.map(row => ($$render` + BACKTICK + `<tr><td><strong>${row}</strong></td></tr>` + BACKTICK + `))}</tbody></table>`,
+			},
+		},
+		{
 			name:   "td expressions",
 			source: `<table><tr><td><h2>Row 1</h2></td><td>{title}</td></tr></table>`,
 			want: want{
