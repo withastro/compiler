@@ -8,7 +8,7 @@ import (
 )
 
 func (p *printer) printScopedSelector() bool {
-	p.print(fmt.Sprintf(":where([data-astro-scope=\"%s\"])", p.options.Scope))
+	p.print(fmt.Sprintf(":where(.astro-%s)", p.options.Scope))
 	return true
 }
 

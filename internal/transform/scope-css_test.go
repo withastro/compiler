@@ -19,97 +19,97 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "class",
 			source: ".class{}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   ".class:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "id",
 			source: "#class{}",
-			want:   "#class:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   "#class:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "element",
 			source: "h1{}",
-			want:   "h1:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   "h1:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "adjacent sibling",
 			source: ".class+.class{}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"])+.class:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   ".class:where(.astro-XXXXXX)+.class:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "and selector",
 			source: ".class,.class{}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]),.class:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   ".class:where(.astro-XXXXXX),.class:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "children universal",
 			source: ".class *{}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]) :where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   ".class:where(.astro-XXXXXX) :where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "attr",
-			source: "a[aria-current=\"page\"]{}",
-			want:   "a:where([data-astro-scope=\"XXXXXX\"])[aria-current=page]{}",
+			source: "a[aria-current=page]{}",
+			want:   "a:where(.astro-XXXXXX)[aria-current=page]{}",
 		},
 		{
 			name:   "attr universal implied",
 			source: "[aria-visible],[aria-hidden]{}",
-			want:   ":where([data-astro-scope=\"XXXXXX\"])[aria-visible],:where([data-astro-scope=\"XXXXXX\"])[aria-hidden]{}",
+			want:   ":where(.astro-XXXXXX)[aria-visible],:where(.astro-XXXXXX)[aria-hidden]{}",
 		},
 		{
 			name:   "universal pseudo state",
 			source: "*:hover{}",
-			want:   ":where([data-astro-scope=\"XXXXXX\"]):hover{}",
+			want:   ":where(.astro-XXXXXX):hover{}",
 		},
 		{
 			name:   "immediate child universal",
 			source: ".class>*{}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"])>:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   ".class:where(.astro-XXXXXX)>:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "element + pseudo state",
 			source: ".class button:focus{}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]) button:where([data-astro-scope=\"XXXXXX\"]):focus{}",
+			want:   ".class:where(.astro-XXXXXX) button:where(.astro-XXXXXX):focus{}",
 		},
 		{
 			name:   "element + pseudo element",
 			source: ".class h3::before{}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]) h3:where([data-astro-scope=\"XXXXXX\"])::before{}",
+			want:   ".class:where(.astro-XXXXXX) h3:where(.astro-XXXXXX)::before{}",
 		},
 		{
 			name:   "media query",
 			source: "@media screen and (min-width:640px){.class{}}",
-			want:   "@media screen and (min-width:640px){.class:where([data-astro-scope=\"XXXXXX\"]){}}",
+			want:   "@media screen and (min-width:640px){.class:where(.astro-XXXXXX){}}",
 		},
 		{
 			name:   "element + pseudo state + pseudo element",
 			source: "button:focus::before{}",
-			want:   "button:where([data-astro-scope=\"XXXXXX\"]):focus::before{}",
+			want:   "button:where(.astro-XXXXXX):focus::before{}",
 		},
 		{
 			name:   "global children",
 			source: ".class :global(ul li){}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]) ul li{}",
+			want:   ".class:where(.astro-XXXXXX) ul li{}",
 		},
 		{
 			name:   "global universal",
 			source: ".class :global(*){}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]) *{}",
+			want:   ".class:where(.astro-XXXXXX) *{}",
 		},
 		{
 			name:   "global with scoped children",
 			source: ":global(section) .class{}",
-			want:   "section .class:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   "section .class:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "subsequent siblings + global",
 			source: ".class~:global(a){}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"])~a{}",
+			want:   ".class:where(.astro-XXXXXX)~a{}",
 		},
 		{
 			name:   "global nested parens",
 			source: ".class :global(.nav:not(.is-active)){}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]) .nav:not(.is-active){}",
+			want:   ".class:where(.astro-XXXXXX) .nav:not(.is-active){}",
 		},
 		{
 			name:   "global nested parens + chained class",
@@ -124,27 +124,27 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "class chained global",
 			source: ".class:global(.bar){}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]).bar{}", // technically this may be incorrect, but would require a lookahead to fix
+			want:   ".class:where(.astro-XXXXXX).bar{}", // technically this may be incorrect, but would require a lookahead to fix
 		},
 		{
 			name:   "chained :not()",
 			source: ".class:not(.is-active):not(.is-disabled){}",
-			want:   ".class:where([data-astro-scope=\"XXXXXX\"]):not(.is-active):not(.is-disabled){}",
+			want:   ".class:where(.astro-XXXXXX):not(.is-active):not(.is-disabled){}",
 		},
 		{
 			name:   "weird chaining",
 			source: ":hover.a:focus{}", // yes this is valid. yes I’m just upset as you are :(
-			want:   ":hover.a:where([data-astro-scope=\"XXXXXX\"]):focus{}",
+			want:   ":hover.a:where(.astro-XXXXXX):focus{}",
 		},
 		{
 			name:   "more weird chaining",
 			source: ":not(.is-disabled).a{}",
-			want:   ":not(.is-disabled).a:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   ":not(.is-disabled).a:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "body",
 			source: "body h1{}",
-			want:   "body h1:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   "body h1:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "body class",
@@ -164,7 +164,7 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "escaped characters",
 			source: ".class\\:class:focus{}",
-			want:   ".class\\:class:where([data-astro-scope=\"XXXXXX\"]):focus{}",
+			want:   ".class\\:class:where(.astro-XXXXXX):focus{}",
 		},
 		// the following tests assert we leave valid CSS alone
 		{
@@ -190,17 +190,17 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "keyframes start",
 			source: "@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}} h1{} h2{}",
-			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}h1:where([data-astro-scope=\"XXXXXX\"]){}h2:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   "@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}h1:where(.astro-XXXXXX){}h2:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "keyframes middle",
 			source: "h1{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}} h2{}",
-			want:   "h1:where([data-astro-scope=\"XXXXXX\"]){}@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}h2:where([data-astro-scope=\"XXXXXX\"]){}",
+			want:   "h1:where(.astro-XXXXXX){}@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}h2:where(.astro-XXXXXX){}",
 		},
 		{
 			name:   "keyframes end",
 			source: "h1{} h2{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}",
-			want:   "h1:where([data-astro-scope=\"XXXXXX\"]){}h2:where([data-astro-scope=\"XXXXXX\"]){}@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}",
+			want:   "h1:where(.astro-XXXXXX){}h2:where(.astro-XXXXXX){}@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}",
 		},
 		{
 			name:   "calc",
@@ -210,7 +210,7 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "grid-template-columns",
 			source: "div{grid-template-columns: [content-start] 1fr [content-end];}",
-			want:   "div:where([data-astro-scope=\"XXXXXX\"]){grid-template-columns:[content-start] 1fr [content-end]}",
+			want:   "div:where(.astro-XXXXXX){grid-template-columns:[content-start] 1fr [content-end]}",
 		},
 		{
 			name:   "charset",
@@ -238,7 +238,7 @@ func TestScopeStyle(t *testing.T) {
   color: blue
   font-size: 18px;
 }`,
-			want: `.foo:where([data-astro-scope="XXXXXX"]){color:blue font-size: 18px}`,
+			want: `.foo:where(.astro-XXXXXX){color:blue font-size: 18px}`,
 		},
 		{
 			name:   "nesting media",
@@ -248,12 +248,12 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "nesting combinator",
 			source: "div { & span { color: blue } }",
-			want:   "div:where([data-astro-scope=\"XXXXXX\"]){& span:where([data-astro-scope=\"XXXXXX\"]){color:blue}}",
+			want:   "div:where(.astro-XXXXXX){& span:where(.astro-XXXXXX){color:blue}}",
 		},
 		{
 			name:   "nesting modifier",
 			source: ".header { background-color: white; &.dark { background-color: blue; }}",
-			want:   ".header:where([data-astro-scope=\"XXXXXX\"]){background-color:white;&.dark{background-color:blue}}",
+			want:   ".header:where(.astro-XXXXXX){background-color:white;&.dark{background-color:blue}}",
 		},
 		{
 			name: "@container",
@@ -262,12 +262,12 @@ func TestScopeStyle(t *testing.T) {
           font-size: 30px;
         }
       }`,
-			want: "@container (min-width: 200px) and (min-height: 200px){h1:where([data-astro-scope=\"XXXXXX\"]){font-size:30px}}",
+			want: "@container (min-width: 200px) and (min-height: 200px){h1:where(.astro-XXXXXX){font-size:30px}}",
 		},
 		{
 			name:   "@layer",
 			source: "@layer theme, layout, utilities; @layer special { .item { color: rebeccapurple; }}",
-			want:   "@layer theme,layout,utilities;@layer special{.item:where([data-astro-scope=\"XXXXXX\"]){color:rebeccapurple}}",
+			want:   "@layer theme,layout,utilities;@layer special{.item:where(.astro-XXXXXX){color:rebeccapurple}}",
 		},
 	}
 	for _, tt := range tests {

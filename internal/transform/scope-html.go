@@ -81,6 +81,7 @@ func injectDefineVars(n *astro.Node, values []string) {
 
 func injectScopedClass(n *astro.Node, opts TransformOptions) {
 	hasSpreadAttr := false
+	scopedClass := fmt.Sprintf(`astro-%s`, opts.Scope)
 	for i, attr := range n.Attr {
 		if !hasSpreadAttr && attr.Type == astro.SpreadAttribute {
 			// We only handle this special case on built-in elements
@@ -88,11 +89,11 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 		}
 
 		// If we find an existing class attribute, append the scoped class
-		if attr.Key == "data-astro-scope" {
+		if attr.Key == "class" {
 			switch attr.Type {
 			case astro.ShorthandAttribute:
 				if n.Component {
-					attr.Val = fmt.Sprintf(`%s + "%s"`, attr.Key, opts.Scope)
+					attr.Val = fmt.Sprintf(`%s + "%s"`, attr.Key, scopedClass)
 					attr.Type = astro.ExpressionAttribute
 					n.Attr[i] = attr
 					return
@@ -100,17 +101,17 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 			case astro.EmptyAttribute:
 				// instead of an empty string
 				attr.Type = astro.QuotedAttribute
-				attr.Val = opts.Scope
+				attr.Val = scopedClass
 				n.Attr[i] = attr
 				return
 			case astro.QuotedAttribute, astro.TemplateLiteralAttribute:
 				// as a plain string
-				attr.Val = fmt.Sprintf(`%s %s`, attr.Val, opts.Scope)
+				attr.Val = fmt.Sprintf(`%s %s`, attr.Val, scopedClass)
 				n.Attr[i] = attr
 				return
 			case astro.ExpressionAttribute:
 				// as an expression
-				attr.Val = fmt.Sprintf(`(%s) + " %s"`, attr.Val, opts.Scope)
+				attr.Val = fmt.Sprintf(`(%s) + " %s"`, attr.Val, scopedClass)
 				n.Attr[i] = attr
 				return
 			}
@@ -131,7 +132,7 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 				return
 			case astro.ExpressionAttribute:
 				// as an expression
-				attr.Val = fmt.Sprintf(`[(%s), "astro-%s"]`, attr.Val, opts.Scope)
+				attr.Val = fmt.Sprintf(`[(%s), "%s"]`, attr.Val, scopedClass)
 				n.Attr[i] = attr
 				return
 			}
@@ -144,8 +145,8 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 	}
 	// If we didn't find an existing class attribute, let's add one
 	n.Attr = append(n.Attr, astro.Attribute{
-		Key:  "data-astro-scope",
+		Key:  "class",
 		Type: astro.QuotedAttribute,
-		Val:  opts.Scope,
+		Val:  scopedClass,
 	})
 }

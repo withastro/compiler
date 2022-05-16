@@ -19,7 +19,7 @@ func TestTransformScoping(t *testing.T) {
 				<style>div { color: red }</style>
 				<div />
 			`,
-			want: `<div data-astro-scope="XXXXXX"></div>`,
+			want: `<div class="astro-XXXXXX"></div>`,
 		},
 		{
 			name: "global empty",
@@ -60,7 +60,7 @@ func TestTransformScoping(t *testing.T) {
 				<style>div { color: green }</style>
 				<div />
 			`,
-			want: `<div data-astro-scope="XXXXXX"></div>`,
+			want: `<div class="astro-XXXXXX"></div>`,
 		},
 		{
 			name: "global multiple",
@@ -78,7 +78,7 @@ func TestTransformScoping(t *testing.T) {
 				<style is:global>div { color: green }</style>
 				<div />
 			`,
-			want: `<div data-astro-scope="XXXXXX"></div>`,
+			want: `<div class="astro-XXXXXX"></div>`,
 		},
 		{
 			name: "multiple scoped :global",
@@ -87,7 +87,7 @@ func TestTransformScoping(t *testing.T) {
 				<style>:global(test-1) {}</style>
 				<div />
 			`,
-			want: `<div data-astro-scope="XXXXXX"></div>`,
+			want: `<div class="astro-XXXXXX"></div>`,
 		},
 		{
 			name: "inline does not scope",

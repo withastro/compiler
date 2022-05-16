@@ -1005,7 +1005,7 @@ const someProps = {
 					hydratedComponents:  []string{`Counter`},
 					hydrationDirectives: []string{"visible"},
 				},
-				code: `<html lang="en" data-astro-scope="HMNNHVCQ">
+				code: `<html lang="en" class="astro-HMNNHVCQ">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
@@ -2139,7 +2139,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 				styles: []string{
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1:where([data-astro-scope=\"VFS5OEMV\"]){color:var(--color)}`}",
+					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1:where(.astro-VFS5OEMV){color:var(--color)}`}",
 				},
 			},
 		},
