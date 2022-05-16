@@ -2070,6 +2070,16 @@ const a = "hey"
 <div>{a}</div>`,
 			want: []ASTNode{{Type: "frontmatter", Value: "\nconst a = \"hey\"\n"}, {Type: "element", Name: "div", Children: []ASTNode{{Type: "expression", Children: []ASTNode{{Type: "text", Value: "a"}}}}}},
 		},
+		{
+			name: "JSON escape",
+			source: `---
+const a = "\n"
+const b = "\""
+const c = '\''
+---
+{a + b + c}`,
+			want: []ASTNode{{Type: "frontmatter", Value: "\nconst a = \"\\n\"\nconst b = \"\\\"\"\nconst c = '\\''\n"}, {Type: "expression", Children: []ASTNode{{Type: "text", Value: "a + b + c"}}}},
+		},
 	}
 
 	for _, tt := range tests {
