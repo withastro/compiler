@@ -1063,13 +1063,7 @@ import Widget2 from '../components/Widget2.astro';`},
 				styles:   []string{},
 				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
-<<<<<<< HEAD
-				code:     `<main></main>`,
-=======
-				code: `${$$maybeRenderHead($$result)}<main>
-
-</main>`,
->>>>>>> 3a9d166 (Add renderHead injection points (#438))
+				code:     `${$$maybeRenderHead($$result)}<main></main>`,
 			},
 		},
 		{
