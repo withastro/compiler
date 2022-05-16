@@ -1,7 +1,6 @@
 package transform
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -82,7 +81,7 @@ func TestScopeHTML(t *testing.T) {
 			astro.PrintToSource(&b, nodes[0])
 			got := b.String()
 			if tt.want != got {
-				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 		})
 	}

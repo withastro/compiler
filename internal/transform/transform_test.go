@@ -1,7 +1,6 @@
 package transform
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -112,7 +111,7 @@ func TestTransformScoping(t *testing.T) {
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()
 			if tt.want != got {
-				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 		})
 	}
@@ -194,7 +193,7 @@ func TestFullTransform(t *testing.T) {
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {
-				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 		})
 	}

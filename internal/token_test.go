@@ -878,7 +878,7 @@ func runPanicTest(t *testing.T, suite []TokenPanicTest) {
 				}
 
 				if diff := test_utils.ANSIDiff(test_utils.Dedent(r.(string)), test_utils.Dedent(tt.message)); diff != "" {
-					t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+					t.Errorf("mismatch (-want +got):\n%s", diff)
 				}
 			}()
 			var next TokenType
