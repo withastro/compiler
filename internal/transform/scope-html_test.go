@@ -65,6 +65,11 @@ func TestScopeHTML(t *testing.T) {
 			want:   `<Component className={("test") + " astro-XXXXXX"}></Component>`,
 		},
 		{
+			name:   "component className shorthand",
+			source: "<Component {className} />",
+			want:   `<Component className={className + " astro-XXXXXX"}></Component>`,
+		},
+		{
 			name:   "element class:list",
 			source: "<div class:list={{ a: true }} />",
 			want:   `<div class:list={[({ a: true }), "astro-XXXXXX"]}></div>`,
