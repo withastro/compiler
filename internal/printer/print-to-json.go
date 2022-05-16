@@ -37,6 +37,8 @@ type ASTNode struct {
 }
 
 func escapeForJSON(value string) string {
+	backslash := regexp.MustCompile(`\\`)
+	value = backslash.ReplaceAllString(value, `\\`)
 	newlines := regexp.MustCompile(`\n`)
 	value = newlines.ReplaceAllString(value, `\n`)
 	doublequotes := regexp.MustCompile(`"`)
