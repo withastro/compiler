@@ -875,18 +875,13 @@ import Widget2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
-			name: "script hoist without frontmatter",
-			source: `
-							<main>
-								<script type="module" hoist>console.log("Hello");</script>
-							`,
+			name:   "script hoist without frontmatter",
+			source: `<script type="module" hoist>console.log("Hello");</script><main></main>`,
 			want: want{
 				styles:   []string{},
 				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
-				code: `<main>
-
-</main>`,
+				code:     `<main></main>`,
 			},
 		},
 		{
@@ -1130,6 +1125,20 @@ import ZComponent from '../components/ZComponent.jsx';`},
 >`,
 			want: want{
 				code: `<html><body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
+			},
+		},
+		{
+			name:   "noscript styles",
+			source: `<noscript><style>div { color: red; }</style></noscript>`,
+			want: want{
+				code: `<noscript><style>div { color: red; }</style></noscript>`,
+			},
+		},
+		{
+			name:   "noscript deep styles",
+			source: `<body><noscript><div><div><div><style>div { color: red; }</style></div></div></div></noscript></body>`,
+			want: want{
+				code: `<body><noscript><div><div><div><style>div { color: red; }</style></div></div></div></noscript></body>`,
 			},
 		},
 		{

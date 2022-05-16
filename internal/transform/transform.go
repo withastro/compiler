@@ -6,7 +6,6 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/loc"
-	"golang.org/x/net/html/atom"
 	a "golang.org/x/net/html/atom"
 )
 
@@ -60,8 +59,8 @@ func ExtractStyles(doc *astro.Node) {
 			if HasSetDirective(n) || HasInlineDirective(n) {
 				return
 			}
-			// Do not extract <style> inside of SVGs
-			if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
+			// RFC0008: ignore styles not a top-level of template
+			if !IsTopLevel(n) {
 				return
 			}
 			// prepend node to maintain authored order
@@ -139,6 +138,10 @@ func NormalizeSetDirectives(doc *astro.Node) {
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
 		if HasSetDirective(n) || HasInlineDirective(n) {
+			return
+		}
+		// RFC0008: ignore styles not a top-level of template
+		if !IsTopLevel(n) {
 			return
 		}
 
