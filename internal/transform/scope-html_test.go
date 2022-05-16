@@ -56,13 +56,13 @@ func TestScopeHTML(t *testing.T) {
 		},
 		{
 			name:   "component className not scoped",
-			source: `<Component class="test" />`,
-			want:   `<Component class="test astro-XXXXXX"></Component>`,
+			source: `<Component className="test" />`,
+			want:   `<Component className="test astro-XXXXXX"></Component>`,
 		},
 		{
 			name:   "component className expression",
-			source: `<Component class={"test"} />`,
-			want:   `<Component class={("test") + " astro-XXXXXX"}></Component>`,
+			source: `<Component className={"test"} />`,
+			want:   `<Component className={("test") + " astro-XXXXXX"}></Component>`,
 		},
 		{
 			name:   "element class:list",

@@ -89,7 +89,7 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 		}
 
 		// If we find an existing class attribute, append the scoped class
-		if attr.Key == "class" {
+		if attr.Key == "class" || (n.Component && attr.Key == "className") {
 			switch attr.Type {
 			case astro.ShorthandAttribute:
 				if n.Component {
