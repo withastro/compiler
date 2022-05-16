@@ -1,7 +1,6 @@
 package printer
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -75,7 +74,7 @@ func TestPrinterCSS(t *testing.T) {
 
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
-				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

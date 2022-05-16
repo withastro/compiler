@@ -1,7 +1,6 @@
 package js_scanner
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/withastro/compiler/internal/test_utils"
@@ -197,7 +196,7 @@ import { c } from "c";`,
 			got := tt.source[:split]
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(got, tt.want); diff != "" {
-				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

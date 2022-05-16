@@ -2009,7 +2009,7 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
-				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -2089,7 +2089,7 @@ const a = "hey"
 			result := PrintToJSON(code, doc, types.ParseOptions{Position: false})
 
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(string(toMatch)), test_utils.Dedent(string(result.Output))); diff != "" {
-				t.Error(fmt.Sprintf("mismatch (-want +got):\n%s", diff))
+				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

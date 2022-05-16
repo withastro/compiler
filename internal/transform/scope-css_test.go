@@ -1,7 +1,6 @@
 package transform
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -284,7 +283,7 @@ func TestScopeStyle(t *testing.T) {
 			ScopeStyle(styles, TransformOptions{Scope: "XXXXXX"})
 			got := styles[0].FirstChild.Data
 			if tt.want != got {
-				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 		})
 	}
