@@ -93,7 +93,7 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 			switch attr.Type {
 			case astro.ShorthandAttribute:
 				if n.Component {
-					attr.Val = fmt.Sprintf(`%s + "%s"`, attr.Key, scopedClass)
+					attr.Val = fmt.Sprintf(`%s + " %s"`, attr.Key, scopedClass)
 					attr.Type = astro.ExpressionAttribute
 					n.Attr[i] = attr
 					return
