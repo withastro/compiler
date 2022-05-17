@@ -846,7 +846,9 @@ func inHeadIM(p *parser) bool {
 
 		if p.oe.top() != nil && (isComponent(p.oe.top().Data) || isFragment((p.oe.top().Data))) {
 			p.addElement()
-			p.setOriginalIM()
+			if p.originalIM == nil {
+				p.setOriginalIM()
+			}
 			p.im = inBodyIM
 			if p.hasSelfClosingToken {
 				p.addLoc()
@@ -909,7 +911,9 @@ func inHeadIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.afe = append(p.afe, &scopeMarker)
-		p.setOriginalIM()
+		if p.originalIM == nil {
+			p.setOriginalIM()
+		}
 		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:
