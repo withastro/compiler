@@ -15,6 +15,12 @@ func escapeText(src string) string {
 	)
 }
 
+func escapeBraces(src string) string {
+	return escapeTSXExpressions(
+		escapeExistingEscapes(src),
+	)
+}
+
 func getComponentName(pathname string) string {
 	if len(pathname) == 0 {
 		return "$$Component"
@@ -33,6 +39,11 @@ func getComponentName(pathname string) string {
 
 func escapeExistingEscapes(src string) string {
 	return strings.Replace(src, "\\", "\\\\", -1)
+}
+
+func escapeTSXExpressions(src string) string {
+	interpolation := regexp.MustCompile(`{`)
+	return interpolation.ReplaceAllString(src, "\\{")
 }
 
 func escapeInterpolation(src string) string {

@@ -12,6 +12,10 @@ export const parse: typeof types.parse = async (input, options) => {
   return getService().then((service) => service.parse(input, options));
 };
 
+export const convertToTSX: typeof types.convertToTSX = async (input, options) => {
+  return getService().then((service) => service.convertToTSX(input, options));
+};
+
 export const compile = async (template: string): Promise<string> => {
   const { default: mod } = await import(`data:text/javascript;charset=utf-8;base64,${Buffer.from(template).toString('base64')}`);
   return mod;
@@ -20,6 +24,7 @@ export const compile = async (template: string): Promise<string> => {
 interface Service {
   transform: typeof types.transform;
   parse: typeof types.parse;
+  convertToTSX: typeof types.convertToTSX;
 }
 
 let longLivedService: Promise<Service> | undefined;
@@ -56,5 +61,6 @@ const startRunningService = async (): Promise<Service> => {
   return {
     transform: (input, options) => new Promise((resolve) => resolve(_service.transform(input, options || {}))),
     parse: (input, options) => new Promise((resolve) => resolve(_service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
+    convertToTSX: (input, options) => new Promise((resolve) => resolve(_service.convertToTSX(input, options || {}))),
   };
 };

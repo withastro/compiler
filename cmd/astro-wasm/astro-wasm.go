@@ -26,6 +26,7 @@ func main() {
 	module := js.Global().Get("@astrojs/compiler")
 	module.Set("transform", Transform())
 	module.Set("parse", Parse())
+	module.Set("convertToTSX", ConvertToTSX())
 
 	<-make(chan struct{})
 }
@@ -127,6 +128,11 @@ type ParseResult struct {
 	AST string `js:"ast"`
 }
 
+type TSXResult struct {
+	Code string `js:"code"`
+	Map  string `js:"map"`
+}
+
 type TransformResult struct {
 	Code    string          `js:"code"`
 	Map     string          `js:"map"`
@@ -167,6 +173,25 @@ func Parse() interface{} {
 
 		return vert.ValueOf(ParseResult{
 			AST: string(result.Output),
+		})
+	})
+}
+
+func ConvertToTSX() interface{} {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		source := jsString(args[0])
+		transformOptions := makeTransformOptions(js.Value(args[1]), "XXXXXX")
+
+		var doc *astro.Node
+		doc, err := astro.Parse(strings.NewReader(source))
+		if err != nil {
+			fmt.Println(err)
+		}
+		result := printer.PrintToTSX(source, doc, transformOptions)
+
+		return vert.ValueOf(TSXResult{
+			Code: string(result.Output),
+			Map:  createSourceMapString(source, result, transformOptions),
 		})
 	})
 }
