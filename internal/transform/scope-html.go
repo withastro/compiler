@@ -1,6 +1,8 @@
 package transform
 
 import (
+	"fmt"
+
 	astro "github.com/withastro/compiler/internal"
 )
 
@@ -62,6 +64,27 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 			case astro.ExpressionAttribute:
 				// as an expression
 				attr.Val = "(" + attr.Val + `) + " astro-` + opts.Scope + `"`
+				n.Attr[i] = attr
+				return
+			}
+		}
+
+		if attr.Key == "class:list" {
+			switch attr.Type {
+			case astro.EmptyAttribute:
+				// instead of an empty string
+				attr.Type = astro.QuotedAttribute
+				attr.Val = "astro-" + opts.Scope
+				n.Attr[i] = attr
+				return
+			case astro.QuotedAttribute, astro.TemplateLiteralAttribute:
+				// as a plain string
+				attr.Val = attr.Val + " astro-" + opts.Scope
+				n.Attr[i] = attr
+				return
+			case astro.ExpressionAttribute:
+				// as an expression
+				attr.Val = fmt.Sprintf(`[(%s), "astro-%s"]`, attr.Val, opts.Scope)
 				n.Attr[i] = attr
 				return
 			}
