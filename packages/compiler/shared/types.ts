@@ -64,7 +64,7 @@ export declare function transform(input: string, options?: TransformOptions): Pr
 
 export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
 
-export declare function convertToTSX(input: string, options?: { filename?: string }): Promise<TSXResult>;
+export declare function convertToTSX(input: string, options?: { sourcefile?: string }): Promise<TSXResult>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before

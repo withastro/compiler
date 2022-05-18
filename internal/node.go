@@ -166,6 +166,20 @@ func (n *Node) RemoveChild(c *Node) {
 	c.NextSibling = nil
 }
 
+func (n *Node) Closest(check func(*Node) bool) *Node {
+	p := n
+	for {
+		if check(p) {
+			return p
+		}
+		p = p.Parent
+		if p == nil {
+			break
+		}
+	}
+	return nil
+}
+
 func GetAttribute(n *Node, key string) *Attribute {
 	for _, attr := range n.Attr {
 		if attr.Key == key {
