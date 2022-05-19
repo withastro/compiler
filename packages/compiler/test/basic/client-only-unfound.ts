@@ -21,14 +21,14 @@ test.before(async () => {
     await transform(FIXTURE, {
       pathname: '/src/components/Cool.astro',
     });
-  } catch(err) {
+  } catch (err) {
     error = err;
   }
 });
 
 test('got an error because client:only component not found import', () => {
-  console.log('error', error);
-})
+  assert.ok(error, 'paniced');
+});
 
 /*
 test('exports named component', () => {
@@ -37,5 +37,3 @@ test('exports named component', () => {
 */
 
 test.run();
-
-
