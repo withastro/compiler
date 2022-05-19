@@ -335,17 +335,23 @@ func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
 	p.println(fmt.Sprintf("const $$Astro = %s(%s, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, patharg, p.opts.Site, p.opts.ProjectRoot))
 }
 
+func remove(slice []*astro.Node, s int) []*astro.Node {
+	return append(slice[:s], slice[s+1:]...)
+}
+
 func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
 	var specs []string
 	var asrts []string
 	var conlyspecs []string
+	unfoundconly := make([]*astro.Node, len(doc.ClientOnlyComponents))
+	copy(unfoundconly, doc.ClientOnlyComponents)
 
 	modCount := 1
 	loc, statement := js_scanner.NextImportStatement(source, 0)
 	for loc != -1 {
 		isClientOnlyImport := false
 	component_loop:
-		for _, n := range doc.ClientOnlyComponents {
+		for cindex, n := range doc.ClientOnlyComponents {
 			for _, imported := range statement.Imports {
 				if imported.ExportName == "*" {
 					prefix := fmt.Sprintf("%s.", imported.LocalName)
@@ -368,6 +374,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 							Type: astro.QuotedAttribute,
 						}
 						n.Attr = append(n.Attr, exportAttr)
+						remove(unfoundconly, cindex)
 
 						isClientOnlyImport = true
 						continue component_loop
@@ -381,6 +388,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					}
 					n.Attr = append(n.Attr, pathAttr)
 					conlyspecs = append(conlyspecs, statement.Specifier)
+					remove(unfoundconly, cindex)
 
 					exportAttr := astro.Attribute{
 						Key:  "client:component-export",
@@ -409,6 +417,16 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 			modCount++
 		}
 		loc, statement = js_scanner.NextImportStatement(source, loc)
+	}
+	if len(unfoundconly) > 0 {
+		componentnames := ""
+		for cindex, n := range unfoundconly {
+			if cindex > 0 {
+				componentnames += ", "
+			}
+			componentnames += n.Data
+		}
+		panic(fmt.Sprintf("Unable to find matching import statements for the client:only component: %s. A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.", componentnames))
 	}
 	// If we added imports, add a line break.
 	if modCount > 1 {
