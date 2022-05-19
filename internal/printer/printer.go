@@ -335,7 +335,13 @@ func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
 	p.println(fmt.Sprintf("const $$Astro = %s(%s, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, patharg, p.opts.Site, p.opts.ProjectRoot))
 }
 
-func remove(slice []*astro.Node, s int) []*astro.Node {
+func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {
+	var s int
+	for i, n := range slice {
+		if n == node {
+			s = i
+		}
+	}
 	return append(slice[:s], slice[s+1:]...)
 }
 
@@ -351,7 +357,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	for loc != -1 {
 		isClientOnlyImport := false
 	component_loop:
-		for cindex, n := range doc.ClientOnlyComponents {
+		for _, n := range doc.ClientOnlyComponents {
 			for _, imported := range statement.Imports {
 				if imported.ExportName == "*" {
 					prefix := fmt.Sprintf("%s.", imported.LocalName)
@@ -374,7 +380,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 							Type: astro.QuotedAttribute,
 						}
 						n.Attr = append(n.Attr, exportAttr)
-						remove(unfoundconly, cindex)
+						unfoundconly = remove(unfoundconly, n)
 
 						isClientOnlyImport = true
 						continue component_loop
@@ -388,7 +394,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					}
 					n.Attr = append(n.Attr, pathAttr)
 					conlyspecs = append(conlyspecs, statement.Specifier)
-					remove(unfoundconly, cindex)
+					unfoundconly = remove(unfoundconly, n)
 
 					exportAttr := astro.Attribute{
 						Key:  "client:component-export",
