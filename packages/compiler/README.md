@@ -19,6 +19,7 @@ _Note: Public APIs are likely to change before 1.0! Use at your own discretion._
 The Astro compiler can convert `.astro` syntax to a TypeScript Module whose default export generates HTML.
 
 **Some notes**...
+
 - TypeScript is valid `.astro` syntax! The output code may need an additional post-processing step to generate valid JavaScript.
 - `.astro` files rely on a server implementation exposed as `astro/internal` in the Node ecosystem. Other runtimes currently need to bring their own rendering implementation and reference it via `internalURL`. This is a pain point we're looking into fixing.
 
@@ -38,6 +39,7 @@ const result = await transform(source, {
 The Astro compiler can emit an AST using the `parse` method.
 
 **Some notes**...
+
 - Position data is currently incomplete and in some cases incorrect. We're working on it!
 - A `TextNode` can represent both HTML `text` and JavaScript/TypeScript source code.
 - The `@astrojs/compiler/utils` entrypoint exposes a `walk` function that can be used to traverse the AST. It also exposes the `is` helper which can be used as guards to derive the proper types for each `node`.
@@ -55,7 +57,7 @@ walk(result.ast, (node) => {
   if (is.tag(node)) {
     console.log(node.name);
   }
-})
+});
 ```
 
 ## Contributing

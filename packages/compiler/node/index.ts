@@ -54,7 +54,16 @@ const startRunningService = async (): Promise<Service> => {
   go.run(wasm.instance);
   const _service: any = (globalThis as any)['@astrojs/compiler'];
   return {
-    transform: (input, options) => new Promise((resolve) => resolve(_service.transform(input, options || {}))),
+    transform: (input, options) =>
+      new Promise((resolve) => {
+        try {
+          resolve(_service.transform(input, options || {}));
+        } catch (err) {
+          // Recreate the service next time on panic
+          longLivedService = void 0;
+          throw err;
+        }
+      }),
     parse: (input, options) => new Promise((resolve) => resolve(_service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
   };
 };
