@@ -44,6 +44,11 @@ export interface TransformResult {
   map: string;
 }
 
+export interface TSXResult {
+  code: string;
+  map: string;
+}
+
 export interface ParseResult {
   ast: RootNode;
 }
@@ -58,6 +63,8 @@ export interface ParseResult {
 export declare function transform(input: string, options?: TransformOptions): Promise<TransformResult>;
 
 export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
+
+export declare function convertToTSX(input: string, options?: { sourcefile?: string }): Promise<TSXResult>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before
