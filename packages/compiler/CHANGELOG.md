@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 0.14.3
+
+### Patch Changes
+
+- 6177620: Fix edge case with expressions inside of tables
+- 79b1ed6: Provides a better error message when we can't match client:only usage to an import statement
+- a4e1957: Fix Astro scoping when `class:list` is used
+- fda859a: Fix json escape
+
 ## 0.14.2
 
 ### Patch Changes
