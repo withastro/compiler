@@ -31,6 +31,7 @@ test.before(async () => {
   try {
     result = serialize(ast);
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.log(e);
   }
 });
