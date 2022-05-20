@@ -15,6 +15,28 @@ func escapeText(src string) string {
 	)
 }
 
+func escapeBraces(src string) string {
+	return escapeTSXExpressions(
+		escapeExistingEscapes(src),
+	)
+}
+
+func getTSXComponentName(filename string) string {
+	if filename == "<stdin>" {
+		return "__AstroComponent_"
+	}
+	if len(filename) == 0 {
+		return "__AstroComponent_"
+	}
+	parts := strings.Split(filename, "/")
+	part := parts[len(parts)-1]
+	if len(part) == 0 {
+		return "__AstroComponent_"
+	}
+	basename := strcase.ToCamel(strings.Split(part, ".")[0])
+	return strings.Join([]string{basename, "__AstroComponent_"}, "")
+}
+
 func getComponentName(pathname string) string {
 	if len(pathname) == 0 {
 		return "$$Component"
@@ -33,6 +55,12 @@ func getComponentName(pathname string) string {
 
 func escapeExistingEscapes(src string) string {
 	return strings.Replace(src, "\\", "\\\\", -1)
+}
+
+func escapeTSXExpressions(src string) string {
+	open := regexp.MustCompile(`{`)
+	close := regexp.MustCompile(`}`)
+	return close.ReplaceAllString(open.ReplaceAllString(src, `\\{`), `\\}`)
 }
 
 func escapeInterpolation(src string) string {
