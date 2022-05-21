@@ -96,8 +96,8 @@ func TestBasic(t *testing.T) {
 		},
 		{
 			"No expressions inside math (complex)",
-			`<math xmlns="http://www.w3.org/1998/Math/MathML"><annotation encoding="application/x-tex">\sqrt{2}</annotation></math>`,
-			[]TokenType{StartTagToken, StartTagToken, TextToken, TextToken, TextToken, TextToken, EndTagToken, EndTagToken},
+			`<span><math xmlns="http://www.w3.org/1998/Math/MathML"><mo>4</mo><mi /><semantics><annotation encoding="application/x-tex">\sqrt {x}</annotation></semantics></math></span>`,
+			[]TokenType{StartTagToken, StartTagToken, StartTagToken, TextToken, EndTagToken, SelfClosingTagToken, StartTagToken, StartTagToken, TextToken, TextToken, TextToken, TextToken, EndTagToken, EndTagToken, EndTagToken, EndTagToken},
 		},
 		{
 			"Expression attributes allowed inside math",
