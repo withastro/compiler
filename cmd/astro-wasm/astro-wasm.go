@@ -159,9 +159,14 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	style.FirstChild.Data = str
 }
 
+func preprocessSource(source string) string {
+	// remove trailing newlines
+	return strings.TrimRight(source, "\n")
+}
+
 func Parse() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		source := jsString(args[0])
+		source := preprocessSource(jsString(args[0]))
 		parseOptions := makeParseOptions(js.Value(args[1]))
 
 		var doc *astro.Node
@@ -179,7 +184,7 @@ func Parse() interface{} {
 
 func ConvertToTSX() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		source := jsString(args[0])
+		source := preprocessSource(jsString(args[0]))
 		transformOptions := makeTransformOptions(js.Value(args[1]), "XXXXXX")
 
 		var doc *astro.Node
@@ -198,7 +203,7 @@ func ConvertToTSX() interface{} {
 
 func Transform() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		source := jsString(args[0])
+		source := preprocessSource(jsString(args[0]))
 		hash := astro.HashFromSource(source)
 		transformOptions := makeTransformOptions(js.Value(args[1]), hash)
 
