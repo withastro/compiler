@@ -220,6 +220,11 @@ func TestTransformTrailingSpace(t *testing.T) {
 			source: "<span/>\n\n\t <h1>Hello world</h1>\n\n\t ",
 			want:   "<span></span>\n\n\t <h1>Hello world</h1>",
 		},
+		{
+			name:   "html with explicit space",
+			source: "<html><body>\n\n\n</body></html>",
+			want:   "<html><body>\n\n\n</body></html>",
+		},
 	}
 	var b strings.Builder
 	for _, tt := range tests {
