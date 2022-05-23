@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 0.15.0
+
+### Minor Changes
+
+- 702e848: Trailing space at the end of Astro files is now stripped from Component output.
+
+### Patch Changes
+
+- 3a1a24b: Fix long-standing bug where a `class` attribute inside of a spread prop will cause duplicate `class` attributes
+- 62faceb: Fixes an issue where curly braces in `<math>` elements would get parsed as expressions instead of raw text.
+
 ## 0.14.3
 
 ### Patch Changes
