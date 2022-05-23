@@ -423,11 +423,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					panic(`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`)
 				}
 				if n.Parent.CustomElement {
-					p.printAttribute(a)
+					p.printAttribute(a, n)
 					p.addSourceMapping(n.Loc[0])
 				}
 			} else {
-				p.printAttribute(a)
+				p.printAttribute(a, n)
 				p.addSourceMapping(n.Loc[0])
 			}
 		}
