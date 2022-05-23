@@ -354,9 +354,6 @@ func (z *Tokenizer) NextIsNotRawText() {
 	if z.rawTag != "style" {
 		z.rawTag = ""
 	}
-	if z.noExpressionTag != "" {
-		z.noExpressionTag = ""
-	}
 }
 
 // Err returns the error associated with the most recent ErrorToken token.
@@ -1010,20 +1007,10 @@ func (z *Tokenizer) readStartTag() TokenType {
 	}
 
 	// HTML void tags list: https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#syntax-elements
-	// Note: self-closing tags in SVG and MathML work differently; handled below
-	if z.startTagIn("area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr") {
+	// Also look for a self-closing token that’s not in the list (e.g. "<svg><path/></svg>")
+	if z.startTagIn("area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr") || z.err == nil && z.buf[z.raw.End-2] == '/' {
 		// Reset tokenizer state for self-closing elements
 		z.rawTag = ""
-		z.noExpressionTag = ""
-		z.openBraceIsExpressionStart = true
-		return SelfClosingTagToken
-	}
-	// Look for a self-closing token that’s not in the list above (e.g. "<svg><path/></svg>")
-	if z.err == nil && z.buf[z.raw.End-2] == '/' {
-		// Reset tokenizer state for self-closing elements
-		z.rawTag = ""
-		z.noExpressionTag = ""
-		z.openBraceIsExpressionStart = true
 		return SelfClosingTagToken
 	}
 
@@ -1511,6 +1498,7 @@ loop:
 			if z.fm == FrontmatterInitial {
 				z.fm = FrontmatterClosed
 			}
+
 			c = z.readByte()
 			if z.err != nil {
 				break loop
@@ -1521,7 +1509,12 @@ loop:
 			}
 			if 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' {
 				z.readTag(false)
-				if string(z.buf[z.data.Start:z.data.End]) == "Markdown" {
+				tagName := string(z.buf[z.data.Start:z.data.End])
+				if tagName == z.noExpressionTag {
+					// out of the tag block
+					z.noExpressionTag = ""
+				}
+				if tagName == "Markdown" {
 					z.m = MarkdownClosed
 				} else if z.m == MarkdownInnerTag {
 					z.m = MarkdownOpen
