@@ -198,3 +198,46 @@ func TestFullTransform(t *testing.T) {
 		})
 	}
 }
+
+func TestTransformTrailingSpace(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "component with trailing space",
+			source: "<h1>Hello world</h1>\n\n\t ",
+			want:   `<h1>Hello world</h1>`,
+		},
+		{
+			name:   "component with no trailing space",
+			source: "<h1>Hello world</h1>",
+			want:   "<h1>Hello world</h1>",
+		},
+		{
+			name:   "component with leading and trailing space",
+			source: "<span/>\n\n\t <h1>Hello world</h1>\n\n\t ",
+			want:   "<span></span>\n\n\t <h1>Hello world</h1>",
+		},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			ExtractStyles(doc)
+			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
+			doc.Styles = make([]*astro.Node, 0)
+			Transform(doc, TransformOptions{})
+			astro.PrintToSource(&b, doc)
+			got := b.String()
+			if tt.want != got {
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
+			}
+		})
+	}
+}
