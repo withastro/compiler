@@ -3,6 +3,7 @@ package transform
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/loc"
@@ -50,6 +51,8 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 		})
 		doc.AppendChild(empty)
 	}
+
+	TrimTrailingSpace(doc)
 
 	return doc
 }
@@ -123,6 +126,33 @@ func NormalizeSetDirectives(doc *astro.Node) {
 			}
 			n.AppendChild(expr)
 		}
+	}
+}
+
+func TrimTrailingSpace(doc *astro.Node) {
+	if doc.LastChild == nil {
+		return
+	}
+
+	if doc.LastChild.Type == astro.TextNode {
+		doc.LastChild.Data = strings.TrimRightFunc(doc.LastChild.Data, unicode.IsSpace)
+		return
+	}
+
+	n := doc.LastChild
+	for i := 0; i < 2; i++ {
+		// Loop through implicit nodes to find final trailing text node (html > body > #text)
+		if n != nil && n.Type == astro.ElementNode && IsImplictNode(n) {
+			n = n.LastChild
+			continue
+		} else {
+			n = nil
+			break
+		}
+	}
+
+	if n != nil && n.Type == astro.TextNode {
+		n.Data = strings.TrimRightFunc(n.Data, unicode.IsSpace)
 	}
 }
 
