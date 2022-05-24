@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.15.1
+
+### Patch Changes
+
+- 26cbcdb: Prevent side-effectual CSS imports from becoming module metadata
+
 ## 0.15.0
 
 ### Minor Changes
