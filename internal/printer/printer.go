@@ -44,7 +44,7 @@ var RESULT = "$$result"
 var SLOTS = "$$slots"
 var FRAGMENT = "Fragment"
 var BACKTICK = "`"
-var styleModuleSpecExp = regexp.MustCompile("(\\.css|\\.sass|\\.scss)$")
+var styleModuleSpecExp = regexp.MustCompile(`(\.css|\.sass|\.scss)$`)
 
 func (p *printer) print(text string) {
 	p.output = append(p.output, text...)
