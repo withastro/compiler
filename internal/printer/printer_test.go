@@ -222,6 +222,19 @@ import data from "test" assert { type: 'json' };
 			},
 		},
 		{
+			name: "css imports are not included in module metadata",
+			source: `---
+			import './styles.css';
+			---
+			`,
+			want: want{
+				frontmatter: []string{
+					`import './styles.css';`,
+				},
+				styles: []string{},
+			},
+		},
+		{
 			name:   "solidus in template literal expression",
 			source: "<div value={`${attr ? `a/b` : \"c\"} awesome`} />",
 			want: want{
