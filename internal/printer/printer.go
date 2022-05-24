@@ -2,6 +2,7 @@ package printer
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	astro "github.com/withastro/compiler/internal"
@@ -43,6 +44,7 @@ var RESULT = "$$result"
 var SLOTS = "$$slots"
 var FRAGMENT = "Fragment"
 var BACKTICK = "`"
+var styleModuleSpecExp = regexp.MustCompile("(\\.css|\\.sass|\\.scss)$")
 
 func (p *printer) print(text string) {
 	p.output = append(p.output, text...)
@@ -441,10 +443,18 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 				assertions += " assert "
 				assertions += statement.Assertions
 			}
-			p.print(fmt.Sprintf("\nimport * as $$module%v from '%s'%s;", modCount, statement.Specifier, assertions))
-			specs = append(specs, statement.Specifier)
-			asrts = append(asrts, statement.Assertions)
-			modCount++
+
+			isCssImport := false
+			if len(statement.Imports) == 0 && styleModuleSpecExp.MatchString(statement.Specifier) {
+				isCssImport = true
+			}
+
+			if !isCssImport {
+				p.print(fmt.Sprintf("\nimport * as $$module%v from '%s'%s;", modCount, statement.Specifier, assertions))
+				specs = append(specs, statement.Specifier)
+				asrts = append(asrts, statement.Assertions)
+				modCount++
+			}
 		}
 		loc, statement = js_scanner.NextImportStatement(source, loc)
 	}
