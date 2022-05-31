@@ -2138,6 +2138,11 @@ const c = '\''
 {a + b + c}`,
 			want: []ASTNode{{Type: "frontmatter", Value: "\nconst a = \"\\n\"\nconst b = \"\\\"\"\nconst c = '\\''\n"}, {Type: "expression", Children: []ASTNode{{Type: "text", Value: "a + b + c"}}}},
 		},
+		{
+			name:   "Preserve namespaces",
+			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></svg>`,
+			want:   []ASTNode{{Type: "element", Name: "svg", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "xmlns", Value: "http://www.w3.org/2000/svg"}, {Type: "attribute", Kind: "quoted", Name: "xmlns:xlink", Value: "http://www.w3.org/1999/xlink"}}, Children: []ASTNode{{Type: "element", Name: "rect", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "xlink:href", Value: "#id"}}}}}},
+		},
 	}
 
 	for _, tt := range tests {

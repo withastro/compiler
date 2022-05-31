@@ -204,11 +204,17 @@ func renderNode(p *printer, parent *ASTNode, n *Node, opts t.ParseOptions) {
 			}
 
 			for _, attr := range n.Attr {
+				var name string
+				if attr.Namespace != "" {
+					name = attr.Namespace + ":" + attr.Key
+				} else {
+					name = attr.Key
+				}
 				attrNode := ASTNode{
 					Type:     "attribute",
 					Kind:     attr.Type.String(),
 					Position: attrPositionAt(p, &attr, opts),
-					Name:     attr.Key,
+					Name:     name,
 					Value:    attr.Val,
 				}
 				node.Attributes = append(node.Attributes, attrNode)
