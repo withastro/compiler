@@ -16,7 +16,7 @@ let content = "Testing 123";
 
 <div>Hello {value}</div>
 
-<h1 name="value" set:html={content} empty {shorthand} expression={true} literal=\`tags\`>Hello {value}</h1>
+<h1 name="value" set:html={content} empty {shorthand} expression={true} literal=\`tags\` {...spread}>Hello {value}</h1>
 
 <Fragment set:html={content} />
 

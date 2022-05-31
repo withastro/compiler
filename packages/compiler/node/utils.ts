@@ -94,7 +94,7 @@ function serializeAttributes(node: TagLikeNode): string {
         break;
       }
       case 'spread': {
-        output += `{...${attr.value}}`;
+        output += `{...${attr.name}}`;
         break;
       }
     }
