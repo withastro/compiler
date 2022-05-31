@@ -204,11 +204,9 @@ func renderNode(p *printer, parent *ASTNode, n *Node, opts t.ParseOptions) {
 			}
 
 			for _, attr := range n.Attr {
-				var name string
+				name := attr.Key
 				if attr.Namespace != "" {
-					name = attr.Namespace + ":" + attr.Key
-				} else {
-					name = attr.Key
+					name = fmt.Sprintf("%s:%s", attr.Namespace, attr.Key)
 				}
 				attrNode := ASTNode{
 					Type:     "attribute",
