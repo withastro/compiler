@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.15.2
+
+### Patch Changes
+
+- f951822: Fix wasm `parse` to save attribute namespace
+- 5221e09: Fix serialize spread attribute
+
 ## 0.15.1
 
 ### Patch Changes
