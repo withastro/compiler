@@ -1302,8 +1302,12 @@ func (z *Tokenizer) readTagAttrExpression() {
 			z.raw.End = z.data.End
 			z.data.End = end
 		case '{':
-			z.attrExpressionStack++
-			z.attrTemplateLiteralStack = append(z.attrTemplateLiteralStack, 0)
+			previousChar := z.buf[z.raw.End - 2]
+			inTemplateLiteral := len(z.attrTemplateLiteralStack) >= z.attrExpressionStack && z.attrTemplateLiteralStack[z.attrExpressionStack-1] > 0
+			if !inTemplateLiteral || previousChar == '$' {
+				z.attrExpressionStack++
+				z.attrTemplateLiteralStack = append(z.attrTemplateLiteralStack, 0)
+			}
 		case '}':
 			z.attrExpressionStack--
 			if z.attrExpressionStack == 0 && z.allTagAttrExpressionsClosed() {
