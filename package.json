@@ -17,11 +17,12 @@
     "test:stress": "tsm packages/compiler/test/stress/index.ts",
     "test:ci": "yarn test && yarn test:stress"
   },
+  "packageManager": "pnpm@7.0.1",
   "workspaces": [
     "packages/*"
   ],
   "volta": {
-    "node": "14.18.1",
+    "node": "14.19.3",
     "npm": "7.11.2",
     "yarn": "1.22.10"
   },
