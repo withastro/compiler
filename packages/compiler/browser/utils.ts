@@ -2,6 +2,7 @@ import {
   Node,
   ParentNode,
   RootNode,
+  LiteralNode,
   ElementNode,
   CustomElementNode,
   ComponentNode,
@@ -26,7 +27,7 @@ export const is = {
   parent(node: Node): node is ParentNode {
     return Array.isArray((node as any).children);
   },
-  literal(node: Node): node is TextNode | DoctypeNode | CommentNode | FrontmatterNode {
+  literal(node: Node): node is LiteralNode {
     return typeof (node as any).value === 'string';
   },
   tag(node: Node): node is TagLikeNode {
