@@ -15,6 +15,23 @@ export interface ParseOptions {
   position?: boolean;
 }
 
+export interface Message {
+  location: MessageLocation;
+  text: string;
+}
+
+export interface MessageLocation {
+  file: string;
+  lineText?: string;
+  suggestion?: string;
+  // 1-based
+  line: number;
+  // 0-based, in bytes
+  column: number;
+  // in bytes
+  length: number;
+}
+
 export interface TransformOptions {
   internalURL?: string;
   site?: string;
@@ -51,14 +68,16 @@ export interface HydratedComponent {
 }
 
 export interface TransformResult {
-  css: string[];
-  scripts: HoistedScript[];
-  hydratedComponents: HydratedComponent[];
-  clientOnlyComponents: HydratedComponent[];
   code: string;
   map: string;
   scope: string;
   styleError: string[];
+  errors: Message[];
+  warnings: Message[];
+  css: string[];
+  scripts: HoistedScript[];
+  hydratedComponents: HydratedComponent[];
+  clientOnlyComponents: HydratedComponent[];
 }
 
 export interface SourceMap {

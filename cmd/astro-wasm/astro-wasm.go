@@ -156,6 +156,7 @@ type TSXResult struct {
 
 type TransformResult struct {
 	Code                 string              `js:"code"`
+	Errors               []loc.Message       `js:"errors"`
 	Map                  string              `js:"map"`
 	Scope                string              `js:"scope"`
 	CSS                  []string            `js:"css"`
@@ -368,10 +369,8 @@ func Transform() interface{} {
 						})
 					}
 				}
-
-				result := printer.PrintToJS(source, doc, len(css), transformOptions)
-
 				var value interface{}
+				result := printer.PrintToJS(source, doc, len(css), transformOptions)
 				switch transformOptions.SourceMap {
 				case "external":
 					value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
@@ -382,6 +381,7 @@ func Transform() interface{} {
 				default:
 					value = vert.ValueOf(TransformResult{
 						CSS:                  css,
+						Errors:               []loc.Message{},
 						Code:                 string(result.Output),
 						Map:                  "",
 						Scope:                transformOptions.Scope,
@@ -426,6 +426,7 @@ func createExternalSourceMap(source string, result printer.PrintResult, css []st
 	return vert.ValueOf(TransformResult{
 		CSS:                  css,
 		Code:                 string(result.Output),
+		Errors:               []loc.Message{},
 		Map:                  createSourceMapString(source, result, transformOptions),
 		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,
@@ -441,6 +442,7 @@ func createInlineSourceMap(source string, result printer.PrintResult, css []stri
 	return vert.ValueOf(TransformResult{
 		CSS:                  css,
 		Code:                 string(result.Output) + "\n" + inlineSourcemap,
+		Errors:               []loc.Message{},
 		Map:                  "",
 		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,
@@ -456,6 +458,7 @@ func createBothSourceMap(source string, result printer.PrintResult, css []string
 	return vert.ValueOf(TransformResult{
 		CSS:                  css,
 		Code:                 string(result.Output) + "\n" + inlineSourcemap,
+		Errors:               []loc.Message{},
 		Map:                  sourcemapString,
 		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,

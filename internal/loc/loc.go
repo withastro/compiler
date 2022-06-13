@@ -19,3 +19,17 @@ func (r Range) End() int {
 type Span struct {
 	Start, End int
 }
+
+type Message struct {
+	Location *MessageLocation `js:"location"`
+	Text     string           `js:"text"`
+}
+
+type MessageLocation struct {
+	File       string `js:"file"`
+	LineText   string `js:"lineText"`
+	Suggestion string `js:"suggestion"`
+	Line       int    `js:"line"`
+	Column     int    `js:"column"`
+	Length     int    `js:"length"`
+}
