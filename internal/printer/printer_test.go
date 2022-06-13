@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	types "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/test_utils"
 	"github.com/withastro/compiler/internal/transform"
@@ -2283,6 +2284,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			code := test_utils.Dedent(tt.source)
 
 			doc, err := astro.Parse(strings.NewReader(code))
+			h := handler.NewHandler(code, "<stdin>")
 
 			if err != nil {
 				t.Error(err)
@@ -2290,14 +2292,14 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			hash := astro.HashFromSource(code)
 			transform.ExtractStyles(doc)
-			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+			transform.Transform(doc, transform.TransformOptions{Scope: hash}, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
 				Scope:            "XXXX",
 				Site:             "https://astro.build",
 				InternalURL:      "http://localhost:3000/",
 				ProjectRoot:      ".",
 				StaticExtraction: tt.staticExtraction,
-			})
+			}, h)
 			output := string(result.Output)
 
 			toMatch := INTERNAL_IMPORTS

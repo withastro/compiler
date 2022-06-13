@@ -14,6 +14,7 @@ import (
 
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/printer"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -241,6 +242,7 @@ func ConvertToTSX() interface{} {
 func Transform() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		source := jsString(args[0])
+		h := handler.NewHandler(source, transformOptions.Filename)
 
 		transformOptions := makeTransformOptions(js.Value(args[1]))
 		transformOptions.Scope = astro.HashFromSourceAndModuleId(source, transformOptions.ModuleId)
@@ -281,7 +283,7 @@ func Transform() interface{} {
 				wg.Wait()
 
 				// Perform CSS and element scoping as needed
-				transform.Transform(doc, transformOptions)
+				transform.Transform(doc, transformOptions, h)
 
 				css := []string{}
 				scripts := []HoistedScript{}
@@ -371,25 +373,35 @@ func Transform() interface{} {
 				}
 				var value interface{}
 				result := printer.PrintToJS(source, doc, len(css), transformOptions)
-				switch transformOptions.SourceMap {
-				case "external":
-					value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
-				case "both":
-					value = createBothSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
-				case "inline":
-					value = createInlineSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
-				default:
+				if h.HasErrors() {
 					value = vert.ValueOf(TransformResult{
-						CSS:                  css,
-						Errors:               []loc.Message{},
-						Code:                 string(result.Output),
-						Map:                  "",
-						Scope:                transformOptions.Scope,
-						Scripts:              scripts,
-						HydratedComponents:   hydratedComponents,
-						ClientOnlyComponents: clientOnlyComponents,
-						StyleError:           styleError,
+						Code:     "",
+						Map:      "",
+						Warnings: h.Warnings(),
+						Errors:   h.Errors(),
 					})
+				} else {
+
+					switch transformOptions.SourceMap {
+					case "external":
+						value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
+					case "both":
+						value = createBothSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
+					case "inline":
+						value = createInlineSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
+					default:
+						value = vert.ValueOf(TransformResult{
+							CSS:                  css,
+							Errors:               []loc.Message{},
+							Code:                 string(result.Output),
+							Map:                  "",
+							Scope:                transformOptions.Scope,
+							Scripts:              scripts,
+							HydratedComponents:   hydratedComponents,
+							ClientOnlyComponents: clientOnlyComponents,
+							StyleError:           styleError,
+						})
+					}
 				}
 
 				resolve.Invoke(value)

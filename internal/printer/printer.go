@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -16,33 +17,6 @@ import (
 type PrintResult struct {
 	Output         []byte
 	SourceMapChunk sourcemap.Chunk
-	Warnings       []loc.Message
-	Errors         []loc.Message
-}
-
-type ErrorWithRange struct {
-	Text       string
-	Suggestion string
-	Range      loc.Range
-}
-
-func (e *ErrorWithRange) Error() string {
-	return e.Text
-}
-
-func (e *ErrorWithRange) ToMessage(p *printer) loc.Message {
-	pos := p.builder.GetLineAndColumnForLocation(e.Range.Loc)
-	return loc.Message{
-		Text: e.Error(),
-		Location: &loc.MessageLocation{
-			File:       p.opts.Filename,
-			Line:       pos[0],
-			Column:     pos[1],
-			Length:     e.Range.Len,
-			LineText:   p.sourcetext[e.Range.Loc.Start:e.Range.End()],
-			Suggestion: e.Suggestion,
-		},
-	}
 }
 
 type printer struct {
@@ -50,8 +24,7 @@ type printer struct {
 	opts               transform.TransformOptions
 	output             []byte
 	builder            sourcemap.ChunkBuilder
-	errors             []error
-	warnings           []error
+	handler            *handler.Handler
 	hasFuncPrelude     bool
 	hasInternalImports bool
 	hasCSSImports      bool
@@ -456,7 +429,7 @@ func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {
 	return append(slice[:s], slice[s+1:]...)
 }
 
-func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) []error {
+func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
 	var specs []string
 	var asrts []string
 	var conlyspecs []string
@@ -544,15 +517,13 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 		l, statement = js_scanner.NextImportStatement(source, l)
 	}
 	if len(unfoundconly) > 0 {
-		e := make([]error, len(unfoundconly))
 		for _, n := range unfoundconly {
-			e = append(e, &ErrorWithRange{
+			p.handler.AppendError(&loc.ErrorWithRange{
 				Text:       "Unable to find matching import statement for client:only component",
 				Suggestion: "A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.",
 				Range:      loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
 			})
 		}
-		return e
 	}
 	// If we added imports, add a line break.
 	if modCount > 1 {
@@ -651,5 +622,5 @@ conly_loop:
 	}
 
 	p.print("] });\n\n")
-	return nil
+	return
 }
