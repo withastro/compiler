@@ -16,12 +16,42 @@ import (
 type PrintResult struct {
 	Output         []byte
 	SourceMapChunk sourcemap.Chunk
+	Warnings       []loc.Message
+	Errors         []loc.Message
+}
+
+type ErrorWithRange struct {
+	Text       string
+	Suggestion string
+	Range      loc.Range
+}
+
+func (e *ErrorWithRange) Error() string {
+	return e.Text
+}
+
+func (e *ErrorWithRange) ToMessage(p *printer) loc.Message {
+	pos := p.builder.GetLineAndColumnForLocation(e.Range.Loc)
+	return loc.Message{
+		Text: e.Error(),
+		Location: &loc.MessageLocation{
+			File:       p.opts.Filename,
+			Line:       pos[0],
+			Column:     pos[1],
+			Length:     e.Range.Len,
+			LineText:   p.sourcetext[e.Range.Loc.Start:e.Range.End()],
+			Suggestion: e.Suggestion,
+		},
+	}
 }
 
 type printer struct {
+	sourcetext         string
 	opts               transform.TransformOptions
 	output             []byte
 	builder            sourcemap.ChunkBuilder
+	errors             []error
+	warnings           []error
 	hasFuncPrelude     bool
 	hasTypedProps      bool
 	hasInternalImports bool
@@ -371,7 +401,7 @@ func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {
 	return append(slice[:s], slice[s+1:]...)
 }
 
-func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
+func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) []error {
 	var specs []string
 	var asrts []string
 	var conlyspecs []string
@@ -379,8 +409,8 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	copy(unfoundconly, doc.ClientOnlyComponents)
 
 	modCount := 1
-	loc, statement := js_scanner.NextImportStatement(source, 0)
-	for loc != -1 {
+	l, statement := js_scanner.NextImportStatement(source, 0)
+	for l != -1 {
 		isClientOnlyImport := false
 	component_loop:
 		for _, n := range doc.ClientOnlyComponents {
@@ -456,17 +486,18 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 				modCount++
 			}
 		}
-		loc, statement = js_scanner.NextImportStatement(source, loc)
+		l, statement = js_scanner.NextImportStatement(source, l)
 	}
 	if len(unfoundconly) > 0 {
-		componentnames := ""
-		for cindex, n := range unfoundconly {
-			if cindex > 0 {
-				componentnames += ", "
-			}
-			componentnames += n.Data
+		e := make([]error, len(unfoundconly))
+		for _, n := range unfoundconly {
+			e = append(e, &ErrorWithRange{
+				Text:       "Unable to find matching import statement for client:only component",
+				Suggestion: "A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.",
+				Range:      loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+			})
 		}
-		panic(fmt.Sprintf("Unable to find matching import statements for the client:only component: %s. A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.", componentnames))
+		return e
 	}
 	// If we added imports, add a line break.
 	if modCount > 1 {
@@ -552,4 +583,5 @@ conly_loop:
 	}
 
 	p.print("] });\n\n")
+	return nil
 }
