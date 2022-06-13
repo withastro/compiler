@@ -29,10 +29,6 @@
     "./astro.wasm": "./astro.wasm",
     "./types": "./types.d.ts"
   },
-  "dependencies": {
-    "tsm": "^2.2.1",
-    "uvu": "^0.5.3"
-  },
   "devDependencies": {
     "@types/node": "^16.4.12",
     "@types/sass": "^1.43.1",
