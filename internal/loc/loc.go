@@ -33,3 +33,20 @@ type MessageLocation struct {
 	Column     int    `js:"column"`
 	Length     int    `js:"length"`
 }
+
+type ErrorWithRange struct {
+	Text       string
+	Suggestion string
+	Range      Range
+}
+
+func (e *ErrorWithRange) Error() string {
+	return e.Text
+}
+
+func (e *ErrorWithRange) ToMessage(location *MessageLocation) Message {
+	return Message{
+		Text:     e.Error(),
+		Location: location,
+	}
+}

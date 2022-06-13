@@ -5,12 +5,12 @@
 package printer
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
 	. "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -42,19 +42,12 @@ import (
 // text node would become a tree containing <html>, <head> and <body> elements.
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
-func PrintToJS(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
+func PrintToJS(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
 		opts:       opts,
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
-	}
-	return printToJs(p, n, cssLen, opts)
-}
-
-func PrintToJSFragment(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
-	p := &printer{
-		opts:    opts,
-		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+		handler:    h,
 	}
 	return printToJs(p, n, cssLen, opts)
 }
@@ -73,8 +66,6 @@ type ExtractedStatement struct {
 }
 
 func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
-	p.errors = make([]error, 0)
-	p.warnings = make([]error, 0)
 	render1(p, n, RenderOptions{
 		cssLen:       cssLen,
 		isRoot:       true,
@@ -83,31 +74,9 @@ func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions)
 		opts:         opts,
 	})
 
-	var errs []loc.Message
-	if len(p.errors) > 0 {
-		errs = make([]loc.Message, 0)
-		for _, err := range p.errors {
-			if err != nil {
-				var rangedError *ErrorWithRange
-				switch {
-				case errors.As(err, &rangedError):
-					errs = append(errs, rangedError.ToMessage(p))
-				default:
-					errs = append(errs, loc.Message{Text: err.Error()})
-				}
-			}
-		}
-	}
-	var warnings []loc.Message
-	if len(p.warnings) > 0 {
-		warnings = make([]loc.Message, len(p.warnings))
-	}
-
 	return PrintResult{
 		Output:         p.output,
 		SourceMapChunk: p.builder.GenerateChunk(p.output),
-		Errors:         errs,
-		Warnings:       warnings,
 	}
 }
 
@@ -182,14 +151,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(strings.TrimSpace(c.Data))
 
 					// 3. The metadata object
-					errs := p.printComponentMetadata(n.Parent, opts.opts, []byte(c.Data))
-					if errs != nil {
-						p.errors = append(p.errors, errs...)
-						p.hasFuncPrelude = true
-						return
-					}
-					fmt.Println("a", errs)
-
+					p.printComponentMetadata(n.Parent, opts.opts, []byte(c.Data))
 					p.printFuncPrelude(opts.opts)
 				} else {
 					importStatements := c.Data[0:renderBodyStart]
@@ -202,12 +164,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.println(strings.TrimSpace(importStatements))
 
 					// 1. Component imports, if any exist.
-					errs := p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
-					if errs != nil {
-						p.errors = append(p.errors, errs...)
-						p.hasFuncPrelude = true
-						return
-					}
+					p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
 
 					// 2. Top-level Astro global.
 					p.printTopLevelAstro(opts.opts)
@@ -262,12 +219,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		return
 	} else if !p.hasFuncPrelude {
-		errs := p.printComponentMetadata(n.Parent, opts.opts, []byte{})
-		if errs != nil {
-			p.errors = append(p.errors, errs...)
-			p.hasFuncPrelude = true
-			return
-		}
+		p.printComponentMetadata(n.Parent, opts.opts, []byte{})
 		p.printTopLevelAstro(opts.opts)
 
 		// Render func prelude. Will only run for the first non-frontmatter node
