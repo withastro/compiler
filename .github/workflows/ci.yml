@@ -35,25 +35,28 @@ jobs:
         with:
           go-version: 1.17
 
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v2.2.1
+
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: 14
-          cache: 'yarn'
+          cache: 'pnpm'
 
       - name: Build WASM
         run: make wasm
 
       - name: Install NPM Dependencies
-        run: yarn install --prefer-offline --frozen-lockfile --ignore-engines
+        run: pnpm install
         env:
           CI: true
 
       - name: Build JS
-        run: yarn build:compiler
+        run: pnpm run build:compiler
 
       - name: Test WASM
-        run: yarn test:ci
+        run: pnpm test:ci
 
   lint:
     runs-on: ubuntu-latest
@@ -68,6 +71,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: pnpm/action-setup@v2.2.1
       - uses: actions/setup-node@v2
-      - run: yarn
-      - run: yarn lint
+        with:
+          node-version: 14
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run lint

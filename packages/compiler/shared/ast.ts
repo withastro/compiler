@@ -1,4 +1,6 @@
 export type ParentNode = RootNode | ElementNode | ComponentNode | CustomElementNode | FragmentNode | ExpressionNode;
+export type LiteralNode = TextNode | DoctypeNode | CommentNode | FrontmatterNode;
+
 export type Node = RootNode | ElementNode | ComponentNode | CustomElementNode | FragmentNode | ExpressionNode | TextNode | FrontmatterNode | DoctypeNode | CommentNode;
 
 export interface Position {
@@ -23,8 +25,7 @@ export interface ParentLikeNode extends BaseNode {
   children: Node[];
 }
 
-export interface LiteralNode extends BaseNode {
-  type: 'text' | 'doctype' | 'comment' | 'frontmatter';
+export interface ValueNode extends BaseNode {
   value: string;
 }
 
@@ -39,7 +40,7 @@ export interface AttributeNode extends BaseNode {
   value: string;
 }
 
-export interface TextNode extends LiteralNode {
+export interface TextNode extends ValueNode {
   type: 'text';
 }
 
@@ -69,15 +70,15 @@ export interface CustomElementNode extends ParentLikeNode {
 
 export type TagLikeNode = ElementNode | FragmentNode | ComponentNode | CustomElementNode;
 
-export interface DoctypeNode extends LiteralNode {
+export interface DoctypeNode extends ValueNode {
   type: 'doctype';
 }
 
-export interface CommentNode extends LiteralNode {
+export interface CommentNode extends ValueNode {
   type: 'comment';
 }
 
-export interface FrontmatterNode extends LiteralNode {
+export interface FrontmatterNode extends ValueNode {
   type: 'frontmatter';
 }
 

@@ -11,7 +11,7 @@ wasm: cmd/astro/*.go internal/*/*.go go.mod
 
 publish-node: 
 	make wasm
-	cd packages/compiler && npm run build
+	cd packages/compiler && pnpm run build
 
 clean:
 	git clean -dxf
