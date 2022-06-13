@@ -25,7 +25,7 @@ Sometimes you may have to install an older version of tinygo, either to test or 
 
 ### Node
 
-You will also need [Node.js][node] installed, as well as Yarn 1.x (`npm i -g yarn`). More often than not, you won’t need to touch JS in this repo, but in case you do, be sure to run `yarn` first.
+You will also need [Node.js][node] installed, as well as PNPM 1.x (`npm i -g pnpm`). More often than not, you won’t need to touch JS in this repo, but in case you do, be sure to run `pnpm install` first.
 
 ## Code Structure
 

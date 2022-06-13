@@ -71,6 +71,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: pnpm/action-setup@v2.2.1
       - uses: actions/setup-node@v2
-      - run: yarn
-      - run: yarn lint
+        with:
+          node-version: 14
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run lint
