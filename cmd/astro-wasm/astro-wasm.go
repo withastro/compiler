@@ -169,7 +169,7 @@ func Parse() interface{} {
 		parseOptions := makeParseOptions(js.Value(args[1]))
 
 		var doc *astro.Node
-		doc, err := astro.Parse(strings.NewReader(source))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -213,7 +213,7 @@ func Transform() interface{} {
 			go func() {
 				var doc *astro.Node
 
-				doc, err := astro.Parse(strings.NewReader(source))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionAddHandler(h))
 				if err != nil {
 					fmt.Println(err)
 				}
