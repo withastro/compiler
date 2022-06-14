@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
 	"golang.org/x/net/html/atom"
 )
@@ -294,6 +295,8 @@ type Tokenizer struct {
 	convertNUL bool
 	// allowCDATA is whether CDATA sections are allowed in the current context.
 	allowCDATA bool
+
+	handler *handler.Handler
 }
 
 // AllowCDATA sets whether or not the tokenizer recognizes <![CDATA[foo]]> as
@@ -823,6 +826,7 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 	case '*':
 		// look for "*/"
 		for {
+			start := z.data.Start
 			z.readUntilChar([]byte{'*'})
 			c = z.readByte()
 			if c == '/' {
@@ -830,7 +834,14 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 				return
 			}
 			if z.err == io.EOF {
-				panic("unterminated comment")
+				z.handler.AppendError(&loc.ErrorWithRange{
+					Text: `Unterminated comment`,
+					Range: loc.Range{
+						Loc: loc.Loc{Start: start},
+						Len: 2,
+					},
+				})
+				return
 			}
 		}
 	// RegExp
@@ -1471,12 +1482,17 @@ loop:
 			tokenType = CommentToken
 		default:
 			raw := z.Raw()
+			trimmed := []byte(strings.TrimLeftFunc(string(raw), unicode.IsSpace))
 			// Error: encountered an attempted use of <> syntax with attributes, like `< slot="named">Hello world!</>`
-			if len(raw) > 1 && bytes.HasPrefix(raw, []byte{'<'}) {
+			if len(raw) > 1 && bytes.HasPrefix(trimmed, []byte{'<'}) {
 				element := bytes.Split(z.Buffered(), []byte{'>'})
 				incorrect := fmt.Sprintf("< %s>", element[0])
 				correct := fmt.Sprintf("<Fragment %s>", element[0])
-				panic(fmt.Sprintf("Unable to assign attributes when using <> Fragment shorthand syntax!\n\nTo fix this, please change\n  %s\nto use the longhand Fragment syntax:\n  %s\n", incorrect, correct))
+				z.handler.AppendError(&loc.ErrorWithRange{
+					Text:       `Unable to assign attributes when using <> Fragment shorthand syntax!`,
+					Range:      loc.Range{Loc: loc.Loc{Start: z.data.Start}, Len: len(trimmed)},
+					Suggestion: fmt.Sprintf("To fix this, please change %s to use the longhand Fragment syntax: %s", incorrect, correct),
+				})
 			}
 			// Reconsume the current character.
 			z.raw.End--

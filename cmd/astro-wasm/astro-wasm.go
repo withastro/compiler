@@ -254,7 +254,7 @@ func Transform() interface{} {
 			go func() {
 				var doc *astro.Node
 
-				doc, err := astro.Parse(strings.NewReader(source))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionAddHandler(h))
 				if err != nil {
 					fmt.Println(err)
 				}

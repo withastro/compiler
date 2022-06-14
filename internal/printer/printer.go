@@ -266,7 +266,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
 			p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
 		case astro.ShorthandAttribute:
-			withoutComments := removeComments(a.Key)
+			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
 				lastAttributeSkipped = true
 				continue
@@ -377,7 +377,7 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 			p.printf(`,"%s",{"class":"astro-%s"})}`, strings.TrimSpace(attr.Key), p.opts.Scope)
 		}
 	case astro.ShorthandAttribute:
-		withoutComments := removeComments(attr.Key)
+		withoutComments, _ := removeComments(attr.Key)
 		if len(withoutComments) == 0 {
 			return
 		}

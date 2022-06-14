@@ -10,6 +10,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
 	a "golang.org/x/net/html/atom"
 )
@@ -58,6 +59,7 @@ type parser struct {
 	// context is the context element when parsing an HTML fragment
 	// (section 12.4).
 	context *Node
+	handler *handler.Handler
 }
 
 func (p *parser) top() *Node {
@@ -2964,6 +2966,13 @@ func ParseFragment(r io.Reader, context *Node) ([]*Node, error) {
 
 // ParseOption configures a parser.
 type ParseOption func(p *parser)
+
+func ParseOptionAddHandler(h *handler.Handler) ParseOption {
+	return func(p *parser) {
+		p.handler = h
+		p.tokenizer.handler = h
+	}
+}
 
 // ParseOptionEnableScripting configures the scripting flag.
 // https://html.spec.whatwg.org/multipage/webappapis.html#enabling-and-disabling-scripting

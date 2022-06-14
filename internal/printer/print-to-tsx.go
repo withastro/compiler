@@ -273,7 +273,7 @@ func renderTsx(p *printer, n *Node) {
 			p.print(fmt.Sprintf(`{...%s}`, a.Val))
 			endLoc = a.ValLoc.Start + len(a.Val) + 2
 		case astro.ShorthandAttribute:
-			withoutComments := removeComments(a.Key)
+			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}
@@ -342,7 +342,7 @@ func renderTsx(p *printer, n *Node) {
 			p.print(fmt.Sprintf(`...%s`, a.Val))
 			endLoc = a.ValLoc.Start + len(a.Val) + 3
 		case astro.ShorthandAttribute:
-			withoutComments := removeComments(a.Key)
+			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}

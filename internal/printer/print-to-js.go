@@ -88,11 +88,12 @@ const whitespace = " \t\r\n\f"
 
 // Returns true if the expression only contains a comment block (e.g. {/* a comment */})
 func expressionOnlyHasCommentBlock(n *Node) bool {
+	clean, _ := removeComments(n.FirstChild.Data)
 	return n.FirstChild.NextSibling == nil &&
 		n.FirstChild.Type == TextNode &&
 		// removeComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* before iterating
 		strings.HasPrefix(strings.TrimLeft(n.FirstChild.Data, whitespace), "/*") &&
-		len(removeComments(n.FirstChild.Data)) == 0
+		len(clean) == 0
 }
 
 func render1(p *printer, n *Node, opts RenderOptions) {
@@ -389,7 +390,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(`"` + escapeDoubleQuote(a.Val) + `"`)
 					slotted = true
 				default:
-					panic("slot[name] must be a static string")
+					p.handler.AppendError(&loc.ErrorWithRange{
+						Text:  "slot[name] must be a static string",
+						Range: loc.Range{Loc: a.ValLoc, Len: len(a.Val)},
+					})
 				}
 			}
 			if !slotted {
@@ -503,7 +507,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							} else if a.Type == ExpressionAttribute {
 								slotProp = fmt.Sprintf(`[%s]`, a.Val)
 							} else {
-								panic(`unknown slot attribute type`)
+								p.handler.AppendError(&loc.ErrorWithRange{
+									Text:  "slot[name] must be a static string",
+									Range: loc.Range{Loc: a.ValLoc, Len: len(a.Val)},
+								})
 							}
 						}
 					}
