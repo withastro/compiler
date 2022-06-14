@@ -14,12 +14,6 @@ type TokenTypeTest struct {
 	expected []TokenType
 }
 
-type TokenPanicTest struct {
-	name    string
-	input   string
-	message string
-}
-
 type AttributeTest struct {
 	name     string
 	input    string
@@ -458,37 +452,6 @@ func TestBasic(t *testing.T) {
 	}
 
 	runTokenTypeTest(t, Basic)
-}
-
-func TestPanics(t *testing.T) {
-	Panics := []TokenPanicTest{
-		{
-			"fragment with attributes",
-			`< slot="named">foo</>`,
-			`Unable to assign attributes when using <> Fragment shorthand syntax!
-
-To fix this, please change
-  < slot="named">
-to use the longhand Fragment syntax:
-  <Fragment slot="named">`,
-		},
-		{
-			"unterminated comment block",
-			"{/*",
-			"unterminated comment",
-		},
-		{
-			"unterminated comment block in expression",
-			"<div>{/*}</div>",
-			"unterminated comment",
-		},
-		{
-			"unterminated comment block in attribute list",
-			`<div a="1" {/* b="2" />`,
-			"unterminated comment",
-		},
-	}
-	runPanicTest(t, Panics)
 }
 
 func TestFrontmatter(t *testing.T) {
@@ -996,34 +959,6 @@ func runTokenTypeTest(t *testing.T, suite []TokenTypeTest) {
 			if !reflect.DeepEqual(tokens, tt.expected) {
 				t.Errorf("Tokens = %v\nExpected = %v", tokens, tt.expected)
 			}
-		})
-	}
-}
-
-func runPanicTest(t *testing.T, suite []TokenPanicTest) {
-	for _, tt := range suite {
-		value := test_utils.Dedent(tt.input)
-		t.Run(tt.name, func(t *testing.T) {
-			tokenizer := NewTokenizer(strings.NewReader(value))
-			defer func() {
-				r := recover()
-
-				if r == nil {
-					t.Errorf("%s did not panic\nExpected %s", tt.name, tt.message)
-				}
-
-				if diff := test_utils.ANSIDiff(test_utils.Dedent(r.(string)), test_utils.Dedent(tt.message)); diff != "" {
-					t.Errorf("mismatch (-want +got):\n%s", diff)
-				}
-			}()
-			var next TokenType
-			for {
-				next = tokenizer.Next()
-				if next == ErrorToken {
-					break
-				}
-			}
-
 		})
 	}
 }
