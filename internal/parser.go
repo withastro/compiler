@@ -620,7 +620,6 @@ func initialIM(p *parser) bool {
 			// It was all whitespace, so ignore it.
 			return true
 		}
-		p.addText(p.tok.Data)
 	case CommentToken:
 		p.doc.AppendChild(&Node{
 			Type: CommentNode,
