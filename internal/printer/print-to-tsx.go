@@ -208,7 +208,7 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf(`{...%s}`, a.Val))
 		case astro.ShorthandAttribute:
-			withoutComments := removeComments(a.Key)
+			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}
@@ -259,7 +259,7 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf(`...%s`, a.Val))
 		case astro.ShorthandAttribute:
-			withoutComments := removeComments(a.Key)
+			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}

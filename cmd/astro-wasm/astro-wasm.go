@@ -13,6 +13,8 @@ import (
 
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/printer"
 	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
@@ -134,10 +136,12 @@ type TSXResult struct {
 }
 
 type TransformResult struct {
-	Code    string          `js:"code"`
-	Map     string          `js:"map"`
-	CSS     []string        `js:"css"`
-	Scripts []HoistedScript `js:"scripts"`
+	Code     string          `js:"code"`
+	Errors   []loc.Message   `js:"errors"`
+	Warnings []loc.Message   `js:"warnings"`
+	Map      string          `js:"map"`
+	CSS      []string        `js:"css"`
+	Scripts  []HoistedScript `js:"scripts"`
 }
 
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
@@ -165,7 +169,7 @@ func Parse() interface{} {
 		parseOptions := makeParseOptions(js.Value(args[1]))
 
 		var doc *astro.Node
-		doc, err := astro.Parse(strings.NewReader(source))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -201,6 +205,7 @@ func Transform() interface{} {
 		source := jsString(args[0])
 		hash := astro.HashFromSource(source)
 		transformOptions := makeTransformOptions(js.Value(args[1]), hash)
+		h := handler.NewHandler(source, transformOptions.Filename)
 
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
@@ -208,7 +213,7 @@ func Transform() interface{} {
 			go func() {
 				var doc *astro.Node
 
-				doc, err := astro.Parse(strings.NewReader(source))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionAddHandler(h))
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -232,7 +237,7 @@ func Transform() interface{} {
 				wg.Wait()
 
 				// Perform CSS and element scoping as needed
-				transform.Transform(doc, transformOptions)
+				transform.Transform(doc, transformOptions, h)
 
 				css := []string{}
 				scripts := []HoistedScript{}
@@ -261,24 +266,34 @@ func Transform() interface{} {
 						scripts = append(scripts, script)
 					}
 				}
-
-				result := printer.PrintToJS(source, doc, len(css), transformOptions)
-
 				var value interface{}
-				switch transformOptions.SourceMap {
-				case "external":
-					value = createExternalSourceMap(source, result, css, &scripts, transformOptions)
-				case "both":
-					value = createBothSourceMap(source, result, css, &scripts, transformOptions)
-				case "inline":
-					value = createInlineSourceMap(source, result, css, &scripts, transformOptions)
-				default:
+				result := printer.PrintToJS(source, doc, len(css), transformOptions, h)
+
+				if h.HasErrors() {
 					value = vert.ValueOf(TransformResult{
-						CSS:     css,
-						Code:    string(result.Output),
-						Map:     "",
-						Scripts: scripts,
+						Code:     "",
+						Map:      "",
+						Warnings: h.Warnings(),
+						Errors:   h.Errors(),
 					})
+				} else {
+					switch transformOptions.SourceMap {
+					case "external":
+						value = createExternalSourceMap(source, result, css, h, &scripts, transformOptions)
+					case "both":
+						value = createBothSourceMap(source, result, css, h, &scripts, transformOptions)
+					case "inline":
+						value = createInlineSourceMap(source, result, css, h, &scripts, transformOptions)
+					default:
+						value = vert.ValueOf(TransformResult{
+							CSS:      css,
+							Code:     string(result.Output),
+							Map:      "",
+							Scripts:  scripts,
+							Errors:   h.Errors(),
+							Warnings: h.Warnings(),
+						})
+					}
 				}
 
 				resolve.Invoke(value)
@@ -311,33 +326,39 @@ func createSourceMapString(source string, result printer.PrintResult, transformO
 }`, sourcemap.Sources[0], sourcemap.SourcesContent[0], sourcemap.Mappings)
 }
 
-func createExternalSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
+func createExternalSourceMap(source string, result printer.PrintResult, css []string, h *handler.Handler, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
 	return vert.ValueOf(TransformResult{
-		CSS:     css,
-		Code:    string(result.Output),
-		Map:     createSourceMapString(source, result, transformOptions),
-		Scripts: *scripts,
+		CSS:      css,
+		Code:     string(result.Output),
+		Errors:   []loc.Message{},
+		Warnings: h.Warnings(),
+		Map:      createSourceMapString(source, result, transformOptions),
+		Scripts:  *scripts,
 	})
 }
 
-func createInlineSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
+func createInlineSourceMap(source string, result printer.PrintResult, css []string, h *handler.Handler, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
-		CSS:     css,
-		Code:    string(result.Output) + "\n" + inlineSourcemap,
-		Map:     "",
-		Scripts: *scripts,
+		CSS:      css,
+		Code:     string(result.Output) + "\n" + inlineSourcemap,
+		Errors:   []loc.Message{},
+		Warnings: h.Warnings(),
+		Map:      "",
+		Scripts:  *scripts,
 	})
 }
 
-func createBothSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
+func createBothSourceMap(source string, result printer.PrintResult, css []string, h *handler.Handler, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
-		CSS:     css,
-		Code:    string(result.Output) + "\n" + inlineSourcemap,
-		Map:     sourcemapString,
-		Scripts: *scripts,
+		CSS:      css,
+		Code:     string(result.Output) + "\n" + inlineSourcemap,
+		Errors:   []loc.Message{},
+		Warnings: h.Warnings(),
+		Map:      sourcemapString,
+		Scripts:  *scripts,
 	})
 }

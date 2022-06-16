@@ -11,6 +11,23 @@ export interface ParseOptions {
   position?: boolean;
 }
 
+export interface Message {
+  location: MessageLocation;
+  text: string;
+}
+
+export interface MessageLocation {
+  file: string;
+  lineText?: string;
+  suggestion?: string;
+  // 1-based
+  line: number;
+  // 0-based, in bytes
+  column: number;
+  // in bytes
+  length: number;
+}
+
 export interface TransformOptions {
   internalURL?: string;
   site?: string;
@@ -38,9 +55,11 @@ export type HoistedScript = { type: string } & (
 );
 
 export interface TransformResult {
+  code: string;
+  errors: Message[];
+  warnings: Message[];
   css: string[];
   scripts: HoistedScript[];
-  code: string;
   map: string;
 }
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/test_utils"
 	"github.com/withastro/compiler/internal/transform"
 )
@@ -53,7 +54,7 @@ func TestPrinterCSS(t *testing.T) {
 
 			hash := astro.HashFromSource(code)
 			transform.ExtractStyles(doc)
-			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+			transform.Transform(doc, transform.TransformOptions{Scope: hash}, handler.NewHandler(code, "/test.astro")) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintCSS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",
 				Site:        "https://astro.build",

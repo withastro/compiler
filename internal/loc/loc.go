@@ -19,3 +19,34 @@ func (r Range) End() int {
 type Span struct {
 	Start, End int
 }
+
+type Message struct {
+	Location *MessageLocation `js:"location"`
+	Text     string           `js:"text"`
+}
+
+type MessageLocation struct {
+	File       string `js:"file"`
+	LineText   string `js:"lineText"`
+	Suggestion string `js:"suggestion"`
+	Line       int    `js:"line"`
+	Column     int    `js:"column"`
+	Length     int    `js:"length"`
+}
+
+type ErrorWithRange struct {
+	Text       string
+	Suggestion string
+	Range      Range
+}
+
+func (e *ErrorWithRange) Error() string {
+	return e.Text
+}
+
+func (e *ErrorWithRange) ToMessage(location *MessageLocation) Message {
+	return Message{
+		Text:     e.Error(),
+		Location: location,
+	}
+}
