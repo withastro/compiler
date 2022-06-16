@@ -70,6 +70,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken},
 		},
 		{
+			"text",
+			`Hello@`,
+			[]TokenType{TextToken},
+		},
+		{
 			"self-closing script",
 			`<script />`,
 			[]TokenType{SelfClosingTagToken},
