@@ -128,6 +128,13 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "text only",
+			source: "Hello!",
+			want: want{
+				code: "Hello!",
+			},
+		},
+		{
 			name: "basic (frontmatter)",
 			source: `---
 const href = '/about';
