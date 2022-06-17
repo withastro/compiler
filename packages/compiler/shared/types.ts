@@ -37,9 +37,17 @@ export type HoistedScript = { type: string } & (
     }
 );
 
+export interface HydratedComponent {
+  exportName: string;
+  specifier: string;
+  resolvedPath: string;
+}
+
 export interface TransformResult {
   css: string[];
   scripts: HoistedScript[];
+  hydratedComponents: HydratedComponent[];
+  clientOnlyComponents: HydratedComponent[];
   code: string;
   map: string;
 }

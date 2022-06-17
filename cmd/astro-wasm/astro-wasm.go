@@ -124,6 +124,12 @@ type HoistedScript struct {
 	Type string `js:"type"`
 }
 
+type HydratedComponent struct {
+	ExportName   string `js:"exportName"`
+	Specifier    string `js:"specifier"`
+	ResolvedPath string `js:"resolvedPath"`
+}
+
 type ParseResult struct {
 	AST string `js:"ast"`
 }
@@ -134,10 +140,12 @@ type TSXResult struct {
 }
 
 type TransformResult struct {
-	Code    string          `js:"code"`
-	Map     string          `js:"map"`
-	CSS     []string        `js:"css"`
-	Scripts []HoistedScript `js:"scripts"`
+	Code                 string              `js:"code"`
+	Map                  string              `js:"map"`
+	CSS                  []string            `js:"css"`
+	Scripts              []HoistedScript     `js:"scripts"`
+	HydratedComponents   []HydratedComponent `js:"hydratedComponents"`
+	ClientOnlyComponents []HydratedComponent `js:"clientOnlyComponents"`
 }
 
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
@@ -236,6 +244,8 @@ func Transform() interface{} {
 
 				css := []string{}
 				scripts := []HoistedScript{}
+				hydratedComponents := []HydratedComponent{}
+				clientOnlyComponents := []HydratedComponent{}
 				// Only perform static CSS extraction if the flag is passed in.
 				if transformOptions.StaticExtraction {
 					css_result := printer.PrintCSS(source, doc, transformOptions)
@@ -260,6 +270,22 @@ func Transform() interface{} {
 						}
 						scripts = append(scripts, script)
 					}
+
+					for _, c := range doc.HydratedComponents {
+						hydratedComponents = append(hydratedComponents, HydratedComponent{
+							ExportName:   c.ExportName,
+							Specifier:    c.Specifier,
+							ResolvedPath: c.ResolvedPath,
+						})
+					}
+
+					for _, c := range doc.ClientOnlyComponents {
+						clientOnlyComponents = append(clientOnlyComponents, HydratedComponent{
+							ExportName:   c.ExportName,
+							Specifier:    c.Specifier,
+							ResolvedPath: c.ResolvedPath,
+						})
+					}
 				}
 
 				result := printer.PrintToJS(source, doc, len(css), transformOptions)
@@ -267,17 +293,19 @@ func Transform() interface{} {
 				var value interface{}
 				switch transformOptions.SourceMap {
 				case "external":
-					value = createExternalSourceMap(source, result, css, &scripts, transformOptions)
+					value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, transformOptions)
 				case "both":
-					value = createBothSourceMap(source, result, css, &scripts, transformOptions)
+					value = createBothSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, transformOptions)
 				case "inline":
-					value = createInlineSourceMap(source, result, css, &scripts, transformOptions)
+					value = createInlineSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, transformOptions)
 				default:
 					value = vert.ValueOf(TransformResult{
-						CSS:     css,
-						Code:    string(result.Output),
-						Map:     "",
-						Scripts: scripts,
+						CSS:                  css,
+						Code:                 string(result.Output),
+						Map:                  "",
+						Scripts:              scripts,
+						HydratedComponents:   hydratedComponents,
+						ClientOnlyComponents: clientOnlyComponents,
 					})
 				}
 
@@ -311,33 +339,39 @@ func createSourceMapString(source string, result printer.PrintResult, transformO
 }`, sourcemap.Sources[0], sourcemap.SourcesContent[0], sourcemap.Mappings)
 }
 
-func createExternalSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
+func createExternalSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, transformOptions transform.TransformOptions) interface{} {
 	return vert.ValueOf(TransformResult{
-		CSS:     css,
-		Code:    string(result.Output),
-		Map:     createSourceMapString(source, result, transformOptions),
-		Scripts: *scripts,
+		CSS:                  css,
+		Code:                 string(result.Output),
+		Map:                  createSourceMapString(source, result, transformOptions),
+		Scripts:              *scripts,
+		HydratedComponents:   *hydratedComponents,
+		ClientOnlyComponents: *clientOnlyComponents,
 	})
 }
 
-func createInlineSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
+func createInlineSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
-		CSS:     css,
-		Code:    string(result.Output) + "\n" + inlineSourcemap,
-		Map:     "",
-		Scripts: *scripts,
+		CSS:                  css,
+		Code:                 string(result.Output) + "\n" + inlineSourcemap,
+		Map:                  "",
+		Scripts:              *scripts,
+		HydratedComponents:   *hydratedComponents,
+		ClientOnlyComponents: *clientOnlyComponents,
 	})
 }
 
-func createBothSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, transformOptions transform.TransformOptions) interface{} {
+func createBothSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
-		CSS:     css,
-		Code:    string(result.Output) + "\n" + inlineSourcemap,
-		Map:     sourcemapString,
-		Scripts: *scripts,
+		CSS:                  css,
+		Code:                 string(result.Output) + "\n" + inlineSourcemap,
+		Map:                  sourcemapString,
+		Scripts:              *scripts,
+		HydratedComponents:   *hydratedComponents,
+		ClientOnlyComponents: *clientOnlyComponents,
 	})
 }
