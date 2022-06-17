@@ -324,7 +324,7 @@ func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatemen
 		source := []byte(doc.FirstChild.FirstChild.Data)
 		loc, statement := js_scanner.NextImportStatement(source, 0)
 		for loc != -1 {
-			if cb(statement) == false {
+			if !cb(statement) {
 				break
 			}
 			loc, statement = js_scanner.NextImportStatement(source, loc)
