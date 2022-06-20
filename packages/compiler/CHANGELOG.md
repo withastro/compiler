@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.16.0
+
+### Minor Changes
+
+- 470efc0: Adds component metadata to the TransformResult
+
+### Patch Changes
+
+- c104d4f: Fix #418: duplicate text when only text
+
 ## 0.15.2
 
 ### Patch Changes
