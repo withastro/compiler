@@ -35,6 +35,9 @@ jobs:
         env:
           CI: true
 
+      - name: Build JS
+        run: pnpm run build:compiler
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
