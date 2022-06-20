@@ -62,6 +62,12 @@ const ImplicitNodeMarker = "\x00implicit"
 // template, td, th, and caption elements".
 var scopeMarker = Node{Type: scopeMarkerNode}
 
+type HydratedComponentMetadata struct {
+	ExportName   string
+	Specifier    string
+	ResolvedPath string
+}
+
 // A Node consists of a NodeType and some Data (tag name for element nodes,
 // content for text) and are part of a tree of Nodes. Element nodes may also
 // have a Namespace and contain a slice of Attributes. Data is unescaped, so
@@ -80,10 +86,12 @@ type Node struct {
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
 
 	// These are only accessible from the document root Node
-	Styles, Scripts      []*Node
-	HydratedComponents   []*Node
-	ClientOnlyComponents []*Node
-	HydrationDirectives  map[string]bool
+	Styles, Scripts          []*Node
+	HydratedComponentNodes   []*Node
+	HydratedComponents       []*HydratedComponentMetadata
+	ClientOnlyComponentNodes []*Node
+	ClientOnlyComponents     []*HydratedComponentMetadata
+	HydrationDirectives      map[string]bool
 
 	Type      NodeType
 	DataAtom  atom.Atom
