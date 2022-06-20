@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.16.1
+
+### Patch Changes
+
+- 9fcc43b: Build JS during the release
+
 ## 0.16.0
 
 ### Minor Changes
