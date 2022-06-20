@@ -375,15 +375,15 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	var specs []string
 	var asrts []string
 	var conlyspecs []string
-	unfoundconly := make([]*astro.Node, len(doc.ClientOnlyComponents))
-	copy(unfoundconly, doc.ClientOnlyComponents)
+	unfoundconly := make([]*astro.Node, len(doc.ClientOnlyComponentNodes))
+	copy(unfoundconly, doc.ClientOnlyComponentNodes)
 
 	modCount := 1
 	loc, statement := js_scanner.NextImportStatement(source, 0)
 	for loc != -1 {
 		isClientOnlyImport := false
 	component_loop:
-		for _, n := range doc.ClientOnlyComponents {
+		for _, n := range doc.ClientOnlyComponentNodes {
 			for _, imported := range statement.Imports {
 				if imported.ExportName == "*" {
 					prefix := fmt.Sprintf("%s.", imported.LocalName)
@@ -498,7 +498,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 
 	// Hydrated Components
 	p.print(", hydratedComponents: [")
-	for i, node := range doc.HydratedComponents {
+	for i, node := range doc.HydratedComponentNodes {
 		if i > 0 {
 			p.print(", ")
 		}

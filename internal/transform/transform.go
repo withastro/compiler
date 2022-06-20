@@ -2,10 +2,12 @@ package transform
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"unicode"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	a "golang.org/x/net/html/atom"
 )
@@ -26,7 +28,7 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	walk(doc, func(n *astro.Node) {
 		ExtractScript(doc, n, &opts)
-		AddComponentProps(doc, n)
+		AddComponentProps(doc, n, &opts)
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
@@ -203,7 +205,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	}
 }
 
-func AddComponentProps(doc *astro.Node, n *astro.Node) {
+func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && (n.Component || n.CustomElement) {
 		for _, attr := range n.Attr {
 			id := n.Data
@@ -225,11 +227,21 @@ func AddComponentProps(doc *astro.Node, n *astro.Node) {
 				n.Attr = append(n.Attr, hydrationAttr)
 
 				if attr.Key == "client:only" {
-					doc.ClientOnlyComponents = append([]*astro.Node{n}, doc.ClientOnlyComponents...)
+					doc.ClientOnlyComponentNodes = append([]*astro.Node{n}, doc.ClientOnlyComponentNodes...)
+
+					match := matchNodeToImportStatement(doc, n)
+					if match != nil {
+						doc.ClientOnlyComponents = append(doc.ClientOnlyComponents, &astro.HydratedComponentMetadata{
+							ExportName:   match.ExportName,
+							Specifier:    match.Specifier,
+							ResolvedPath: resolveIdForMatch(match, opts),
+						})
+					}
+
 					break
 				}
 				// prepend node to maintain authored order
-				doc.HydratedComponents = append([]*astro.Node{n}, doc.HydratedComponents...)
+				doc.HydratedComponentNodes = append([]*astro.Node{n}, doc.HydratedComponentNodes...)
 				pathAttr := astro.Attribute{
 					Key:  "client:component-path",
 					Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
@@ -243,8 +255,82 @@ func AddComponentProps(doc *astro.Node, n *astro.Node) {
 					Type: astro.ExpressionAttribute,
 				}
 				n.Attr = append(n.Attr, exportAttr)
+
+				match := matchNodeToImportStatement(doc, n)
+				if match != nil {
+					doc.HydratedComponents = append(doc.HydratedComponents, &astro.HydratedComponentMetadata{
+						ExportName:   match.ExportName,
+						Specifier:    match.Specifier,
+						ResolvedPath: resolveIdForMatch(match, opts),
+					})
+				}
+
 				break
 			}
+		}
+	}
+}
+
+type ImportMatch struct {
+	ExportName string
+	Specifier  string
+}
+
+func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
+	var match *ImportMatch
+
+	eachImportStatement(doc, func(stmt js_scanner.ImportStatement) bool {
+		for _, imported := range stmt.Imports {
+			if imported.ExportName == "*" {
+				prefix := fmt.Sprintf("%s.", imported.LocalName)
+
+				if strings.HasPrefix(n.Data, prefix) {
+					exportParts := strings.Split(n.Data[len(prefix):], ".")
+					exportName := exportParts[0]
+
+					match = &ImportMatch{
+						ExportName: exportName,
+						Specifier:  stmt.Specifier,
+					}
+
+					return false
+				}
+			} else if imported.LocalName == n.Data {
+				match = &ImportMatch{
+					ExportName: imported.ExportName,
+					Specifier:  stmt.Specifier,
+				}
+				return false
+			}
+		}
+
+		return true
+	})
+
+	return match
+}
+
+func resolveIdForMatch(match *ImportMatch, opts *TransformOptions) string {
+	if strings.HasPrefix(match.Specifier, ".") && len(opts.Pathname) > 0 {
+		u, err := url.Parse(opts.Pathname)
+		if err == nil {
+			ref, _ := url.Parse(match.Specifier)
+			ou := u.ResolveReference(ref)
+			return ou.String()
+		}
+	}
+	return ""
+}
+
+func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatement) bool) {
+	if doc.FirstChild.Type == astro.FrontmatterNode {
+		source := []byte(doc.FirstChild.FirstChild.Data)
+		loc, statement := js_scanner.NextImportStatement(source, 0)
+		for loc != -1 {
+			if !cb(statement) {
+				break
+			}
+			loc, statement = js_scanner.NextImportStatement(source, loc)
 		}
 	}
 }
