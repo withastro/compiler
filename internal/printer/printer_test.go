@@ -20,6 +20,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
+	"renderHead as " + RENDER_HEAD,
 	"unescapeHTML as " + UNESCAPE_HTML,
 	"renderSlot as " + RENDER_SLOT,
 	"addAttribute as " + ADD_ATTRIBUTE,
@@ -41,7 +42,7 @@ var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE);\
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build', '.');\nconst Astro = $$Astro;"
-var RENDER_HEAD_RESULT = "<!--astro:head-->"
+var RENDER_HEAD_RESULT = "$$renderHead($$result)"
 
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
