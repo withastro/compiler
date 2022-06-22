@@ -58,11 +58,12 @@ func PrintToJSFragment(sourcetext string, n *Node, cssLen int, opts transform.Tr
 }
 
 type RenderOptions struct {
-	isRoot       bool
-	isExpression bool
-	depth        int
-	cssLen       int
-	opts         transform.TransformOptions
+	isRoot           bool
+	isExpression     bool
+	depth            int
+	cssLen           int
+	opts             transform.TransformOptions
+	printedMaybeHead *bool
 }
 
 type ExtractedStatement struct {
@@ -71,12 +72,14 @@ type ExtractedStatement struct {
 }
 
 func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
+	printedMaybeHead := false
 	render1(p, n, RenderOptions{
-		cssLen:       cssLen,
-		isRoot:       true,
-		isExpression: false,
-		depth:        0,
-		opts:         opts,
+		cssLen:           cssLen,
+		isRoot:           true,
+		isExpression:     false,
+		depth:            0,
+		opts:             opts,
+		printedMaybeHead: &printedMaybeHead,
 	})
 
 	return PrintResult{
@@ -108,10 +111,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			render1(p, c, RenderOptions{
-				isRoot:       false,
-				isExpression: false,
-				depth:        depth + 1,
-				opts:         opts.opts,
+				isRoot:           false,
+				isExpression:     false,
+				depth:            depth + 1,
+				opts:             opts.opts,
+				printedMaybeHead: opts.printedMaybeHead,
 			})
 		}
 
@@ -212,10 +216,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printReturnOpen()
 			} else {
 				render1(p, c, RenderOptions{
-					isRoot:       false,
-					isExpression: true,
-					depth:        depth + 1,
-					opts:         opts.opts,
+					isRoot:           false,
+					isExpression:     true,
+					depth:            depth + 1,
+					opts:             opts.opts,
+					printedMaybeHead: opts.printedMaybeHead,
 				})
 				if len(n.Loc) > 1 {
 					p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
@@ -326,10 +331,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTemplateLiteralOpen()
 			}
 			render1(p, c, RenderOptions{
-				isRoot:       false,
-				isExpression: true,
-				depth:        depth + 1,
-				opts:         opts.opts,
+				isRoot:           false,
+				isExpression:     true,
+				depth:            depth + 1,
+				opts:             opts.opts,
+				printedMaybeHead: opts.printedMaybeHead,
 			})
 			if c.NextSibling == nil || c.NextSibling.Type == TextNode {
 				p.printTemplateLiteralClose()
@@ -365,6 +371,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case isImplicit:
 		// do nothing
 	default:
+		// Before the first non-head element, inject $$maybeRender($$result)
+		// This is for pages that do not contain an explicit head element
+		switch n.DataAtom {
+		case atom.Html, atom.Head, atom.Base, atom.Basefont, atom.Bgsound, atom.Link, atom.Meta, atom.Noframes, atom.Script, atom.Style, atom.Template, atom.Title:
+			break
+		default:
+			if !*opts.printedMaybeHead {
+				*opts.printedMaybeHead = true
+				p.printMaybeRenderHead()
+			}
+		}
+
 		p.print("<")
 
 	}
@@ -378,6 +396,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case !isSlot && n.CustomElement:
 		p.print(fmt.Sprintf("'%s'", n.Data))
 	case !isSlot && !isImplicit:
+		// Print the tag name
 		p.print(n.Data)
 	}
 
@@ -462,10 +481,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.print(escapeText(c.Data))
 			} else {
 				render1(p, c, RenderOptions{
-					isRoot:       false,
-					isExpression: opts.isExpression,
-					depth:        depth + 1,
-					opts:         opts.opts,
+					isRoot:           false,
+					isExpression:     opts.isExpression,
+					depth:            depth + 1,
+					opts:             opts.opts,
+					printedMaybeHead: opts.printedMaybeHead,
 				})
 			}
 		}
@@ -494,10 +514,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTemplateLiteralOpen()
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					render1(p, c, RenderOptions{
-						isRoot:       false,
-						isExpression: opts.isExpression,
-						depth:        depth + 1,
-						opts:         opts.opts,
+						isRoot:           false,
+						isExpression:     opts.isExpression,
+						depth:            depth + 1,
+						opts:             opts.opts,
+						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
 				p.printTemplateLiteralClose()
@@ -536,10 +557,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.printTemplateLiteralOpen()
 					for _, child := range children {
 						render1(p, child, RenderOptions{
-							isRoot:       false,
-							isExpression: opts.isExpression,
-							depth:        depth + 1,
-							opts:         opts.opts,
+							isRoot:           false,
+							isExpression:     opts.isExpression,
+							depth:            depth + 1,
+							opts:             opts.opts,
+							printedMaybeHead: opts.printedMaybeHead,
 						})
 					}
 					p.printTemplateLiteralClose()
@@ -561,10 +583,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			default:
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					render1(p, c, RenderOptions{
-						isRoot:       false,
-						isExpression: opts.isExpression,
-						depth:        depth + 1,
-						opts:         opts.opts,
+						isRoot:           false,
+						isExpression:     opts.isExpression,
+						depth:            depth + 1,
+						opts:             opts.opts,
+						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
 			}
@@ -580,6 +603,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(")}")
 	} else if !isImplicit {
 		if n.DataAtom == atom.Head {
+			*opts.printedMaybeHead = true
 			p.printRenderHead()
 		}
 		p.print(`</` + n.Data + `>`)
