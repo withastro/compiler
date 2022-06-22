@@ -9,8 +9,8 @@ test.before(async () => {
   result = await transform(FIXTURE);
 });
 
-test('head placeholder', () => {
-  assert.match(result.code, '<!--astro:head-->', 'Expected output to contain <!--astro:head--> placeholder');
+test('head injection', () => {
+  assert.match(result.code, '$$renderHead($$result)', 'Expected output to contain $$renderHead($$result) injection point');
 });
 
 test.run();
