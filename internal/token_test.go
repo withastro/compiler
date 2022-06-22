@@ -95,6 +95,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{SelfClosingTagToken, StartTagToken, EndTagToken, SelfClosingTagToken},
 		},
 		{
+			"attribute with quoted template literal",
+			"<a :href=\"`/home`\">Home</a>",
+			[]TokenType{StartTagToken, TextToken, EndTagToken},
+		},
+		{
 			"No expressions inside math",
 			`<math>{test}</math>`,
 			[]TokenType{StartTagToken, TextToken, TextToken, TextToken, EndTagToken},
@@ -777,6 +782,16 @@ func TestAttributes(t *testing.T) {
 		{
 			"expression with apostrophe",
 			`<div a="fred's" />`,
+			[]AttributeType{QuotedAttribute},
+		},
+		{
+			"expression with template literal",
+			"<div a=\"`value`\" />",
+			[]AttributeType{QuotedAttribute},
+		},
+		{
+			"expression with template literal interpolation",
+			"<div a=\"`${value}`\" />",
 			[]AttributeType{QuotedAttribute},
 		},
 		{
