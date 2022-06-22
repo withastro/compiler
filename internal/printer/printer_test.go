@@ -20,6 +20,8 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"createAstro as " + CREATE_ASTRO,
 	"createComponent as " + CREATE_COMPONENT,
 	"renderComponent as " + RENDER_COMPONENT,
+	"renderHead as " + RENDER_HEAD,
+	"maybeRenderHead as " + MAYBE_RENDER_HEAD,
 	"unescapeHTML as " + UNESCAPE_HTML,
 	"renderSlot as " + RENDER_SLOT,
 	"addAttribute as " + ADD_ATTRIBUTE,
@@ -41,7 +43,7 @@ var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE);\
 var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
 var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build', '.');\nconst Astro = $$Astro;"
-var RENDER_HEAD_RESULT = "<!--astro:head-->"
+var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
@@ -89,7 +91,7 @@ func TestPrinter(t *testing.T) {
 			name:   "basic (no frontmatter)",
 			source: `<button>Click</button>`,
 			want: want{
-				code: `<button>Click</button>`,
+				code: `${$$maybeRenderHead($$result)}<button>Click</button>`,
 			},
 		},
 		{
@@ -156,7 +158,7 @@ const href = '/about';
 <a href={href}>About</a>`,
 			want: want{
 				frontmatter: []string{"", "const href = '/about';"},
-				code:        `<a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a>`,
+				code:        `${$$maybeRenderHead($$result)}<a${` + ADD_ATTRIBUTE + `(href, "href")}>About</a>`,
 			},
 		},
 		{
@@ -171,7 +173,7 @@ export const getStaticPaths = async () => {
 				frontmatter: []string{`export const getStaticPaths = async () => {
 	return { paths: [] }
 }`, ""},
-				code: `<div></div>`,
+				code: `${$$maybeRenderHead($$result)}<div></div>`,
 			},
 		},
 		{
@@ -188,7 +190,7 @@ export const getStaticPaths = async () => {
 				getStaticPaths: `export const getStaticPaths = async () => {
 	return { paths: [] }
 }`,
-				code: `<div></div>`,
+				code: `${$$maybeRenderHead($$result)}<div></div>`,
 			},
 		},
 		{
@@ -207,7 +209,7 @@ const b = 0;`},
 				getStaticPaths: `export async function getStaticPaths() {
 	return { paths: [] }
 }`,
-				code: `<div></div>`,
+				code: `${$$maybeRenderHead($$result)}<div></div>`,
 			},
 		},
 		{
@@ -218,7 +220,7 @@ mod.export();
 <div />`,
 			want: want{
 				frontmatter: []string{``, `mod.export();`},
-				code:        `<div></div>`,
+				code:        `${$$maybeRenderHead($$result)}<div></div>`,
 			},
 		},
 		{
@@ -239,7 +241,7 @@ import data from "test" assert { type: 'json' };
 			name:   "no expressions in math",
 			source: `<p>Hello, world! This is a <em>buggy</em> formula: <span class="math math-inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mspace></mspace><mspace width="0.1111em"></mspace><mo lspace="0em" rspace="0.17em"></mo><mtext> ⁣</mtext><mo lspace="0em" rspace="0em">:</mo><mspace width="0.3333em"></mspace><mi>X</mi><mo>→</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>2</mn><mi>x</mi></mrow></msup></mrow><annotation encoding="application/x-tex">f\colon X \to \mathbb R^{2x}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace nobreak"></span><span class="mspace" style="margin-right:0.1111em;"></span><span class="mpunct"></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mrel">:</span></span><span class="mspace" style="margin-right:0.3333em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight">x</span></span></span></span></span></span></span></span></span></span></span></span></span></p>`,
 			want: want{
-				code: `<p>Hello, world! This is a <em>buggy</em> formula: <span class="math math-inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mspace></mspace><mspace width="0.1111em"></mspace><mo lspace="0em" rspace="0.17em"></mo><mtext> ⁣</mtext><mo lspace="0em" rspace="0em">:</mo><mspace width="0.3333em"></mspace><mi>X</mi><mo>→</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>2</mn><mi>x</mi></mrow></msup></mrow><annotation encoding="application/x-tex">f\\colon X \\to \\mathbb R^{2x}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace nobreak"></span><span class="mspace" style="margin-right:0.1111em;"></span><span class="mpunct"></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mrel">:</span></span><span class="mspace" style="margin-right:0.3333em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight">x</span></span></span></span></span></span></span></span></span></span></span></span></span></p>`,
+				code: `${$$maybeRenderHead($$result)}<p>Hello, world! This is a <em>buggy</em> formula: <span class="math math-inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mspace></mspace><mspace width="0.1111em"></mspace><mo lspace="0em" rspace="0.17em"></mo><mtext> ⁣</mtext><mo lspace="0em" rspace="0em">:</mo><mspace width="0.3333em"></mspace><mi>X</mi><mo>→</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>2</mn><mi>x</mi></mrow></msup></mrow><annotation encoding="application/x-tex">f\\colon X \\to \\mathbb R^{2x}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace nobreak"></span><span class="mspace" style="margin-right:0.1111em;"></span><span class="mpunct"></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mrel">:</span></span><span class="mspace" style="margin-right:0.3333em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight">x</span></span></span></span></span></span></span></span></span></span></span></span></span></p>`,
 			},
 		},
 		{
@@ -259,21 +261,21 @@ import data from "test" assert { type: 'json' };
 			name:   "solidus in template literal expression",
 			source: "<div value={`${attr ? `a/b` : \"c\"} awesome`} />",
 			want: want{
-				code: "<div${$$addAttribute(`${attr ? `a/b` : \"c\"} awesome`, \"value\")}></div>",
+				code: "${$$maybeRenderHead($$result)}<div${$$addAttribute(`${attr ? `a/b` : \"c\"} awesome`, \"value\")}></div>",
 			},
 		},
 		{
 			name:   "nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c`}` : \"d\"} awesome`} />",
 			want: want{
-				code: "<div${$$addAttribute(`${attr ? `a/b ${`c`}` : \"d\"} awesome`, \"value\")}></div>",
+				code: "${$$maybeRenderHead($$result)}<div${$$addAttribute(`${attr ? `a/b ${`c`}` : \"d\"} awesome`, \"value\")}></div>",
 			},
 		},
 		{
 			name:   "complex nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
 			want: want{
-				code: "<div${$$addAttribute(`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`, \"value\")}></div>",
+				code: "${$$maybeRenderHead($$result)}<div${$$addAttribute(`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`, \"value\")}></div>",
 			},
 		},
 		{
@@ -477,35 +479,35 @@ import Component from '../components';
 			name:   "iframe",
 			source: `<iframe src="something" />`,
 			want: want{
-				code: "<iframe src=\"something\"></iframe>",
+				code: "${$$maybeRenderHead($$result)}<iframe src=\"something\"></iframe>",
 			},
 		},
 		{
 			name:   "conditional render",
 			source: `<body>{false ? <div>#f</div> : <div>#t</div>}</body>`,
 			want: want{
-				code: "<body>${false ? $$render`<div>#f</div>` : $$render`<div>#t</div>`}</body>",
+				code: "${$$maybeRenderHead($$result)}<body>${false ? $$render`<div>#f</div>` : $$render`<div>#t</div>`}</body>",
 			},
 		},
 		{
 			name:   "conditional noscript",
 			source: `{mode === "production" && <noscript>Hello</noscript>}`,
 			want: want{
-				code: "${mode === \"production\" && $$render`<noscript>Hello</noscript>`}",
+				code: "${mode === \"production\" && $$render`${$$maybeRenderHead($$result)}<noscript>Hello</noscript>`}",
 			},
 		},
 		{
 			name:   "conditional iframe",
 			source: `{bool && <iframe src="something">content</iframe>}`,
 			want: want{
-				code: "${bool && $$render`<iframe src=\"something\">content</iframe>`}",
+				code: "${bool && $$render`${$$maybeRenderHead($$result)}<iframe src=\"something\">content</iframe>`}",
 			},
 		},
 		{
 			name:   "simple ternary",
 			source: `<body>{link ? <a href="/">{link}</a> : <div>no link</div>}</body>`,
 			want: want{
-				code: fmt.Sprintf(`<body>${link ? $$render%s<a href="/">${link}</a>%s : $$render%s<div>no link</div>%s}</body>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<body>${link ? $$render%s<a href="/">${link}</a>%s : $$render%s<div>no link</div>%s}</body>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
 			},
 		},
 		{
@@ -520,7 +522,7 @@ const items = [0, 1, 2];
 </ul>`,
 			want: want{
 				frontmatter: []string{"", "const items = [0, 1, 2];"},
-				code: fmt.Sprintf(`<ul>
+				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<ul>
 	${items.map(item => {
 		return $$render%s<li>${item}</li>%s;
 	})}
@@ -531,14 +533,14 @@ const items = [0, 1, 2];
 			name:   "map without component",
 			source: `<header><nav>{menu.map((item) => <a href={item.href}>{item.title}</a>)}</nav></header>`,
 			want: want{
-				code: fmt.Sprintf(`<header><nav>${menu.map((item) => $$render%s<a${$$addAttribute(item.href, "href")}>${item.title}</a>%s)}</nav></header>`, BACKTICK, BACKTICK),
+				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<header><nav>${menu.map((item) => $$render%s<a${$$addAttribute(item.href, "href")}>${item.title}</a>%s)}</nav></header>`, BACKTICK, BACKTICK),
 			},
 		},
 		{
 			name:   "map with component",
 			source: `<header><nav>{menu.map((item) => <a href={item.href}>{item.title}</a>)}</nav><Hello/></header>`,
 			want: want{
-				code: fmt.Sprintf(`<header><nav>${menu.map((item) => $$render%s<a${$$addAttribute(item.href, "href")}>${item.title}</a>%s)}</nav>${$$renderComponent($$result,'Hello',Hello,{})}</header>`, BACKTICK, BACKTICK),
+				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<header><nav>${menu.map((item) => $$render%s<a${$$addAttribute(item.href, "href")}>${item.title}</a>%s)}</nav>${$$renderComponent($$result,'Hello',Hello,{})}</header>`, BACKTICK, BACKTICK),
 			},
 		},
 		{
@@ -558,7 +560,7 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			want: want{
 				frontmatter: []string{"", "const groups = [[0, 1, 2], [3, 4, 5]];"},
 				styles:      []string{},
-				code: fmt.Sprintf(`<div>
+				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<div>
 	${groups.map(items => {
 		return %s<ul>${
 			items.map(item => {
@@ -572,14 +574,14 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			name:   "backtick in HTML comment",
 			source: "<body><!-- `npm install astro` --></body>",
 			want: want{
-				code: "<body><!-- \\`npm install astro\\` --></body>",
+				code: "${$$maybeRenderHead($$result)}<body><!-- \\`npm install astro\\` --></body>",
 			},
 		},
 		{
 			name:   "nested expressions",
 			source: `<article>{(previous || next) && <aside>{previous && <div>Previous Article: <a rel="prev" href={new URL(previous.link, Astro.site).pathname}>{previous.text}</a></div>}{next && <div>Next Article: <a rel="next" href={new URL(next.link, Astro.site).pathname}>{next.text}</a></div>}</aside>}</article>`,
 			want: want{
-				code: `<article>${(previous || next) && $$render` + BACKTICK + `<aside>${previous && $$render` + BACKTICK + `<div>Previous Article: <a rel="prev"${$$addAttribute(new URL(previous.link, Astro.site).pathname, "href")}>${previous.text}</a></div>` + BACKTICK + `}${next && $$render` + BACKTICK + `<div>Next Article: <a rel="next"${$$addAttribute(new URL(next.link, Astro.site).pathname, "href")}>${next.text}</a></div>` + BACKTICK + `}</aside>` + BACKTICK + `}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${(previous || next) && $$render` + BACKTICK + `<aside>${previous && $$render` + BACKTICK + `<div>Previous Article: <a rel="prev"${$$addAttribute(new URL(previous.link, Astro.site).pathname, "href")}>${previous.text}</a></div>` + BACKTICK + `}${next && $$render` + BACKTICK + `<div>Next Article: <a rel="next"${$$addAttribute(new URL(next.link, Astro.site).pathname, "href")}>${next.text}</a></div>` + BACKTICK + `}</aside>` + BACKTICK + `}</article>`,
 			},
 		},
 		{
@@ -598,7 +600,7 @@ const items = ['red', 'yellow', 'blue'];
 </div>`,
 			want: want{
 				frontmatter: []string{"", "const items = ['red', 'yellow', 'blue'];"},
-				code: `<div>
+				code: `${$$maybeRenderHead($$result)}<div>
   ${items.map((item) => (
     // foo < > < }
 $$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
@@ -624,7 +626,7 @@ $$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
 }
 </div>`,
 			want: want{
-				code: `<div>
+				code: `${$$maybeRenderHead($$result)}<div>
 ${
 	() => {
 		let generate = (input) => {
@@ -649,7 +651,7 @@ import Component from "test";
 			want: want{
 				frontmatter: []string{`import Component from "test";`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -665,7 +667,7 @@ import Component from 'test';
 			want: want{
 				frontmatter: []string{`import Component from 'test';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -675,7 +677,7 @@ import Component from 'test';
 	{items.map(item => <div>{item}</div>)}
 </Component>`,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{"data":(data)},{"default": () => $$render` + BACKTICK + `${items.map(item => $$render` + BACKTICK + `<div>${item}</div>` + BACKTICK + `)}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{"data":(data)},{"default": () => $$render` + BACKTICK + `${items.map(item => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>${item}</div>` + BACKTICK + `)}` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -720,7 +722,7 @@ const name = "world";
 		<p class="body">I’m a page</p>`,
 			want: want{
 				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px}.body.astro-DPOHFLYM{font-size:1em}`}"},
-				code: "\n\n\t\t" + `<h1 class="title astro-DPOHFLYM">Page Title</h1>
+				code: "\n\n\t\t" + `${$$maybeRenderHead($$result)}<h1 class="title astro-DPOHFLYM">Page Title</h1>
 		<p class="body astro-DPOHFLYM">I’m a page</p>`,
 			},
 		},
@@ -922,21 +924,27 @@ import Widget2 from '../components/Widget2.astro';`},
 				styles:   []string{},
 				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
+<<<<<<< HEAD
 				code:     `<main></main>`,
+=======
+				code: `${$$maybeRenderHead($$result)}<main>
+
+</main>`,
+>>>>>>> 3a9d166 (Add renderHead injection points (#438))
 			},
 		},
 		{
 			name:   "script inline",
 			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
 			want: want{
-				code: `<main><script type="module">console.log("Hello");</script></main>`,
+				code: `${$$maybeRenderHead($$result)}<main><script type="module">console.log("Hello");</script></main>`,
 			},
 		},
 		{
 			name:   "script define:vars",
 			source: `<main><script define:vars={{ value: 0 }} type="module">console.log(value);</script>`,
 			want: want{
-				code: fmt.Sprintf(`<main><script type="module">${%s({ value: 0 })}console.log(value);</script></main>`, DEFINE_SCRIPT_VARS),
+				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<main><script type="module">${%s({ value: 0 })}console.log(value);</script></main>`, DEFINE_SCRIPT_VARS),
 			},
 		},
 		{
@@ -966,14 +974,14 @@ import Widget2 from '../components/Widget2.astro';`},
 				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
 				styles:      []string{},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
 			name:   "condition expressions at the top-level",
 			source: `{cond && <span></span>}{cond && <strong></strong>}`,
 			want: want{
-				code: "${cond && $$render`<span></span>`}${cond && $$render`<strong></strong>`}",
+				code: "${cond && $$render`${$$maybeRenderHead($$result)}<span></span>`}${cond && $$render`<strong></strong>`}",
 			},
 		},
 		{
@@ -1073,7 +1081,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Self-closing formatting elements",
 			source: `<div id="1"><div id="2"><div id="3"><i/><i/><i/></div></div></div>`,
 			want: want{
-				code: `<div id="1"><div id="2"><div id="3"><i></i><i></i><i></i></div></div></div>`,
+				code: `${$$maybeRenderHead($$result)}<div id="1"><div id="2"><div id="3"><i></i><i></i><i></i></div></div></div>`,
 			},
 		},
 		{
@@ -1084,7 +1092,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
   <div id="7"><div id="8"><div id="9"><i id="c" /></div></div></div>
 </body>`,
 			want: want{
-				code: `<body>
+				code: `${$$maybeRenderHead($$result)}<body>
   <div id="1"><div id="2"><div id="3"><i id="a"></i></div></div></div>
   <div id="4"><div id="5"><div id="6"><i id="b"></i></div></div></div>
   <div id="7"><div id="8"><div id="9"><i id="c"></i></div></div></div>
@@ -1124,7 +1132,7 @@ let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');
 }
 let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');`},
 				styles: []string{},
-				code:   "<div>testing</div>",
+				code:   "${$$maybeRenderHead($$result)}<div>testing</div>",
 			},
 		},
 		{
@@ -1148,7 +1156,7 @@ import ZComponent from '../components/ZComponent.jsx';`},
 						`{ module: $$module2, specifier: '../components/ZComponent.jsx', assert: {} }`,
 					},
 				},
-				code: `<body>
+				code: `${$$maybeRenderHead($$result)}<body>
   ${` + RENDER_COMPONENT + `($$result,'AComponent',AComponent,{})}
   ${` + RENDER_COMPONENT + `($$result,'ZComponent',ZComponent,{})}
 </body>`,
@@ -1165,7 +1173,7 @@ import ZComponent from '../components/ZComponent.jsx';`},
   sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"
 >`,
 			want: want{
-				code: `<html><body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
+				code: `<html>${$$maybeRenderHead($$result)}<body>` + longRandomString + `<img width="1600" height="1131" class="img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75" srcSet="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 800w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=75 1200w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=75 1600w,https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2400&q=75 2400w" sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, (max-width: 1600px) 1600px, (max-width: 2400px) 2400px, 1200px"></body></html>`,
 			},
 		},
 		{
@@ -1186,7 +1194,7 @@ import ZComponent from '../components/ZComponent.jsx';`},
 			name:   "SVG styles",
 			source: `<svg><style>path { fill: red; }</style></svg>`,
 			want: want{
-				code: `<svg><style>path { fill: red; }</style></svg>`,
+				code: `${$$maybeRenderHead($$result)}<svg><style>path { fill: red; }</style></svg>`,
 			},
 		},
 		{
@@ -1197,7 +1205,7 @@ const title = 'icon';
 <svg>{title ?? null}</svg>`,
 			want: want{
 				frontmatter: []string{"", "const title = 'icon';"},
-				code:        `<svg>${title ?? null}</svg>`,
+				code:        `${$$maybeRenderHead($$result)}<svg>${title ?? null}</svg>`,
 			},
 		},
 		{
@@ -1208,7 +1216,7 @@ const title = 'icon';
 <svg>{title ? <title>{title}</title> : null}</svg>`,
 			want: want{
 				frontmatter: []string{"", "const title = 'icon';"},
-				code:        `<svg>${title ? $$render` + BACKTICK + `<title>${title}</title>` + BACKTICK + ` : null}</svg>`,
+				code:        `${$$maybeRenderHead($$result)}<svg>${title ? $$render` + BACKTICK + `<title>${title}</title>` + BACKTICK + ` : null}</svg>`,
 			},
 		},
 		{
@@ -1330,7 +1338,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			want: want{
 				frontmatter: []string{`import { Container, Col, Row } from 'react-bootstrap';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap', assert: {} }`}},
-				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`<h1>Hi!</h1>`,})}`,})}`,})}",
+				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`${$$maybeRenderHead($$result)}<h1>Hi!</h1>`,})}`,})}`,})}",
 			},
 		},
 		{
@@ -1354,21 +1362,21 @@ import { Container, Col, Row } from 'react-bootstrap';
 			name:   "class with spread",
 			source: `<div class="something" {...Astro.props} />`,
 			want: want{
-				code: `<div class="something"${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div class="something"${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
 			},
 		},
 		{
 			name:   "class:list with spread",
 			source: `<div class:list="something" {...Astro.props} />`,
 			want: want{
-				code: `<div class:list="something"${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div class:list="something"${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
 			},
 		},
 		{
 			name:   "spread without style or class",
 			source: `<div {...Astro.props} />`,
 			want: want{
-				code: `<div${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
 			},
 		},
 		{
@@ -1378,21 +1386,21 @@ import { Container, Col, Row } from 'react-bootstrap';
 				styles: []string{
 					"{props:{\"data-astro-id\":\"TN53UTDL\"},children:`div.astro-TN53UTDL{color:red}`}",
 				},
-				code: `<div${$$spreadAttributes(Astro.props,"Astro.props",{"class":"astro-XXXX"})}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,"Astro.props",{"class":"astro-XXXX"})}></div>`,
 			},
 		},
 		{
 			name:   "Fragment",
 			source: `<body><Fragment><div>Default</div><div>Named</div></Fragment></body>`,
 			want: want{
-				code: `<body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}</body>`,
+				code: `${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}</body>`,
 			},
 		},
 		{
 			name:   "Fragment shorthand",
 			source: `<body><><div>Default</div><div>Named</div></></body>`,
 			want: want{
-				code: `<body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}</body>`,
+				code: `${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}</body>`,
 			},
 		},
 		{
@@ -1413,28 +1421,28 @@ import { Container, Col, Row } from 'react-bootstrap';
 			name:   "Fragment slotted",
 			source: `<body><Component><><div>Default</div><div>Named</div></></Component></body>`,
 			want: want{
-				code: `<body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}` + BACKTICK + `,})}</body>`,
+				code: `${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}` + BACKTICK + `,})}</body>`,
 			},
 		},
 		{
 			name:   "Fragment slotted with name",
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 			want: want{
-				code: `<body>${$$renderComponent($$result,'Component',Component,{},{"named": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{"slot":"named"},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}` + BACKTICK + `,})}</body>`,
+				code: `${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'Component',Component,{},{"named": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{"slot":"named"},{"default": () => $$render` + BACKTICK + `<div>Default</div><div>Named</div>` + BACKTICK + `,})}` + BACKTICK + `,})}</body>`,
 			},
 		},
 		{
 			name:   "Preserve slots inside custom-element",
 			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
 			want: want{
-				code: `<body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render` + BACKTICK + `<div slot="name">Name</div><div>Default</div>` + BACKTICK + `,})}</body>`,
+				code: `${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render` + BACKTICK + `<div slot="name">Name</div><div>Default</div>` + BACKTICK + `,})}</body>`,
 			},
 		},
 		{
 			name:   "Preserve namespaces",
 			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></svg>`,
 			want: want{
-				code: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></rect></svg>`,
+				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></rect></svg>`,
 			},
 		},
 		{
@@ -1537,7 +1545,7 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
 			name:   "doctype",
 			source: `<!DOCTYPE html><div/>`,
 			want: want{
-				code: `<!DOCTYPE html><div></div>`,
+				code: `<!DOCTYPE html>${$$maybeRenderHead($$result)}<div></div>`,
 			},
 		},
 		{
@@ -1548,7 +1556,7 @@ const value = 'test';
 <select><option>{value}</option></select>`,
 			want: want{
 				frontmatter: []string{"", "const value = 'test';"},
-				code:        `<select><option>${value}</option></select>`,
+				code:        `${$$maybeRenderHead($$result)}<select><option>${value}</option></select>`,
 			},
 		},
 		{
@@ -1559,14 +1567,14 @@ const value = 'test';
 <select>{value && <option>{value}</option>}</select>`,
 			want: want{
 				frontmatter: []string{"", "const value = 'test';"},
-				code:        `<select>${value && $$render` + BACKTICK + `<option>${value}</option>` + BACKTICK + `}</select>`,
+				code:        `${$$maybeRenderHead($$result)}<select>${value && $$render` + BACKTICK + `<option>${value}</option>` + BACKTICK + `}</select>`,
 			},
 		},
 		{
 			name:   "select map expression",
 			source: `<select>{[1, 2, 3].map(num => <option>{num}</option>)}</select><div>Hello world!</div>`,
 			want: want{
-				code: `<select>${[1, 2, 3].map(num => $$render` + BACKTICK + `<option>${num}</option>` + BACKTICK + `)}</select><div>Hello world!</div>`,
+				code: `${$$maybeRenderHead($$result)}<select>${[1, 2, 3].map(num => $$render` + BACKTICK + `<option>${num}</option>` + BACKTICK + `)}</select><div>Hello world!</div>`,
 			},
 		},
 		{
@@ -1577,14 +1585,14 @@ const value = 'test';
 <textarea>{value}</textarea>`,
 			want: want{
 				frontmatter: []string{"", "const value = 'test';"},
-				code:        `<textarea>${value}</textarea>`,
+				code:        `${$$maybeRenderHead($$result)}<textarea>${value}</textarea>`,
 			},
 		},
 		{
 			name:   "textarea inside expression",
 			source: `{bool && <textarea>{value}</textarea>} {!bool && <input>}`,
 			want: want{
-				code: `${bool && $$render` + BACKTICK + `<textarea>${value}</textarea>` + BACKTICK + `} ${!bool && $$render` + BACKTICK + `<input>` + BACKTICK + `}`,
+				code: `${bool && $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<textarea>${value}</textarea>` + BACKTICK + `} ${!bool && $$render` + BACKTICK + `<input>` + BACKTICK + `}`,
 			},
 		},
 		{
@@ -1595,14 +1603,14 @@ const items = ["Dog", "Cat", "Platipus"];
 <table>{items.map(item => (<tr><td>{item}</td></tr>))}</table>`,
 			want: want{
 				frontmatter: []string{"", `const items = ["Dog", "Cat", "Platipus"];`},
-				code:        `<table>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td></tr>` + BACKTICK + `))}</table>`,
+				code:        `${$$maybeRenderHead($$result)}<table>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td></tr>` + BACKTICK + `))}</table>`,
 			},
 		},
 		{
 			name:   "table caption expression",
 			source: `<table><caption>{title}</caption><tr><td>Hello</td></tr></table>`,
 			want: want{
-				code: `<table><caption>${title}</caption><tr><td>Hello</td></tr></table>`,
+				code: `${$$maybeRenderHead($$result)}<table><caption>${title}</caption><tr><td>Hello</td></tr></table>`,
 			},
 		},
 		{
@@ -1613,7 +1621,7 @@ const items = ["Dog", "Cat", "Platipus"];
 <table><tr><td>Name</td></tr>{items.map(item => (<tr><td>{item}</td></tr>))}</table>`,
 			want: want{
 				frontmatter: []string{"", `const items = ["Dog", "Cat", "Platipus"];`},
-				code:        `<table><tr><td>Name</td></tr>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td></tr>` + BACKTICK + `))}</table>`,
+				code:        `${$$maybeRenderHead($$result)}<table><tr><td>Name</td></tr>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td></tr>` + BACKTICK + `))}</table>`,
 			},
 		},
 		{
@@ -1624,105 +1632,105 @@ const items = ["Dog", "Cat", "Platipus"];
 <table><tr><td>Name</td></tr>{items.map(item => (<tr><td>{item}</td><td>{item + 's'}</td></tr>))}</table>`,
 			want: want{
 				frontmatter: []string{"", `const items = ["Dog", "Cat", "Platipus"];`},
-				code:        `<table><tr><td>Name</td></tr>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td><td>${item + 's'}</td></tr>` + BACKTICK + `))}</table>`,
+				code:        `${$$maybeRenderHead($$result)}<table><tr><td>Name</td></tr>${items.map(item => ($$render` + BACKTICK + `<tr><td>${item}</td><td>${item + 's'}</td></tr>` + BACKTICK + `))}</table>`,
 			},
 		},
 		{
 			name:   "tbody expressions 3",
 			source: `<table><tbody>{rows.map(row => (<tr><td><strong>{row}</strong></td></tr>))}</tbody></table>`,
 			want: want{
-				code: `<table><tbody>${rows.map(row => ($$render` + BACKTICK + `<tr><td><strong>${row}</strong></td></tr>` + BACKTICK + `))}</tbody></table>`,
+				code: `${$$maybeRenderHead($$result)}<table><tbody>${rows.map(row => ($$render` + BACKTICK + `<tr><td><strong>${row}</strong></td></tr>` + BACKTICK + `))}</tbody></table>`,
 			},
 		},
 		{
 			name:   "td expressions",
 			source: `<table><tr><td><h2>Row 1</h2></td><td>{title}</td></tr></table>`,
 			want: want{
-				code: `<table><tr><td><h2>Row 1</h2></td><td>${title}</td></tr></table>`,
+				code: `${$$maybeRenderHead($$result)}<table><tr><td><h2>Row 1</h2></td><td>${title}</td></tr></table>`,
 			},
 		},
 		{
 			name:   "th expressions",
 			source: `<table><thead><tr><th>{title}</th></tr></thead></table>`,
 			want: want{
-				code: `<table><thead><tr><th>${title}</th></tr></thead></table>`,
+				code: `${$$maybeRenderHead($$result)}<table><thead><tr><th>${title}</th></tr></thead></table>`,
 			},
 		},
 		{
 			name:   "tr only",
 			source: `<tr><td>col 1</td><td>col 2</td><td>{foo}</td></tr>`,
 			want: want{
-				code: `<tr><td>col 1</td><td>col 2</td><td>${foo}</td></tr>`,
+				code: `${$$maybeRenderHead($$result)}<tr><td>col 1</td><td>col 2</td><td>${foo}</td></tr>`,
 			},
 		},
 		{
 			name:   "caption only",
 			source: `<caption>Hello world!</caption>`,
 			want: want{
-				code: `<caption>Hello world!</caption>`,
+				code: `${$$maybeRenderHead($$result)}<caption>Hello world!</caption>`,
 			},
 		},
 		{
 			name:   "anchor expressions",
 			source: `<a>{expr}</a>`,
 			want: want{
-				code: `<a>${expr}</a>`,
+				code: `${$$maybeRenderHead($$result)}<a>${expr}</a>`,
 			},
 		},
 		{
 			name:   "anchor inside expression",
 			source: `{true && <a>expr</a>}`,
 			want: want{
-				code: `${true && $$render` + BACKTICK + `<a>expr</a>` + BACKTICK + `}`,
+				code: `${true && $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<a>expr</a>` + BACKTICK + `}`,
 			},
 		},
 		{
 			name:   "anchor content",
 			source: `<a><div><h3></h3><ul><li>{expr}</li></ul></div></a>`,
 			want: want{
-				code: `<a><div><h3></h3><ul><li>${expr}</li></ul></div></a>`,
+				code: `${$$maybeRenderHead($$result)}<a><div><h3></h3><ul><li>${expr}</li></ul></div></a>`,
 			},
 		},
 		{
 			name:   "small expression",
 			source: `<div><small>{a}</small>{data.map(a => <Component value={a} />)}</div>`,
 			want: want{
-				code: `<div><small>${a}</small>${data.map(a => $$render` + BACKTICK + `${$$renderComponent($$result,'Component',Component,{"value":(a)})}` + BACKTICK + `)}</div>`,
+				code: `${$$maybeRenderHead($$result)}<div><small>${a}</small>${data.map(a => $$render` + BACKTICK + `${$$renderComponent($$result,'Component',Component,{"value":(a)})}` + BACKTICK + `)}</div>`,
 			},
 		},
 		{
 			name:   "division inside expression",
 			source: `<div>{16 / 4}</div>`,
 			want: want{
-				code: `<div>${16 / 4}</div>`,
+				code: `${$$maybeRenderHead($$result)}<div>${16 / 4}</div>`,
 			},
 		},
 		{
 			name:   "escaped entity",
 			source: `<img alt="A person saying &#x22;hello&#x22;">`,
 			want: want{
-				code: `<img alt="A person saying &quot;hello&quot;">`,
+				code: `${$$maybeRenderHead($$result)}<img alt="A person saying &quot;hello&quot;">`,
 			},
 		},
 		{
 			name:   "textarea in form",
 			source: `<html><Component><form><textarea></textarea></form></Component></html>`,
 			want: want{
-				code: `<html>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `,})}</html>`,
+				code: `<html>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<form><textarea></textarea></form>` + BACKTICK + `,})}</html>`,
 			},
 		},
 		{
 			name:   "select in form",
 			source: `<form><select>{options.map((option) => (<option value={option.id}>{option.title}</option>))}</select><div><label>Title 3</label><input type="text" /></div><button type="submit">Submit</button></form>`,
 			want: want{
-				code: `<form><select>${options.map((option) => ($$render` + BACKTICK + `<option${$$addAttribute(option.id, "value")}>${option.title}</option>` + BACKTICK + `))}</select><div><label>Title 3</label><input type="text"></div><button type="submit">Submit</button></form>`,
+				code: `${$$maybeRenderHead($$result)}<form><select>${options.map((option) => ($$render` + BACKTICK + `<option${$$addAttribute(option.id, "value")}>${option.title}</option>` + BACKTICK + `))}</select><div><label>Title 3</label><input type="text"></div><button type="submit">Submit</button></form>`,
 			},
 		},
 		{
 			name:   "slot inside of Base",
 			source: `<Base title="Home"><div>Hello</div></Base>`,
 			want: want{
-				code: `${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render` + BACKTICK + `<div>Hello</div>` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>Hello</div>` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -1741,7 +1749,7 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			want: want{
 				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"SJ3WYE6H"},children:%s.container.astro-SJ3WYE6H{padding:2rem}%s}`, BACKTICK, BACKTICK)},
-				code:   `<div class="container astro-SJ3WYE6H">My Text</div>`,
+				code:   `${$$maybeRenderHead($$result)}<div class="container astro-SJ3WYE6H">My Text</div>`,
 			},
 		},
 		{
@@ -1754,7 +1762,7 @@ const items = ["Dog", "Cat", "Platipus"];
   </table>
 </body>`,
 			want: want{
-				code: fmt.Sprintf(`<html><body>
+				code: fmt.Sprintf(`<html>${$$maybeRenderHead($$result)}<body>
   <table>
   ${true ? ($$render%s<tr><td>Row 1</td></tr>%s) : null}
   ${true ? ($$render%s<tr><td>Row 2</td></tr>%s) : null}
@@ -1774,21 +1782,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "Empty expression",
 			source: "<body>({})</body>",
 			want: want{
-				code: `<body>(${(void 0)})</body>`,
+				code: `${$$maybeRenderHead($$result)}<body>(${(void 0)})</body>`,
 			},
 		},
 		{
 			name:   "Empty attribute expression",
 			source: "<body attr={}></body>",
 			want: want{
-				code: `<body${$$addAttribute((void 0), "attr")}></body>`,
+				code: `${$$maybeRenderHead($$result)}<body${$$addAttribute((void 0), "attr")}></body>`,
 			},
 		},
 		{
 			name:   "is:raw",
 			source: "<article is:raw><% awesome %></article>",
 			want: want{
-				code: `<article><% awesome %></article>`,
+				code: `${$$maybeRenderHead($$result)}<article><% awesome %></article>`,
 			},
 		},
 		{
@@ -1802,14 +1810,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<article>${$$unescapeHTML(content)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:text",
 			source: "<article set:text={content} />",
 			want: want{
-				code: `<article>${content}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${content}</article>`,
 			},
 		},
 		{
@@ -1844,21 +1852,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on self-closing tag",
 			source: "<article set:html={content} />",
 			want: want{
-				code: `<article>${$$unescapeHTML(content)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html with other attributes",
 			source: "<article set:html={content} cool=\"true\" />",
 			want: want{
-				code: `<article cool="true">${$$unescapeHTML(content)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article cool="true">${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html on empty tag",
 			source: "<article set:html={content}></article>",
 			want: want{
-				code: `<article>${$$unescapeHTML(content)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
@@ -1866,21 +1874,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html and set:text",
 			source: "<article set:html={content} set:text={content} />",
 			want: want{
-				code: `<article>${$$unescapeHTML(content)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with children",
 			source: "<article set:html={content}>!!!</article>",
 			want: want{
-				code: `<article>${$$unescapeHTML(content)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with empty whitespace",
 			source: "<article set:html={content}>   </article>",
 			want: want{
-				code: `<article>${$$unescapeHTML(content)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
 		{
@@ -1902,7 +1910,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			staticExtraction: true,
 			want: want{
-				code: `<h1 class="astro-VFS5OEMV">testing</h1>`,
+				code: `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV">testing</h1>`,
 				styles: []string{
 					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1.astro-VFS5OEMV{color:var(--color)}`}",
 				},
@@ -1927,28 +1935,28 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "comments removed from attribute list",
 			source: `<div><h1 {/* comment 1 */} value="1" {/* comment 2 */}>Hello</h1><Component {/* comment 1 */} value="1" {/* comment 2 */} /></div>`,
 			want: want{
-				code: `<div><h1 value="1">Hello</h1>${$$renderComponent($$result,'Component',Component,{"value":"1",})}</div>`,
+				code: `${$$maybeRenderHead($$result)}<div><h1 value="1">Hello</h1>${$$renderComponent($$result,'Component',Component,{"value":"1",})}</div>`,
 			},
 		},
 		{
 			name:   "includes comments for shorthand attribute",
 			source: `<div><h1 {/* comment 1 */ id /* comment 2 */}>Hello</h1><Component {/* comment 1 */ id /* comment 2 */}/></div>`,
 			want: want{
-				code: `<div><h1${$$addAttribute(/* comment 1 */ id /* comment 2 */, "id")}>Hello</h1>${$$renderComponent($$result,'Component',Component,{"id":(/* comment 1 */ id /* comment 2 */)})}</div>`,
+				code: `${$$maybeRenderHead($$result)}<div><h1${$$addAttribute(/* comment 1 */ id /* comment 2 */, "id")}>Hello</h1>${$$renderComponent($$result,'Component',Component,{"id":(/* comment 1 */ id /* comment 2 */)})}</div>`,
 			},
 		},
 		{
 			name:   "includes comments for expression attribute",
 			source: `<div><h1 attr={/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */}>Hello</h1><Component attr={/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */}/></div>`,
 			want: want{
-				code: `<div><h1${$$addAttribute(/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */, "attr")}>Hello</h1>${$$renderComponent($$result,'Component',Component,{"attr":(/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */)})}</div>`,
+				code: `${$$maybeRenderHead($$result)}<div><h1${$$addAttribute(/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */, "attr")}>Hello</h1>${$$renderComponent($$result,'Component',Component,{"attr":(/* comment 1 */ isTrue ? 1 : 2 /* comment 2 */)})}</div>`,
 			},
 		},
 		{
 			name:   "comment only expressions are removed",
 			source: `{/* a comment 1 */}<h1>{/* a comment 2*/}Hello</h1>`,
 			want: want{
-				code: `<h1>Hello</h1>`,
+				code: `${$$maybeRenderHead($$result)}<h1>Hello</h1>`,
 			},
 		},
 	}

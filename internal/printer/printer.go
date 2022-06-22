@@ -32,6 +32,8 @@ var TEMPLATE_TAG = "$$render"
 var CREATE_ASTRO = "$$createAstro"
 var CREATE_COMPONENT = "$$createComponent"
 var RENDER_COMPONENT = "$$renderComponent"
+var RENDER_HEAD = "$$renderHead"
+var MAYBE_RENDER_HEAD = "$$maybeRenderHead"
 var UNESCAPE_HTML = "$$unescapeHTML"
 var RENDER_SLOT = "$$renderSlot"
 var ADD_ATTRIBUTE = "$$addAttribute"
@@ -68,6 +70,8 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print("createAstro as " + CREATE_ASTRO + ",\n  ")
 	p.print("createComponent as " + CREATE_COMPONENT + ",\n  ")
 	p.print("renderComponent as " + RENDER_COMPONENT + ",\n  ")
+	p.print("renderHead as " + RENDER_HEAD + ",\n  ")
+	p.print("maybeRenderHead as " + MAYBE_RENDER_HEAD + ",\n  ")
 	p.print("unescapeHTML as " + UNESCAPE_HTML + ",\n  ")
 	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
 	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
@@ -97,7 +101,12 @@ func (p *printer) printCSSImports(cssLen int) {
 
 func (p *printer) printRenderHead() {
 	p.addNilSourceMapping()
-	p.print("<!--astro:head-->")
+	p.print(fmt.Sprintf("${%s(%s)}", RENDER_HEAD, RESULT))
+}
+
+func (p *printer) printMaybeRenderHead() {
+	p.addNilSourceMapping()
+	p.print(fmt.Sprintf("${%s(%s)}", MAYBE_RENDER_HEAD, RESULT))
 }
 
 func (p *printer) printReturnOpen() {
