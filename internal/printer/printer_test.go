@@ -135,6 +135,20 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "attribute with template literal",
+			source: "<a :href=\"`/home`\">Home</a>",
+			want: want{
+				code: "<a :href=\"\\`/home\\`\">Home</a>",
+			},
+		},
+		{
+			name:   "attribute with template literal interpolation",
+			source: "<a :href=\"`/${url}`\">Home</a>",
+			want: want{
+				code: "<a :href=\"\\`/\\${url}\\`\">Home</a>",
+			},
+		},
+		{
 			name: "basic (frontmatter)",
 			source: `---
 const href = '/about';
