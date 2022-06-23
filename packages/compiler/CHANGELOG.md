@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.17.0
+
+### Minor Changes
+
+- 3a9d166: Add renderHead injection points
+
 ## 0.16.1
 
 ### Patch Changes
