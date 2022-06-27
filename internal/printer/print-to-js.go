@@ -354,9 +354,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	isSlot := n.DataAtom == atom.Slot
 	isImplicit := false
 	for _, a := range n.Attr {
+		if isSlot && a.Key == "is:inline" {
+			isSlot = false
+		}
 		if transform.IsImplictNodeMarker(a) {
 			isImplicit = true
-			break
 		}
 	}
 
@@ -438,13 +440,13 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				continue
 			}
 			if a.Key == "slot" {
-				if !(n.Parent.Component || n.Parent.CustomElement) {
-					panic(`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`)
+				if n.Parent.Component {
+					continue
 				}
-				if n.Parent.CustomElement {
-					p.printAttribute(a, n)
-					p.addSourceMapping(n.Loc[0])
-				}
+				// Note: if we encounter "slot" NOT inside a component, that's fine
+				// These should be perserved in the output
+				p.printAttribute(a, n)
+				p.addSourceMapping(n.Loc[0])
 			} else {
 				p.printAttribute(a, n)
 				p.addSourceMapping(n.Loc[0])
