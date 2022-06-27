@@ -130,6 +130,20 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "preserve is:inline slot",
+			source: `<slot is:inline />`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<slot></slot>`,
+			},
+		},
+		{
+			name:   "preserve is:inline slot II",
+			source: `<slot name="test" is:inline />`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<slot name="test"></slot>`,
+			},
+		},
+		{
 			name:   "text only",
 			source: "Hello!",
 			want: want{
@@ -140,14 +154,14 @@ func TestPrinter(t *testing.T) {
 			name:   "attribute with template literal",
 			source: "<a :href=\"`/home`\">Home</a>",
 			want: want{
-				code: "<a :href=\"\\`/home\\`\">Home</a>",
+				code: "${$$maybeRenderHead($$result)}<a :href=\"\\`/home\\`\">Home</a>",
 			},
 		},
 		{
 			name:   "attribute with template literal interpolation",
 			source: "<a :href=\"`/${url}`\">Home</a>",
 			want: want{
-				code: "<a :href=\"\\`/\\${url}\\`\">Home</a>",
+				code: "${$$maybeRenderHead($$result)}<a :href=\"\\`/\\${url}\\`\">Home</a>",
 			},
 		},
 		{
