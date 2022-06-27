@@ -391,6 +391,10 @@ func isFragment(data string) bool {
 	return len(data) == 0 || data == "Fragment"
 }
 
+func isSlot(data string) bool {
+	return data == "slot"
+}
+
 func isComponent(data string) bool {
 	if strings.Contains(data, ".") {
 		return true
@@ -774,9 +778,6 @@ func inHeadIM(p *parser) bool {
 			return true
 		case a.Slot:
 			p.addElement()
-			if p.originalIM == nil {
-				p.setOriginalIM()
-			}
 			if p.hasSelfClosingToken {
 				p.addLoc()
 				p.oe.pop()
@@ -843,7 +844,7 @@ func inHeadIM(p *parser) bool {
 			return true
 		}
 
-		if p.oe.top() != nil && (isComponent(p.oe.top().Data) || isFragment((p.oe.top().Data))) {
+		if p.oe.top() != nil && (isSlot(p.oe.top().Data) || isComponent(p.oe.top().Data) || isFragment((p.oe.top().Data))) {
 			p.addElement()
 			if p.originalIM == nil {
 				p.setOriginalIM()

@@ -144,6 +144,20 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "slot with fallback",
+			source: `<body><slot><p>Hello world!</p></slot><body>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<body>${$$renderSlot($$result,$$slots["default"],$$render` + BACKTICK + `<p>Hello world!</p>` + BACKTICK + `)}</body>`,
+			},
+		},
+		{
+			name:   "slot with fallback II",
+			source: `<slot name="test"><p>Hello world!</p></slot>`,
+			want: want{
+				code: `${$$renderSlot($$result,$$slots["test"],$$render` + BACKTICK + `${$$maybeRenderHead($$result)}<p>Hello world!</p>` + BACKTICK + `)}`,
+			},
+		},
+		{
 			name:   "text only",
 			source: "Hello!",
 			want: want{
