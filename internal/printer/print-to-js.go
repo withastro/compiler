@@ -384,9 +384,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printMaybeRenderHead()
 			}
 		}
-
 		p.print("<")
-
 	}
 
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
@@ -425,9 +423,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				default:
 					panic("slot[name] must be a static string")
 				}
-				// if i != len(n.Attr)-1 {
-				// 	p.print("")
-				// }
 			}
 			if !slotted {
 				p.print(`"default"`)
@@ -575,10 +570,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTemplateLiteralOpen()
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					render1(p, c, RenderOptions{
-						isRoot:       false,
-						isExpression: opts.isExpression,
-						depth:        depth + 1,
-						opts:         opts.opts,
+						isRoot:           false,
+						isExpression:     opts.isExpression,
+						depth:            depth + 1,
+						opts:             opts.opts,
+						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
 				p.printTemplateLiteralClose()
