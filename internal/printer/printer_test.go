@@ -158,6 +158,13 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "slot with fallback III",
+			source: `<div><slot name="test"><p>Fallback</p></slot></div>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div>${$$renderSlot($$result,$$slots["test"],$$render` + BACKTICK + `<p>Fallback</p>` + BACKTICK + `)}</div>`,
+			},
+		},
+		{
 			name:   "text only",
 			source: "Hello!",
 			want: want{
