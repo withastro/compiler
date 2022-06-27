@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.17.1
+
+### Patch Changes
+
+- 3885217: Support `<slot is:inline />` and preserve slot attribute when not inside component
+- ea94a26: Fix issue with fallback content inside of slots
+
 ## 0.17.0
 
 ### Minor Changes
