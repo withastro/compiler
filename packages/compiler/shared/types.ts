@@ -24,6 +24,7 @@ export interface TransformOptions {
   projectRoot?: string;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<PreprocessorResult>;
   experimentalStaticExtraction?: boolean;
+  annotateSourceFile?: boolean;
 }
 
 export type HoistedScript = { type: string } & (

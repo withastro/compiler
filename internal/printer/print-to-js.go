@@ -441,6 +441,21 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				// Note: if we encounter "slot" NOT inside a component, that's fine
 				// These should be perserved in the output
 				p.printAttribute(a, n)
+			} else if a.Key == "data-astro-source-file" {
+				p.printAttribute(a, n)
+				var loc []int
+				if n.FirstChild != nil && len(n.FirstChild.Loc) > 0 {
+					loc = p.builder.GetLineAndColumnForLocation(n.FirstChild.Loc[0])
+				} else if len(n.Loc) > 0 {
+					loc = p.builder.GetLineAndColumnForLocation(n.Loc[0])
+				}
+				if len(loc) > 0 {
+					p.printAttribute(Attribute{
+						Key:  "data-astro-source-loc",
+						Type: QuotedAttribute,
+						Val:  fmt.Sprintf("%d:%d", loc[0], loc[1]),
+					}, n)
+				}
 				p.addSourceMapping(n.Loc[0])
 			} else {
 				p.printAttribute(a, n)

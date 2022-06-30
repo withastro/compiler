@@ -94,18 +94,24 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		staticExtraction = true
 	}
 
+	annotateSourceFile := false
+	if jsBool(options.Get("annotateSourceFile")) {
+		annotateSourceFile = true
+	}
+
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		Scope:            hash,
-		Filename:         filename,
-		Pathname:         pathname,
-		InternalURL:      internalURL,
-		SourceMap:        sourcemap,
-		Site:             site,
-		ProjectRoot:      projectRoot,
-		PreprocessStyle:  preprocessStyle,
-		StaticExtraction: staticExtraction,
+		Scope:              hash,
+		Filename:           filename,
+		Pathname:           pathname,
+		InternalURL:        internalURL,
+		SourceMap:          sourcemap,
+		Site:               site,
+		ProjectRoot:        projectRoot,
+		PreprocessStyle:    preprocessStyle,
+		StaticExtraction:   staticExtraction,
+		AnnotateSourceFile: annotateSourceFile,
 	}
 }
 
