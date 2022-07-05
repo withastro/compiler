@@ -65,6 +65,9 @@ func ExtractStyles(doc *astro.Node) {
 			if HasSetDirective(n) || HasInlineDirective(n) {
 				return
 			}
+			if n.Closest(func(p *astro.Node) bool { return p.DataAtom == a.Template }) != nil {
+				return
+			}
 			// Do not extract <style> inside of SVGs
 			if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
 				return
@@ -171,6 +174,10 @@ func TrimTrailingSpace(doc *astro.Node) {
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
 		if HasSetDirective(n) || HasInlineDirective(n) {
+			return
+		}
+
+		if n.Closest(func(p *astro.Node) bool { return p.DataAtom == atom.Template }) != nil {
 			return
 		}
 

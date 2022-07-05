@@ -982,6 +982,13 @@ import Widget2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
+			name:   "template styles/scripts/slots are not transformed",
+			source: `<template><style>:host { color: red; }</style><script>console.log("Hello")</script><slot></slot></template>`,
+			want: want{
+				code: `<template><style>:host { color: red; }</style><script>console.log("Hello")</script><slot></slot></template>`,
+			},
+		},
+		{
 			name:   "text after title expression",
 			source: `<title>a {expr} b</title>`,
 			want: want{

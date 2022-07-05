@@ -352,6 +352,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	isComponent := isFragment || n.Component || n.CustomElement
 	isClientOnly := isComponent && transform.HasAttr(n, "client:only")
 	isSlot := n.DataAtom == atom.Slot
+	isInTemplate := n.Closest(func(p *Node) bool { return p.DataAtom == atom.Template && p.Data == "template" }) != nil
 	isImplicit := false
 	for _, a := range n.Attr {
 		if isSlot && a.Key == "is:inline" {
@@ -360,6 +361,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if transform.IsImplictNodeMarker(a) {
 			isImplicit = true
 		}
+	}
+	if isSlot && isInTemplate {
+		isSlot = false
 	}
 
 	p.addSourceMapping(n.Loc[0])
@@ -379,7 +383,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		case atom.Html, atom.Head, atom.Base, atom.Basefont, atom.Bgsound, atom.Link, atom.Meta, atom.Noframes, atom.Script, atom.Style, atom.Template, atom.Title:
 			break
 		default:
-			if !*opts.printedMaybeHead {
+			if !isInTemplate && !*opts.printedMaybeHead {
 				*opts.printedMaybeHead = true
 				p.printMaybeRenderHead()
 			}
