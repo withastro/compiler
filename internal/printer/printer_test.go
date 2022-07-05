@@ -130,6 +130,42 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "conditional slot",
+			source: `<Component>{value && <div slot="test">foo</div>}</Component>`,
+			want: want{
+				code: "${$$renderComponent($$result,'Component',Component,{},{\"test\": () => $$render`${value && $$render`${$$maybeRenderHead($$result)}<div>foo</div>`}`,})}",
+			},
+		},
+		{
+			name:   "ternary slot",
+			source: `<Component>{Math.random() > 0.5 ? <div slot="a">A</div> : <div slot="b">B</div>}</Component>`,
+			want: want{
+				code: "${$$renderComponent($$result,'Component',Component,{},Object.assign({},Math.random() > 0.5 ? {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`} : {\"b\": () => $$render`<div>B</div>`}))}",
+			},
+		},
+		{
+			name: "function expression slots",
+			source: `<Component>
+				{(() => {
+					switch (value) {
+						case 'a': return <div slot="a">A</div>
+						case 'b': return <div slot="b">B</div>
+						case 'c': return <div slot="c">C</div>
+					}
+				})()}
+			</Component>`,
+			want: want{
+				code: `<Component>${value && $$render` + BACKTICK + `<div slot="test">{value}</div>` + BACKTICK + `}</Component>`,
+			},
+		},
+		{
+			name:   "expression slot",
+			source: `<Component>{true && <div slot="a">A</div>}{false && <div slot="b">B</div>}</Component>`,
+			want: want{
+				code: "${$$renderComponent($$result,'Component',Component,{},{\"a\": () => $$render`${true && $$render`${$$maybeRenderHead($$result)}<div>A</div>`}`,\"b\": () => $$render`${false && $$render`<div>B</div>`}`,})}",
+			},
+		},
+		{
 			name:   "preserve is:inline slot",
 			source: `<slot is:inline />`,
 			want: want{
