@@ -604,7 +604,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				}
 				sort.Strings(slottedKeys)
 				if len(conditionalSlottedChildren) > 0 {
-					p.print(`Object.assign(`)
+					p.print(`$$mergeSlots(`)
 				}
 				p.print(`{`)
 				if len(slottedKeys) > 0 {

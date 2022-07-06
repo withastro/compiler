@@ -24,6 +24,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"maybeRenderHead as " + MAYBE_RENDER_HEAD,
 	"unescapeHTML as " + UNESCAPE_HTML,
 	"renderSlot as " + RENDER_SLOT,
+	"mergeSlots as " + MERGE_SLOTS,
 	"addAttribute as " + ADD_ATTRIBUTE,
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
@@ -140,22 +141,14 @@ func TestPrinter(t *testing.T) {
 			name:   "ternary slot",
 			source: `<Component>{Math.random() > 0.5 ? <div slot="a">A</div> : <div slot="b">B</div>}</Component>`,
 			want: want{
-				code: "${$$renderComponent($$result,'Component',Component,{},Object.assign({},Math.random() > 0.5 ? {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`} : {\"b\": () => $$render`<div>B</div>`}))}",
+				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},Math.random() > 0.5 ? {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`} : {\"b\": () => $$render`<div>B</div>`}))}",
 			},
 		},
 		{
-			name: "function expression slots",
-			source: `<Component>
-				{(() => {
-					switch (value) {
-						case 'a': return <div slot="a">A</div>
-						case 'b': return <div slot="b">B</div>
-						case 'c': return <div slot="c">C</div>
-					}
-				})()}
-			</Component>`,
+			name:   "function expression slots",
+			source: "<Component>\n{() => { switch (value) {\ncase 'a': return <div slot=\"a\">A</div>\ncase 'b': return <div slot=\"b\">B</div>\ncase 'c': return <div slot=\"c\">C</div>\n}\n}}\n</Component>",
 			want: want{
-				code: `<Component>${value && $$render` + BACKTICK + `<div slot="test">{value}</div>` + BACKTICK + `}</Component>`,
+				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},() => { switch (value) {\ncase 'a': return {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`}\ncase 'b': return {\"b\": () => $$render`<div>B</div>`}\ncase 'c': return {\"c\": () => $$render`<div>C</div>`}}\n}))}",
 			},
 		},
 		{

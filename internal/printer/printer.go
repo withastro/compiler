@@ -36,6 +36,7 @@ var RENDER_HEAD = "$$renderHead"
 var MAYBE_RENDER_HEAD = "$$maybeRenderHead"
 var UNESCAPE_HTML = "$$unescapeHTML"
 var RENDER_SLOT = "$$renderSlot"
+var MERGE_SLOTS = "$$mergeSlots"
 var ADD_ATTRIBUTE = "$$addAttribute"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var DEFINE_STYLE_VARS = "$$defineStyleVars"
@@ -74,6 +75,7 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print("maybeRenderHead as " + MAYBE_RENDER_HEAD + ",\n  ")
 	p.print("unescapeHTML as " + UNESCAPE_HTML + ",\n  ")
 	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
+	p.print("mergeSlots as " + MERGE_SLOTS + ",\n  ")
 	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
 	p.print("spreadAttributes as " + SPREAD_ATTRIBUTES + ",\n  ")
 	p.print("defineStyleVars as " + DEFINE_STYLE_VARS + ",\n  ")
