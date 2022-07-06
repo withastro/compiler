@@ -1333,13 +1333,17 @@ func (z *Tokenizer) isAtExpressionBoundary() bool {
 }
 
 func (z *Tokenizer) trackPreviousTokens() {
-	if z.tt == StartExpressionToken {
+	// Reset stack on expression boundaries
+	if z.tt == StartExpressionToken || z.tt == EndExpressionToken {
 		z.prevTokens = make([]Token, 0)
 	}
 	if z.tt == StartTagToken {
 		z.prevTokens = append(z.prevTokens, z.Token())
 	} else if z.tt == EndTagToken {
 		if len(z.prevTokens) > 0 {
+			// This is a very simple stack that pops matching closing elements off the stack,
+			// which is good enough for our purposes.
+			// We only use this to track when `{` should be `StartExpressionToken` or `TextToken`
 			for i := 1; i < len(z.prevTokens)+1; i++ {
 				tok := z.prevTokens[len(z.prevTokens)-i]
 				if tok.Data == string(z.buf[z.data.Start:z.data.End]) {
