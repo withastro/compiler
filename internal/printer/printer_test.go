@@ -620,6 +620,27 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "nested expressions II",
+			source: `<article>{(previous || next) && <aside>{previous && <div>Previous Article: <a rel="prev" href={new URL(previous.link, Astro.site).pathname}>{previous.text}</a></div>} {next && <div>Next Article: <a rel="next" href={new URL(next.link, Astro.site).pathname}>{next.text}</a></div>}</aside>}</article>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<article>${(previous || next) && $$render` + BACKTICK + `<aside>${previous && $$render` + BACKTICK + `<div>Previous Article: <a rel="prev"${$$addAttribute(new URL(previous.link, Astro.site).pathname, "href")}>${previous.text}</a></div>` + BACKTICK + `} ${next && $$render` + BACKTICK + `<div>Next Article: <a rel="next"${$$addAttribute(new URL(next.link, Astro.site).pathname, "href")}>${next.text}</a></div>` + BACKTICK + `}</aside>` + BACKTICK + `}</article>`,
+			},
+		},
+		{
+			name:   "nested expressions III",
+			source: `<div>{x.map((x) => x ? <div>{true ? <span>{x}</span> : null}</div> : <div>{false ? null : <span>{x}</span>}</div>)}</div>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<div>${x.map((x) => x ? $$render`<div>${true ? $$render`<span>${x}</span>` : null}</div>` : $$render`<div>${false ? null : $$render`<span>${x}</span>`}</div>`)}</div>",
+			},
+		},
+		{
+			name:   "nested expressions IV",
+			source: `<div>{() => { if (value > 0.25) { return <span>Default</span> } else if (value > 0.5) { return <span>Another</span> } else if (value > 0.75) { return <span>Other</span> } return <span>Yet Other</span> }}</div>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<div>${() => { if (value > 0.25) { return $$render`<span>Default</span>`} else if (value > 0.5) { return $$render`<span>Another</span>`} else if (value > 0.75) { return $$render`<span>Other</span>`} return $$render`<span>Yet Other</span>`}}</div>",
+			},
+		},
+		{
 			name: "expressions with JS comments",
 			source: `---
 const items = ['red', 'yellow', 'blue'];

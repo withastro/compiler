@@ -250,6 +250,7 @@ type Tokenizer struct {
 	// tt is the TokenType of the current token.
 	tt            TokenType
 	prevTokenType TokenType
+	prevTokens    []Token
 	fm            FrontmatterState
 	m             MarkdownState
 	// err is the first error encountered during tokenization. It is possible
@@ -1331,23 +1332,47 @@ func (z *Tokenizer) isAtExpressionBoundary() bool {
 	return true
 }
 
+func (z *Tokenizer) trackPreviousTokens() {
+	if z.tt == StartExpressionToken {
+		z.prevTokens = make([]Token, 0)
+	}
+	if z.tt == StartTagToken {
+		z.prevTokens = append(z.prevTokens, z.Token())
+	} else if z.tt == EndTagToken {
+		if len(z.prevTokens) > 0 {
+			for i := 1; i < len(z.prevTokens)+1; i++ {
+				tok := z.prevTokens[len(z.prevTokens)-i]
+				if tok.Data == string(z.buf[z.data.Start:z.data.End]) {
+					if len(z.prevTokens) == 1 {
+						z.prevTokens = make([]Token, 0)
+					} else {
+						z.prevTokens = z.prevTokens[0:i]
+						z.prevTokens = append(z.prevTokens, z.prevTokens[i:]...)
+					}
+				}
+			}
+		}
+	}
+}
+
 // Next scans the next token and returns its type.
 func (z *Tokenizer) Next() TokenType {
+	z.trackPreviousTokens()
 	z.raw.Start = z.raw.End
 	z.data.Start = z.raw.End
 	z.data.End = z.raw.End
 	z.prevTokenType = z.tt
 
-	// This handles expressions nested inside of Frontmatter elements
-	// but preserves `{}` as text outside of elements
-	if z.fm == FrontmatterOpen {
+	// Properly handle multiple nested expressions
+	if len(z.expressionStack) > 0 && len(z.prevTokens) == 0 {
 		tt := z.Token().Type
 		switch tt {
-		case StartTagToken, EndTagToken:
+		case StartTagToken, EndExpressionToken, TextToken:
 		default:
 			z.openBraceIsExpressionStart = false
 		}
 	}
+
 	if z.rawTag != "" {
 		if z.rawTag == "plaintext" {
 			// Read everything up to EOF.
