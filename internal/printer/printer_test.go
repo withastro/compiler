@@ -670,6 +670,14 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "nested expressions V",
+			source: "{rows.map(row => row.map(icon => <li class={`icon-${icon}`}><Icon title={icon.replace(/\\-grid$/, '')} name={`logos/${icon}`} height=\"64\" /></li>))}",
+			want: want{
+				code: "${rows.map(row => row.map(icon => $$render`${$$maybeRenderHead($$result)}<li${$$addAttribute(`icon-${icon}`, \"class\")}>${$$renderComponent($$result,'Icon',Icon,{\"title\":(icon.replace(/\\-grid$/, '')),\"name\":(`logos/${icon}`),\"height\":\"64\"})}</li>`))}",
+			},
+		},
+
+		{
 			name: "expressions with JS comments",
 			source: `---
 const items = ['red', 'yellow', 'blue'];
