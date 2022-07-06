@@ -893,7 +893,7 @@ import Counter from '../components/Counter.jsx'`,
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
   
   ` + RENDER_HEAD_RESULT + `</head>
-  <body>
+  <body class="astro-HMNNHVCQ">
     <main class="astro-HMNNHVCQ">
       ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":($$metadata.getPath(Counter)),"client:component-export":($$metadata.getExport(Counter)),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
