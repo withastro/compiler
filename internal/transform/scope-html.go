@@ -15,10 +15,8 @@ func ScopeElement(n *astro.Node, opts TransformOptions) {
 }
 
 var NeverScopedElements map[string]bool = map[string]bool{
-	// "html" is a notable omission, see `NeverScopedSelectors`
 	"Fragment": true,
 	"base":     true,
-	"body":     true,
 	"font":     true,
 	"frame":    true,
 	"frameset": true,
@@ -33,8 +31,6 @@ var NeverScopedElements map[string]bool = map[string]bool{
 }
 
 var NeverScopedSelectors map[string]bool = map[string]bool{
-	// html is never scoped as a selector (from CSS) but is scoped as an element (from HTML)
-	"html":  true,
 	":root": true,
 }
 
