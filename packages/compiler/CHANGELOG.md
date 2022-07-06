@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 0.18.0
+
+### Minor Changes
+
+- 4b02776: Fix handling of `slot` attribute used inside of expressions
+
+### Patch Changes
+
+- 62d2a8e: Properly handle nested expressions that return multiple elements
+- 571d6b9: Ensure `html` and `body` elements are scoped
+
 ## 0.17.1
 
 ### Patch Changes
