@@ -435,7 +435,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				continue
 			}
 			if a.Key == "slot" {
-				if n.Parent.Component {
+				if n.Parent.Component || n.Parent.Expression {
 					continue
 				}
 				// Note: if we encounter "slot" NOT inside a component, that's fine
@@ -521,8 +521,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTemplateLiteralClose()
 				p.print(`,}`)
 			case isComponent:
-				p.print(`,{`)
+				p.print(`,`)
 				slottedChildren := make(map[string][]*Node)
+				conditionalSlottedChildren := make([][]*Node, 0)
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					slotProp := `"default"`
 					for _, a := range c.Attr {
@@ -536,6 +537,60 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							}
 						}
 					}
+					if c.Expression {
+						nestedSlots := make([]string, 0)
+						for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
+							for _, a := range c1.Attr {
+								if a.Key == "slot" {
+									if a.Type == QuotedAttribute {
+										nestedSlotProp := fmt.Sprintf(`"%s"`, a.Val)
+										nestedSlots = append(nestedSlots, nestedSlotProp)
+									} else if a.Type == ExpressionAttribute {
+										nestedSlotProp := fmt.Sprintf(`[%s]`, a.Val)
+										nestedSlots = append(nestedSlots, nestedSlotProp)
+									} else {
+										panic(`unknown slot attribute type`)
+									}
+								}
+							}
+						}
+
+						if len(nestedSlots) == 1 {
+							slotProp = nestedSlots[0]
+							slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
+							continue
+						} else if len(nestedSlots) > 1 {
+							conditionalChildren := make([]*Node, 0)
+						child_loop:
+							for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
+								for _, a := range c1.Attr {
+									if a.Key == "slot" {
+										if a.Type == QuotedAttribute {
+											nestedSlotProp := fmt.Sprintf(`"%s"`, a.Val)
+											nestedSlots = append(nestedSlots, nestedSlotProp)
+											conditionalChildren = append(conditionalChildren, &Node{Type: TextNode, Data: fmt.Sprintf("{%s: () => ", nestedSlotProp), Loc: make([]loc.Loc, 1)})
+											conditionalChildren = append(conditionalChildren, c1)
+											conditionalChildren = append(conditionalChildren, &Node{Type: TextNode, Data: "}", Loc: make([]loc.Loc, 1)})
+											continue child_loop
+										} else if a.Type == ExpressionAttribute {
+											nestedSlotProp := fmt.Sprintf(`[%s]`, a.Val)
+											nestedSlots = append(nestedSlots, nestedSlotProp)
+											conditionalChildren = append(conditionalChildren, &Node{Type: TextNode, Data: fmt.Sprintf("{%s: () => ", nestedSlotProp), Loc: make([]loc.Loc, 1)})
+											conditionalChildren = append(conditionalChildren, c1)
+											conditionalChildren = append(conditionalChildren, &Node{Type: TextNode, Data: "}", Loc: make([]loc.Loc, 1)})
+											continue child_loop
+										} else {
+											panic(`unknown slot attribute type`)
+										}
+									}
+								}
+								conditionalChildren = append(conditionalChildren, c1)
+							}
+							conditionalSlottedChildren = append(conditionalSlottedChildren, conditionalChildren)
+							continue
+						}
+					}
+
 					// Only slot ElementNodes or non-empty TextNodes!
 					// CommentNode and others should not be slotted
 					if c.Type == ElementNode || (c.Type == TextNode && strings.TrimSpace(c.Data) != "") {
@@ -548,23 +603,50 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					slottedKeys = append(slottedKeys, k)
 				}
 				sort.Strings(slottedKeys)
-				for _, slotProp := range slottedKeys {
-					children := slottedChildren[slotProp]
-					p.print(fmt.Sprintf(`%s: () => `, slotProp))
-					p.printTemplateLiteralOpen()
-					for _, child := range children {
-						render1(p, child, RenderOptions{
-							isRoot:           false,
-							isExpression:     opts.isExpression,
-							depth:            depth + 1,
-							opts:             opts.opts,
-							printedMaybeHead: opts.printedMaybeHead,
-						})
+				if len(conditionalSlottedChildren) > 0 {
+					p.print(`$$mergeSlots(`)
+				}
+				p.print(`{`)
+				if len(slottedKeys) > 0 {
+					for _, slotProp := range slottedKeys {
+						children := slottedChildren[slotProp]
+						p.print(fmt.Sprintf(`%s: () => `, slotProp))
+						p.printTemplateLiteralOpen()
+						for _, child := range children {
+							render1(p, child, RenderOptions{
+								isRoot:           false,
+								isExpression:     opts.isExpression,
+								depth:            depth + 1,
+								opts:             opts.opts,
+								printedMaybeHead: opts.printedMaybeHead,
+							})
+						}
+						p.printTemplateLiteralClose()
+						p.print(`,`)
 					}
-					p.printTemplateLiteralClose()
-					p.print(`,`)
 				}
 				p.print(`}`)
+				if len(conditionalSlottedChildren) > 0 {
+					for _, children := range conditionalSlottedChildren {
+						p.print(",")
+						for _, child := range children {
+							if child.Type == ElementNode {
+								p.printTemplateLiteralOpen()
+							}
+							render1(p, child, RenderOptions{
+								isRoot:           false,
+								isExpression:     opts.isExpression,
+								depth:            depth + 1,
+								opts:             opts.opts,
+								printedMaybeHead: opts.printedMaybeHead,
+							})
+							if child.Type == ElementNode {
+								p.printTemplateLiteralClose()
+							}
+						}
+					}
+					p.print(`)`)
+				}
 			case isSlot:
 				p.print(`,`)
 				p.printTemplateLiteralOpen()
