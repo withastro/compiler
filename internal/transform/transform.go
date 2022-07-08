@@ -198,6 +198,12 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 			if shouldAdd {
 				doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
 			}
+		} else {
+			for _, attr := range n.Attr {
+				if strings.HasPrefix(attr.Key, "client:") {
+					fmt.Printf("%s: <script> does not need the %s directive and is always added as a module script.\n", opts.Filename, attr.Key)
+				}
+			}
 		}
 	}
 }
