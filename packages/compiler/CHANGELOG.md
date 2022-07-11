@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.18.1
+
+### Patch Changes
+
+- aff2f23: Warning on client: usage on scripts
+
 ## 0.18.0
 
 ### Minor Changes
