@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.18.2
+
+### Patch Changes
+
+- f8547a7: Revert [#448](https://github.com/withastro/compiler/pull/448) for now
+
 ## 0.18.1
 
 ### Patch Changes
