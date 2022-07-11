@@ -352,8 +352,8 @@ func TestBasic(t *testing.T) {
 		},
 		{
 			"fragment shorthand",
-			`<h1>A{cond && <>item <span>B{text}</span></>}</h1>`,
-			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndTagToken, EndExpressionToken, EndTagToken},
+			`<h1>A{cond && <>item <span>{text}</span></>}</h1>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndTagToken, EndExpressionToken, EndTagToken},
 		},
 		{
 			"fragment",
@@ -388,6 +388,11 @@ func TestBasic(t *testing.T) {
 			"Empty expression",
 			"({})",
 			[]TokenType{TextToken, StartExpressionToken, EndExpressionToken, TextToken},
+		},
+		{
+			"expression after text",
+			`<h1>A{cond && <span>Test {text}</span>}</h1>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndExpressionToken, EndTagToken},
 		},
 	}
 
