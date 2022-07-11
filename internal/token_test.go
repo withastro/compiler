@@ -199,6 +199,20 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"expression with multiple elements",
+			`<div>{() => {
+				if (value > 0.25) {
+					return <span>Default</span>
+				} else if (value > 0.5) {
+					return <span>Another</span>
+				} else if (value > 0.75) {
+					return <span>Other</span>
+				}
+				return <span>Yet Other</span>
+			}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"attribute expression with quoted braces",
 			`<div value={"{"} />`,
 			[]TokenType{SelfClosingTagToken},
