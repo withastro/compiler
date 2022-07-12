@@ -1884,6 +1884,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "table IV",
+			source: "<body><div><tr><td>hello world</td></tr></div></body>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<body><div><tr><td>hello world</td></tr></div></body>",
+			},
+		},
+		{
 			name:   "XElement",
 			source: `<XElement {...attrs}></XElement>{onLoadString ? <script data-something></script> : null }`,
 			want: want{
