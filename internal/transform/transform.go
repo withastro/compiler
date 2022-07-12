@@ -187,6 +187,23 @@ func collapseWhitespace(doc *astro.Node) {
 			if n.Closest(isRawElement) != nil {
 				return
 			}
+			// Top-level expression children
+			if n.Parent != nil && n.Parent.Expression {
+				// Trim left for first child
+				if n.PrevSibling == nil {
+					n.Data = strings.TrimLeftFunc(n.Data, unicode.IsSpace)
+				}
+				// Trim right for last child
+				if n.NextSibling == nil {
+					n.Data = strings.TrimRightFunc(n.Data, unicode.IsSpace)
+				}
+				// Otherwise don't trim this!
+				return
+			}
+			if len(strings.TrimFunc(n.Data, unicode.IsSpace)) == 0 {
+				n.Data = ""
+				return
+			}
 			originalLen := len(n.Data)
 			hasNewline := false
 			n.Data = strings.TrimLeftFunc(n.Data, func(r rune) bool {

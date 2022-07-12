@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -247,7 +248,7 @@ func TestTransformTrailingSpace(t *testing.T) {
 	}
 }
 
-func TestProductionTransform(t *testing.T) {
+func TestCompactTransform(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
@@ -256,7 +257,7 @@ func TestProductionTransform(t *testing.T) {
 		{
 			name:   "trims whitespace",
 			source: `<div>    Test     </div>`,
-			want:   `<div>Test</div>`,
+			want:   `<div> Test </div>`,
 		},
 		{
 			name:   "pre",
@@ -274,9 +275,49 @@ func TestProductionTransform(t *testing.T) {
 			want:   `<pre>  <div> Test </div>  </pre>`,
 		},
 		{
-			name:   "minify",
-			source: `<head>  <script>console.log("hoisted")</script>  <head>  <div> COOL </div>`,
-			want:   `<head></head><div>COOL</div>`,
+			name:   "remove whitespace only",
+			source: `<head>  <script>console.log("hoisted")</script>  <head>`,
+			want:   `<head></head>`,
+		},
+		{
+			name:   "collapse surrounding whitespace",
+			source: `<div>  COOL  </div>`,
+			want:   `<div> COOL </div>`,
+		},
+		{
+			name:   "collapse only surrounding whitespace",
+			source: `<div>  C O O L  </div>`,
+			want:   `<div> C O O L </div>`,
+		},
+		{
+			name:   "collapse surrounding newlines",
+			source: "<div>\n\n\tC O O L\n\n\t</div>",
+			want:   "<div>\nC O O L\n</div>",
+		},
+		{
+			name:   "expression trim first",
+			source: "<div>{\n() => {\n\t\treturn <span />}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
+		},
+		{
+			name:   "expression trim last",
+			source: "<div>{() => {\n\t\treturn <span />}\n}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
+		},
+		{
+			name:   "expression collapse inside",
+			source: "<div>{() => {\n\t\treturn <span>  HEY  </span>}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span> HEY </span>}}</div>",
+		},
+		{
+			name:   "expression collapse newlines",
+			source: "<div>{() => {\n\t\treturn <span>\n\nTEST</span>}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span>\nTEST</span>}}</div>",
+		},
+		{
+			name:   "expression remove only whitespace",
+			source: "<div>{() => {\n\t\treturn <span>\n\n\n</span>}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
 		},
 		{
 			name:   "attributes",
@@ -289,9 +330,14 @@ func TestProductionTransform(t *testing.T) {
 			want:   "<div test={`  test  `}></div>",
 		},
 		{
-			name:   "expression math",
+			name:   "expression attribute math",
 			source: "<div test={ a + b } />",
 			want:   "<div test={a + b}></div>",
+		},
+		{
+			name:   "expression math",
+			source: "<div>{ a + b }</div>",
+			want:   "<div>{a + b}</div>",
 		},
 	}
 	var b strings.Builder
