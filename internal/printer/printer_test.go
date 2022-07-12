@@ -1730,14 +1730,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "td expressions II",
 			source: `<table>{data.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</table>`,
 			want: want{
-				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${cell}</td>`)}</tr>)}`</table>",
+				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${cell}</td>`)}</tr>`)}</table>",
 			},
 		},
 		{
 			name:   "self-closing td",
 			source: `<table>{data.map(row => <tr>{row.map(cell => <td set:html={cell} />)}</tr>)}</table>`,
 			want: want{
-				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${$$unescapeHTML(cell)}</td>`)}</tr>)}`</table>",
+				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${$$unescapeHTML(cell)}</td>`)}</tr>`)}</table>",
 			},
 		},
 		{
@@ -1858,8 +1858,15 @@ const items = ["Dog", "Cat", "Platipus"];
   ${true ? ($$render%s<tr><td>Row 1</td></tr>%s) : null}
   ${true ? ($$render%s<tr><td>Row 2</td></tr>%s) : null}
   ${true ? ($$render%s<tr><td>Row 3</td></tr>%s) : null}
-
-</table></body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+  </table>
+</body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+			},
+		},
+		{
+			name:   "table",
+			source: "<table><tr>{[0,1,2].map(x => (<td>{x}</td>))}</tr></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tr>${[0,1,2].map(x => ($$render`<td>${x}</td>`))}</tr></table>",
 			},
 		},
 		{
