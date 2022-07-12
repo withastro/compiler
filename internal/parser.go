@@ -1942,7 +1942,7 @@ func inColumnGroupIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.afe = append(p.afe, &scopeMarker)
-		p.originalIM = inColumnGroupIM
+		p.originalIM = inTableIM
 		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:
@@ -2008,7 +2008,7 @@ func inTableBodyIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.afe = append(p.afe, &scopeMarker)
-		p.originalIM = inTableBodyIM
+		p.originalIM = inTableIM
 		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:
@@ -2084,7 +2084,7 @@ func inCellIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.afe = append(p.afe, &scopeMarker)
-		p.originalIM = inCellIM
+		p.originalIM = inBodyIM
 		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:
