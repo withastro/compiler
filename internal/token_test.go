@@ -406,7 +406,7 @@ func TestBasic(t *testing.T) {
 		},
 		{
 			"switch statement with expression",
-			`<div>{() => { switch(value) { case 'a': return <A>{value}</A>; case 'b': return <B />; case 'c': return <C>{value.map(i => <span>{i}</i>)}</C> }}}</div>`,
+			`<div>{() => { switch(value) { case 'a': return <A>{value}</A>; case 'b': return <B />; case 'c': return <C>{value.map(i => <span>{i}</span>)}</C> }}}</div>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 	}
