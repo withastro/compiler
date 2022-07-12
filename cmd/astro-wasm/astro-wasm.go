@@ -81,7 +81,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 
 	site := jsString(options.Get("site"))
 	if site == "" {
-		site = "https://astro.build"
+		site = ""
 	}
 
 	projectRoot := jsString(options.Get("projectRoot"))
