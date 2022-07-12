@@ -2616,6 +2616,7 @@ func inExpressionTableIM(p *parser) bool {
 
 func inExpressionIM(p *parser) bool {
 	if p.oe.contains(a.Table) {
+		p.clearActiveFormattingElements()
 		return inExpressionTableIM(p)
 	}
 	switch p.tok.Type {

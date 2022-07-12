@@ -1870,6 +1870,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "table II",
+			source: "<table><thead><tr>{['Hey','Ho'].map((item)=> <th scope=\"col\">{item}</th>)}</tr></thead></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><thead><tr>${['Hey','Ho'].map((item)=> $$render`<th scope=\"col\">${item}</th>`)}</tr></thead></table>",
+			},
+		},
+		{
 			name:   "XElement",
 			source: `<XElement {...attrs}></XElement>{onLoadString ? <script data-something></script> : null }`,
 			want: want{
