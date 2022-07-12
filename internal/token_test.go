@@ -199,6 +199,20 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"expression with multiple elements",
+			`<div>{() => {
+				if (value > 0.25) {
+					return <span>Default</span>
+				} else if (value > 0.5) {
+					return <span>Another</span>
+				} else if (value > 0.75) {
+					return <span>Other</span>
+				}
+				return <span>Yet Other</span>
+			}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"attribute expression with quoted braces",
 			`<div value={"{"} />`,
 			[]TokenType{SelfClosingTagToken},
@@ -338,8 +352,8 @@ func TestBasic(t *testing.T) {
 		},
 		{
 			"fragment shorthand",
-			`<h1>A{cond && <>item <span>B{text}</span></>}</h1>`,
-			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndTagToken, EndExpressionToken, EndTagToken},
+			`<h1>A{cond && <>item <span>{text}</span></>}</h1>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndTagToken, EndExpressionToken, EndTagToken},
 		},
 		{
 			"fragment",
@@ -374,6 +388,26 @@ func TestBasic(t *testing.T) {
 			"Empty expression",
 			"({})",
 			[]TokenType{TextToken, StartExpressionToken, EndExpressionToken, TextToken},
+		},
+		{
+			"expression after text",
+			`<h1>A{cond && <span>Test {text}</span>}</h1>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"expression surrounded by text",
+			`<h1>A{cond && <span>Test {text} Cool</span>}</h1>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, TextToken, EndTagToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"switch statement",
+			`<div>{() => { switch(value) { case 'a': return <A></A>; case 'b': return <B />; case 'c': return <C></C> }}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, EndTagToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, EndTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"switch statement with expression",
+			`<div>{() => { switch(value) { case 'a': return <A>{value}</A>; case 'b': return <B />; case 'c': return <C>{value.map(i => <span>{i}</span>)}</C> }}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 	}
 
