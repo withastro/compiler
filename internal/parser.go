@@ -1741,6 +1741,13 @@ func inTableIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Caption:
 			p.clearStackToContext(tableScope)
 			p.afe = append(p.afe, &scopeMarker)
@@ -1822,6 +1829,9 @@ func inTableIM(p *parser) bool {
 			return true
 		case a.Template:
 			return inHeadIM(p)
+		case a.Slot:
+			p.oe.pop()
+			return true
 		}
 		if isComponent(p.tok.Data) {
 			p.oe.pop()
@@ -1851,6 +1861,13 @@ func inCaptionIM(p *parser) bool {
 	switch p.tok.Type {
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Caption, a.Col, a.Colgroup, a.Tbody, a.Td, a.Tfoot, a.Thead, a.Tr:
 			if !p.popUntil(tableScope, a.Caption) {
 				// Ignore the token.
@@ -1924,6 +1941,13 @@ func inColumnGroupIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Html:
 			return inBodyIM(p)
 		case a.Col:
@@ -1973,6 +1997,13 @@ func inTableBodyIM(p *parser) bool {
 	switch p.tok.Type {
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Tr:
 			p.clearStackToContext(tableBodyScope)
 			p.addElement()
@@ -2041,6 +2072,13 @@ func inRowIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Td, a.Th:
 			p.clearStackToContext(tableRowScope)
 			p.addElement()
@@ -2103,6 +2141,13 @@ func inCellIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Caption, a.Col, a.Colgroup, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
 			if p.popUntil(tableScope, a.Td, a.Th) {
 				// Close the cell and reprocess.

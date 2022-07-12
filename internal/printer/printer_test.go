@@ -1891,6 +1891,41 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "table slot I",
+			source: "<table><slot /></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table>${$$renderSlot($$result,$$slots[\"default\"])}</table>",
+			},
+		},
+		{
+			name:   "table slot II",
+			source: "<table><tr><slot /></tr></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tr>${$$renderSlot($$result,$$slots[\"default\"])}</tr></table>",
+			},
+		},
+		{
+			name:   "table slot III",
+			source: "<table><td><slot /></td></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><td>${$$renderSlot($$result,$$slots[\"default\"])}</td></table>",
+			},
+		},
+		{
+			name:   "table slot IV",
+			source: "<table><thead><slot /></thead></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><thead>${$$renderSlot($$result,$$slots[\"default\"])}</thead></table>",
+			},
+		},
+		{
+			name:   "table slot V",
+			source: "<table><tbody><slot /></tbody></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tbody>${$$renderSlot($$result,$$slots[\"default\"])}</tbody></table>",
+			},
+		},
+		{
 			name:   "XElement",
 			source: `<XElement {...attrs}></XElement>{onLoadString ? <script data-something></script> : null }`,
 			want: want{
