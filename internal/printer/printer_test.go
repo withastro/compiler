@@ -1727,6 +1727,20 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "td expressions II",
+			source: `<table>{data.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</table>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${cell}</td>`)}</tr>)}`</table>",
+			},
+		},
+		{
+			name:   "self-closing td",
+			source: `<table>{data.map(row => <tr>{row.map(cell => <td set:html={cell} />)}</tr>)}</table>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${$$unescapeHTML(cell)}</td>`)}</tr>)}`</table>",
+			},
+		},
+		{
 			name:   "th expressions",
 			source: `<table><thead><tr><th>{title}</th></tr></thead></table>`,
 			want: want{
