@@ -1317,49 +1317,39 @@ func (z *Tokenizer) Loc() loc.Loc {
 	return loc.Loc{Start: z.data.Start}
 }
 
-// func (z *Tokenizer) trackExpressionElementStack() {
-// 	prev := z.prevToken
-// 	if len(z.expressionElementStack) == 0 {
-// 		return
-// 	}
-// 	i := len(z.expressionElementStack) - 1
-// 	switch prev.Type {
-// 	case StartTagToken:
-// 		z.expressionElementStack[i] = append(z.expressionElementStack[i], prev.Data)
-// 	case EndExpressionToken:
-
-// 	case EndTagToken:
-// 		// This is a fairly basic stack that matches tokens inside expressions
-// 		stack := z.expressionElementStack[i]
-// 		if len(stack) > 0 {
-// 			for j := 1; j < len(stack)+1; j++ {
-// 				tok := stack[len(stack)-j]
-// 				if string(tok) == prev.Data {
-// 					if len(stack) == 1 {
-// 						z.expressionElementStack[i] = make([]string, 0)
-// 					} else {
-// 						z.expressionElementStack[i] = stack[0:i]
-// 						z.expressionElementStack[i] = append(stack, stack[i:]...)
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
 // An expression boundary means the next tokens should be treated as a JS expression
 // (_do_ handle strings, comments, regexp, etc) rather than as plain text
 func (z *Tokenizer) isAtExpressionBoundary() bool {
-	prev := z.prevToken.Type
 	if len(z.expressionStack) == 0 {
 		return false
 	}
-	switch prev {
-	// Inside of expressions, these tokens flag that the following tokens are plain text (not JS)
-	case StartTagToken, EndTagToken, SelfClosingTagToken, EndExpressionToken:
-		return false
+	return len(z.expressionElementStack[len(z.expressionElementStack)-1]) == 0
+}
+
+func (z *Tokenizer) trackExpressionElementStack() {
+	if len(z.expressionStack) == 0 {
+		return
 	}
-	return true
+	i := len(z.expressionElementStack) - 1
+	if z.tt == StartTagToken {
+		z.expressionElementStack[i] = append(z.expressionElementStack[i], string(z.buf[z.data.Start:z.data.End]))
+	} else if z.tt == EndTagToken {
+		stack := z.expressionElementStack[i]
+		if len(stack) > 0 {
+			for j := 1; j < len(stack)+1; j++ {
+				tok := stack[len(stack)-j]
+				if tok == string(z.buf[z.data.Start:z.data.End]) {
+					// When stack is balanced, reset `openBraceIsExpressionStart`
+					if len(stack) == 1 {
+						z.expressionElementStack[i] = make([]string, 0)
+						z.openBraceIsExpressionStart = false
+					} else {
+						z.expressionElementStack[i] = stack[:len(stack)-1]
+					}
+				}
+			}
+		}
+	}
 }
 
 // Next scans the next token and returns its type.
@@ -1368,30 +1358,7 @@ func (z *Tokenizer) Next() TokenType {
 	z.raw.Start = z.raw.End
 	z.data.Start = z.raw.End
 	z.data.End = z.raw.End
-
-	defer func() {
-		if len(z.expressionElementStack) == 0 {
-			return
-		}
-		i := len(z.expressionElementStack) - 1
-		if z.tt == StartTagToken {
-			z.expressionElementStack[i] = append(z.expressionElementStack[i], string(z.buf[z.data.Start:z.data.End]))
-		} else if z.tt == EndTagToken {
-			stack := z.expressionElementStack[i]
-			if len(stack) > 0 {
-				for j := 1; j < len(stack)+1; j++ {
-					tok := stack[len(stack)-j]
-					if tok == string(z.buf[z.data.Start:z.data.End]) {
-						if len(stack) == 1 {
-							z.expressionElementStack[i] = make([]string, 0)
-						} else {
-							z.expressionElementStack[i] = stack[:len(stack)-1]
-						}
-					}
-				}
-			}
-		}
-	}()
+	defer z.trackExpressionElementStack()
 
 	if z.rawTag != "" {
 		if z.rawTag == "plaintext" {
@@ -1723,10 +1690,6 @@ expression_loop:
 		if z.err != nil {
 			break expression_loop
 		}
-
-		// if len(z.expressionElementStack) > 0 {
-		// 	fmt.Println(z.openBraceIsExpressionStart, len(z.expressionElementStack[len(z.expressionElementStack)-1]))
-		// }
 
 		// JS Comment or RegExp
 		if c == '/' {

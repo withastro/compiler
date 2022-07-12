@@ -394,6 +394,21 @@ func TestBasic(t *testing.T) {
 			`<h1>A{cond && <span>Test {text}</span>}</h1>`,
 			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, EndExpressionToken, EndTagToken},
 		},
+		{
+			"expression surrounded by text",
+			`<h1>A{cond && <span>Test {text} Cool</span>}</h1>`,
+			[]TokenType{StartTagToken, TextToken, StartExpressionToken, TextToken, StartTagToken, TextToken, StartExpressionToken, TextToken, EndExpressionToken, TextToken, EndTagToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"switch statement",
+			`<div>{() => { switch(value) { case 'a': return <A></A>; case 'b': return <B />; case 'c': return <C></C> }}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, EndTagToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, EndTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"switch statement with expression",
+			`<div>{() => { switch(value) { case 'a': return <A>{value}</A>; case 'b': return <B />; case 'c': return <C>{value.map(i => <span>{i}</i>)}</C> }}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
