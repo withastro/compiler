@@ -1800,6 +1800,14 @@ func inTableIM(p *parser) bool {
 			p.im = inSelectInTableIM
 			return true
 		}
+		if isComponent(p.tok.Data) {
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
+		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
 		case a.Table:
@@ -1814,6 +1822,10 @@ func inTableIM(p *parser) bool {
 			return true
 		case a.Template:
 			return inHeadIM(p)
+		}
+		if isComponent(p.tok.Data) {
+			p.oe.pop()
+			return true
 		}
 	case CommentToken:
 		p.addChild(&Node{
@@ -1831,7 +1843,6 @@ func inTableIM(p *parser) bool {
 
 	p.fosterParenting = true
 	defer func() { p.fosterParenting = false }()
-
 	return inBodyIM(p)
 }
 

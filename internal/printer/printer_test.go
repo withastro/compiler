@@ -1877,6 +1877,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "table III",
+			source: "<table><tbody><tr><td>Cell</td><Cell /><Cell /><Cell /></tr></tbody></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tbody><tr><td>Cell</td>${$$renderComponent($$result,'Cell',Cell,{})}${$$renderComponent($$result,'Cell',Cell,{})}${$$renderComponent($$result,'Cell',Cell,{})}</tr></tbody></table>",
+			},
+		},
+		{
 			name:   "XElement",
 			source: `<XElement {...attrs}></XElement>{onLoadString ? <script data-something></script> : null }`,
 			want: want{
