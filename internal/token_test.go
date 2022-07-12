@@ -419,6 +419,11 @@ func TestBasic(t *testing.T) {
 			"<h1 set:html={'\"Did Nate handle this case, too?\", Fred pondered...'}></h1>",
 			[]TokenType{StartTagToken, EndTagToken},
 		},
+		{
+			"typescript generic",
+			`<ul>{items.map((item: Item<Checkbox>)) => <li>{item.checked}</li>)}</ul>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

@@ -1002,6 +1002,22 @@ func (z *Tokenizer) readStartTag() TokenType {
 		return SelfClosingTagToken
 	}
 
+	// Handle TypeScript Generics
+	if len(z.expressionElementStack) > 0 && len(z.expressionElementStack[len(z.expressionElementStack)-1]) == 0 {
+		if z.prevToken.Type == TextToken {
+			tag := z.buf[z.data.Start:z.data.End]
+			a := atom.Lookup(tag)
+			if a.String() != "" || bytes.Equal(tag, []byte("Fragment")) || bytes.Equal(tag, []byte{}) {
+				return StartTagToken
+			}
+			text := z.prevToken.Data
+			originalLen := len(text)
+			if len(strings.TrimRightFunc(text, unicode.IsSpace)) == originalLen {
+				return TextToken
+			}
+		}
+	}
+
 	return StartTagToken
 }
 
