@@ -30,6 +30,7 @@
     "./types": "./types.d.ts"
   },
   "devDependencies": {
+    "@jridgewell/trace-mapping": "^0.3.14",
     "@types/node": "^16.4.12",
     "@types/sass": "^1.43.1",
     "typescript": "^4.4.3"
