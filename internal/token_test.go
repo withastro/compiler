@@ -376,8 +376,18 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken, StartTagToken, TextToken, EndTagToken},
 		},
 		{
-			"single brace",
+			"single open brace",
 			"<main id={`{`}></main>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
+			"single close brace",
+			"<main id={`}`}></main>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
+			"extra close brace",
+			"<main id={`${}}`}></main>",
 			[]TokenType{StartTagToken, EndTagToken},
 		},
 		{
