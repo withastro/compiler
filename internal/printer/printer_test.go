@@ -1742,6 +1742,20 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "td expressions II",
+			source: `<table>{data.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</table>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${cell}</td>`)}</tr>`)}</table>",
+			},
+		},
+		{
+			name:   "self-closing td",
+			source: `<table>{data.map(row => <tr>{row.map(cell => <td set:html={cell} />)}</tr>)}</table>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${$$unescapeHTML(cell)}</td>`)}</tr>`)}</table>",
+			},
+		},
+		{
 			name:   "th expressions",
 			source: `<table><thead><tr><th>{title}</th></tr></thead></table>`,
 			want: want{
@@ -1859,8 +1873,71 @@ const items = ["Dog", "Cat", "Platipus"];
   ${true ? ($$render%s<tr><td>Row 1</td></tr>%s) : null}
   ${true ? ($$render%s<tr><td>Row 2</td></tr>%s) : null}
   ${true ? ($$render%s<tr><td>Row 3</td></tr>%s) : null}
-
-</table></body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+  </table>
+</body></html>`, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK, BACKTICK),
+			},
+		},
+		{
+			name:   "table",
+			source: "<table><tr>{[0,1,2].map(x => (<td>{x}</td>))}</tr></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tr>${[0,1,2].map(x => ($$render`<td>${x}</td>`))}</tr></table>",
+			},
+		},
+		{
+			name:   "table II",
+			source: "<table><thead><tr>{['Hey','Ho'].map((item)=> <th scope=\"col\">{item}</th>)}</tr></thead></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><thead><tr>${['Hey','Ho'].map((item)=> $$render`<th scope=\"col\">${item}</th>`)}</tr></thead></table>",
+			},
+		},
+		{
+			name:   "table III",
+			source: "<table><tbody><tr><td>Cell</td><Cell /><Cell /><Cell /></tr></tbody></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tbody><tr><td>Cell</td>${$$renderComponent($$result,'Cell',Cell,{})}${$$renderComponent($$result,'Cell',Cell,{})}${$$renderComponent($$result,'Cell',Cell,{})}</tr></tbody></table>",
+			},
+		},
+		{
+			name:   "table IV",
+			source: "<body><div><tr><td>hello world</td></tr></div></body>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<body><div><tr><td>hello world</td></tr></div></body>",
+			},
+		},
+		{
+			name:   "table slot I",
+			source: "<table><slot /></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table>${$$renderSlot($$result,$$slots[\"default\"])}</table>",
+			},
+		},
+		{
+			name:   "table slot II",
+			source: "<table><tr><slot /></tr></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tr>${$$renderSlot($$result,$$slots[\"default\"])}</tr></table>",
+			},
+		},
+		{
+			name:   "table slot III",
+			source: "<table><td><slot /></td></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><td>${$$renderSlot($$result,$$slots[\"default\"])}</td></table>",
+			},
+		},
+		{
+			name:   "table slot IV",
+			source: "<table><thead><slot /></thead></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><thead>${$$renderSlot($$result,$$slots[\"default\"])}</thead></table>",
+			},
+		},
+		{
+			name:   "table slot V",
+			source: "<table><tbody><slot /></tbody></table>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<table><tbody>${$$renderSlot($$result,$$slots[\"default\"])}</tbody></table>",
 			},
 		},
 		{
