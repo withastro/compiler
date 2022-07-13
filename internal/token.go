@@ -1309,9 +1309,12 @@ func (z *Tokenizer) readTagAttrExpression() {
 				z.attrTemplateLiteralStack = append(z.attrTemplateLiteralStack, 0)
 			}
 		case '}':
-			z.attrExpressionStack--
-			if z.attrExpressionStack == 0 && z.allTagAttrExpressionsClosed() {
-				return
+			inTemplateLiteral := len(z.attrTemplateLiteralStack) >= z.attrExpressionStack && z.attrTemplateLiteralStack[z.attrExpressionStack-1] > 0
+			if !inTemplateLiteral {
+				z.attrExpressionStack--
+				if z.attrExpressionStack == 0 && z.allTagAttrExpressionsClosed() {
+					return
+				}
 			}
 		}
 	}
