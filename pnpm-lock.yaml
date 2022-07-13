@@ -34,10 +34,12 @@ importers:
     specifiers:
       '@types/node': ^16.4.12
       '@types/sass': ^1.43.1
+      source-map: ^0.7.4
       typescript: ^4.4.3
     devDependencies:
       '@types/node': 16.11.39
       '@types/sass': 1.43.1
+      source-map: 0.7.4
       typescript: 4.7.3
 
 packages:
@@ -5190,6 +5192,11 @@ packages:
   /source-map/0.6.1:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
+    dev: true
+
+  /source-map/0.7.4:
+    resolution: {integrity: sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA==}
+    engines: {node: '>= 8'}
     dev: true
 
   /spawndamnit/2.0.0:
