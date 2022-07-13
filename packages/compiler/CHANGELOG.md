@@ -1,5 +1,18 @@
 # @astrojs/compiler
 
+## 0.19.0
+
+### Minor Changes
+
+- fcb4834: Removes fallback for the site configuration
+
+### Patch Changes
+
+- 02add77: Fixes many edge cases around tables when used with components, slots, or expressions
+- b23dd4d: Fix handling of unmatched close brace in template literals
+- 9457a91: Fix issue with `{` in template literal attributes
+- c792161: Fix nested expression handling with a proper expression tokenizer stack
+
 ## 0.18.2
 
 ### Patch Changes
