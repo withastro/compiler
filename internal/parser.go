@@ -1741,6 +1741,13 @@ func inTableIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Caption:
 			p.clearStackToContext(tableScope)
 			p.afe = append(p.afe, &scopeMarker)
@@ -1800,6 +1807,14 @@ func inTableIM(p *parser) bool {
 			p.im = inSelectInTableIM
 			return true
 		}
+		if isComponent(p.tok.Data) {
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
+		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
 		case a.Table:
@@ -1814,6 +1829,13 @@ func inTableIM(p *parser) bool {
 			return true
 		case a.Template:
 			return inHeadIM(p)
+		case a.Slot:
+			p.oe.pop()
+			return true
+		}
+		if isComponent(p.tok.Data) {
+			p.oe.pop()
+			return true
 		}
 	case CommentToken:
 		p.addChild(&Node{
@@ -1831,7 +1853,6 @@ func inTableIM(p *parser) bool {
 
 	p.fosterParenting = true
 	defer func() { p.fosterParenting = false }()
-
 	return inBodyIM(p)
 }
 
@@ -1840,6 +1861,13 @@ func inCaptionIM(p *parser) bool {
 	switch p.tok.Type {
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Caption, a.Col, a.Colgroup, a.Tbody, a.Td, a.Tfoot, a.Thead, a.Tr:
 			if !p.popUntil(tableScope, a.Caption) {
 				// Ignore the token.
@@ -1913,6 +1941,13 @@ func inColumnGroupIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Html:
 			return inBodyIM(p)
 		case a.Col:
@@ -1962,6 +1997,13 @@ func inTableBodyIM(p *parser) bool {
 	switch p.tok.Type {
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Tr:
 			p.clearStackToContext(tableBodyScope)
 			p.addElement()
@@ -2022,8 +2064,21 @@ func inTableBodyIM(p *parser) bool {
 // Section 12.2.6.4.14.
 func inRowIM(p *parser) bool {
 	switch p.tok.Type {
+	case StartExpressionToken:
+		p.addExpression()
+		p.afe = append(p.afe, &scopeMarker)
+		p.originalIM = inRowIM
+		p.im = inExpressionIM
+		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Td, a.Th:
 			p.clearStackToContext(tableRowScope)
 			p.addElement()
@@ -2065,12 +2120,6 @@ func inRowIM(p *parser) bool {
 			// Ignore the token.
 			return true
 		}
-	case StartExpressionToken:
-		p.addExpression()
-		p.afe = append(p.afe, &scopeMarker)
-		p.originalIM = inTableIM
-		p.im = inExpressionIM
-		return true
 	case EndExpressionToken:
 		p.oe.pop()
 		return true
@@ -2092,6 +2141,13 @@ func inCellIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Caption, a.Col, a.Colgroup, a.Tbody, a.Td, a.Tfoot, a.Th, a.Thead, a.Tr:
 			if p.popUntil(tableScope, a.Td, a.Th) {
 				// Close the cell and reprocess.
@@ -2583,7 +2639,42 @@ func frontmatterIM(p *parser) bool {
 	}
 }
 
+// Handle expressions inside tables very literally
+func inExpressionTableIM(p *parser) bool {
+	switch p.tok.Type {
+	case ErrorToken:
+		p.oe.pop()
+	case TextToken:
+		p.addText(p.tok.Data)
+		return true
+	case StartTagToken:
+		p.addElement()
+		if p.hasSelfClosingToken {
+			p.oe.pop()
+			p.acknowledgeSelfClosingTag()
+		}
+		return true
+	case EndTagToken:
+		p.oe.pop()
+		return true
+	case StartExpressionToken:
+		p.addExpression()
+		return true
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
+		return true
+	}
+	p.im = p.originalIM
+	p.originalIM = nil
+	return p.tok.Type == EndTagToken
+}
+
 func inExpressionIM(p *parser) bool {
+	if p.oe.contains(a.Table) {
+		p.clearActiveFormattingElements()
+		return inExpressionTableIM(p)
+	}
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
@@ -2593,7 +2684,6 @@ func inExpressionIM(p *parser) bool {
 		if isComponent(p.tok.Data) {
 			return inBodyIM(p)
 		}
-
 		n := p.oe.top()
 		if p.isInsideHead() {
 			switch p.tok.DataAtom {
@@ -2624,8 +2714,6 @@ func inExpressionIM(p *parser) bool {
 				p.originalIM = inBodyIM
 				return false
 			}
-		} else if p.oe.contains(a.Table) {
-			return inTableBodyIM(p)
 		} else {
 			return inBodyIM(p)
 		}
