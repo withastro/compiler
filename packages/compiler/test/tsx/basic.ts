@@ -59,3 +59,25 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}
   const { code } = await convertToTSX(input);
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
+
+test('add trailling semicolon to frontmatter', async () => {
+  const input = `
+---
+const hello = ""
+---
+
+{hello}
+`;
+  const output = `
+const hello = "";
+<Fragment>
+{hello}
+</Fragment>
+
+export default function __AstroComponent_(_props: Record<string, any>): any {}
+`;
+  const { code } = await convertToTSX(input);
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+test.run();
