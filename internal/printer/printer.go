@@ -455,12 +455,12 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 				assertions += statement.Assertions
 			}
 
-			isCssImport := false
+			isCSSImport := false
 			if len(statement.Imports) == 0 && styleModuleSpecExp.MatchString(statement.Specifier) {
-				isCssImport = true
+				isCSSImport = true
 			}
 
-			if !isCssImport {
+			if !isCSSImport && !statement.IsType {
 				p.print(fmt.Sprintf("\nimport * as $$module%v from '%s'%s;", modCount, statement.Specifier, assertions))
 				specs = append(specs, statement.Specifier)
 				asrts = append(asrts, statement.Assertions)
