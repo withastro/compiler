@@ -246,3 +246,118 @@ func TestTransformTrailingSpace(t *testing.T) {
 		})
 	}
 }
+
+func TestCompactTransform(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "trims whitespace",
+			source: `<div>    Test     </div>`,
+			want:   `<div> Test </div>`,
+		},
+		{
+			name:   "pre",
+			source: `<pre>  Test  </pre>`,
+			want:   `<pre>  Test  </pre>`,
+		},
+		{
+			name:   "textarea",
+			source: `<textarea>  Test  </textarea>`,
+			want:   `<textarea>  Test  </textarea>`,
+		},
+		{
+			name:   "deep pre",
+			source: `<pre>  <div> Test </div>  </pre>`,
+			want:   `<pre>  <div> Test </div>  </pre>`,
+		},
+		{
+			name:   "remove whitespace only",
+			source: `<head>  <script>console.log("hoisted")</script>  <head>`,
+			want:   `<head></head>`,
+		},
+		{
+			name:   "collapse surrounding whitespace",
+			source: `<div>  COOL  </div>`,
+			want:   `<div> COOL </div>`,
+		},
+		{
+			name:   "collapse only surrounding whitespace",
+			source: `<div>  C O O L  </div>`,
+			want:   `<div> C O O L </div>`,
+		},
+		{
+			name:   "collapse surrounding newlines",
+			source: "<div>\n\n\tC O O L\n\n\t</div>",
+			want:   "<div>\nC O O L\n</div>",
+		},
+		{
+			name:   "expression trim first",
+			source: "<div>{\n() => {\n\t\treturn <span />}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
+		},
+		{
+			name:   "expression trim last",
+			source: "<div>{() => {\n\t\treturn <span />}\n}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
+		},
+		{
+			name:   "expression collapse inside",
+			source: "<div>{() => {\n\t\treturn <span>  HEY  </span>}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span> HEY </span>}}</div>",
+		},
+		{
+			name:   "expression collapse newlines",
+			source: "<div>{() => {\n\t\treturn <span>\n\nTEST</span>}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span>\nTEST</span>}}</div>",
+		},
+		{
+			name:   "expression remove only whitespace",
+			source: "<div>{() => {\n\t\treturn <span>\n\n\n</span>}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
+		},
+		{
+			name:   "attributes",
+			source: `<div    a="1"    b={0} />`,
+			want:   `<div a="1" b={0}></div>`,
+		},
+		{
+			name:   "expression quoted",
+			source: "<div test={\n`  test  `\n} />",
+			want:   "<div test={`  test  `}></div>",
+		},
+		{
+			name:   "expression attribute math",
+			source: "<div test={ a + b } />",
+			want:   "<div test={a + b}></div>",
+		},
+		{
+			name:   "expression math",
+			source: "<div>{ a + b }</div>",
+			want:   "<div>{a + b}</div>",
+		},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			ExtractStyles(doc)
+			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
+			doc.Styles = make([]*astro.Node, 0)
+			Transform(doc, TransformOptions{
+				Compact: true,
+			})
+			astro.PrintToSource(&b, doc)
+			got := strings.TrimSpace(b.String())
+			if tt.want != got {
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
+			}
+		})
+	}
+}

@@ -89,6 +89,11 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		projectRoot = "."
 	}
 
+	compact := false
+	if jsBool(options.Get("compact")) {
+		compact = true
+	}
+
 	staticExtraction := false
 	if jsBool(options.Get("experimentalStaticExtraction")) {
 		staticExtraction = true
@@ -104,6 +109,7 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 		SourceMap:        sourcemap,
 		Site:             site,
 		ProjectRoot:      projectRoot,
+		Compact:          compact,
 		PreprocessStyle:  preprocessStyle,
 		StaticExtraction: staticExtraction,
 	}

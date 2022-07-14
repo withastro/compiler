@@ -22,7 +22,11 @@ func PrintToSource(buf *strings.Builder, node *Node) {
 			}
 		}
 		if !isImplicit {
-			buf.WriteString(fmt.Sprintf(`<%s`, node.Data))
+			if node.Expression {
+				buf.WriteString("{")
+			} else {
+				buf.WriteString(fmt.Sprintf(`<%s`, node.Data))
+			}
 			for _, attr := range node.Attr {
 				if attr.Key == ImplicitNodeMarker {
 					continue
@@ -54,13 +58,19 @@ func PrintToSource(buf *strings.Builder, node *Node) {
 					buf.WriteString("=`" + strings.TrimSpace(attr.Val) + "`")
 				}
 			}
-			buf.WriteString(`>`)
+			if !node.Expression {
+				buf.WriteString(`>`)
+			}
 		}
 		for c := node.FirstChild; c != nil; c = c.NextSibling {
 			PrintToSource(buf, c)
 		}
 		if !isImplicit {
-			buf.WriteString(fmt.Sprintf(`</%s>`, node.Data))
+			if node.Expression {
+				buf.WriteString("}")
+			} else {
+				buf.WriteString(fmt.Sprintf(`</%s>`, node.Data))
+			}
 		}
 	}
 }

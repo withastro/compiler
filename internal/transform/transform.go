@@ -20,6 +20,7 @@ type TransformOptions struct {
 	SourceMap        string
 	Site             string
 	ProjectRoot      string
+	Compact          bool
 	PreprocessStyle  interface{}
 	StaticExtraction bool
 }
@@ -54,6 +55,10 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	}
 
 	TrimTrailingSpace(doc)
+
+	if opts.Compact {
+		collapseWhitespace(doc)
+	}
 
 	return doc
 }
@@ -157,15 +162,80 @@ func TrimTrailingSpace(doc *astro.Node) {
 	}
 }
 
-// TODO: cleanup sibling whitespace after removing scripts/styles
-// func removeSiblingWhitespace(n *astro.Node) {
-// 	if c := n.NextSibling; c != nil && c.Type == astro.TextNode {
-// 		content := strings.TrimSpace(c.Data)
-// 		if len(content) == 0 {
-// 			c.Parent.RemoveChild(c)
-// 		}
-// 	}
-// }
+func isRawElement(n *astro.Node) bool {
+	if n.Type == astro.FrontmatterNode {
+		return true
+	}
+	rawTags := []string{"Markdown", "pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
+	for _, tag := range rawTags {
+		if n.Data == tag {
+			return true
+		}
+		for _, attr := range n.Attr {
+			if attr.Key == "is:raw" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func collapseWhitespace(doc *astro.Node) {
+	walk(doc, func(n *astro.Node) {
+		if n.Type == astro.TextNode {
+			if n.Closest(isRawElement) != nil {
+				return
+			}
+			// Top-level expression children
+			if n.Parent != nil && n.Parent.Expression {
+				// Trim left for first child
+				if n.PrevSibling == nil {
+					n.Data = strings.TrimLeftFunc(n.Data, unicode.IsSpace)
+				}
+				// Trim right for last child
+				if n.NextSibling == nil {
+					n.Data = strings.TrimRightFunc(n.Data, unicode.IsSpace)
+				}
+				// Otherwise don't trim this!
+				return
+			}
+			if len(strings.TrimFunc(n.Data, unicode.IsSpace)) == 0 {
+				n.Data = ""
+				return
+			}
+			originalLen := len(n.Data)
+			hasNewline := false
+			n.Data = strings.TrimLeftFunc(n.Data, func(r rune) bool {
+				if r == '\n' {
+					hasNewline = true
+				}
+				return unicode.IsSpace(r)
+			})
+			if originalLen != len(n.Data) {
+				if hasNewline {
+					n.Data = "\n" + n.Data
+				} else {
+					n.Data = " " + n.Data
+				}
+			}
+			hasNewline = false
+			originalLen = len(n.Data)
+			n.Data = strings.TrimRightFunc(n.Data, func(r rune) bool {
+				if r == '\n' {
+					hasNewline = true
+				}
+				return unicode.IsSpace(r)
+			})
+			if originalLen != len(n.Data) {
+				if hasNewline {
+					n.Data = n.Data + "\n"
+				} else {
+					n.Data = n.Data + " "
+				}
+			}
+		}
+	})
+}
 
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
