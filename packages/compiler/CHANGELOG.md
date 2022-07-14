@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.20.0-next.0
+
+### Minor Changes
+
+- 40f3bf5: Removes limitation where imports must be at the top of an `.astro` file, fixes various edge cases around `getStaticPaths` hoisting
+
+### Patch Changes
+
+- 245d73e: Add support for HTML minification by passing `compact: true` to `transform`.
+
 ## 0.19.0
 
 ### Minor Changes

@@ -1,0 +1,11 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "@astrojs/compiler": "0.18.2"
+  },
+  "changesets": [
+    "chilly-beers-help",
+    "twenty-spoons-perform"
+  ]
+}
