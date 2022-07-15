@@ -319,6 +319,11 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					}
 				}
 
+				// do not hoist dynamic imports
+				if next == js.OpenParenToken && len(specifier) == 0 {
+					break
+				}
+
 				// if this is import.meta.*, ignore (watch for first dot)
 				if next == js.DotToken && len(specifier) == 0 {
 					break

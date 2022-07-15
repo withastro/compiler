@@ -1274,6 +1274,20 @@ let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');`},
 			},
 		},
 		{
+			name: "dynamic import",
+			source: `---
+const markdownDocs = await Astro.glob('../markdown/*.md')
+const article2 = await import('../markdown/article2.md')
+---
+<div />
+`, want: want{
+				frontmatter: []string{"", `const markdownDocs = await Astro.glob('../markdown/*.md')
+const article2 = await import('../markdown/article2.md')`},
+				styles: []string{},
+				code:   "${$$maybeRenderHead($$result)}<div></div>",
+			},
+		},
+		{
 			name: "Component names A-Z",
 			source: `---
 import AComponent from '../components/AComponent.jsx';

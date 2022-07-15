@@ -30,6 +30,13 @@ const b = await fetch();`,
 `,
 		},
 		{
+			name: "dynamic",
+			source: `const markdownDocs = await Astro.glob('../markdown/*.md')
+const article2 = await import('../markdown/article2.md')
+`,
+			want: "",
+		},
+		{
 			name: "big import",
 			source: `import {
   a,
