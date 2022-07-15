@@ -15,7 +15,7 @@ type HoistedScripts struct {
 }
 
 func HoistExports(source []byte) HoistedScripts {
-	shouldHoist := hasGetStaticPaths(source)
+	shouldHoist := bytes.Contains(source, []byte("export"))
 	if !shouldHoist {
 		return HoistedScripts{
 			Body: source,
@@ -24,9 +24,14 @@ func HoistExports(source []byte) HoistedScripts {
 
 	l := js.NewLexer(parse.NewInputBytes(source))
 	i := 0
+	end := 0
+
+	hoisted := make([][]byte, 1)
+	body := make([]byte, 0)
 	pairs := make(map[byte]int)
 
 	// Let's lex the script until we find what we need!
+outer:
 	for {
 		token, value := l.Next()
 
@@ -55,7 +60,7 @@ func HoistExports(source []byte) HoistedScripts {
 		// Exports should be consumed until all opening braces are closed,
 		// a specifier is found, and a line terminator has been found
 		if token == js.ExportToken {
-			foundGetStaticPaths := false
+			foundIdent := false
 			foundSemicolonOrLineTerminator := false
 			start := 0
 			if i > 0 {
@@ -73,10 +78,13 @@ func HoistExports(source []byte) HoistedScripts {
 				i += len(nextValue)
 
 				if js.IsIdentifier(next) {
-					if !foundGetStaticPaths {
-						foundGetStaticPaths = string(nextValue) == "getStaticPaths"
+					if isKeyword(nextValue) && next != js.FromToken {
+						continue
 					}
-				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
+					if !foundIdent {
+						foundIdent = true
+					}
+				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
 					foundSemicolonOrLineTerminator = true
 				} else if js.IsPunctuator(next) {
 					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
@@ -90,22 +98,22 @@ func HoistExports(source []byte) HoistedScripts {
 					}
 				}
 
-				if next == js.ErrorToken {
-					return HoistedScripts{
-						Body: source,
+				if foundIdent && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
+					hoisted = append(hoisted, source[start:i])
+					if end < start {
+						body = append(body, source[end:start]...)
 					}
+					end = i
+					continue outer
 				}
 
-				if foundGetStaticPaths && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
-					hoisted := make([][]byte, 1)
-					hoisted = append(hoisted, source[start:i])
-					body := make([]byte, 0)
-					body = append(body, source[0:start]...)
-					body = append(body, source[i:]...)
-					return HoistedScripts{
-						Hoisted: hoisted,
-						Body:    body,
+				if next == js.ErrorToken {
+					if l.Err() != io.EOF {
+						return HoistedScripts{
+							Body: source,
+						}
 					}
+					break outer
 				}
 			}
 		}
@@ -129,10 +137,22 @@ func HoistExports(source []byte) HoistedScripts {
 		i += len(value)
 	}
 
-	// If we haven't found anything... there's nothing to find! Split at the start.
+	body = append(body, source[end:]...)
+
 	return HoistedScripts{
-		Body: source,
+		Hoisted: hoisted,
+		Body:    body,
 	}
+}
+
+var keywords = map[string]bool{
+	"interface": true,
+	"async":     true,
+	"await":     true,
+}
+
+func isKeyword(value []byte) bool {
+	return js.Keywords[string(value)] != 0
 }
 
 func HoistImports(source []byte) HoistedScripts {
@@ -149,20 +169,6 @@ func HoistImports(source []byte) HoistedScripts {
 	}
 	body = append(body, source[prev:]...)
 	return HoistedScripts{Hoisted: imports, Body: body}
-}
-
-func hasGetStaticPaths(source []byte) bool {
-	l := js.NewLexer(parse.NewInputBytes(source))
-	for {
-		token, value := l.Next()
-		if token == js.ErrorToken {
-			// EOF or other error
-			return false
-		}
-		if token == js.IdentifierToken && string(value) == "getStaticPaths" {
-			return true
-		}
-	}
 }
 
 type Import struct {

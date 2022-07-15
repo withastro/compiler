@@ -281,7 +281,155 @@ const { a } = Astro.props;`,
   const value = /2/g;
 }`,
 		},
+		{
+			name: "export interface",
+			source: `import { a } from "a";
+export interface Props {
+	open?: boolean;
+}`,
+			want: `export interface Props {
+	open?: boolean;
+}`,
+		},
+		{
+			name: "export multiple",
+			source: `import { a } from "a";
+export interface Props {
+	open?: boolean;
+}
+export const foo = "bar"`,
+			want: `export interface Props {
+	open?: boolean;
+}
+export const foo = "bar"`,
+		},
+		{
+			name: "export multiple with content after",
+			source: `import { a } from "a";
+export interface Props {
+	open?: boolean;
+}
+export const baz = "bing"
+// beep boop`,
+			want: `export interface Props {
+	open?: boolean;
+}
+export const baz = "bing"`,
+		},
+		{
+			name: "export three",
+			source: `import { a } from "a";
+export interface Props {}
+export const a = "b"
+export const c = "d"`,
+			want: `export interface Props {}
+export const a = "b"
+export const c = "d"`,
+		},
+		{
+			name: "export with comments",
+			source: `import { a } from "a";
+// comment
+export interface Props {}
+export const a = "b"
+export const c = "d"`,
+			want: `export interface Props {}
+export const a = "b"
+export const c = "d"`,
+		},
+		{
+			name: "export local reference (runtime error)",
+			source: `import { a } from "a";
+export interface Props {}
+const value = await fetch("something")
+export const data = { value }
+`,
+			want: `export interface Props {}
+export const data = { value }`,
+		},
+		{
+			name: "export passthrough",
+			source: `export * from "./local-data.json";
+export { default as A } from "./_types"
+export B from "./_types"
+export type C from "./_types"`,
+			want: `export * from "./local-data.json";
+export { default as A } from "./_types"
+export B from "./_types"
+export type C from "./_types"`,
+		},
+		{
+			name: "Picture",
+			source: `// @ts-ignore
+import loader from 'virtual:image-loader';
+import { getPicture } from '../src/get-picture.js';
+import type { ImageAttributes, ImageMetadata, OutputFormat, PictureAttributes, TransformOptions } from '../src/types.js';
+export interface LocalImageProps extends Omit<PictureAttributes, 'src' | 'width' | 'height'>, Omit<TransformOptions, 'src'>, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
+	src: ImageMetadata | Promise<{ default: ImageMetadata }>;
+	sizes: HTMLImageElement['sizes'];
+	widths: number[];
+	formats?: OutputFormat[];
+}
+export interface RemoteImageProps extends Omit<PictureAttributes, 'src' | 'width' | 'height'>, TransformOptions, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
+	src: string;
+	sizes: HTMLImageElement['sizes'];
+	widths: number[];
+	aspectRatio: TransformOptions['aspectRatio'];
+	formats?: OutputFormat[];
+}
+export type Props = LocalImageProps | RemoteImageProps;
+const { src, sizes, widths, aspectRatio, formats = ['avif', 'webp'], loading = 'lazy', decoding = 'async', ...attrs } = Astro.props as Props;
+const { image, sources } = await getPicture({ loader, src, widths, formats, aspectRatio });
+`,
+			want: `export interface LocalImageProps extends Omit<PictureAttributes, 'src' | 'width' | 'height'>, Omit<TransformOptions, 'src'>, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
+	src: ImageMetadata | Promise<{ default: ImageMetadata }>;
+	sizes: HTMLImageElement['sizes'];
+	widths: number[];
+	formats?: OutputFormat[];
+}
+export interface RemoteImageProps extends Omit<PictureAttributes, 'src' | 'width' | 'height'>, TransformOptions, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
+	src: string;
+	sizes: HTMLImageElement['sizes'];
+	widths: number[];
+	aspectRatio: TransformOptions['aspectRatio'];
+	formats?: OutputFormat[];
+}
+export type Props = LocalImageProps | RemoteImageProps;`,
+		},
+		{
+			name: "Image",
+			source: `// @ts-ignore
+import loader from 'virtual:image-loader';
+import { getImage } from '../src/index.js';
+import type { ImageAttributes, ImageMetadata, TransformOptions, OutputFormat } from '../src/types.js';
+const { loading = "lazy", decoding = "async", ...props } = Astro.props as Props;
+const attrs = await getImage(loader, props);
+
+// Moved after Astro.props for test
+export interface LocalImageProps extends Omit<TransformOptions, 'src'>, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
+	src: ImageMetadata | Promise<{ default: ImageMetadata }>;
+}
+export interface RemoteImageProps extends TransformOptions, ImageAttributes {
+	src: string;
+	format: OutputFormat;
+	width: number;
+	height: number;
+}
+export type Props = LocalImageProps | RemoteImageProps;
+`,
+			want: `export interface LocalImageProps extends Omit<TransformOptions, 'src'>, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
+	src: ImageMetadata | Promise<{ default: ImageMetadata }>;
+}
+export interface RemoteImageProps extends TransformOptions, ImageAttributes {
+	src: string;
+	format: OutputFormat;
+	width: number;
+	height: number;
+}
+export type Props = LocalImageProps | RemoteImageProps;`,
+		},
 	}
+
 	for _, tt := range tests {
 		if tt.only {
 			tests = make([]testcase, 0)
