@@ -36,6 +36,10 @@ var ScriptMimeTypes map[string]bool = map[string]bool{
 	"application/node":       true,
 }
 
+func isInvalidTSXAttributeName(k string) bool {
+	return strings.HasPrefix(k, "@") || strings.Contains(k, ".")
+}
+
 type TextType uint32
 
 const (
@@ -176,7 +180,7 @@ func renderTsx(p *printer, n *Node) {
 	p.print(n.Data)
 	invalidTSXAttributes := make([]Attribute, 0)
 	for _, a := range n.Attr {
-		if strings.HasPrefix(a.Key, "@") || strings.Contains(a.Key, ".") {
+		if isInvalidTSXAttributeName(a.Key) {
 			invalidTSXAttributes = append(invalidTSXAttributes, a)
 			continue
 		}
