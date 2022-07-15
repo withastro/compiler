@@ -145,12 +145,6 @@ outer:
 	}
 }
 
-var keywords = map[string]bool{
-	"interface": true,
-	"async":     true,
-	"await":     true,
-}
-
 func isKeyword(value []byte) bool {
 	return js.Keywords[string(value)] != 0
 }
