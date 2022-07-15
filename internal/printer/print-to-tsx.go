@@ -176,7 +176,7 @@ func renderTsx(p *printer, n *Node) {
 	p.print(n.Data)
 	invalidTSXAttributes := make([]Attribute, 0)
 	for _, a := range n.Attr {
-		if strings.HasPrefix(a.Key, "@") {
+		if strings.HasPrefix(a.Key, "@") || strings.Contains(a.Key, ".") {
 			invalidTSXAttributes = append(invalidTSXAttributes, a)
 			continue
 		}
