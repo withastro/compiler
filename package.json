@@ -7,11 +7,10 @@
     "url": "https://github.com/withastro/compiler.git"
   },
   "scripts": {
-    "build": "make wasm && lerna run build --scope @astrojs/compiler",
-    "build:compiler": "lerna run build --scope @astrojs/compiler",
+    "build": "make wasm",
     "lint": "eslint \"packages/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
     "format": "prettier -w .",
-    "prerelease": "pnpm run build:compiler",
+    "prerelease": "pnpm run build",
     "release": "changeset publish",
     "test": "tsm node_modules/uvu/bin.js packages test -i utils -i stress",
     "test:stress": "tsm packages/compiler/test/stress/index.ts",
