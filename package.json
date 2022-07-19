@@ -8,9 +8,10 @@
   },
   "scripts": {
     "build": "make wasm",
+    "build:compiler": "pnpm --filter @astrojs/compiler run build",
     "lint": "eslint \"packages/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
     "format": "prettier -w .",
-    "prerelease": "pnpm run build",
+    "prerelease": "pnpm run build:compiler",
     "release": "changeset publish",
     "test": "tsm node_modules/uvu/bin.js packages test -i utils -i stress",
     "test:stress": "tsm packages/compiler/test/stress/index.ts",
