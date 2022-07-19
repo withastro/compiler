@@ -5,6 +5,7 @@
 package printer
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 	"strings"
@@ -133,63 +134,37 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.printCSSImports(opts.cssLen)
 				}
 
-				// This scanner returns a position where we should slice the frontmatter.
-				// If it encounters any `await`ed code or code that accesses the `Astro` global,
-				// `renderBodyStart` will be the index where we should split the frontmatter.
-				// If we don't encounter any of those, `renderBodyStart` will be `-1`
-				renderBodyStart := js_scanner.FindRenderBody([]byte(c.Data))
 				if len(n.Loc) > 0 {
 					p.addSourceMapping(n.Loc[0])
 				}
-				if renderBodyStart == -1 {
-					if len(c.Loc) > 0 {
-						p.addSourceMapping(c.Loc[0])
+				render := js_scanner.HoistImports([]byte(c.Data))
+				importStatements := ""
+				if len(render.Hoisted) > 0 {
+					for _, hoisted := range render.Hoisted {
+						statement := string(bytes.TrimSpace(hoisted)) + "\n"
+						importStatements += statement
 					}
-					preprocessed := js_scanner.HoistExports([]byte(c.Data))
-
-					// 1. After imports put in the top-level Astro.
-					p.printTopLevelAstro(opts.opts)
-
-					if len(preprocessed.Hoisted) > 0 {
-						for _, hoisted := range preprocessed.Hoisted {
-							p.println(strings.TrimSpace(string(hoisted)))
-						}
-					}
-
-					// 2. The frontmatter.
-					p.print(strings.TrimSpace(c.Data))
-
-					// 3. The metadata object
-					p.printComponentMetadata(n.Parent, opts.opts, []byte(c.Data))
-
-					p.printFuncPrelude(opts.opts)
-				} else {
-					importStatements := c.Data[0:renderBodyStart]
-					content := c.Data[renderBodyStart:]
-					preprocessed := js_scanner.HoistExports([]byte(content))
-
-					if len(c.Loc) > 0 {
-						p.addSourceMapping(c.Loc[0])
-					}
-					p.println(strings.TrimSpace(importStatements))
-
-					// 1. Component imports, if any exist.
-					p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
-					// 2. Top-level Astro global.
-					p.printTopLevelAstro(opts.opts)
-
-					if len(preprocessed.Hoisted) > 0 {
-						for _, hoisted := range preprocessed.Hoisted {
-							p.println(strings.TrimSpace(string(hoisted)))
-						}
-					}
-
-					p.printFuncPrelude(opts.opts)
-					if len(c.Loc) > 0 {
-						p.addSourceMapping(loc.Loc{Start: c.Loc[0].Start + renderBodyStart})
-					}
-					p.print(strings.TrimSpace(string(preprocessed.Body)))
 				}
+				preprocessed := js_scanner.HoistExports(render.Body)
+
+				if len(c.Loc) > 0 {
+					p.addSourceMapping(c.Loc[0])
+				}
+				p.println(strings.TrimSpace(importStatements))
+
+				// 1. Component imports, if any exist.
+				p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
+				// 2. Top-level Astro global.
+				p.printTopLevelAstro(opts.opts)
+
+				if len(preprocessed.Hoisted) > 0 {
+					for _, hoisted := range preprocessed.Hoisted {
+						p.println(strings.TrimSpace(string(hoisted)))
+					}
+				}
+
+				p.printFuncPrelude(opts.opts)
+				p.print(strings.TrimSpace(string(preprocessed.Body)))
 
 				// Print empty just to ensure a newline
 				p.println("")
