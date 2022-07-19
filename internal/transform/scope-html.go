@@ -14,6 +14,17 @@ func ScopeElement(n *astro.Node, opts TransformOptions) {
 	}
 }
 
+func AddDefineVars(n *astro.Node, values []string) {
+	if n.Type == astro.ElementNode && !n.Component {
+		if _, noScope := NeverScopedElements[n.Data]; !noScope {
+			if n.Parent == nil || IsImplictNode(n.Parent) || n.Parent.Component {
+				// parent := n.Closest(func(p *astro.Node) bool { return p.Type == astro.ElementNode && HasAttr(p, "style") })
+				injectDefineVars(n, values)
+			}
+		}
+	}
+}
+
 var NeverScopedElements map[string]bool = map[string]bool{
 	"Fragment": true,
 	"base":     true,
@@ -32,6 +43,50 @@ var NeverScopedElements map[string]bool = map[string]bool{
 
 var NeverScopedSelectors map[string]bool = map[string]bool{
 	":root": true,
+}
+
+func injectDefineVars(n *astro.Node, values []string) {
+	hasSpreadAttr := false
+	definedVars := "$$definedVars"
+	for _, attr := range n.Attr {
+		if !hasSpreadAttr && attr.Type == astro.SpreadAttribute {
+			hasSpreadAttr = true
+		}
+	}
+	for i, attr := range n.Attr {
+		if attr.Key == "style" {
+			switch attr.Type {
+			case astro.ShorthandAttribute:
+				attr.Type = astro.ExpressionAttribute
+				attr.Val = fmt.Sprintf(`%s + %s`, attr.Key, definedVars)
+				n.Attr[i] = attr
+				return
+			case astro.EmptyAttribute:
+				attr.Type = astro.ExpressionAttribute
+				attr.Val = definedVars
+				n.Attr[i] = attr
+				return
+			case astro.QuotedAttribute, astro.TemplateLiteralAttribute:
+				attr.Type = astro.ExpressionAttribute
+				attr.Val = fmt.Sprintf("`%s ${%s}`", attr.Key, definedVars)
+				n.Attr[i] = attr
+				return
+			case astro.ExpressionAttribute:
+				attr.Type = astro.ExpressionAttribute
+				attr.Val = fmt.Sprintf("(%s) + %s`", attr.Val, definedVars)
+				n.Attr[i] = attr
+				return
+			}
+		}
+	}
+	if hasSpreadAttr {
+		return
+	}
+	n.Attr = append(n.Attr, astro.Attribute{
+		Key:  "style",
+		Type: astro.ExpressionAttribute,
+		Val:  definedVars,
+	})
 }
 
 func injectScopedClass(n *astro.Node, opts TransformOptions) {

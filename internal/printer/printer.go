@@ -138,6 +138,16 @@ func (p *printer) printDefineVars(n *astro.Node) {
 	if !(n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
 		return
 	}
+	var src string
+	var index string
+	for _, attr := range n.Attr {
+		if attr.Key == "define:vars-src" {
+			src = attr.Val
+		}
+		if attr.Key == "define:vars-index" {
+			index = attr.Val
+		}
+	}
 	for _, attr := range n.Attr {
 		if attr.Key == "define:vars" {
 			var value string
@@ -149,19 +159,19 @@ func (p *printer) printDefineVars(n *astro.Node) {
 				defineCall = DEFINE_STYLE_VARS
 			}
 			switch attr.Type {
-			case astro.QuotedAttribute:
-				value = `"` + attr.Val + `"`
-			case astro.EmptyAttribute:
-				value = attr.Key
 			case astro.ExpressionAttribute:
 				value = strings.TrimSpace(attr.Val)
 			}
 			p.addNilSourceMapping()
 			p.print(fmt.Sprintf("${%s(", defineCall))
 			p.addSourceMapping(attr.ValLoc)
-			p.print(value)
+			p.printf(value)
 			p.addNilSourceMapping()
-			p.print(")}")
+			if src != "" {
+				p.printf(", { file: '%s', index: %s }, %s)}", src, index, RESULT)
+			} else {
+				p.print(")}")
+			}
 			return
 		}
 	}
@@ -277,7 +287,7 @@ func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
-	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
+	if strings.HasPrefix(attr.Key, "define:vars") || attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
 		return
 	}
 
@@ -554,10 +564,23 @@ conly_loop:
 			p.print(", ")
 		}
 
+		defineVars := astro.GetAttribute(node, "define:vars")
 		src := astro.GetAttribute(node, "src")
-		if src != nil {
-			p.print(fmt.Sprintf("{ type: 'remote', src: '%s' }", escapeSingleQuote(src.Val)))
-		} else if node.FirstChild != nil {
+
+		switch {
+		case defineVars != nil:
+			keys := js_scanner.GetObjectKeys([]byte(defineVars.Val))
+			params := make([]byte, 0)
+			for i, key := range keys {
+				params = append(params, key...)
+				if i < len(keys)-1 {
+					params = append(params, ',')
+				}
+			}
+			p.print(fmt.Sprintf("{ type: 'define:vars', value: `%s`, keys: '%s' }", escapeInterpolation(escapeBackticks(node.FirstChild.Data)), escapeSingleQuote(string(params))))
+		case src != nil:
+			p.print(fmt.Sprintf("{ type: 'external', src: '%s' }", escapeSingleQuote(src.Val)))
+		case node.FirstChild != nil:
 			p.print(fmt.Sprintf("{ type: 'inline', value: `%s` }", escapeInterpolation(escapeBackticks(node.FirstChild.Data))))
 		}
 	}

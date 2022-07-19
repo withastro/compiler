@@ -2,6 +2,7 @@ package js_scanner
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -454,6 +455,86 @@ export type Props = LocalImageProps | RemoteImageProps;`,
 			}
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(strings.TrimSpace(tt.want), strings.TrimSpace(string(got))); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+type keytestcase struct {
+	name   string
+	source string
+	want   []string
+	only   bool
+}
+
+func TestGetObjectKeys(t *testing.T) {
+	tests := []keytestcase{
+		{
+			name:   "basic",
+			source: `{ value }`,
+			want:   []string{"value"},
+		},
+		{
+			name:   "shorhand",
+			source: `{ value, foo, bar, baz, bing }`,
+			want:   []string{"value", "foo", "bar", "baz", "bing"},
+		},
+		{
+			name:   "literal",
+			source: `{ value: 0 }`,
+			want:   []string{"value"},
+		},
+		{
+			name:   "multiple",
+			source: `{ a: 0, b: 1, c: 2  }`,
+			want:   []string{"a", "b", "c"},
+		},
+		{
+			name:   "objects",
+			source: `{ a: { a1: 0 }, b: { b1: { b2: 0 }}, c: { c1: { c2: { c3: 0 }}}  }`,
+			want:   []string{"a", "b", "c"},
+		},
+		{
+			name:   "regexp",
+			source: `{ a: /hello/g, b: 0 }`,
+			want:   []string{"a", "b"},
+		},
+		{
+			name:   "array",
+			source: `{ a: [0, 1, 2], b: ["one", "two", "three"], c: 0 }`,
+			want:   []string{"a", "b", "c"},
+		},
+		{
+			name:   "valid strings",
+			source: `{ "lowercase": true, "camelCase": true, "PascalCase": true, "snake_case": true, "__private": true, ["computed"]: true, }`,
+			// Note that quotes are dropped
+			want: []string{`lowercase`, `camelCase`, `PascalCase`, `snake_case`, `__private`, `computed`},
+		},
+		{
+			name:   "invalid strings",
+			source: `{ "dash-case": true, "with.dot": true, "with space": true }`,
+			want:   []string{`"dash-case": dashCase`, `"with.dot": withDot`, `"with space": withSpace`},
+		},
+	}
+	for _, tt := range tests {
+		if tt.only {
+			tests = make([]keytestcase, 0)
+			tests = append(tests, tt)
+			break
+		}
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keys := GetObjectKeys([]byte(tt.source))
+			output := make([]string, 0)
+			for _, key := range keys {
+				output = append(output, string(key))
+			}
+			got, _ := json.Marshal(output)
+			want, _ := json.Marshal(tt.want)
+			// compare to expected string, show diff if mismatch
+			if diff := test_utils.ANSIDiff(string(want), string(got)); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 		})

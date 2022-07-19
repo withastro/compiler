@@ -33,6 +33,15 @@ func HasAttr(n *astro.Node, key string) bool {
 	return false
 }
 
+func GetAttr(n *astro.Node, key string) *astro.Attribute {
+	for _, attr := range n.Attr {
+		if attr.Key == key {
+			return &attr
+		}
+	}
+	return nil
+}
+
 func IsImplictNode(n *astro.Node) bool {
 	return HasAttr(n, astro.ImplicitNodeMarker)
 }
