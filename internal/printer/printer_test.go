@@ -55,7 +55,6 @@ type want struct {
 	scripts        []string
 	getStaticPaths string
 	code           string
-	skipHoist      bool // HACK: sometimes `getStaticPaths()` appears in a slightly-different location. Only use this if needed!
 	metadata
 }
 
@@ -88,6 +87,13 @@ func TestPrinter(t *testing.T) {
 	}
 
 	tests := []testcase{
+		{
+			name:   "text only",
+			source: `Foo`,
+			want: want{
+				code: `Foo`,
+			},
+		},
 		{
 			name:   "basic (no frontmatter)",
 			source: `<button>Click</button>`,
@@ -234,9 +240,9 @@ export const getStaticPaths = async () => {
 ---
 <div></div>`,
 			want: want{
-				frontmatter: []string{`export const getStaticPaths = async () => {
+				getStaticPaths: `export const getStaticPaths = async () => {
 	return { paths: [] }
-}`, ""},
+}`,
 				code: `${$$maybeRenderHead($$result)}<div></div>`,
 			},
 		},
@@ -298,7 +304,6 @@ import data from "test" assert { type: 'json' };
 					`import data from "test" assert { type: 'json' };`,
 				},
 				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {type:'json'} }`}},
-				styles:   []string{},
 			},
 		},
 		{
@@ -308,6 +313,48 @@ import data from "test" assert { type: 'json' };
 				code: `${$$maybeRenderHead($$result)}<p>Hello, world! This is a <em>buggy</em> formula: <span class="math math-inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mspace></mspace><mspace width="0.1111em"></mspace><mo lspace="0em" rspace="0.17em"></mo><mtext> ⁣</mtext><mo lspace="0em" rspace="0em">:</mo><mspace width="0.3333em"></mspace><mi>X</mi><mo>→</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>2</mn><mi>x</mi></mrow></msup></mrow><annotation encoding="application/x-tex">f\\colon X \\to \\mathbb R^{2x}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace nobreak"></span><span class="mspace" style="margin-right:0.1111em;"></span><span class="mpunct"></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mrel">:</span></span><span class="mspace" style="margin-right:0.3333em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight">x</span></span></span></span></span></span></span></span></span></span></span></span></span></p>`,
 			},
 		},
+		{
+			name: "import order",
+			source: `---
+let testWord = "Test"
+// comment
+import data from "test";
+---
+
+<div>{data}</div>
+`,
+			want: want{
+				frontmatter: []string{
+					`import data from "test";`,
+					"let testWord = \"Test\"\n// comment",
+				},
+				metadata: metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
+				code:     "${$$maybeRenderHead($$result)}<div>${data}</div>",
+			},
+		},
+		{
+			name: "type import",
+			source: `---
+import type data from "test"
+---
+
+<div>{data}</div>
+`,
+			want: want{
+				frontmatter: []string{
+					`import type data from "test"`,
+				},
+				code: "${$$maybeRenderHead($$result)}<div>${data}</div>",
+			},
+		},
+		{
+			name:   "no expressions in math",
+			source: `<p>Hello, world! This is a <em>buggy</em> formula: <span class="math math-inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mspace></mspace><mspace width="0.1111em"></mspace><mo lspace="0em" rspace="0.17em"></mo><mtext> ⁣</mtext><mo lspace="0em" rspace="0em">:</mo><mspace width="0.3333em"></mspace><mi>X</mi><mo>→</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>2</mn><mi>x</mi></mrow></msup></mrow><annotation encoding="application/x-tex">f\colon X \to \mathbb R^{2x}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace nobreak"></span><span class="mspace" style="margin-right:0.1111em;"></span><span class="mpunct"></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mrel">:</span></span><span class="mspace" style="margin-right:0.3333em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight">x</span></span></span></span></span></span></span></span></span></span></span></span></span></p>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<p>Hello, world! This is a <em>buggy</em> formula: <span class="math math-inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mspace></mspace><mspace width="0.1111em"></mspace><mo lspace="0em" rspace="0.17em"></mo><mtext> ⁣</mtext><mo lspace="0em" rspace="0em">:</mo><mspace width="0.3333em"></mspace><mi>X</mi><mo>→</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>2</mn><mi>x</mi></mrow></msup></mrow><annotation encoding="application/x-tex">f\\colon X \\to \\mathbb R^{2x}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace nobreak"></span><span class="mspace" style="margin-right:0.1111em;"></span><span class="mpunct"></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mrel">:</span></span><span class="mspace" style="margin-right:0.3333em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight">x</span></span></span></span></span></span></span></span></span></span></span></span></span></p>`,
+			},
+		},
+
 		{
 			name: "css imports are not included in module metadata",
 			source: `---
@@ -929,9 +976,9 @@ const someProps = {
   </body>
 </html>`,
 			want: want{
-				frontmatter: []string{`// Component Imports
-import Counter from '../components/Counter.jsx'`,
-					`const someProps = {
+				frontmatter: []string{`import Counter from '../components/Counter.jsx'`,
+					`// Component Imports
+const someProps = {
   count: 0,
 }
 
@@ -1225,6 +1272,20 @@ let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');
 let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');`},
 				styles: []string{},
 				code:   "${$$maybeRenderHead($$result)}<div>testing</div>",
+			},
+		},
+		{
+			name: "dynamic import",
+			source: `---
+const markdownDocs = await Astro.glob('../markdown/*.md')
+const article2 = await import('../markdown/article2.md')
+---
+<div />
+`, want: want{
+				frontmatter: []string{"", `const markdownDocs = await Astro.glob('../markdown/*.md')
+const article2 = await import('../markdown/article2.md')`},
+				styles: []string{},
+				code:   "${$$maybeRenderHead($$result)}<div></div>",
 			},
 		},
 		{
@@ -1622,7 +1683,6 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
     };
   });
 }`, BACKTICK, BACKTICK),
-				skipHoist: true,
 				metadata: metadata{
 					modules: []string{`{ module: $$module1, specifier: '../../components/Header.jsx', assert: {} }`,
 						`{ module: $$module2, specifier: '../../components/Footer.astro', assert: {} }`,
@@ -2165,11 +2225,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			if len(tt.want.frontmatter) > 0 {
 				toMatch += test_utils.Dedent(tt.want.frontmatter[0])
 			}
-			// Fixes some tests where getStaticPaths appears in a different location
-			if tt.want.skipHoist == true && len(tt.want.getStaticPaths) > 0 {
-				toMatch += "\n\n"
-				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n"
-			}
 			moduleSpecRe := regexp.MustCompile(`specifier:\s*('[^']+'),\s*assert:\s*([^}]+\})`)
 			if len(tt.want.metadata.modules) > 0 {
 				toMatch += "\n\n"
@@ -2242,7 +2297,7 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
 			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n\n"
-			if tt.want.skipHoist != true && len(tt.want.getStaticPaths) > 0 {
+			if len(tt.want.getStaticPaths) > 0 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
 			}
 			toMatch += test_utils.Dedent(PRELUDE) + "\n"
