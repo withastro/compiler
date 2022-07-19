@@ -45,7 +45,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 
 	// Important! Remove scripts from original location *after* walking the doc
 	addedHeadRenderingInsertion := false
-	for _, script := range doc.Scripts {
+	for i, script := range doc.Scripts {
 		if !addedHeadRenderingInsertion {
 			renderHeadNode := &astro.Node{
 				Type: astro.RenderHeadNode,
@@ -53,7 +53,24 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 			script.Parent.InsertBefore(renderHeadNode, script)
 			addedHeadRenderingInsertion = true
 		}
-
+		for _, attr := range script.Attr {
+			if attr.Key == "define:vars" {
+				handler := &astro.Node{
+					Type:     astro.ElementNode,
+					Data:     "script",
+					DataAtom: a.Script,
+					Loc:      make([]loc.Loc, 2),
+					Attr: []astro.Attribute{
+						{Key: "type", Val: "module"},
+						{Key: "define:vars-src", Val: opts.Filename},
+						{Key: "define:vars-index", Val: fmt.Sprintf("%d", i)},
+						attr,
+					},
+				}
+				script.Parent.InsertBefore(handler, script)
+				attr.Val = fmt.Sprintf("%d", i)
+			}
+		}
 		script.Parent.RemoveChild(script)
 	}
 
@@ -271,7 +288,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 		// if <script>, hoist to the document root
 		// If also using define:vars, that overrides the hoist tag.
 		if (hasTruthyAttr(n, "hoist")) ||
-			len(n.Attr) == 0 || (len(n.Attr) == 1 && n.Attr[0].Key == "src") {
+			len(n.Attr) == 0 || (len(n.Attr) == 1 && n.Attr[0].Key == "src" || len(n.Attr) == 1 && n.Attr[0].Key == "define:vars") {
 			shouldAdd := true
 			for _, attr := range n.Attr {
 				if attr.Key == "hoist" {

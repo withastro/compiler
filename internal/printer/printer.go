@@ -172,9 +172,14 @@ func (p *printer) printDefineVarsOpen(n *astro.Node) {
 	if !transform.HasAttr(n, "define:vars") {
 		return
 	}
-	if n.DataAtom == atom.Script {
-		if !isTypeModuleScript(n) {
-			p.print("{")
+	var src string
+	var index string
+	for _, attr := range n.Attr {
+		if attr.Key == "define:vars-src" {
+			src = attr.Val
+		}
+		if attr.Key == "define:vars-index" {
+			index = attr.Val
 		}
 	}
 	for _, attr := range n.Attr {
@@ -196,7 +201,11 @@ func (p *printer) printDefineVarsOpen(n *astro.Node) {
 			p.addSourceMapping(attr.ValLoc)
 			p.printf(value)
 			p.addNilSourceMapping()
-			p.print(")}")
+			if src != "" {
+				p.printf(", { file: '%s', index: %s }, %s)}", src, index, RESULT)
+			} else {
+				p.print(")}")
+			}
 			return
 		}
 	}
@@ -325,7 +334,7 @@ func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
-	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
+	if strings.HasPrefix(attr.Key, "define:vars") || attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
 		return
 	}
 

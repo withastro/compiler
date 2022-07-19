@@ -15,6 +15,7 @@ import (
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/printer"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -157,6 +158,7 @@ type HoistedScript struct {
 	Code string `js:"code"`
 	Src  string `js:"src"`
 	Type string `js:"type"`
+	Keys string `js:"keys"`
 	Map  string `js:"map"`
 }
 
@@ -332,11 +334,13 @@ func Transform() interface{} {
 
 					// Append hoisted scripts
 					for _, node := range doc.Scripts {
+						defineVars := astro.GetAttribute(node, "define:vars")
 						src := astro.GetAttribute(node, "src")
 						script := HoistedScript{
 							Src:  "",
 							Code: "",
 							Type: "",
+							Keys: "",
 							Map:  "",
 						}
 
@@ -344,8 +348,20 @@ func Transform() interface{} {
 							script.Type = "external"
 							script.Src = src.Val
 						} else if node.FirstChild != nil {
-							script.Type = "inline"
-
+							if defineVars != nil {
+								script.Type = "define:vars"
+								keys := js_scanner.GetObjectKeys([]byte(defineVars.Val))
+								params := make([]byte, 0)
+								for i, key := range keys {
+									params = append(params, key...)
+									if i < len(keys)-1 {
+										params = append(params, ',')
+									}
+								}
+								script.Keys = string(params)
+							} else {
+								script.Type = "inline"
+							}
 							if transformOptions.SourceMap != "" {
 								isLine := func(r rune) bool { return r == '\r' || r == '\n' }
 								isNotLine := func(r rune) bool { return !(r == '\r' || r == '\n') }
@@ -383,7 +399,6 @@ func Transform() interface{} {
 								script.Code = node.FirstChild.Data
 							}
 						}
-
 						// sourcemapString := createSourceMapString(source, result, transformOptions)
 						// inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 						scripts = append(scripts, script)

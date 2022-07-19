@@ -45,7 +45,13 @@ var NeverScopedSelectors map[string]bool = map[string]bool{
 }
 
 func injectDefineVars(n *astro.Node, values []string) {
+	hasSpreadAttr := false
 	definedVars := "$$definedVars"
+	for _, attr := range n.Attr {
+		if !hasSpreadAttr && attr.Type == astro.SpreadAttribute {
+			hasSpreadAttr = true
+		}
+	}
 	for i, attr := range n.Attr {
 		if attr.Key == "style" {
 			switch attr.Type {
@@ -71,6 +77,9 @@ func injectDefineVars(n *astro.Node, values []string) {
 				return
 			}
 		}
+	}
+	if hasSpreadAttr {
+		return
 	}
 	n.Attr = append(n.Attr, astro.Attribute{
 		Key:  "style",
