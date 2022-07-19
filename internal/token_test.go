@@ -280,11 +280,6 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, EndTagToken},
 		},
 		{
-			"data-astro-raw allows children to be parsed as Text",
-			"<span data-astro-raw>function foo() { }</span>",
-			[]TokenType{StartTagToken, TextToken, EndTagToken},
-		},
-		{
 			"is:raw allows children to be parsed as Text",
 			"<span is:raw>function foo() { }</span>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},

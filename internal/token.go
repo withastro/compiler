@@ -984,9 +984,6 @@ func (z *Tokenizer) readStartTag() TokenType {
 		raw = z.startTagIn("xmp")
 	}
 	if !raw {
-		raw = z.hasAttribute("data-astro-raw")
-	}
-	if !raw {
 		raw = z.hasAttribute("is:raw")
 	}
 	if raw {
