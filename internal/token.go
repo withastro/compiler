@@ -55,15 +55,6 @@ const (
 	FrontmatterClosed
 )
 
-type MarkdownState uint32
-
-const (
-	MarkdownInitial MarkdownState = iota
-	MarkdownOpen
-	MarkdownClosed
-	MarkdownInnerTag
-)
-
 // AttributeType is the type of an Attribute
 type AttributeType uint32
 
@@ -251,7 +242,6 @@ type Tokenizer struct {
 	tt        TokenType
 	prevToken Token
 	fm        FrontmatterState
-	m         MarkdownState
 	// err is the first error encountered during tokenization. It is possible
 	// for tt != Error && err != nil to hold: this means that Next returned a
 	// valid token but the subsequent Next call will return an error token.
@@ -1404,17 +1394,6 @@ loop:
 
 		var tokenType TokenType
 
-		if z.m == MarkdownOpen {
-			// Does this need to exist at all?
-			// Expressions and frontmatter have their own loop
-			if c == '\'' || c == '"' || c == '`' {
-				z.readString(c)
-				z.tt = TextToken
-				z.data.End = z.raw.End
-				return z.tt
-			}
-		}
-
 		if c == '{' || c == '}' {
 			if x := z.raw.End - len("{"); z.raw.Start < x {
 				z.raw.End = x
@@ -1505,11 +1484,6 @@ loop:
 				z.fm = FrontmatterClosed
 			}
 			z.tt = z.readStartTag()
-			if string(z.buf[z.data.Start:z.data.End]) == "Markdown" {
-				z.m = MarkdownOpen
-			} else if z.m == MarkdownOpen {
-				z.m = MarkdownInnerTag
-			}
 			return z.tt
 		case EndTagToken:
 			// If we see an element before "---", ignore any future "---"
@@ -1531,11 +1505,6 @@ loop:
 				if tagName == z.noExpressionTag {
 					// out of the tag block
 					z.noExpressionTag = ""
-				}
-				if tagName == "Markdown" {
-					z.m = MarkdownClosed
-				} else if z.m == MarkdownInnerTag {
-					z.m = MarkdownOpen
 				}
 				if z.err != nil {
 					z.tt = ErrorToken
