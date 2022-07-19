@@ -68,7 +68,7 @@ func GetDefineVars(styles []*astro.Node) []string {
 			case astro.TemplateLiteralAttribute:
 				values = append(values, fmt.Sprintf("`%s`", attr.Val))
 			case astro.ExpressionAttribute:
-				values = append(values, fmt.Sprintf("%s", attr.Val))
+				values = append(values, attr.Val)
 			}
 		}
 	}
