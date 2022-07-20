@@ -300,7 +300,6 @@ func Transform() interface{} {
 									for _, statement := range hoisted.Hoisted {
 										j := bytes.Index(src, statement)
 										start := i + j
-										fmt.Println(string(statement), start)
 										for k, b := range statement {
 											if k == 0 || !unicode.IsSpace(rune(b)) {
 												builder.AddSourceMapping(loc.Loc{Start: start}, output)
@@ -320,7 +319,6 @@ func Transform() interface{} {
 										content := []byte(ln)
 										content = append(content, '\n')
 										for _, b := range content {
-											fmt.Println(string(b), start)
 											if !unicode.IsSpace(rune(b)) {
 												builder.AddSourceMapping(loc.Loc{Start: start}, output)
 											}
