@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/printer"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -267,7 +265,6 @@ func Transform() interface{} {
 
 					// Append hoisted scripts
 					for _, node := range doc.Scripts {
-						defineVars := astro.GetAttribute(node, "define:vars")
 						src := astro.GetAttribute(node, "src")
 						script := HoistedScript{
 							Src:  "",
@@ -279,86 +276,6 @@ func Transform() interface{} {
 						if src != nil {
 							script.Type = "external"
 							script.Src = src.Val
-						} else if node.FirstChild != nil && defineVars != nil {
-							script.Type = "define:vars"
-							keys := js_scanner.GetObjectKeys([]byte(defineVars.Val))
-							params := make([]byte, 0)
-							for i, key := range keys {
-								params = append(params, key...)
-								if i < len(keys)-1 {
-									params = append(params, ',')
-								}
-							}
-							if transformOptions.SourceMap != "" {
-								output := make([]byte, 0)
-								builder := sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(source, len(strings.Split(source, "\n"))))
-								sourcesContent, _ := json.Marshal(source)
-								src := []byte(node.FirstChild.Data)
-								hoisted := js_scanner.HoistImports(src)
-								if len(node.FirstChild.Loc) > 0 {
-									i := node.FirstChild.Loc[0].Start
-									for _, statement := range hoisted.Hoisted {
-										j := bytes.Index(src, statement)
-										start := i + j
-										for k, b := range statement {
-											if k == 0 || !unicode.IsSpace(rune(b)) {
-												builder.AddSourceMapping(loc.Loc{Start: start}, output)
-											}
-											output = append(output, b)
-											start += 1
-										}
-										builder.AddSourceMapping(loc.Loc{}, output)
-										output = append(output, '\n')
-									}
-									builder.AddSourceMapping(loc.Loc{}, output)
-									output = append(output, []byte(fmt.Sprintf(`import deserialize from 'astro/client/deserialize.js'; export default (str) => (async function({%s}) {%s`, params, "\n"))...)
-									body := bytes.TrimSpace(hoisted.Body)
-									j := bytes.Index(src, body)
-									start := i + j
-									for _, ln := range bytes.Split(body, []byte{'\n'}) {
-										content := []byte(ln)
-										content = append(content, '\n')
-										for _, b := range content {
-											if !unicode.IsSpace(rune(b)) {
-												builder.AddSourceMapping(loc.Loc{Start: start}, output)
-											}
-											output = append(output, b)
-											start += 1
-										}
-									}
-									builder.AddSourceMapping(loc.Loc{}, output)
-									output = append(output, []byte(fmt.Sprintf(`%s})(deserialize(str))`, "\n"))...)
-									output = append(output, '\n')
-								} else {
-									for _, statement := range hoisted.Hoisted {
-										output = append(output, statement...)
-									}
-									output = append(output, []byte(fmt.Sprintf(`import deserialize from 'astro/client/deserialize.js'; export default (str) => (async function({%s}) {%s`, params, "\n"))...)
-									output = append(output, hoisted.Body...)
-									output = append(output, []byte(fmt.Sprintf(`%s})(deserialize(str))`, "\n"))...)
-								}
-
-								sourcemap := fmt.Sprintf(
-									`{ "version": 3, "sources": ["%s"], "sourcesContent": [%s], "mappings": "%s", "names": [] }`,
-									transformOptions.Filename,
-									string(sourcesContent),
-									string(builder.GenerateChunk(output).Buffer),
-								)
-								script.Map = sourcemap
-								script.Code = string(output)
-							} else {
-								src := []byte(node.FirstChild.Data)
-								hoisted := js_scanner.HoistImports(src)
-								output := make([]byte, 0)
-								for _, statement := range hoisted.Hoisted {
-									output = append(output, statement...)
-								}
-								output = append(output, []byte(fmt.Sprintf(`import deserialize from 'astro/client/deserialize.js'; export default (str) => (async function({%s}) {%s`, params, "\n"))...)
-								output = append(output, hoisted.Body...)
-								output = append(output, []byte(fmt.Sprintf(`%s})(deserialize(str))`, "\n"))...)
-
-								script.Code = string(output)
-							}
 						} else if node.FirstChild != nil {
 							script.Type = "inline"
 

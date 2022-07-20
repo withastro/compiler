@@ -18,7 +18,6 @@ func AddDefineVars(n *astro.Node, values []string) {
 	if n.Type == astro.ElementNode && !n.Component {
 		if _, noScope := NeverScopedElements[n.Data]; !noScope {
 			if n.Parent == nil || IsImplictNode(n.Parent) || n.Parent.Component {
-				// parent := n.Closest(func(p *astro.Node) bool { return p.Type == astro.ElementNode && HasAttr(p, "style") })
 				injectDefineVars(n, values)
 			}
 		}

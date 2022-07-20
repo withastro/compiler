@@ -450,7 +450,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 
 	if n.DataAtom == atom.Script || n.DataAtom == atom.Style {
-		p.printDefineVars(n)
+		p.printDefineVarsOpen(n)
 	}
 
 	// Render any child nodes.
@@ -661,6 +661,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.addSourceMapping(n.Loc[1])
 	} else {
 		p.addSourceMapping(n.Loc[0])
+	}
+	if n.DataAtom == atom.Script || n.DataAtom == atom.Style {
+		p.printDefineVarsClose(n)
 	}
 	if isComponent || isSlot {
 		p.print(")}")

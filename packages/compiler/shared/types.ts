@@ -37,11 +37,6 @@ export type HoistedScript = { type: string } & (
       code: string;
       map: string;
     }
-  | {
-      type: 'define:vars';
-      code: string;
-      map: string;
-    }
 );
 
 export interface HydratedComponent {

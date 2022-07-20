@@ -133,20 +133,16 @@ func (p *printer) printTemplateLiteralClose() {
 	p.print(BACKTICK)
 }
 
-func (p *printer) printDefineVars(n *astro.Node) {
+func (p *printer) printDefineVarsOpen(n *astro.Node) {
 	// Only handle <script> or <style>
 	if !(n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
 		return
 	}
-	var src string
-	var index string
-	for _, attr := range n.Attr {
-		if attr.Key == "define:vars-src" {
-			src = attr.Val
-		}
-		if attr.Key == "define:vars-index" {
-			index = attr.Val
-		}
+	if !transform.HasAttr(n, "define:vars") {
+		return
+	}
+	if n.DataAtom == atom.Script {
+		p.print("{")
 	}
 	for _, attr := range n.Attr {
 		if attr.Key == "define:vars" {
@@ -167,14 +163,21 @@ func (p *printer) printDefineVars(n *astro.Node) {
 			p.addSourceMapping(attr.ValLoc)
 			p.printf(value)
 			p.addNilSourceMapping()
-			if src != "" {
-				p.printf(", { file: '%s', index: %s }, %s)}", src, index, RESULT)
-			} else {
-				p.print(")}")
-			}
+			p.print(")}")
 			return
 		}
 	}
+}
+
+func (p *printer) printDefineVarsClose(n *astro.Node) {
+	// Only handle <script>
+	if !(n.DataAtom == atom.Script) {
+		return
+	}
+	if !transform.HasAttr(n, "define:vars") {
+		return
+	}
+	p.print("}")
 }
 
 func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
@@ -287,7 +290,7 @@ func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
-	if strings.HasPrefix(attr.Key, "define:vars") || attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
+	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
 		return
 	}
 
