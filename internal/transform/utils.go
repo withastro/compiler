@@ -50,6 +50,20 @@ func IsImplictNodeMarker(attr astro.Attribute) bool {
 	return attr.Key == astro.ImplicitNodeMarker
 }
 
+func IsTopLevel(n *astro.Node) bool {
+	p := n.Parent
+	if p == nil {
+		return true
+	}
+	if IsImplictNode(p) || p.Data == "" {
+		return true
+	}
+	if p.Component {
+		return IsTopLevel(p)
+	}
+	return false
+}
+
 func GetQuotedAttr(n *astro.Node, key string) string {
 	for _, attr := range n.Attr {
 		if attr.Key == key {

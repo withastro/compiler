@@ -17,7 +17,7 @@ func ScopeElement(n *astro.Node, opts TransformOptions) {
 func AddDefineVars(n *astro.Node, values []string) {
 	if n.Type == astro.ElementNode && !n.Component {
 		if _, noScope := NeverScopedElements[n.Data]; !noScope {
-			if n.Parent == nil || IsImplictNode(n.Parent) || n.Parent.Component {
+			if IsTopLevel(n) {
 				injectDefineVars(n, values)
 			}
 		}
@@ -45,13 +45,7 @@ var NeverScopedSelectors map[string]bool = map[string]bool{
 }
 
 func injectDefineVars(n *astro.Node, values []string) {
-	hasSpreadAttr := false
 	definedVars := "$$definedVars"
-	for _, attr := range n.Attr {
-		if !hasSpreadAttr && attr.Type == astro.SpreadAttribute {
-			hasSpreadAttr = true
-		}
-	}
 	for i, attr := range n.Attr {
 		if attr.Key == "style" {
 			switch attr.Type {
@@ -77,9 +71,6 @@ func injectDefineVars(n *astro.Node, values []string) {
 				return
 			}
 		}
-	}
-	if hasSpreadAttr {
-		return
 	}
 	n.Attr = append(n.Attr, astro.Attribute{
 		Key:  "style",
