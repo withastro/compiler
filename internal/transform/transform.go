@@ -167,7 +167,7 @@ func isRawElement(n *astro.Node) bool {
 	if n.Type == astro.FrontmatterNode {
 		return true
 	}
-	rawTags := []string{"Markdown", "pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
+	rawTags := []string{"pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
 	for _, tag := range rawTags {
 		if n.Data == tag {
 			return true

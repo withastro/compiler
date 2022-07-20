@@ -20,7 +20,7 @@ let content = "Testing 123";
 
 <Fragment set:html={content} />
 
-<Markdown>
+<Markdown is:raw>
   # Hello world!
 </Markdown>
 `;
