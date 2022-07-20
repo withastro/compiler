@@ -35,11 +35,12 @@ export type HoistedScript = { type: string } & (
   | {
       type: 'inline';
       code: string;
+      map: string;
     }
   | {
       type: 'define:vars';
       code: string;
-      keys: string;
+      map: string;
     }
 );
 
