@@ -1327,14 +1327,14 @@ import ZComponent from '../components/ZComponent.jsx';`},
 			name:   "noscript styles",
 			source: `<noscript><style>div { color: red; }</style></noscript>`,
 			want: want{
-				code: `<noscript><style>div { color: red; }</style></noscript>`,
+				code: `${$$maybeRenderHead($$result)}<noscript><style>div { color: red; }</style></noscript>`,
 			},
 		},
 		{
 			name:   "noscript deep styles",
 			source: `<body><noscript><div><div><div><style>div { color: red; }</style></div></div></div></noscript></body>`,
 			want: want{
-				code: `<body><noscript><div><div><div><style>div { color: red; }</style></div></div></div></noscript></body>`,
+				code: `${$$maybeRenderHead($$result)}<body><noscript><div><div><div><style>div { color: red; }</style></div></div></div></noscript></body>`,
 			},
 		},
 		{

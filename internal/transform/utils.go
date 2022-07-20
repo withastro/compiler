@@ -2,7 +2,7 @@ package transform
 
 import (
 	astro "github.com/withastro/compiler/internal"
-	a "golang.org/x/net/html/atom"
+	"golang.org/x/net/html/atom"
 )
 
 func hasTruthyAttr(n *astro.Node, key string) bool {
@@ -17,20 +17,11 @@ func hasTruthyAttr(n *astro.Node, key string) bool {
 	return false
 }
 
-func IsTopLevel(n *astro.Node) bool {
-	p := n.Parent
-	if p == nil {
-		return true
-	}
-	if IsImplictNode(p) || p.Data == "" {
-		return true
-	}
-	for _, a := range []a.Atom{a.Html, a.Body, a.Head} {
-		if p.DataAtom == a {
-			return true
-		}
-	}
-	return false
+func IsHoistable(n *astro.Node) bool {
+	parent := n.Closest(func(p *astro.Node) bool {
+		return p.DataAtom == atom.Svg || p.DataAtom == atom.Noscript
+	})
+	return parent == nil
 }
 
 func HasSetDirective(n *astro.Node) bool {

@@ -69,8 +69,8 @@ func ExtractStyles(doc *astro.Node) {
 			if HasSetDirective(n) || HasInlineDirective(n) {
 				return
 			}
-			// RFC0008: ignore styles not a top-level of template
-			if !IsTopLevel(n) {
+			// Ignore styles in svg/noscript/etc
+			if !IsHoistable(n) {
 				return
 			}
 			// prepend node to maintain authored order
@@ -242,8 +242,8 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 		if HasSetDirective(n) || HasInlineDirective(n) {
 			return
 		}
-		// RFC0008: ignore styles not a top-level of template
-		if !IsTopLevel(n) {
+		// Ignore styles in svg/noscript/etc
+		if !IsHoistable(n) {
 			return
 		}
 
