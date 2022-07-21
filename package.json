@@ -7,8 +7,8 @@
     "url": "https://github.com/withastro/compiler.git"
   },
   "scripts": {
-    "build": "make wasm && lerna run build --scope @astrojs/compiler",
-    "build:compiler": "lerna run build --scope @astrojs/compiler",
+    "build": "make wasm",
+    "build:compiler": "pnpm --filter @astrojs/compiler run build",
     "lint": "eslint \"packages/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
     "format": "prettier -w .",
     "prerelease": "pnpm run build:compiler",
@@ -32,7 +32,6 @@
     "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "lerna": "^4.0.0",
     "prettier": "^2.4.1",
     "sass": "^1.43.3",
     "tsm": "^2.2.1",
