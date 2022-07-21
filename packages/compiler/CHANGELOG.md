@@ -1,5 +1,17 @@
 # @astrojs/compiler
 
+## 0.20.0
+
+### Minor Changes
+
+- 48d33ff: Removes compiler special casing for the Markdown component
+- 4a5352e: Removes limitation where imports/exports must be at the top of an `.astro` file. Fixes various edge cases around `getStaticPaths` hoisting.
+
+### Patch Changes
+
+- 245d73e: Add support for HTML minification by passing `compact: true` to `transform`.
+- 3ecdd24: Update TSX output to also generate TSX-compatible code for attributes containing dots
+
 ## 0.19.0
 
 ### Minor Changes

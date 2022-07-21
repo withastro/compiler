@@ -1,165 +1,13 @@
 package js_scanner
 
 import (
-	"fmt"
+	"bytes"
 	"io"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
+	"github.com/withastro/compiler/internal/loc"
 )
-
-// This function returns the index at which we should split the frontmatter.
-// The first slice contains any top-level imports/exports, which are global.
-// The second slice contains any non-exported declarations, which are scoped to the render body
-//
-// Why use a lexical scan here?
-//   1. We can stop lexing as soon as we hit a non-exported token
-//   2. Lexing supports malformed modules, they'll throw at runtime instead of compilation
-//   3. `tdewolff/parse/v2` doesn't support TypeScript parsing yet, but we can lex it fine
-func FindRenderBody(source []byte) int {
-	l := js.NewLexer(parse.NewInputBytes(source))
-	i := 0
-	pairs := make(map[byte]int)
-
-	// Let's lex the script until we find what we need!
-	for {
-		token, value := l.Next()
-		if token == js.DivToken || token == js.DivEqToken {
-			token, value = l.RegExp()
-		}
-		openPairs := pairs['{'] > 0 || pairs['('] > 0 || pairs['['] > 0
-		if token == js.ErrorToken {
-			break
-		}
-
-		// Common delimeters. Track their length, then skip.
-		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
-			i += len(value)
-			continue
-		}
-
-		// Imports should be consumed up until we find a specifier,
-		// then we can exit after the following line terminator or semicolon
-		if token == js.ImportToken {
-			i += len(value)
-			foundSpecifier := false
-			foundAssertion := false
-			for {
-				next, nextValue := l.Next()
-				if token == js.DivToken || token == js.DivEqToken {
-					next, nextValue = l.RegExp()
-				}
-				if next == js.ErrorToken {
-					break
-				}
-				i += len(nextValue)
-				if next == js.StringToken {
-					foundSpecifier = true
-				}
-				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
-					break
-				}
-				if !foundAssertion && next == js.IdentifierToken && string(nextValue) == "assert" {
-					foundAssertion = true
-				}
-				if foundSpecifier {
-					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
-						pairs[nextValue[0]]++
-					} else if nextValue[0] == '}' {
-						pairs['{']--
-					} else if nextValue[0] == ')' {
-						pairs['(']--
-					} else if nextValue[0] == ']' {
-						pairs['[']--
-					}
-				}
-			}
-			continue
-		}
-
-		// Exports should be consumed until all opening braces are closed,
-		// a specifier is found, and a line terminator has been found
-		if token == js.ExportToken {
-			foundIdentifier := false
-			foundSemicolonOrLineTerminator := false
-			i += len(value)
-			for {
-				next, nextValue := l.Next()
-				if next == js.DivToken || next == js.DivEqToken {
-					next, nextValue = l.RegExp()
-				}
-				if next == js.ErrorToken {
-					break
-				}
-				i += len(nextValue)
-				if js.IsIdentifier(next) {
-					foundIdentifier = true
-				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
-					foundSemicolonOrLineTerminator = true
-				} else if js.IsPunctuator(next) {
-					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
-						pairs[nextValue[0]]++
-					} else if nextValue[0] == '}' {
-						pairs['{']--
-					} else if nextValue[0] == ')' {
-						pairs['(']--
-					} else if nextValue[0] == ']' {
-						pairs['[']--
-					}
-				}
-
-				if foundIdentifier && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
-					break
-				}
-			}
-			continue
-		}
-
-		// Track opening and closing braces
-		if js.IsPunctuator(token) {
-			if value[0] == '{' || value[0] == '(' || value[0] == '[' {
-				pairs[value[0]]++
-				i += len(value)
-				continue
-			} else if value[0] == '}' {
-				pairs['{']--
-			} else if value[0] == ')' {
-				pairs['(']--
-			} else if value[0] == ']' {
-				pairs['[']--
-			}
-		}
-
-		// If there are no open pairs and we hit anything other than a comment
-		// return our index! This is the first non-exported declaration
-		if !openPairs && token != js.CommentToken {
-			return i
-		}
-
-		// Track our current position
-		i += len(value)
-	}
-
-	// If we haven't found anything... there's nothing to find! Split at the start.
-	return i
-}
-
-func HasExports(source []byte) bool {
-	l := js.NewLexer(parse.NewInputBytes(source))
-	var prevToken js.TokenType
-	for {
-		token, _ := l.Next()
-		if token == js.ErrorToken {
-			// EOF or other error
-			return false
-		}
-		if token == js.ExportToken {
-			fmt.Println(prevToken, token)
-			return true
-		}
-		prevToken = token
-	}
-}
 
 type HoistedScripts struct {
 	Hoisted [][]byte
@@ -167,7 +15,7 @@ type HoistedScripts struct {
 }
 
 func HoistExports(source []byte) HoistedScripts {
-	shouldHoist := hasGetStaticPaths(source)
+	shouldHoist := bytes.Contains(source, []byte("export"))
 	if !shouldHoist {
 		return HoistedScripts{
 			Body: source,
@@ -176,11 +24,23 @@ func HoistExports(source []byte) HoistedScripts {
 
 	l := js.NewLexer(parse.NewInputBytes(source))
 	i := 0
+	end := 0
+
+	hoisted := make([][]byte, 1)
+	body := make([]byte, 0)
 	pairs := make(map[byte]int)
 
 	// Let's lex the script until we find what we need!
+outer:
 	for {
 		token, value := l.Next()
+
+		if token == js.DivToken || token == js.DivEqToken {
+			lns := bytes.Split(source[i+1:], []byte{'\n'})
+			if bytes.Contains(lns[0], []byte{'/'}) {
+				token, value = l.RegExp()
+			}
+		}
 
 		if token == js.ErrorToken {
 			if l.Err() != io.EOF {
@@ -200,19 +60,31 @@ func HoistExports(source []byte) HoistedScripts {
 		// Exports should be consumed until all opening braces are closed,
 		// a specifier is found, and a line terminator has been found
 		if token == js.ExportToken {
-			foundGetStaticPaths := false
+			foundIdent := false
 			foundSemicolonOrLineTerminator := false
-			start := i - 1
+			start := 0
+			if i > 0 {
+				start = i - 1
+			}
 			i += len(value)
 			for {
 				next, nextValue := l.Next()
+				if next == js.DivToken || next == js.DivEqToken {
+					lns := bytes.Split(source[i+1:], []byte{'\n'})
+					if bytes.Contains(lns[0], []byte{'/'}) {
+						next, nextValue = l.RegExp()
+					}
+				}
 				i += len(nextValue)
 
 				if js.IsIdentifier(next) {
-					if !foundGetStaticPaths {
-						foundGetStaticPaths = string(nextValue) == "getStaticPaths"
+					if isKeyword(nextValue) && next != js.FromToken {
+						continue
 					}
-				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
+					if !foundIdent {
+						foundIdent = true
+					}
+				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
 					foundSemicolonOrLineTerminator = true
 				} else if js.IsPunctuator(next) {
 					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
@@ -226,22 +98,22 @@ func HoistExports(source []byte) HoistedScripts {
 					}
 				}
 
-				if next == js.ErrorToken {
-					return HoistedScripts{
-						Body: source,
+				if foundIdent && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
+					hoisted = append(hoisted, source[start:i])
+					if end < start {
+						body = append(body, source[end:start]...)
 					}
+					end = i
+					continue outer
 				}
 
-				if foundGetStaticPaths && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
-					hoisted := make([][]byte, 1)
-					hoisted = append(hoisted, source[start:i])
-					body := make([]byte, 0)
-					body = append(body, source[0:start]...)
-					body = append(body, source[i:]...)
-					return HoistedScripts{
-						Hoisted: hoisted,
-						Body:    body,
+				if next == js.ErrorToken {
+					if l.Err() != io.EOF {
+						return HoistedScripts{
+							Body: source,
+						}
 					}
+					break outer
 				}
 			}
 		}
@@ -265,47 +137,45 @@ func HoistExports(source []byte) HoistedScripts {
 		i += len(value)
 	}
 
-	// If we haven't found anything... there's nothing to find! Split at the start.
+	body = append(body, source[end:]...)
+
 	return HoistedScripts{
-		Body: source,
+		Hoisted: hoisted,
+		Body:    body,
 	}
 }
 
-func hasGetStaticPaths(source []byte) bool {
-	l := js.NewLexer(parse.NewInputBytes(source))
-	for {
-		token, value := l.Next()
-		if token == js.ErrorToken {
-			// EOF or other error
-			return false
-		}
-		if token == js.IdentifierToken && string(value) == "getStaticPaths" {
-			return true
-		}
-	}
+func isKeyword(value []byte) bool {
+	return js.Keywords[string(value)] != 0
 }
 
-func AccessesPrivateVars(source []byte) bool {
-	l := js.NewLexer(parse.NewInputBytes(source))
-	for {
-		token, value := l.Next()
-		if token == js.ErrorToken {
-			// EOF or other error
-			return false
-		}
-		if js.IsIdentifier(token) && len(value) > 1 && value[0] == '$' && value[1] == '$' {
-			return true
-		}
+func HoistImports(source []byte) HoistedScripts {
+	imports := make([][]byte, 0)
+	body := make([]byte, 0)
+	prev := 0
+	for i, statement := NextImportStatement(source, 0); i > -1; i, statement = NextImportStatement(source, i) {
+		body = append(body, source[prev:statement.Span.Start]...)
+		imports = append(imports, statement.Value)
+		prev = i
 	}
+	if prev == 0 {
+		return HoistedScripts{Body: source}
+	}
+	body = append(body, source[prev:]...)
+	return HoistedScripts{Hoisted: imports, Body: body}
 }
 
 type Import struct {
+	IsType     bool
 	ExportName string
 	LocalName  string
 	Assertions string
 }
 
 type ImportStatement struct {
+	Span       loc.Span
+	Value      []byte
+	IsType     bool
 	Imports    []Import
 	Specifier  string
 	Assertions string
@@ -323,6 +193,14 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 	i := pos
 	for {
 		token, value := l.Next()
+
+		if token == js.DivToken || token == js.DivEqToken {
+			lns := bytes.Split(source[i+1:], []byte{'\n'})
+			if bytes.Contains(lns[0], []byte{'/'}) {
+				token, value = l.RegExp()
+			}
+		}
+
 		if token == js.ErrorToken {
 			// EOF or other error
 			return -1, ImportStatement{}
@@ -331,6 +209,8 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 		// then we can exit after the following line terminator or semicolon
 		if token == js.ImportToken {
 			i += len(value)
+			text := []byte(value)
+			isType := false
 			specifier := ""
 			assertion := ""
 			foundSpecifier := false
@@ -341,12 +221,27 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 			pairs := make(map[byte]int)
 			for {
 				next, nextValue := l.Next()
+				if next == js.DivToken || next == js.DivEqToken {
+					lns := bytes.Split(source[i+1:], []byte{'\n'})
+					if bytes.Contains(lns[0], []byte{'/'}) {
+						next, nextValue = l.RegExp()
+					}
+				}
 				i += len(nextValue)
+				text = append(text, nextValue...)
+
+				if next == js.ErrorToken {
+					break
+				}
 
 				if !foundSpecifier && next == js.StringToken {
 					specifier = string(nextValue[1 : len(nextValue)-1])
 					foundSpecifier = true
 					continue
+				}
+
+				if !foundSpecifier && next == js.IdentifierToken && string(nextValue) == "type" {
+					isType = true
 				}
 
 				if foundSpecifier && (next == js.LineTerminatorToken || next == js.SemicolonToken) && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
@@ -357,6 +252,9 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 						imports = append(imports, currImport)
 					}
 					return i, ImportStatement{
+						Span:       loc.Span{Start: i - len(text), End: i},
+						Value:      text,
+						IsType:     isType,
 						Imports:    imports,
 						Specifier:  specifier,
 						Assertions: assertion,
@@ -419,6 +317,11 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					} else if nextValue[0] == ']' {
 						pairs['[']--
 					}
+				}
+
+				// do not hoist dynamic imports
+				if next == js.OpenParenToken && len(specifier) == 0 {
+					break
 				}
 
 				// if this is import.meta.*, ignore (watch for first dot)
