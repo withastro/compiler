@@ -875,7 +875,7 @@ const name = "world";
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title.astro-DPOHFLYM{font-family:fantasy;font-size:28px}.body.astro-DPOHFLYM{font-size:1em}`}"},
+				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}`}"},
 				code: "\n\n\t\t" + `${$$maybeRenderHead($$result)}<h1 class="title astro-DPOHFLYM">Page Title</h1>
 		<p class="body astro-DPOHFLYM">I’m a page</p>`,
 			},
@@ -1534,7 +1534,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<style>div { color: red; }</style><div {...Astro.props} />`,
 			want: want{
 				styles: []string{
-					"{props:{\"data-astro-id\":\"TN53UTDL\"},children:`div.astro-TN53UTDL{color:red}`}",
+					"{props:{\"data-astro-id\":\"TN53UTDL\"},children:`div:where(.astro-TN53UTDL){color:red}`}",
 				},
 				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,"Astro.props",{"class":"astro-XXXX"})}></div>`,
 			},
@@ -1911,7 +1911,7 @@ const items = ["Dog", "Cat", "Platipus"];
 </style><div class="container">My Text</div>`,
 
 			want: want{
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"SJ3WYE6H"},children:%s.container.astro-SJ3WYE6H{padding:2rem}%s}`, BACKTICK, BACKTICK)},
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"SJ3WYE6H"},children:%s.container:where(.astro-SJ3WYE6H){padding:2rem}%s}`, BACKTICK, BACKTICK)},
 				code:   `${$$maybeRenderHead($$result)}<div class="container astro-SJ3WYE6H">My Text</div>`,
 			},
 		},
