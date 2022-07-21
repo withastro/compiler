@@ -15,7 +15,7 @@ import Layout from '../layouts/content.astro';
 
 <Layout>
   <div id="root">
-    <Markdown>
+    <Markdown is:raw>
       ## Interesting Topic
     </Markdown>
   </div>

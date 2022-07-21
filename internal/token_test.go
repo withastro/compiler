@@ -1,7 +1,6 @@
 package astro
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -271,16 +270,6 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartExpressionToken, TextToken, StartTagToken, TextToken, EndTagToken, EndExpressionToken, TextToken, StartExpressionToken, TextToken, SelfClosingTagToken, EndExpressionToken, TextToken},
 		},
 		{
-			"Markdown Inside markdown backtick treated as a string",
-			"<Markdown>`{}`</Markdown>",
-			[]TokenType{StartTagToken, TextToken, EndTagToken},
-		},
-		{
-			"Quotes in elements in Markdown",
-			"<Markdown><span>can't</span></Markdown>",
-			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken},
-		},
-		{
 			"text containing a /",
 			"<span>next/router</span>",
 			[]TokenType{StartTagToken, TextToken, EndTagToken},
@@ -289,11 +278,6 @@ func TestBasic(t *testing.T) {
 			"iframe allows attributes",
 			"<iframe src=\"https://google.com\"></iframe>",
 			[]TokenType{StartTagToken, EndTagToken},
-		},
-		{
-			"data-astro-raw allows children to be parsed as Text",
-			"<span data-astro-raw>function foo() { }</span>",
-			[]TokenType{StartTagToken, TextToken, EndTagToken},
 		},
 		{
 			"is:raw allows children to be parsed as Text",
@@ -389,15 +373,6 @@ func TestBasic(t *testing.T) {
 			"extra close brace",
 			"<main id={`${}}`}></main>",
 			[]TokenType{StartTagToken, EndTagToken},
-		},
-		{
-			"Markdown codeblock",
-			fmt.Sprintf(`<Markdown>
-		%s%s%s
-		open brace {
-		%s%s%s
-		</Markdown>`, "`", "`", "`", "`", "`", "`"),
-			[]TokenType{StartTagToken, TextToken, TextToken, TextToken, TextToken, EndTagToken},
 		},
 		{
 			"Empty expression",
