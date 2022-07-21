@@ -84,6 +84,7 @@ func renderTsx(p *printer, n *Node) {
 				if n.LastChild.Data == c.Data {
 					if !strings.HasSuffix(c.Data, ";\n") || !strings.HasSuffix(c.Data, ";") {
 						c.Data = strings.TrimSuffix(c.Data, "\n")
+						c.Data = "\n" + strings.TrimSpace(c.Data)
 						if !strings.HasSuffix(c.Data, ";") {
 							c.Data += ";\n"
 						} else {
