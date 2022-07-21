@@ -2,6 +2,7 @@ package transform
 
 import (
 	astro "github.com/withastro/compiler/internal"
+	"golang.org/x/net/html/atom"
 )
 
 func hasTruthyAttr(n *astro.Node, key string) bool {
@@ -40,6 +41,13 @@ func GetAttr(n *astro.Node, key string) *astro.Attribute {
 		}
 	}
 	return nil
+}
+
+func IsHoistable(n *astro.Node) bool {
+	parent := n.Closest(func(p *astro.Node) bool {
+		return p.DataAtom == atom.Svg || p.DataAtom == atom.Noscript || p.DataAtom == atom.Template
+	})
+	return parent == nil
 }
 
 func IsImplictNode(n *astro.Node) bool {

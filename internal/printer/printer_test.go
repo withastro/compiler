@@ -468,6 +468,20 @@ import * as ns from '../components';
 			},
 		},
 		{
+			name:   "noscript styles",
+			source: `<noscript><style>div { color: red; }</style></noscript>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<noscript><style>div { color: red; }</style></noscript>`,
+			},
+		},
+		{
+			name:   "noscript deep styles",
+			source: `<body><noscript><div><div><div><style>div { color: red; }</style></div></div></div></noscript></body>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<body><noscript><div><div><div><style>div { color: red; }</style></div></div></div></noscript></body>`,
+			},
+		},
+		{
 			name: "client:only component (default)",
 			source: `---
 import Component from '../components';

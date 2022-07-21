@@ -9,7 +9,6 @@ import (
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
-	"golang.org/x/net/html/atom"
 	a "golang.org/x/net/html/atom"
 )
 
@@ -74,8 +73,8 @@ func ExtractStyles(doc *astro.Node) {
 			if HasSetDirective(n) || HasInlineDirective(n) {
 				return
 			}
-			// Do not extract <style> inside of SVGs
-			if n.Parent != nil && n.Parent.DataAtom == atom.Svg {
+			// Ignore styles in svg/noscript/etc
+			if !IsHoistable(n) {
 				return
 			}
 			// prepend node to maintain authored order
@@ -171,7 +170,7 @@ func isRawElement(n *astro.Node) bool {
 	if n.Type == astro.FrontmatterNode {
 		return true
 	}
-	rawTags := []string{"Markdown", "pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
+	rawTags := []string{"pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
 	for _, tag := range rawTags {
 		if n.Data == tag {
 			return true
@@ -245,6 +244,10 @@ func collapseWhitespace(doc *astro.Node) {
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
 		if HasSetDirective(n) || HasInlineDirective(n) {
+			return
+		}
+		// Ignore scripts in svg/noscript/etc
+		if !IsHoistable(n) {
 			return
 		}
 
