@@ -10,10 +10,13 @@ import (
 	"strings"
 	"sync"
 	"syscall/js"
+	"unicode"
 
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/printer"
+	"github.com/withastro/compiler/internal/sourcemap"
 	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
@@ -128,6 +131,7 @@ type HoistedScript struct {
 	Code string `js:"code"`
 	Src  string `js:"src"`
 	Type string `js:"type"`
+	Map  string `js:"map"`
 }
 
 type HydratedComponent struct {
@@ -266,14 +270,55 @@ func Transform() interface{} {
 							Src:  "",
 							Code: "",
 							Type: "",
+							Map:  "",
 						}
+
 						if src != nil {
 							script.Type = "external"
 							script.Src = src.Val
 						} else if node.FirstChild != nil {
 							script.Type = "inline"
-							script.Code = node.FirstChild.Data
+
+							if transformOptions.SourceMap != "" {
+								isLine := func(r rune) bool { return r == '\r' || r == '\n' }
+								isNotLine := func(r rune) bool { return !(r == '\r' || r == '\n') }
+								output := make([]byte, 0)
+								builder := sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(source, len(strings.Split(source, "\n"))))
+								sourcesContent, _ := json.Marshal(source)
+								if len(node.FirstChild.Loc) > 0 {
+									i := node.FirstChild.Loc[0].Start
+									nonWS := strings.IndexFunc(node.FirstChild.Data, isNotLine)
+									i += nonWS
+									for _, ln := range strings.Split(strings.TrimFunc(node.FirstChild.Data, isLine), "\n") {
+										content := []byte(ln)
+										content = append(content, '\n')
+										for j, b := range content {
+											if j == 0 || !unicode.IsSpace(rune(b)) {
+												builder.AddSourceMapping(loc.Loc{Start: i}, output)
+											}
+											output = append(output, b)
+											i += 1
+										}
+									}
+									output = append(output, '\n')
+								} else {
+									output = append(output, []byte(strings.TrimSpace(node.FirstChild.Data))...)
+								}
+								sourcemap := fmt.Sprintf(
+									`{ "version": 3, "sources": ["%s"], "sourcesContent": [%s], "mappings": "%s", "names": [] }`,
+									transformOptions.Filename,
+									string(sourcesContent),
+									string(builder.GenerateChunk(output).Buffer),
+								)
+								script.Map = sourcemap
+								script.Code = string(output)
+							} else {
+								script.Code = node.FirstChild.Data
+							}
 						}
+
+						// sourcemapString := createSourceMapString(source, result, transformOptions)
+						// inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 						scripts = append(scripts, script)
 					}
 

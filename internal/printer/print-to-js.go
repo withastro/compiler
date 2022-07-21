@@ -169,6 +169,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				// Print empty just to ensure a newline
 				p.println("")
 				if len(n.Parent.Styles) > 0 {
+					definedVars := transform.GetDefineVars(n.Parent.Styles)
+					if len(definedVars) > 0 {
+						p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
+					}
 					p.println("const STYLES = [")
 					for _, style := range n.Parent.Styles {
 						p.printStyleOrScript(opts, style)
@@ -214,6 +218,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		// If we haven't printed the funcPrelude but we do have Styles/Scripts, we need to print them!
 		if len(n.Parent.Styles) > 0 {
+			definedVars := transform.GetDefineVars(n.Parent.Styles)
+			if len(definedVars) > 0 {
+				p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
+			}
 			p.println("const STYLES = [")
 			for _, style := range n.Parent.Styles {
 				p.printStyleOrScript(opts, style)
@@ -442,7 +450,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 
 	if n.DataAtom == atom.Script || n.DataAtom == atom.Style {
-		p.printDefineVars(n)
+		p.printDefineVarsOpen(n)
 	}
 
 	// Render any child nodes.
@@ -653,6 +661,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.addSourceMapping(n.Loc[1])
 	} else {
 		p.addSourceMapping(n.Loc[0])
+	}
+	if n.DataAtom == atom.Script || n.DataAtom == atom.Style {
+		p.printDefineVarsClose(n)
 	}
 	if isComponent || isSlot {
 		p.print(")}")

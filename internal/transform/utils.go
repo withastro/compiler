@@ -34,6 +34,15 @@ func HasAttr(n *astro.Node, key string) bool {
 	return false
 }
 
+func GetAttr(n *astro.Node, key string) *astro.Attribute {
+	for _, attr := range n.Attr {
+		if attr.Key == key {
+			return &attr
+		}
+	}
+	return nil
+}
+
 func IsHoistable(n *astro.Node) bool {
 	parent := n.Closest(func(p *astro.Node) bool {
 		return p.DataAtom == atom.Svg || p.DataAtom == atom.Noscript || p.DataAtom == atom.Template
@@ -47,6 +56,20 @@ func IsImplictNode(n *astro.Node) bool {
 
 func IsImplictNodeMarker(attr astro.Attribute) bool {
 	return attr.Key == astro.ImplicitNodeMarker
+}
+
+func IsTopLevel(n *astro.Node) bool {
+	p := n.Parent
+	if p == nil {
+		return true
+	}
+	if IsImplictNode(p) || p.Data == "" {
+		return true
+	}
+	if p.Component {
+		return IsTopLevel(p)
+	}
+	return false
 }
 
 func GetQuotedAttr(n *astro.Node, key string) string {

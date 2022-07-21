@@ -35,6 +35,7 @@ export type HoistedScript = { type: string } & (
   | {
       type: 'inline';
       code: string;
+      map: string;
     }
 );
 

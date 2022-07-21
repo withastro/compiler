@@ -45,3 +45,28 @@ outer:
 
 	return didScope
 }
+
+func GetDefineVars(styles []*astro.Node) []string {
+	values := make([]string, 0)
+	for _, n := range styles {
+		if n.DataAtom != a.Style {
+			continue
+		}
+		if !HasAttr(n, "define:vars") {
+			continue
+		}
+		attr := GetAttr(n, "define:vars")
+		if attr != nil {
+			switch attr.Type {
+			case astro.QuotedAttribute:
+				values = append(values, fmt.Sprintf("'%s'", attr.Val))
+			case astro.TemplateLiteralAttribute:
+				values = append(values, fmt.Sprintf("`%s`", attr.Val))
+			case astro.ExpressionAttribute:
+				values = append(values, attr.Val)
+			}
+		}
+	}
+
+	return values
+}

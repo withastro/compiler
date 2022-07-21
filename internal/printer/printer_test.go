@@ -51,6 +51,7 @@ var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS
 
 type want struct {
 	frontmatter    []string
+	definedVars    []string
 	styles         []string
 	scripts        []string
 	getStaticPaths string
@@ -1058,19 +1059,6 @@ import Widget2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
-			name: "script hoist remote",
-			source: `---
----
-<script type="module" hoist src="url" />`,
-			want: want{
-				frontmatter: []string{"\n"},
-				styles:      []string{},
-				scripts:     []string{`{props:{"type":"module","hoist":true,"src":"url"}}`},
-				metadata:    metadata{hoisted: []string{`{ type: 'remote', src: 'url' }`}},
-				code:        "",
-			},
-		},
-		{
 			name: "script hoist without frontmatter",
 			source: `
 							<main>
@@ -1093,10 +1081,19 @@ import Widget2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
-			name:   "script define:vars",
-			source: `<main><script define:vars={{ value: 0 }} type="module">console.log(value);</script>`,
+			name:             "script define:vars I",
+			staticExtraction: true,
+			source:           `<script define:vars={{ value: 0 }}>console.log(value);</script>`,
 			want: want{
-				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<main><script type="module">${%s({ value: 0 })}console.log(value);</script></main>`, DEFINE_SCRIPT_VARS),
+				code: `<script>{${$$defineScriptVars({ value: 0 })}console.log(value);}</script>`,
+			},
+		},
+		{
+			name:             "script define:vars II",
+			staticExtraction: true,
+			source:           `<script define:vars={{ "dash-case": true }}>console.log(dashCase);</script>`,
+			want: want{
+				code: `<script>{${$$defineScriptVars({ "dash-case": true })}console.log(dashCase);}</script>`,
 			},
 		},
 		{
@@ -1383,8 +1380,9 @@ const title = 'icon';
 			name:   "Empty style",
 			source: `<style define:vars={{ color: "Gainsboro" }}></style>`,
 			want: want{
-				styles: []string{`{props:{"define:vars":({ color: "Gainsboro" }),"data-astro-id":"7HAAVZPE"}}`},
-				code:   ``,
+				definedVars: []string{`{ color: "Gainsboro" }`},
+				styles:      []string{`{props:{"define:vars":({ color: "Gainsboro" }),"data-astro-id":"7HAAVZPE"}}`},
+				code:        ``,
 			},
 		},
 		{
@@ -2138,9 +2136,23 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			staticExtraction: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
+				definedVars: []string{"{color:'green'}"},
 				styles: []string{
 					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1.astro-VFS5OEMV{color:var(--color)}`}",
+				},
+			},
+		},
+		{
+			name:             "multiple define:vars on style",
+			source:           "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>",
+			staticExtraction: true,
+			want: want{
+				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
+				definedVars: []string{"{color:'red'}", "{color:'green'}"},
+				styles: []string{
+					"{props:{\"define:vars\":({color:'red'}),\"data-astro-id\":\"6OXBQCST\"},children:`h2.astro-6OXBQCST{color:var(--color)}`}",
+					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"6OXBQCST\"},children:`h1.astro-6OXBQCST{color:var(--color)}`}",
 				},
 			},
 		},
@@ -2148,12 +2160,12 @@ const items = ["Dog", "Cat", "Platipus"];
 			name: "define:vars on script with StaticExpression turned on",
 			// 1. An inline script with is:inline - right
 			// 2. A hoisted script - wrong, shown up in scripts.add
-			// 3. A define:vars module script - right
-			// 4. A define:vars hoisted script - wrong, not inlined
-			source:           `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script type="module">var three = foo;</script><script type="module" define:vars={{foo:'bar'}}>var four = foo;</script>`,
+			// 3. A define:vars hoisted script
+			// 4. A define:vars inline script
+			source:           `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script define:vars={{foo:'bar'}}>var three = foo;</script><script is:inline define:vars={{foo:'bar'}}>var four = foo;</script>`,
 			staticExtraction: true,
 			want: want{
-				code: `<script>var one = 'one';</script><script type="module">var three = foo;</script><script type="module">${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
+				code: `<script>var one = 'one';</script><script>{${$$defineScriptVars({foo:'bar'})}var three = foo;}</script><script>{${$$defineScriptVars({foo:'bar'})}var four = foo;}</script>`,
 				metadata: metadata{
 					hoisted: []string{"{ type: 'inline', value: `var two = 'two';` }"},
 				},
@@ -2304,6 +2316,16 @@ const items = ["Dog", "Cat", "Platipus"];
 				toMatch += test_utils.Dedent(tt.want.frontmatter[1])
 			}
 			toMatch += "\n"
+			if len(tt.want.definedVars) > 0 {
+				toMatch = toMatch + "const $$definedVars = $$defineStyleVars(["
+				for i, d := range tt.want.definedVars {
+					if i > 0 {
+						toMatch += ","
+					}
+					toMatch += d
+				}
+				toMatch += "]);\n"
+			}
 			if len(tt.want.styles) > 0 {
 				toMatch = toMatch + STYLE_PRELUDE
 				for _, style := range tt.want.styles {
