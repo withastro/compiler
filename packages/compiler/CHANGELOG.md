@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.21.0
+
+### Minor Changes
+
+- 8960d82: New handling for `define:vars` scripts and styles
+
+### Patch Changes
+
+- 4b318d5: Do not attempt to hoist styles or scripts inside of `<noscript>`
+
 ## 0.20.0
 
 ### Minor Changes
