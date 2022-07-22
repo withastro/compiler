@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.22.0
+
+### Minor Changes
+
+- 558c9dd: Generate a stable scoped class that does _NOT_ factor in local styles. This will allow us to safely do style HMR without needing to update the DOM as well.
+- c19cd8c: Update Astro's CSS scoping algorithm to implement zero-specificity scoping, according to [RFC0012](https://github.com/withastro/rfcs/blob/main/proposals/0012-scoped-css-with-preserved-specificity.md).
+
 ## 0.21.0
 
 ### Minor Changes
