@@ -52,6 +52,7 @@ export interface TransformResult {
   clientOnlyComponents: HydratedComponent[];
   code: string;
   map: string;
+  scope: string;
 }
 
 export interface TSXResult {

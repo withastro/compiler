@@ -152,6 +152,7 @@ type TSXResult struct {
 type TransformResult struct {
 	Code                 string              `js:"code"`
 	Map                  string              `js:"map"`
+	Scope                string              `js:"scope"`
 	CSS                  []string            `js:"css"`
 	Scripts              []HoistedScript     `js:"scripts"`
 	HydratedComponents   []HydratedComponent `js:"hydratedComponents"`
@@ -233,6 +234,11 @@ func Transform() interface{} {
 
 				// Hoist styles and scripts to the top-level
 				transform.ExtractStyles(doc)
+
+				if len(doc.Styles) > 0 {
+					newHash := astro.HashFromDoc(doc)
+					transformOptions.Scope = newHash
+				}
 
 				// Pre-process styles
 				// Important! These goroutines need to be spawned from this file or they don't work
@@ -354,6 +360,7 @@ func Transform() interface{} {
 						CSS:                  css,
 						Code:                 string(result.Output),
 						Map:                  "",
+						Scope:                transformOptions.Scope,
 						Scripts:              scripts,
 						HydratedComponents:   hydratedComponents,
 						ClientOnlyComponents: clientOnlyComponents,
@@ -395,6 +402,7 @@ func createExternalSourceMap(source string, result printer.PrintResult, css []st
 		CSS:                  css,
 		Code:                 string(result.Output),
 		Map:                  createSourceMapString(source, result, transformOptions),
+		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,
 		HydratedComponents:   *hydratedComponents,
 		ClientOnlyComponents: *clientOnlyComponents,
@@ -408,6 +416,7 @@ func createInlineSourceMap(source string, result printer.PrintResult, css []stri
 		CSS:                  css,
 		Code:                 string(result.Output) + "\n" + inlineSourcemap,
 		Map:                  "",
+		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,
 		HydratedComponents:   *hydratedComponents,
 		ClientOnlyComponents: *clientOnlyComponents,
@@ -421,6 +430,7 @@ func createBothSourceMap(source string, result printer.PrintResult, css []string
 		CSS:                  css,
 		Code:                 string(result.Output) + "\n" + inlineSourcemap,
 		Map:                  sourcemapString,
+		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,
 		HydratedComponents:   *hydratedComponents,
 		ClientOnlyComponents: *clientOnlyComponents,
