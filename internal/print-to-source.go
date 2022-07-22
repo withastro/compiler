@@ -12,11 +12,13 @@ func PrintToSource(buf *strings.Builder, node *Node) {
 			PrintToSource(buf, c)
 		}
 	case FrontmatterNode:
-		buf.WriteString("---")
-		for c := node.FirstChild; c != nil; c = c.NextSibling {
-			PrintToSource(buf, c)
+		if node.FirstChild != nil {
+			buf.WriteString("---")
+			for c := node.FirstChild; c != nil; c = c.NextSibling {
+				PrintToSource(buf, c)
+			}
+			buf.WriteString("---")
 		}
-		buf.WriteString("---")
 	case TextNode:
 		buf.WriteString(node.Data)
 	case ElementNode:
