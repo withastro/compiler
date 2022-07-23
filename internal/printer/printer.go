@@ -229,7 +229,8 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.print(`"` + a.Key + `"`)
 			p.print(":")
 			p.addSourceMapping(a.ValLoc)
-			p.print(`"` + a.Val + `"`)
+			// TODO: Fix complianace with HTML spec (currently it's printing HTML escape characters)
+			p.print(`"` + encodeDoubleQuote(escapeInterpolation(escapeBackticks(a.Val))) + `"`)
 		case astro.EmptyAttribute:
 			p.addSourceMapping(a.KeyLoc)
 			p.print(`"` + a.Key + `"`)

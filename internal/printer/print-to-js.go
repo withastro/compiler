@@ -377,7 +377,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				switch a.Type {
 				case QuotedAttribute:
 					p.addSourceMapping(a.ValLoc)
-					p.print(`"` + a.Val + `"`)
+					p.print(`"` + encodeDoubleQuote(escapeInterpolation(escapeBackticks(a.Val))) + `"`)
 					slotted = true
 				default:
 					panic("slot[name] must be a static string")
