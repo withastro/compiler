@@ -16,6 +16,7 @@
 ### Patch Changes
 
 - 4b318d5: Do not attempt to hoist styles or scripts inside of `<noscript>`
+- d6ebab6: Fixing missing semicolon on TSX Frontmatter last-entries
 
 ## 0.20.0
 
