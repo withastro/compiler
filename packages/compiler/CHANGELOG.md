@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.22.1
+
+### Patch Changes
+
+- 973103c: Prevents unescaping attribute expressions
+
 ## 0.22.0
 
 ### Minor Changes
