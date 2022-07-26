@@ -2132,6 +2132,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "set:html on Fragment",
+			source: "<Fragment set:html={\"<p>&#x3C;i>This should NOT be italic&#x3C;/i></p>\"} />",
+			want: want{
+				code: "${$$renderComponent($$result,'Fragment',Fragment,{},{\"default\": () => $$render`${$$unescapeHTML(\"<p>&#x3C;i>This should NOT be italic&#x3C;/i></p>\")}`,})}",
+			},
+		},
+		{
 			name:             "define:vars on style with StaticExpression turned on",
 			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			staticExtraction: true,
