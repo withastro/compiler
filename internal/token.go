@@ -1853,7 +1853,15 @@ func (z *Tokenizer) TagAttr() (key []byte, keyLoc loc.Loc, val []byte, valLoc lo
 			val = z.buf[x[1].Start:x[1].End]
 			keyLoc := loc.Loc{Start: x[0].Start}
 			valLoc := loc.Loc{Start: x[1].Start}
-			return key, keyLoc, unescape(convertNewlines(val), true), valLoc, attrType, z.nAttrReturned < len(z.attr)
+
+			var attrVal []byte
+			if attrType == ExpressionAttribute {
+				attrVal = val
+			} else {
+				attrVal = unescape(convertNewlines(val), true)
+			}
+
+			return key, keyLoc, attrVal, valLoc, attrType, z.nAttrReturned < len(z.attr)
 		}
 	}
 	return nil, loc.Loc{Start: 0}, nil, loc.Loc{Start: 0}, QuotedAttribute, false
