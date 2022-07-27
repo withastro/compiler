@@ -2179,6 +2179,15 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name: "define:vars on a module script with imports",
+			// Should not wrap with { } scope.
+			source:           `<script type="module" define:vars={{foo:'bar'}}>import 'foo';\nvar three = foo;</script>`,
+			staticExtraction: true,
+			want: want{
+				code: `<script type="module">${$$defineScriptVars({foo:'bar'})}import 'foo';\\nvar three = foo;</script>`,
+			},
+		},
+		{
 			name:   "comments removed from attribute list",
 			source: `<div><h1 {/* comment 1 */} value="1" {/* comment 2 */}>Hello</h1><Component {/* comment 1 */} value="1" {/* comment 2 */} /></div>`,
 			want: want{

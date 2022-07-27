@@ -133,6 +133,14 @@ func (p *printer) printTemplateLiteralClose() {
 	p.print(BACKTICK)
 }
 
+func isTypeModuleScript(n *astro.Node) bool {
+	t := astro.GetAttribute(n, "type")
+	if t != nil && t.Val == "module" {
+		return true
+	}
+	return false
+}
+
 func (p *printer) printDefineVarsOpen(n *astro.Node) {
 	// Only handle <script> or <style>
 	if !(n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
@@ -142,7 +150,9 @@ func (p *printer) printDefineVarsOpen(n *astro.Node) {
 		return
 	}
 	if n.DataAtom == atom.Script {
-		p.print("{")
+		if !isTypeModuleScript(n) {
+			p.print("{")
+		}
 	}
 	for _, attr := range n.Attr {
 		if attr.Key == "define:vars" {
@@ -177,7 +187,9 @@ func (p *printer) printDefineVarsClose(n *astro.Node) {
 	if !transform.HasAttr(n, "define:vars") {
 		return
 	}
-	p.print("}")
+	if !isTypeModuleScript(n) {
+		p.print("}")
+	}
 }
 
 func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
