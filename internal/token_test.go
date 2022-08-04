@@ -409,6 +409,16 @@ func TestBasic(t *testing.T) {
 			"<h1 set:html={`Oh \"no...`}></h1>",
 			[]TokenType{StartTagToken, EndTagToken},
 		},
+		{
+			"attribute expression with unmatched quotes inside matched quotes",
+			"<h1 set:html={\"hello y'all\"}></h1>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
+			"attribute expression with unmatched quotes inside matched quotes II",
+			"<h1 set:html={'\"Did Nate handle this case, too?\", Fred pondered...'}></h1>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
