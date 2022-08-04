@@ -424,6 +424,16 @@ func TestBasic(t *testing.T) {
 			`<ul>{items.map((item: Item<Checkbox>)) => <li>{item.checked}</li>)}</ul>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
 		},
+		{
+			"typescript generic II",
+			`<ul>{items.map((item: Item<Checkbox>)) => <Checkbox>{item.checked}</Checkbox>)}</ul>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"typescript generic III",
+			`<ul>{items.map((item: Item<Checkbox>)) => <Checkbox>{item.checked}</Checkbox>)}</ul>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)
