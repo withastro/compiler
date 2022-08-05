@@ -208,6 +208,13 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "custom-element",
+			source: "{show && <client-only-element></client-only-element>}",
+			want: want{
+				code: "${show && $$render`${$$renderComponent($$result,'client-only-element','client-only-element',{})}`}",
+			},
+		},
+		{
 			name:   "attribute with template literal",
 			source: "<a :href=\"`/home`\">Home</a>",
 			want: want{
