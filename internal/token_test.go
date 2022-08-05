@@ -399,6 +399,26 @@ func TestBasic(t *testing.T) {
 			`<div>{() => { switch(value) { case 'a': return <A>{value}</A>; case 'b': return <B />; case 'c': return <C>{value.map(i => <span>{i}</span>)}</C> }}}</div>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
+		{
+			"attribute expression with unmatched quotes",
+			"<h1 set:text={`Houston we've got a problem`}></h1>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
+			"attribute expression with unmatched quotes",
+			"<h1 set:html={`Oh \"no...`}></h1>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
+			"attribute expression with unmatched quotes inside matched quotes",
+			"<h1 set:html={\"hello y'all\"}></h1>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
+		{
+			"attribute expression with unmatched quotes inside matched quotes II",
+			"<h1 set:html={'\"Did Nate handle this case, too?\", Fred pondered...'}></h1>",
+			[]TokenType{StartTagToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

@@ -1274,6 +1274,10 @@ func (z *Tokenizer) readTagAttrExpression() {
 			if z.attrTemplateLiteralStack[z.attrExpressionStack-1] != 0 && c == '/' {
 				continue
 			}
+			inTemplateLiteral := len(z.attrTemplateLiteralStack) >= z.attrExpressionStack && z.attrTemplateLiteralStack[z.attrExpressionStack-1] > 0
+			if inTemplateLiteral {
+				continue
+			}
 			end := z.data.End
 			if c == '/' {
 				// Also stop when we hit a '}' character (end of attribute expression)
