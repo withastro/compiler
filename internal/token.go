@@ -1002,6 +1002,25 @@ func (z *Tokenizer) readStartTag() TokenType {
 		return SelfClosingTagToken
 	}
 
+	// Handle TypeScript Generics
+	if len(z.expressionElementStack) > 0 && len(z.expressionElementStack[len(z.expressionElementStack)-1]) == 0 {
+		if z.prevToken.Type == TextToken {
+			tag := z.buf[z.data.Start:z.data.End]
+			a := atom.Lookup(tag)
+			// We can be certain this is a start tag if we match an HTML tag, Fragment, or <>
+			if a.String() != "" || bytes.Equal(tag, []byte("Fragment")) || bytes.Equal(tag, []byte{}) {
+				return StartTagToken
+			}
+			text := z.prevToken.Data
+			originalLen := len(text)
+			// If this "StartTagToken" does not include any spaces between it and the end of the expression
+			// we can roughly assume it is a TypeScript generic rather than an element. Rough but it works!
+			if len(strings.TrimRightFunc(text, unicode.IsSpace)) == originalLen {
+				return TextToken
+			}
+		}
+	}
+
 	return StartTagToken
 }
 
