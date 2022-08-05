@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.23.1
+
+### Patch Changes
+
+- 79376f3: Fix regression with expression rendering
+
 ## 0.23.0
 
 ### Minor Changes
