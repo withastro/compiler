@@ -1015,7 +1015,7 @@ func (z *Tokenizer) readStartTag() TokenType {
 			originalLen := len(text)
 			// If this "StartTagToken" does not include any spaces between it and the end of the expression
 			// we can roughly assume it is a TypeScript generic rather than an element. Rough but it works!
-			if len(strings.TrimRightFunc(text, unicode.IsSpace)) == originalLen {
+			if len(text) != 0 && len(strings.TrimRightFunc(text, unicode.IsSpace)) == originalLen {
 				return TextToken
 			}
 		}
