@@ -1007,7 +1007,6 @@ func (z *Tokenizer) readStartTag() TokenType {
 		if z.prevToken.Type == TextToken {
 			tag := z.buf[z.data.Start:z.data.End]
 			a := atom.Lookup(tag)
-			fmt.Println(string(tag))
 			// We can be certain this is a start tag if we match an HTML tag, Fragment, or <>
 			if a.String() != "" || bytes.Equal(tag, []byte("Fragment")) || bytes.Equal(tag, []byte{}) {
 				return StartTagToken
