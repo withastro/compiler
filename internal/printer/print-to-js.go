@@ -262,31 +262,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print("-->")
 		return
 	case DoctypeNode:
-		p.print("<!DOCTYPE ")
-		p.print(n.Data)
-		if n.Attr != nil {
-			var public, system string
-			for _, a := range n.Attr {
-				switch a.Key {
-				case "public":
-					public = a.Val
-				case "system":
-					system = a.Val
-				}
-			}
-			if public != "" {
-				p.print(" PUBLIC ")
-				p.print(fmt.Sprintf(`"%s"`, public))
-				if system != "" {
-					p.print(" ")
-					p.print(fmt.Sprintf(`"%s"`, system))
-				}
-			} else if system != "" {
-				p.print(" SYSTEM ")
-				p.print(fmt.Sprintf(`"%s"`, system))
-			}
-		}
-		p.print(">")
+		// Doctype doesn't get printed because the Astro runtime always appends it
 		return
 	case RawNode:
 		p.print(n.Data)
