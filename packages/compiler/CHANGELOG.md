@@ -1,5 +1,17 @@
 # @astrojs/compiler
 
+## 0.23.0
+
+### Minor Changes
+
+- d8448e2: Prevent printing the doctype in the JS output
+
+### Patch Changes
+
+- a28c3d8: Fix handling of unbalanced quotes in expression attributes
+- 28d1d4d: Fix handling of TS generics inside of expressions
+- 356d3b6: Prevent wraping module scripts with scope
+
 ## 0.22.1
 
 ### Patch Changes
