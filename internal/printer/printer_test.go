@@ -913,7 +913,7 @@ const name = "world";
   </body>
 </html>`,
 			want: want{
-				code: `<!DOCTYPE html><html lang="en">
+				code: `<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1641,7 +1641,7 @@ const { product } = Astro.props;
 </body>
 </html>`, BACKTICK, BACKTICK),
 			want: want{
-				code: `<!DOCTYPE html><html lang="en">
+				code: `<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1694,7 +1694,7 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
 			name:   "doctype",
 			source: `<!DOCTYPE html><div/>`,
 			want: want{
-				code: `<!DOCTYPE html>${$$maybeRenderHead($$result)}<div></div>`,
+				code: `${$$maybeRenderHead($$result)}<div></div>`,
 			},
 		},
 		{
