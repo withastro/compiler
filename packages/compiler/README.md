@@ -2,8 +2,6 @@
 
 Astro’s [Go](https://golang.org/) + WASM compiler.
 
-⚠️ Currently in beta!
-
 ## Install
 
 ```
