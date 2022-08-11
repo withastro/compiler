@@ -288,11 +288,6 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && (n.Component || n.CustomElement) {
 		for _, attr := range n.Attr {
-			id := n.Data
-			if n.CustomElement {
-				id = fmt.Sprintf("'%s'", id)
-			}
-
 			if strings.HasPrefix(attr.Key, "client:") {
 				parts := strings.Split(attr.Key, ":")
 				directive := parts[1]
