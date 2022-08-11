@@ -390,16 +390,27 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 	return match
 }
 
+func safeURL(pathname string) string {
+	// url.PathEscape also escapes `/` to `%2F`, but we don't want that!
+	escaped := strings.ReplaceAll(url.PathEscape(pathname), "%2F", "/")
+	return escaped
+}
+
 func resolveIdForMatch(match *ImportMatch, opts *TransformOptions) string {
 	if strings.HasPrefix(match.Specifier, ".") && len(opts.Pathname) > 0 {
-		u, err := url.Parse(opts.Pathname)
+		pathname := safeURL(opts.Pathname)
+		u, err := url.Parse(pathname)
 		if err == nil {
-			ref, _ := url.Parse(match.Specifier)
+			spec := safeURL(match.Specifier)
+			ref, _ := url.Parse(spec)
 			ou := u.ResolveReference(ref)
-			return ou.String()
+			unescaped, _ := url.PathUnescape(ou.String())
+			fmt.Println(unescaped)
+			return unescaped
 		}
 	}
-	return ""
+	// If we can't manipulate the URLs, fallback to the exact specifier
+	return match.Specifier
 }
 
 func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatement) bool) {
