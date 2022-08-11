@@ -49,7 +49,7 @@ test('Hydrated components: default export', () => {
 
 test('Hydrated components: star export', () => {
   let components = result.hydratedComponents;
-  assert.equal(components[1].exportName, '*');
+  assert.equal(components[1].exportName, 'someName');
   assert.equal(components[1].specifier, '../components/two.jsx');
   assert.equal(components[1].resolvedPath, '/@fs/users/astro/apps/pacman/src/components/two.jsx');
 });
@@ -63,7 +63,7 @@ test('Hydrated components: named export', () => {
 
 test('Hydrated components: deep nested export', () => {
   let components = result.hydratedComponents;
-  assert.equal(components[3].exportName, '*');
+  assert.equal(components[3].exportName, 'nested.deep.Component');
   assert.equal(components[3].specifier, '../components/four.jsx');
   assert.equal(components[3].resolvedPath, '/@fs/users/astro/apps/pacman/src/components/four.jsx');
 });
@@ -75,7 +75,7 @@ test('ClientOnly component', () => {
 
 test('ClientOnly components: star export', () => {
   let components = result.clientOnlyComponents;
-  assert.equal(components[0].exportName, '*');
+  assert.equal(components[0].exportName, 'someName');
   assert.equal(components[0].specifier, '../components/five.jsx');
   assert.equal(components[0].resolvedPath, '/@fs/users/astro/apps/pacman/src/components/five.jsx');
 });
@@ -96,7 +96,7 @@ test('ClientOnly components: default export', () => {
 
 test('ClientOnly components: deep nested export', () => {
   let components = result.clientOnlyComponents;
-  assert.equal(components[3].exportName, '*');
+  assert.equal(components[3].exportName, 'nested.deep.Component');
   assert.equal(components[3].specifier, '../components/eight.jsx');
   assert.equal(components[3].resolvedPath, '/@fs/users/astro/apps/pacman/src/components/eight.jsx');
 });

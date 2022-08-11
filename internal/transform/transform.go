@@ -364,8 +364,12 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 		for _, imported := range stmt.Imports {
 
 			if strings.Contains(n.Data, ".") && strings.HasPrefix(n.Data, fmt.Sprintf("%s.", imported.LocalName)) {
+				exportName := n.Data
+				if imported.ExportName == "*" {
+					exportName = strings.Replace(exportName, fmt.Sprintf("%s.", imported.LocalName), "", 1)
+				}
 				match = &ImportMatch{
-					ExportName: n.Data,
+					ExportName: exportName,
 					Specifier:  stmt.Specifier,
 				}
 				return false
@@ -380,11 +384,6 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 
 		return true
 	})
-
-	if match != nil {
-		fmt.Println(match.ExportName, match.Specifier)
-	}
-
 	return match
 }
 
