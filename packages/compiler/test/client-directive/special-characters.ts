@@ -24,7 +24,7 @@ import RemoteComponent from 'https://test.com/components/with-[wacky-brackets}()
   <RemoteComponent id="remote-component" client:visible />
 </body>
 </html>
-`
+`;
 
 let result;
 test.before(async () => {
