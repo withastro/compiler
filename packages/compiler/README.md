@@ -10,8 +10,6 @@ npm install @astrojs/compiler
 
 ## Usage
 
-_Note: Public APIs are likely to change before 1.0! Use at your own discretion._
-
 #### Transform `.astro` to valid TypeScript
 
 The Astro compiler can convert `.astro` syntax to a TypeScript Module whose default export generates HTML.
