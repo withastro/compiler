@@ -377,7 +377,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				switch a.Type {
 				case QuotedAttribute:
 					p.addSourceMapping(a.ValLoc)
-					p.print(`"` + encodeDoubleQuote(escapeInterpolation(escapeBackticks(a.Val))) + `"`)
+					p.print(`"` + escapeDoubleQuote(a.Val) + `"`)
 					slotted = true
 				default:
 					panic("slot[name] must be a static string")
@@ -488,7 +488,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					for _, a := range c.Attr {
 						if a.Key == "slot" {
 							if a.Type == QuotedAttribute {
-								slotProp = fmt.Sprintf(`"%s"`, a.Val)
+								slotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 							} else if a.Type == ExpressionAttribute {
 								slotProp = fmt.Sprintf(`[%s]`, a.Val)
 							} else {
@@ -502,7 +502,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							for _, a := range c1.Attr {
 								if a.Key == "slot" {
 									if a.Type == QuotedAttribute {
-										nestedSlotProp := fmt.Sprintf(`"%s"`, a.Val)
+										nestedSlotProp := fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 										nestedSlots = append(nestedSlots, nestedSlotProp)
 									} else if a.Type == ExpressionAttribute {
 										nestedSlotProp := fmt.Sprintf(`[%s]`, a.Val)
@@ -525,7 +525,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 								for _, a := range c1.Attr {
 									if a.Key == "slot" {
 										if a.Type == QuotedAttribute {
-											nestedSlotProp := fmt.Sprintf(`"%s"`, a.Val)
+											nestedSlotProp := fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 											nestedSlots = append(nestedSlots, nestedSlotProp)
 											conditionalChildren = append(conditionalChildren, &Node{Type: TextNode, Data: fmt.Sprintf("{%s: () => ", nestedSlotProp), Loc: make([]loc.Loc, 1)})
 											conditionalChildren = append(conditionalChildren, c1)

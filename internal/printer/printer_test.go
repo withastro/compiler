@@ -453,6 +453,20 @@ import * as ns from '../components';
 			},
 		},
 		{
+			name:   "component with quoted attributes",
+			source: `<Component is='"cool"' />`,
+			want: want{
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{"is":"\"cool\""})}`,
+			},
+		},
+		{
+			name:   "slot with quoted attributes",
+			source: `<Component><div slot='"name"' /></Component>`,
+			want: want{
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},{"\"name\"": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div></div>` + BACKTICK + `,})}`,
+			},
+		},
+		{
 			name: "noscript component",
 			source: `
 <html>
