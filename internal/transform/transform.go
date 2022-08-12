@@ -288,11 +288,6 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && (n.Component || n.CustomElement) {
 		for _, attr := range n.Attr {
-			id := n.Data
-			if n.CustomElement {
-				id = fmt.Sprintf("'%s'", id)
-			}
-
 			if strings.HasPrefix(attr.Key, "client:") {
 				parts := strings.Split(attr.Key, ":")
 				directive := parts[1]
@@ -322,19 +317,6 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 				}
 				// prepend node to maintain authored order
 				doc.HydratedComponentNodes = append([]*astro.Node{n}, doc.HydratedComponentNodes...)
-				pathAttr := astro.Attribute{
-					Key:  "client:component-path",
-					Val:  fmt.Sprintf("$$metadata.getPath(%s)", id),
-					Type: astro.ExpressionAttribute,
-				}
-				n.Attr = append(n.Attr, pathAttr)
-
-				exportAttr := astro.Attribute{
-					Key:  "client:component-export",
-					Val:  fmt.Sprintf("$$metadata.getExport(%s)", id),
-					Type: astro.ExpressionAttribute,
-				}
-				n.Attr = append(n.Attr, exportAttr)
 
 				match := matchNodeToImportStatement(doc, n)
 				if match != nil {
@@ -343,6 +325,20 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 						Specifier:    match.Specifier,
 						ResolvedPath: resolveIdForMatch(match, opts),
 					})
+
+					pathAttr := astro.Attribute{
+						Key:  "client:component-path",
+						Val:  fmt.Sprintf(`"%s"`, resolveIdForMatch(match, opts)),
+						Type: astro.ExpressionAttribute,
+					}
+					n.Attr = append(n.Attr, pathAttr)
+
+					exportAttr := astro.Attribute{
+						Key:  "client:component-export",
+						Val:  fmt.Sprintf(`"%s"`, match.ExportName),
+						Type: astro.ExpressionAttribute,
+					}
+					n.Attr = append(n.Attr, exportAttr)
 				}
 
 				break
@@ -361,20 +357,17 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 
 	eachImportStatement(doc, func(stmt js_scanner.ImportStatement) bool {
 		for _, imported := range stmt.Imports {
-			if imported.ExportName == "*" {
-				prefix := fmt.Sprintf("%s.", imported.LocalName)
 
-				if strings.HasPrefix(n.Data, prefix) {
-					exportParts := strings.Split(n.Data[len(prefix):], ".")
-					exportName := exportParts[0]
-
-					match = &ImportMatch{
-						ExportName: exportName,
-						Specifier:  stmt.Specifier,
-					}
-
-					return false
+			if strings.Contains(n.Data, ".") && strings.HasPrefix(n.Data, fmt.Sprintf("%s.", imported.LocalName)) {
+				exportName := n.Data
+				if imported.ExportName == "*" {
+					exportName = strings.Replace(exportName, fmt.Sprintf("%s.", imported.LocalName), "", 1)
 				}
+				match = &ImportMatch{
+					ExportName: exportName,
+					Specifier:  stmt.Specifier,
+				}
+				return false
 			} else if imported.LocalName == n.Data {
 				match = &ImportMatch{
 					ExportName: imported.ExportName,
@@ -386,7 +379,6 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 
 		return true
 	})
-
 	return match
 }
 
