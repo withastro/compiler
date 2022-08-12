@@ -2,8 +2,6 @@
 
 Astro’s [Go](https://golang.org/) + WASM compiler.
 
-⚠️ Currently in beta!
-
 ## Install
 
 ```
@@ -11,8 +9,6 @@ npm install @astrojs/compiler
 ```
 
 ## Usage
-
-_Note: Public APIs are likely to change before 1.0! Use at your own discretion._
 
 #### Transform `.astro` to valid TypeScript
 
