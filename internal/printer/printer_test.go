@@ -453,6 +453,20 @@ import * as ns from '../components';
 			},
 		},
 		{
+			name:   "component with quoted attributes",
+			source: `<Component is='"cool"' />`,
+			want: want{
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{"is":"\"cool\""})}`,
+			},
+		},
+		{
+			name:   "slot with quoted attributes",
+			source: `<Component><div slot='"name"' /></Component>`,
+			want: want{
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},{"\"name\"": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div></div>` + BACKTICK + `,})}`,
+			},
+		},
+		{
 			name: "noscript component",
 			source: `
 <html>
@@ -1021,7 +1035,7 @@ const someProps = {
   ` + RENDER_HEAD_RESULT + `</head>
   <body class="astro-HMNNHVCQ">
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":(""),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter.jsx"),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>
   `,
@@ -1186,8 +1200,8 @@ import 'custom-element';`,
 					hydratedComponents:  []string{"'my-element'", "Two", "One"},
 					hydrationDirectives: []string{"load"},
 				},
-				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-hydration":"load","client:component-path":(""),"client:component-export":("default")})}
-${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-hydration":"load","client:component-path":(""),"client:component-export":("default")})}
+				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-hydration":"load","client:component-path":("one"),"client:component-export":("default")})}
+${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-hydration":"load","client:component-path":("two"),"client:component-export":("default")})}
 ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-hydration":"load"})}`,
 			},
 		},
@@ -1661,7 +1675,7 @@ const { product } = Astro.props;
   ${$$renderComponent($$result,'Header',Header,{})}
   <div class="product-page">
     <article>
-      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-hydration":"visible","client:component-path":(""),"client:component-export":("default")})}
+      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-hydration":"visible","client:component-path":("../../components/ProductPageContent.jsx"),"client:component-export":("default")})}
     </article>
   </div>
   ${$$renderComponent($$result,'Footer',Footer,{})}
