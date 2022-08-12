@@ -388,6 +388,14 @@ func safeURL(pathname string) string {
 	return escaped
 }
 
+func trimExtension(pathname string) string {
+	// Runtime will be unable to resolve `.jsx` so we need to trim it off
+	if strings.HasSuffix(pathname, ".jsx") {
+		return pathname[0 : len(pathname)-4]
+	}
+	return pathname
+}
+
 func resolveIdForMatch(match *ImportMatch, opts *TransformOptions) string {
 	if strings.HasPrefix(match.Specifier, ".") && len(opts.Pathname) > 0 {
 		pathname := safeURL(opts.Pathname)
@@ -397,12 +405,11 @@ func resolveIdForMatch(match *ImportMatch, opts *TransformOptions) string {
 			ref, _ := url.Parse(spec)
 			ou := u.ResolveReference(ref)
 			unescaped, _ := url.PathUnescape(ou.String())
-			fmt.Println(unescaped)
-			return unescaped
+			return trimExtension(unescaped)
 		}
 	}
 	// If we can't manipulate the URLs, fallback to the exact specifier
-	return match.Specifier
+	return trimExtension(match.Specifier)
 }
 
 func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatement) bool) {
