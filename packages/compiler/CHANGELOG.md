@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.23.3
+
+### Patch Changes
+
+- 7693d76: Fix resolution of .jsx modules
+
 ## 0.23.2
 
 ### Patch Changes
