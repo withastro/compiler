@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.23.2
+
+### Patch Changes
+
+- 167ad21: Improve handling of namespaced components when they are multiple levels deep
+- 9283258: Fix quotations in pre-quoted attributes
+- 76fcef3: Better handling for imports which use special characters
+
 ## 0.23.1
 
 ### Patch Changes
