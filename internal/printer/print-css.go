@@ -27,7 +27,7 @@ func PrintCSS(sourcetext string, doc *Node, opts transform.TransformOptions) Pri
 		for _, style := range doc.Styles {
 			if style.FirstChild != nil && strings.TrimSpace(style.FirstChild.Data) != "" {
 				p.addSourceMapping(style.Loc[0])
-				p.print(escapeText(strings.TrimSpace(style.FirstChild.Data)))
+				p.print(strings.TrimSpace(style.FirstChild.Data))
 				result.Output = append(result.Output, p.output)
 				p.output = []byte{}
 				p.addNilSourceMapping()
