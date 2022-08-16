@@ -8,6 +8,7 @@ const FIXTURE = `
 <style>
     .thing { color: green; }
     .url-space { background: url('/white space.png'); }
+    .escape:not(#\\#) { color: red; }
 </style>
 `;
 
@@ -24,6 +25,10 @@ test('extracts styles', () => {
 
 test('escape url with space', () => {
   assert.match(result.css[0], 'background:url(/white\\ space.png)');
+});
+
+test('escape css syntax', () => {
+  assert.match(result.css[0], ':not(#\\#)');
 });
 
 test.run();
