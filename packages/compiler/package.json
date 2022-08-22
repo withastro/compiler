@@ -5,7 +5,7 @@
   "type": "module",
   "bugs": "https://github.com/withastro/compiler/issues",
   "homepage": "https://astro.build",
-  "version": "0.23.3",
+  "version": "0.23.4",
   "scripts": {
     "build": "tsc -p ."
   },
