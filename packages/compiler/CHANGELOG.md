@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.23.4
+
+### Patch Changes
+
+- 3b9f0d2: Remove css print escape for experimentalStaticExtraction
+
 ## 0.23.3
 
 ### Patch Changes
