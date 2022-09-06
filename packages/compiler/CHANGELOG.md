@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.23.5
+
+### Patch Changes
+
+- 6bc8e0b: Prevent import assertion from being scanned too soon
+
 ## 0.23.4
 
 ### Patch Changes
