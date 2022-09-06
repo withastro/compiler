@@ -365,7 +365,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					continue
 				}
 
-				if !foundAssertion && next == js.IdentifierToken && string(nextValue) == "assert" {
+				if !foundAssertion && foundSpecifier && next == js.IdentifierToken && string(nextValue) == "assert" {
 					foundAssertion = true
 					continue
 				}
