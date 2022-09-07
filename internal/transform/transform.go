@@ -16,6 +16,7 @@ type TransformOptions struct {
 	Scope            string
 	Filename         string
 	Pathname         string
+	ModuleId         string
 	InternalURL      string
 	SourceMap        string
 	Site             string

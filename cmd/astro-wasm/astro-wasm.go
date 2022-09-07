@@ -61,7 +61,7 @@ func makeParseOptions(options js.Value) t.ParseOptions {
 	}
 }
 
-func makeTransformOptions(options js.Value, hash string) transform.TransformOptions {
+func makeTransformOptions(options js.Value) transform.TransformOptions {
 	filename := jsString(options.Get("sourcefile"))
 	if filename == "" {
 		filename = "<stdin>"
@@ -70,6 +70,11 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	pathname := jsString(options.Get("pathname"))
 	if pathname == "" {
 		pathname = "<stdin>"
+	}
+
+	moduleId := jsString(options.Get("moduleId"))
+	if moduleId == "" {
+		moduleId = "<stdin>"
 	}
 
 	internalURL := jsString(options.Get("internalURL"))
@@ -105,9 +110,9 @@ func makeTransformOptions(options js.Value, hash string) transform.TransformOpti
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		Scope:            hash,
 		Filename:         filename,
 		Pathname:         pathname,
+		ModuleId:         moduleId,
 		InternalURL:      internalURL,
 		SourceMap:        sourcemap,
 		Site:             site,
@@ -199,7 +204,8 @@ func Parse() interface{} {
 func ConvertToTSX() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		source := jsString(args[0])
-		transformOptions := makeTransformOptions(js.Value(args[1]), "XXXXXX")
+		transformOptions := makeTransformOptions(js.Value(args[1]))
+		transformOptions.Scope = "XXXXXX"
 
 		var doc *astro.Node
 		doc, err := astro.Parse(strings.NewReader(source))
@@ -218,8 +224,9 @@ func ConvertToTSX() interface{} {
 func Transform() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		source := jsString(args[0])
-		hash := astro.HashFromSource(source)
-		transformOptions := makeTransformOptions(js.Value(args[1]), hash)
+
+		transformOptions := makeTransformOptions(js.Value(args[1]))
+		transformOptions.Scope = astro.HashFromSourceAndModuleId(source, transformOptions.ModuleId)
 
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
@@ -236,7 +243,7 @@ func Transform() interface{} {
 				transform.ExtractStyles(doc)
 
 				if len(doc.Styles) > 0 {
-					newHash := astro.HashFromDoc(doc)
+					newHash := astro.HashFromDoc(doc, transformOptions.ModuleId)
 					transformOptions.Scope = newHash
 				}
 
