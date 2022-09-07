@@ -2257,7 +2257,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				t.Error(err)
 			}
 
-			hash := astro.HashFromSource(code)
+			hash := astro.HashFromSource(code, "filename")
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{

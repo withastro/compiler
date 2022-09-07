@@ -8,17 +8,17 @@ import (
 )
 
 // This is used in `Transform` to ensure a stable hash when updating styles
-func HashFromDoc(doc *Node) string {
+func HashFromDoc(doc *Node, filename string) string {
 	var b strings.Builder
 	PrintToSource(&b, doc)
 	source := strings.TrimSpace(b.String())
-	return HashFromSource(source)
+	return HashFromSource(source, filename)
 }
 
-func HashFromSource(source string) string {
+func HashFromSource(source string, filename string) string {
 	h := xxhash.New()
 	//nolint
-	h.Write([]byte(source))
+	h.Write([]byte(filename + source))
 	hashBytes := h.Sum(nil)
 	return base32.StdEncoding.EncodeToString(hashBytes)[:8]
 }
