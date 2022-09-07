@@ -27,7 +27,7 @@ func TestPrinterCSS(t *testing.T) {
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				styles: []string{".title:where(.astro-RVXLICQI){font-family:fantasy;font-size:28px}.body:where(.astro-RVXLICQI){font-size:1em}"},
+				styles: []string{".title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}"},
 			},
 		},
 	}
@@ -51,7 +51,7 @@ func TestPrinterCSS(t *testing.T) {
 				t.Error(err)
 			}
 
-			hash := astro.HashFromSource(code, "filename")
+			hash := astro.HashFromSource(code)
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintCSS(code, doc, transform.TransformOptions{

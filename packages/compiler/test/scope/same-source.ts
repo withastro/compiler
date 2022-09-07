@@ -28,16 +28,14 @@ function grabAstroScope(code: string) {
 test('Similar components have different scoped class names', async () => {
   let result = await transform(FIXTURE, {
     experimentalStaticExtraction: true,
-    pathname: '/@fs/users/astro/apps/pacman/src/pages/index.astro',
-    sourcefile: '/users/astro/apps/pacman/src/pages/index.astro',
+    moduleId: '/src/pages/index.astro',
   });
   let scopeA = grabAstroScope(result.code);
   assert.ok(scopeA);
 
   result = await transform(FIXTURE, {
     experimentalStaticExtraction: true,
-    pathname: '/@fs/users/astro/apps/pacman/src/pages/two.astro',
-    sourcefile: '/users/astro/apps/pacman/src/pages/two.astro',
+    moduleId: '/src/pages/two.astro',
   });
 
   let scopeB = grabAstroScope(result.code);

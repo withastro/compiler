@@ -72,6 +72,11 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		pathname = "<stdin>"
 	}
 
+	moduleId := jsString(options.Get("moduleId"))
+	if moduleId == "" {
+		moduleId = "<stdin>"
+	}
+
 	internalURL := jsString(options.Get("internalURL"))
 	if internalURL == "" {
 		internalURL = "astro/internal"
@@ -107,6 +112,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	return transform.TransformOptions{
 		Filename:         filename,
 		Pathname:         pathname,
+		ModuleId:         moduleId,
 		InternalURL:      internalURL,
 		SourceMap:        sourcemap,
 		Site:             site,
@@ -220,7 +226,7 @@ func Transform() interface{} {
 		source := jsString(args[0])
 
 		transformOptions := makeTransformOptions(js.Value(args[1]))
-		transformOptions.Scope = astro.HashFromSource(source, transformOptions.Filename)
+		transformOptions.Scope = astro.HashFromSourceAndModuleId(source, transformOptions.ModuleId)
 
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
@@ -237,7 +243,7 @@ func Transform() interface{} {
 				transform.ExtractStyles(doc)
 
 				if len(doc.Styles) > 0 {
-					newHash := astro.HashFromDoc(doc, transformOptions.Filename)
+					newHash := astro.HashFromDoc(doc, transformOptions.ModuleId)
 					transformOptions.Scope = newHash
 				}
 

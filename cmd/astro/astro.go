@@ -46,7 +46,7 @@ const something = await Astro.fetchContent('../*.md');
 		fmt.Println(err)
 		return
 	}
-	hash := astro.HashFromSource(source, "<stdin>")
+	hash := astro.HashFromSource(source)
 
 	transform.ExtractStyles(doc)
 	transform.Transform(doc, transform.TransformOptions{
