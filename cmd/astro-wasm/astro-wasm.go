@@ -162,10 +162,11 @@ type TransformResult struct {
 	Scripts              []HoistedScript     `js:"scripts"`
 	HydratedComponents   []HydratedComponent `js:"hydratedComponents"`
 	ClientOnlyComponents []HydratedComponent `js:"clientOnlyComponents"`
+	StyleError           string              `js:"styleError"`
 }
 
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
-func preprocessStyle(i int, style *astro.Node, transformOptions transform.TransformOptions, cb func()) {
+func preprocessStyle(i int, style *astro.Node, transformOptions transform.TransformOptions, styleError *string, cb func()) {
 	defer cb()
 	if style.FirstChild == nil {
 		return
@@ -174,6 +175,13 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	data, _ := wasm_utils.Await(transformOptions.PreprocessStyle.(js.Value).Invoke(style.FirstChild.Data, attrs))
 	// note: Rollup (and by extension our Astro Vite plugin) allows for "undefined" and "null" responses if a transform wishes to skip this occurrence
 	if data[0].Equal(js.Undefined()) || data[0].Equal(js.Null()) {
+		return
+	}
+	// If an error return, override the style's CSS so the compiler doesn't hang
+	// And return a styleError. The caller will use this to know that style processing failed.
+	if err := jsString(data[0].Get("error")); err != "" {
+		style.FirstChild.Data = ""
+		*styleError = err
 		return
 	}
 	str := jsString(data[0].Get("code"))
@@ -228,6 +236,7 @@ func Transform() interface{} {
 		transformOptions := makeTransformOptions(js.Value(args[1]))
 		transformOptions.Scope = astro.HashFromSourceAndModuleId(source, transformOptions.ModuleId)
 
+		styleError := ""
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			resolve := args[0]
 
@@ -255,7 +264,7 @@ func Transform() interface{} {
 						for i, style := range doc.Styles {
 							wg.Add(1)
 							i := i
-							go preprocessStyle(i, style, transformOptions, wg.Done)
+							go preprocessStyle(i, style, transformOptions, &styleError, wg.Done)
 						}
 					}
 				}
@@ -357,11 +366,11 @@ func Transform() interface{} {
 				var value interface{}
 				switch transformOptions.SourceMap {
 				case "external":
-					value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, transformOptions)
+					value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, styleError, transformOptions)
 				case "both":
-					value = createBothSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, transformOptions)
+					value = createBothSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, styleError, transformOptions)
 				case "inline":
-					value = createInlineSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, transformOptions)
+					value = createInlineSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, styleError, transformOptions)
 				default:
 					value = vert.ValueOf(TransformResult{
 						CSS:                  css,
@@ -371,6 +380,7 @@ func Transform() interface{} {
 						Scripts:              scripts,
 						HydratedComponents:   hydratedComponents,
 						ClientOnlyComponents: clientOnlyComponents,
+						StyleError:           styleError,
 					})
 				}
 
@@ -404,7 +414,7 @@ func createSourceMapString(source string, result printer.PrintResult, transformO
 }`, sourcemap.Sources[0], sourcemap.SourcesContent[0], sourcemap.Mappings)
 }
 
-func createExternalSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, transformOptions transform.TransformOptions) interface{} {
+func createExternalSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, styleError string, transformOptions transform.TransformOptions) interface{} {
 	return vert.ValueOf(TransformResult{
 		CSS:                  css,
 		Code:                 string(result.Output),
@@ -413,10 +423,11 @@ func createExternalSourceMap(source string, result printer.PrintResult, css []st
 		Scripts:              *scripts,
 		HydratedComponents:   *hydratedComponents,
 		ClientOnlyComponents: *clientOnlyComponents,
+		StyleError:           styleError,
 	})
 }
 
-func createInlineSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, transformOptions transform.TransformOptions) interface{} {
+func createInlineSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, styleError string, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
@@ -427,10 +438,11 @@ func createInlineSourceMap(source string, result printer.PrintResult, css []stri
 		Scripts:              *scripts,
 		HydratedComponents:   *hydratedComponents,
 		ClientOnlyComponents: *clientOnlyComponents,
+		StyleError:           styleError,
 	})
 }
 
-func createBothSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, transformOptions transform.TransformOptions) interface{} {
+func createBothSourceMap(source string, result printer.PrintResult, css []string, scripts *[]HoistedScript, hydratedComponents *[]HydratedComponent, clientOnlyComponents *[]HydratedComponent, styleError string, transformOptions transform.TransformOptions) interface{} {
 	sourcemapString := createSourceMapString(source, result, transformOptions)
 	inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
 	return vert.ValueOf(TransformResult{
@@ -441,5 +453,6 @@ func createBothSourceMap(source string, result printer.PrintResult, css []string
 		Scripts:              *scripts,
 		HydratedComponents:   *hydratedComponents,
 		ClientOnlyComponents: *clientOnlyComponents,
+		StyleError:           styleError,
 	})
 }
