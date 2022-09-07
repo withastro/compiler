@@ -896,9 +896,9 @@ const name = "world";
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}`}"},
-				code: "\n\n\t\t" + `${$$maybeRenderHead($$result)}<h1 class="title astro-DPOHFLYM">Page Title</h1>
-		<p class="body astro-DPOHFLYM">I’m a page</p>`,
+				styles: []string{"{props:{\"data-astro-id\":\"RVXLICQI\"},children:`.title:where(.astro-RVXLICQI){font-family:fantasy;font-size:28px}.body:where(.astro-RVXLICQI){font-size:1em}`}"},
+				code: "\n\n\t\t" + `${$$maybeRenderHead($$result)}<h1 class="title astro-RVXLICQI">Page Title</h1>
+		<p class="body astro-RVXLICQI">I’m a page</p>`,
 			},
 		},
 		{
@@ -1020,22 +1020,22 @@ const someProps = {
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`},
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em}.children{display:grid;place-items:center;margin-bottom:2em}%s}`, BACKTICK, BACKTICK)},
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"OGUHOMIA"},children:%s:root{font-family:system-ui;padding:2em 0}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em}.children{display:grid;place-items:center;margin-bottom:2em}%s}`, BACKTICK, BACKTICK)},
 				metadata: metadata{
 					modules:             []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
 					hydratedComponents:  []string{`Counter`},
 					hydrationDirectives: []string{"visible"},
 				},
-				code: `<html lang="en" class="astro-HMNNHVCQ">
+				code: `<html lang="en" class="astro-OGUHOMIA">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
   
   ` + RENDER_HEAD_RESULT + `</head>
-  <body class="astro-HMNNHVCQ">
-    <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter"),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+  <body class="astro-OGUHOMIA">
+    <main class="astro-OGUHOMIA">
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter"),"client:component-export":("default"),"class":"astro-OGUHOMIA"},{"default": () => $$render` + "`" + `<h1 class="astro-OGUHOMIA">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>
   `,
@@ -1402,7 +1402,7 @@ const title = 'icon';
 			source: `<style define:vars={{ color: "Gainsboro" }}></style>`,
 			want: want{
 				definedVars: []string{`{ color: "Gainsboro" }`},
-				styles:      []string{`{props:{"define:vars":({ color: "Gainsboro" }),"data-astro-id":"7HAAVZPE"}}`},
+				styles:      []string{`{props:{"define:vars":({ color: "Gainsboro" }),"data-astro-id":"GX7RITV5"}}`},
 				code:        ``,
 			},
 		},
@@ -1522,11 +1522,11 @@ import { Container, Col, Row } from 'react-bootstrap';
 <div />`,
 			want: want{
 				styles: []string{
-					"{props:{\"data-astro-id\":\"LASNTLJA\"},children:`div:where(.astro-LASNTLJA){color:blue}`}",
-					"{props:{\"is:scoped\":true,\"data-astro-id\":\"LASNTLJA\"},children:`div:where(.astro-LASNTLJA){color:green}`}",
+					"{props:{\"data-astro-id\":\"LVLG5AGR\"},children:`div:where(.astro-LVLG5AGR){color:blue}`}",
+					"{props:{\"is:scoped\":true,\"data-astro-id\":\"LVLG5AGR\"},children:`div:where(.astro-LVLG5AGR){color:green}`}",
 					"{props:{\"is:global\":true},children:`div { color: red }`}",
 				},
-				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-LASNTLJA\"></div>",
+				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-LVLG5AGR\"></div>",
 			},
 		},
 		{
@@ -1555,7 +1555,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<style>div { color: red; }</style><div {...Astro.props} />`,
 			want: want{
 				styles: []string{
-					"{props:{\"data-astro-id\":\"TN53UTDL\"},children:`div:where(.astro-TN53UTDL){color:red}`}",
+					"{props:{\"data-astro-id\":\"ITZRYRQA\"},children:`div:where(.astro-ITZRYRQA){color:red}`}",
 				},
 				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,"Astro.props",{"class":"astro-XXXX"})}></div>`,
 			},
@@ -1932,8 +1932,8 @@ const items = ["Dog", "Cat", "Platipus"];
 </style><div class="container">My Text</div>`,
 
 			want: want{
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"SJ3WYE6H"},children:%s.container:where(.astro-SJ3WYE6H){padding:2rem}%s}`, BACKTICK, BACKTICK)},
-				code:   `${$$maybeRenderHead($$result)}<div class="container astro-SJ3WYE6H">My Text</div>`,
+				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"J3J2H75B"},children:%s.container:where(.astro-J3J2H75B){padding:2rem}%s}`, BACKTICK, BACKTICK)},
+				code:   `${$$maybeRenderHead($$result)}<div class="container astro-J3J2H75B">My Text</div>`,
 			},
 		},
 		{
@@ -2164,10 +2164,10 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			staticExtraction: true,
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-OEEV5AVU"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 				styles: []string{
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1:where(.astro-VFS5OEMV){color:var(--color)}`}",
+					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"OEEV5AVU\"},children:`h1:where(.astro-OEEV5AVU){color:var(--color)}`}",
 				},
 			},
 		},
@@ -2176,11 +2176,11 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>",
 			staticExtraction: true,
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
+				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-276Y6SX2"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-276Y6SX2"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
 				definedVars: []string{"{color:'red'}", "{color:'green'}"},
 				styles: []string{
-					"{props:{\"define:vars\":({color:'red'}),\"data-astro-id\":\"6OXBQCST\"},children:`h2:where(.astro-6OXBQCST){color:var(--color)}`}",
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"6OXBQCST\"},children:`h1:where(.astro-6OXBQCST){color:var(--color)}`}",
+					"{props:{\"define:vars\":({color:'red'}),\"data-astro-id\":\"276Y6SX2\"},children:`h2:where(.astro-276Y6SX2){color:var(--color)}`}",
+					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"276Y6SX2\"},children:`h1:where(.astro-276Y6SX2){color:var(--color)}`}",
 				},
 			},
 		},
