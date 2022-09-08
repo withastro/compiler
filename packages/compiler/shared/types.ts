@@ -6,6 +6,10 @@ export interface PreprocessorResult {
   map?: string;
 }
 
+export interface PreprocessorError {
+  error: string;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ParseOptions {
   position?: boolean;
@@ -24,7 +28,7 @@ export interface TransformOptions {
    */
   as?: 'document' | 'fragment';
   projectRoot?: string;
-  preprocessStyle?: (content: string, attrs: Record<string, string>) => Promise<PreprocessorResult>;
+  preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
   experimentalStaticExtraction?: boolean;
 }
 
@@ -54,6 +58,7 @@ export interface TransformResult {
   code: string;
   map: string;
   scope: string;
+  styleError: string[];
 }
 
 export interface TSXResult {
