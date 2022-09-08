@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.24.0
+
+### Minor Changes
+
+- 6ebcb4f: Allow preprocessStyle to return an error
+
+### Patch Changes
+
+- abda605: Include filename when calculating scope
+
 ## 0.23.5
 
 ### Patch Changes
