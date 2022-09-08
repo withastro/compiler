@@ -8,6 +8,11 @@ const FIXTURE = `
 		color: purple;
 	}
 </style>
+<style lang="scss">
+	article:is(h1, h2, h3, h4, h5, h6)):hover {
+		color: purple;
+	}
+</style>
 `;
 
 test('it works', async () => {
@@ -20,7 +25,8 @@ test('it works', async () => {
       };
     },
   });
-  assert.equal(result.styleError, 'Unable to convert');
+  assert.equal(result.styleError.length, 2);
+  assert.equal(result.styleError[0], 'Unable to convert');
 });
 
 test.run();

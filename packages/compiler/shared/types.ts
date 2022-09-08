@@ -58,7 +58,7 @@ export interface TransformResult {
   code: string;
   map: string;
   scope: string;
-  styleError: string;
+  styleError: string[];
 }
 
 export interface TSXResult {
