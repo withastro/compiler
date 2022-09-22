@@ -223,9 +223,16 @@ func ConvertToTSX() interface{} {
 		}
 		result := printer.PrintToTSX(source, doc, transformOptions)
 
+		sourcemapString := createSourceMapString(source, result, transformOptions)
+		code := string(result.Output)
+		if transformOptions.SourceMap != "external" {
+			inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
+			code += "\n" + inlineSourcemap
+		}
+
 		return vert.ValueOf(TSXResult{
-			Code: string(result.Output),
-			Map:  createSourceMapString(source, result, transformOptions),
+			Code: code,
+			Map:  sourcemapString,
 		})
 	})
 }

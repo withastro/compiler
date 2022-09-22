@@ -70,6 +70,10 @@ const startRunningService = async (): Promise<Service> => {
         }
       }),
     parse: (input, options) => new Promise((resolve) => resolve(_service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
-    convertToTSX: (input, options) => new Promise((resolve) => resolve(_service.convertToTSX(input, options || {}))),
+    convertToTSX: (input, options) => {
+      return new Promise((resolve) => resolve(_service.convertToTSX(input, options || {}))).then((result: any) => {
+        return { ...result, map: JSON.parse(result.map) };
+      })
+    },
   };
 };

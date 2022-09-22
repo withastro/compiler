@@ -1,6 +1,7 @@
 package astro
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -24,6 +25,12 @@ type AttributeTest struct {
 	name     string
 	input    string
 	expected []AttributeType
+}
+
+type LocTest struct {
+	name     string
+	input    string
+	expected []int
 }
 
 func TestBasic(t *testing.T) {
@@ -918,6 +925,41 @@ func TestAttributes(t *testing.T) {
 	runAttributeTypeTest(t, Attributes)
 }
 
+func TestLoc(t *testing.T) {
+	Locs := []LocTest{
+		{
+			"doctype",
+			`<!DOCTYPE html>`,
+			[]int{0, 15},
+		},
+		{
+			"frontmatter",
+			`---
+doesNotExist
+---
+`,
+			[]int{0, 4, 18},
+		},
+		{
+			"expression",
+			`<div>{console.log(hey)}</div>`,
+			[]int{0, 5, 6, 23, 24, 29},
+		},
+		{
+			"expression II",
+			`{"hello" + hey}`,
+			[]int{0, 1, 9, 15, 16},
+		},
+		{
+			"element I",
+			`<div></div>`,
+			[]int{0, 5, 11},
+		},
+	}
+
+	runTokenLocTest(t, Locs)
+}
+
 func runTokenTypeTest(t *testing.T, suite []TokenTypeTest) {
 	for _, tt := range suite {
 		value := test_utils.Dedent(tt.input)
@@ -986,6 +1028,30 @@ func runAttributeTypeTest(t *testing.T, suite []AttributeTest) {
 			}
 			if !reflect.DeepEqual(attributeTypes, tt.expected) {
 				t.Errorf("Attributes = %v\nExpected = %v", attributeTypes, tt.expected)
+			}
+		})
+	}
+}
+
+func runTokenLocTest(t *testing.T, suite []LocTest) {
+	for _, tt := range suite {
+		value := test_utils.Dedent(tt.input)
+		t.Run(tt.name, func(t *testing.T) {
+			locs := make([]int, 0)
+			tokenizer := NewTokenizer(strings.NewReader(value))
+			var next TokenType
+			locs = append(locs, tokenizer.Token().Loc.Start)
+			for {
+				next = tokenizer.Next()
+				if next == ErrorToken {
+					break
+				}
+				tok := tokenizer.Token()
+				fmt.Println(tt.input[tok.Loc.Start:])
+				locs = append(locs, tok.Loc.Start+1)
+			}
+			if !reflect.DeepEqual(locs, tt.expected) {
+				t.Errorf("Tokens = %v\nExpected = %v", locs, tt.expected)
 			}
 		})
 	}

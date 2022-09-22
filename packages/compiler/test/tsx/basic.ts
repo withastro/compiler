@@ -21,7 +21,7 @@ let value = 'world';
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
@@ -44,7 +44,7 @@ let value = 'world';
 
 export default function Test__AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input, { sourcefile: '/Users/nmoo/test.astro' });
+  const { code } = await convertToTSX(input, { sourcefile: '/Users/nmoo/test.astro', sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
@@ -56,7 +56,7 @@ test('moves @attributes to spread', async () => {
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
@@ -76,7 +76,7 @@ const hello = "";
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
@@ -90,7 +90,7 @@ test('moves attributes with dots in them to spread', async () => {
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 

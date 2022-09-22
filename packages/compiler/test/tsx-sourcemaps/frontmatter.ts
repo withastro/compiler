@@ -1,21 +1,19 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
-import { generatedPositionFor, TraceMap } from '@jridgewell/trace-mapping';
+import { testSourcemap } from '../utils';
 
 test('frontmatter', async () => {
   const input = `---
-dontExist
+nonexistent
 ---
 `;
+  const output = await testSourcemap(input, 'nonexistent');
 
-  const { map } = await convertToTSX(input);
-  const tracer = new TraceMap(map);
-
-  const traced = generatedPositionFor(tracer, { source: '<stdin>', line: 2, column: 0 });
-  assert.equal(traced, {
-    line: 1,
+  assert.equal(output, {
+    line: 2,
     column: 0,
+    source: 'index.astro',
+    name: null,
   });
 });
 

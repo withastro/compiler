@@ -19,6 +19,7 @@ type PrintResult struct {
 }
 
 type printer struct {
+	sourcetext         string
 	opts               transform.TransformOptions
 	output             []byte
 	builder            sourcemap.ChunkBuilder
@@ -53,6 +54,10 @@ func (p *printer) print(text string) {
 	p.output = append(p.output, text...)
 }
 
+func (p *printer) printRune(c rune) {
+	p.output = append(p.output, byte(c))
+}
+
 func (p *printer) printf(format string, a ...interface{}) {
 	p.output = append(p.output, []byte(fmt.Sprintf(format, a...))...)
 }
@@ -61,10 +66,27 @@ func (p *printer) println(text string) {
 	p.output = append(p.output, (text + "\n")...)
 }
 
+func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
+	start := l.Start + 1
+	if !strings.Contains(text, "\n") {
+		p.addSourceMapping(loc.Loc{Start: start})
+		p.print(text)
+	} else {
+		for _, c := range text {
+			p.printRune(c)
+			if c == '\n' {
+				p.addSourceMapping(loc.Loc{Start: start})
+			}
+			start++
+		}
+	}
+}
+
 func (p *printer) printInternalImports(importSpecifier string) {
 	if p.hasInternalImports {
 		return
 	}
+	p.addNilSourceMapping()
 	p.print("import {\n  ")
 	p.print(FRAGMENT + ",\n  ")
 	p.print("render as " + TEMPLATE_TAG + ",\n  ")
@@ -93,6 +115,7 @@ func (p *printer) printCSSImports(cssLen int) {
 	}
 	i := 0
 	for i < cssLen {
+		p.addNilSourceMapping()
 		// import '/src/pages/index.astro?astro&type=style&index=0&lang.css';
 		p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.css\";", p.opts.Filename, i))
 		i++
@@ -382,8 +405,9 @@ func (p *printer) addSourceMapping(location loc.Loc) {
 	p.builder.AddSourceMapping(location, p.output)
 }
 
+// Reset sourcemap by pointing to last possible index
 func (p *printer) addNilSourceMapping() {
-	p.builder.AddSourceMapping(loc.Loc{Start: 0}, p.output)
+	p.builder.AddSourceMapping(loc.Loc{Start: len(p.sourcetext)}, p.output)
 }
 
 func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {

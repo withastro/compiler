@@ -10,7 +10,7 @@ test('style is raw', async () => {
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
@@ -22,7 +22,7 @@ test('is:raw is raw', async () => {
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 

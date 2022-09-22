@@ -6,6 +6,7 @@ import (
 
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
 	"github.com/withastro/compiler/internal/transform"
 	"golang.org/x/net/html/atom"
@@ -13,8 +14,9 @@ import (
 
 func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions) PrintResult {
 	p := &printer{
-		opts:    opts,
-		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+		sourcetext: sourcetext,
+		opts:       opts,
+		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
 
 	renderTsx(p, n)
@@ -63,7 +65,6 @@ func renderTsx(p *printer, n *Node) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			renderTsx(p, c)
 		}
-		p.addNilSourceMapping()
 		p.print("\n</Fragment>")
 		propType := "Record<string, any>"
 		if p.hasTypedProps {
@@ -80,7 +81,9 @@ func renderTsx(p *printer, n *Node) {
 				if strings.Contains(c.Data, "Props") {
 					p.hasTypedProps = true
 				}
-				p.addSourceMapping(c.Loc[0])
+				// if len(c.Loc) > 0 {
+				// 	p.addSourceMapping(c.Loc[0])
+				// }
 				if n.LastChild.Data == c.Data {
 					if !strings.HasSuffix(c.Data, ";\n") || !strings.HasSuffix(c.Data, ";") {
 						c.Data = strings.TrimSuffix(c.Data, "\n")
@@ -97,7 +100,6 @@ func renderTsx(p *printer, n *Node) {
 				renderTsx(p, c)
 			}
 		}
-		p.addNilSourceMapping()
 		p.print("<Fragment>\n")
 		return
 	}
@@ -105,32 +107,29 @@ func renderTsx(p *printer, n *Node) {
 	switch n.Type {
 	case TextNode:
 		if strings.TrimSpace(n.Data) == "" {
-			p.addSourceMapping(n.Loc[0])
+			// p.addSourceMapping(n.Loc[0])
 			p.print(n.Data)
 		} else if strings.ContainsAny(n.Data, "{}") {
 			switch getTextType(n) {
 			case RawText:
 				p.print("{`")
-				p.addSourceMapping(n.Loc[0])
+				// p.addSourceMapping(n.Loc[0])
 				p.print(escapeText(n.Data))
-				p.addNilSourceMapping()
 				p.print("`}")
 			case ScriptText:
 				p.print("{() => {")
-				p.addSourceMapping(n.Loc[0])
 				p.print(n.Data)
-				p.addNilSourceMapping()
+				// p.printTextWithSourcemap(n.Data, n.Loc[0])
 				p.print("}}")
 			}
 		} else {
-			p.addSourceMapping(n.Loc[0])
-			p.print(n.Data)
+			p.printTextWithSourcemap(n.Data, n.Loc[0])
 		}
 		return
 	case ElementNode:
 		// No-op.
 	case CommentNode:
-		p.addSourceMapping(n.Loc[0])
+		// p.addSourceMapping(n.Loc[0])
 		p.print("{/**")
 		p.print(escapeBraces(n.Data))
 		p.print("*/}")
@@ -140,6 +139,7 @@ func renderTsx(p *printer, n *Node) {
 	}
 
 	if n.Expression {
+		p.addSourceMapping(n.Loc[0])
 		if n.FirstChild == nil {
 			p.print("{(void 0)")
 		} else if expressionOnlyHasCommentBlock(n) {
@@ -148,11 +148,11 @@ func renderTsx(p *printer, n *Node) {
 		} else {
 			p.print("{")
 		}
+		p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			p.addSourceMapping(c.Loc[0])
 			if c.Type == TextNode {
-				p.print(escapeBraces(c.Data))
+				p.printTextWithSourcemap(c.Data, c.Loc[0])
 				continue
 			}
 			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {
@@ -163,10 +163,8 @@ func renderTsx(p *printer, n *Node) {
 				p.print(`</Fragment>`)
 			}
 		}
-		if len(n.Loc) >= 2 {
-			p.addSourceMapping(n.Loc[1])
-		}
 		p.print("}")
+		p.addNilSourceMapping()
 		return
 	}
 
@@ -186,7 +184,7 @@ func renderTsx(p *printer, n *Node) {
 		return
 	}
 
-	p.addSourceMapping(n.Loc[0])
+	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start - 1})
 	p.print("<")
 	p.print(n.Data)
 	invalidTSXAttributes := make([]Attribute, 0)
@@ -242,11 +240,11 @@ func renderTsx(p *printer, n *Node) {
 	}
 	for i, a := range invalidTSXAttributes {
 		if i == 0 {
-			p.addNilSourceMapping()
 			p.print(" {...{")
 		} else {
 			p.print(",")
 		}
+		p.addSourceMapping(a.KeyLoc)
 		p.print(`"`)
 		if a.Namespace != "" {
 			p.print(a.Namespace)
@@ -254,17 +252,18 @@ func renderTsx(p *printer, n *Node) {
 		}
 		switch a.Type {
 		case astro.QuotedAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			p.print(`":`)
-			p.addSourceMapping(a.ValLoc)
+			p.print(`"`)
+			eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
+			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.print(`:`)
+			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
+			p.addSourceMapping(loc.Loc{Start: eqStart + 1 + len(a.Val) + 2})
 		case astro.EmptyAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
 			p.print(`": true`)
 		case astro.ExpressionAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
 			p.print(`":`)
 			p.addSourceMapping(a.ValLoc)
@@ -302,10 +301,10 @@ func renderTsx(p *printer, n *Node) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		renderTsx(p, c)
 	}
-	if len(n.Loc) == 2 {
-		p.addSourceMapping(n.Loc[1])
-	} else {
-		p.addSourceMapping(n.Loc[0])
-	}
+	// if len(n.Loc) == 2 {
+	// 	p.addSourceMapping(n.Loc[1])
+	// } else {
+	// 	p.addSourceMapping(n.Loc[0])
+	// }
 	p.print(fmt.Sprintf(`</%s>`, n.Data))
 }

@@ -105,6 +105,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
+		p.addNilSourceMapping()
 		p.printInternalImports(p.opts.InternalURL)
 		if opts.opts.StaticExtraction && n.FirstChild != nil && n.FirstChild.Type != FrontmatterNode {
 			p.printCSSImports(opts.cssLen)
@@ -134,6 +135,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
+				p.addNilSourceMapping()
 				p.printInternalImports(p.opts.InternalURL)
 
 				if len(n.Loc) > 0 {

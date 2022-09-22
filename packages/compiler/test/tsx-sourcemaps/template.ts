@@ -1,84 +1,92 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
-import { generatedPositionFor, TraceMap } from '@jridgewell/trace-mapping';
+import { testSourcemap } from '../utils';
 
 test('template expression basic', async () => {
-  const input = `<div>
-{dontExist}
-</div>
-`;
+  const input = `<div>{nonexistent}</div>`;
 
-  const { map } = await convertToTSX(input);
-  const tracer = new TraceMap(map);
-
-  const traced = generatedPositionFor(tracer, { source: '<stdin>', line: 2, column: 1 });
-  assert.equal(traced, {
-    line: 3,
-    column: 1,
+  const output = await testSourcemap(input, 'nonexistent');
+  assert.equal(output, {
+    source: 'index.astro',
+    line: 1,
+    column: 6,
+    name: null,
   });
 });
 
 test('template expression has dot', async () => {
-  const input = `<div>
-{console.log(hey)}
-</div>
-`;
-
-  const { map } = await convertToTSX(input);
-  const tracer = new TraceMap(map);
-
-  const traced = generatedPositionFor(tracer, { source: '<stdin>', line: 2, column: 13 });
-  assert.equal(traced, {
-    line: 3,
-    column: 13,
+  const input = `<div>{console.log(hey)}</div>`;
+  const output = await testSourcemap(input, 'log');
+  assert.equal(output, {
+    source: 'index.astro',
+    line: 1,
+    column: 14,
+    name: null,
   });
 });
 
 test('template expression with addition', async () => {
   const input = `{"hello" + hey}`;
-
-  const { map } = await convertToTSX(input);
-  const tracer = new TraceMap(map);
-
-  const traced = generatedPositionFor(tracer, { source: '<stdin>', line: 1, column: 10 });
-  assert.equal(traced, {
-    line: 2,
+  const output = await testSourcemap(input, 'hey');
+  assert.equal(output, {
+    source: 'index.astro',
+    line: 1,
     column: 10,
+    name: null,
   });
 });
 
 test('html attribute', async () => {
   const input = `<svg color="#000"></svg>`;
-
-  const { map } = await convertToTSX(input);
-  const tracer = new TraceMap(map);
-
-  const traced = generatedPositionFor(tracer, { source: '<stdin>', line: 1, column: 6 });
-  assert.equal(traced, {
-    line: 2,
-    column: 6,
+  const output = await testSourcemap(input, 'color');
+  assert.equal(output, {
+    source: 'index.astro',
+    name: null,
+    line: 1,
+    column: 5,
   });
 });
 
 test('complex template expression', async () => {
-  const input = `{[].map(item => {
-return <div>{items}</div>
+  const input = `{[].map(ITEM => {
+v = "what";
+return <div>{ITEMS}</div>
 })}`;
-
-  const { map } = await convertToTSX(input);
-  const tracer = new TraceMap(map);
-
-  const item = generatedPositionFor(tracer, { source: '<stdin>', line: 1, column: 7 });
-  const items = generatedPositionFor(tracer, { source: '<stdin>', line: 2, column: 12 });
-
+  const item = await testSourcemap(input, 'ITEM');
+  const items = await testSourcemap(input, 'ITEMS');
   assert.equal(item, {
-    line: 2,
-    column: 7,
+    source: 'index.astro',
+    name: null,
+    line: 1,
+    column: 8,
   });
   assert.equal(items, {
-    line: 3,
+    source: 'index.astro',
+    name: null,
+    line: 2,
     column: 24,
+  });
+});
+
+test('attributes', async () => {
+  const input = `<div className="hello" />`;
+  const className = await testSourcemap(input, 'className');
+  assert.equal(className, {
+    source: 'index.astro',
+    name: null,
+    line: 1,
+    column: 5,
+  });
+});
+
+test('special attributes', async () => {
+  const input = `<div @on.click="fn" />`;
+  const onClick = await testSourcemap(input, '@on.click');
+  assert.equal(onClick, {
+    source: 'index.astro',
+    name: null,
+    line: 1,
+    column: 5,
   });
 });
 

@@ -10,7 +10,7 @@ test('script function', async () => {
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
@@ -22,7 +22,7 @@ test('partytown function', async () => {
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
@@ -34,7 +34,7 @@ test('ld+json wrapping', async () => {
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
-  const { code } = await convertToTSX(input);
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
