@@ -65,6 +65,7 @@ func renderTsx(p *printer, n *Node) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			renderTsx(p, c)
 		}
+		p.addNilSourceMapping()
 		p.print("\n</Fragment>")
 		propType := "Record<string, any>"
 		if p.hasTypedProps {
@@ -81,9 +82,9 @@ func renderTsx(p *printer, n *Node) {
 				if strings.Contains(c.Data, "Props") {
 					p.hasTypedProps = true
 				}
-				// if len(c.Loc) > 0 {
-				// 	p.addSourceMapping(c.Loc[0])
-				// }
+				if len(c.Loc) > 0 {
+					p.addSourceMapping(c.Loc[0])
+				}
 				if n.LastChild.Data == c.Data {
 					if !strings.HasSuffix(c.Data, ";\n") || !strings.HasSuffix(c.Data, ";") {
 						c.Data = strings.TrimSuffix(c.Data, "\n")
@@ -95,11 +96,16 @@ func renderTsx(p *printer, n *Node) {
 						}
 					}
 				}
-				p.print(c.Data)
+				p.printTextWithSourcemap(c.Data, c.Loc[0])
 			} else {
 				renderTsx(p, c)
 			}
 		}
+		// Convert closing `---` to a comment, just in case
+		p.addNilSourceMapping()
+		p.println("///")
+
+		p.addNilSourceMapping()
 		p.print("<Fragment>\n")
 		return
 	}
@@ -107,19 +113,20 @@ func renderTsx(p *printer, n *Node) {
 	switch n.Type {
 	case TextNode:
 		if strings.TrimSpace(n.Data) == "" {
-			// p.addSourceMapping(n.Loc[0])
-			p.print(n.Data)
+			p.printTextWithSourcemap(n.Data, n.Loc[0])
 		} else if strings.ContainsAny(n.Data, "{}") {
 			switch getTextType(n) {
 			case RawText:
+				p.addNilSourceMapping()
 				p.print("{`")
-				// p.addSourceMapping(n.Loc[0])
-				p.print(escapeText(n.Data))
+				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
+				p.addNilSourceMapping()
 				p.print("`}")
 			case ScriptText:
+				p.addNilSourceMapping()
 				p.print("{() => {")
-				p.print(n.Data)
-				// p.printTextWithSourcemap(n.Data, n.Loc[0])
+				p.printTextWithSourcemap(n.Data, n.Loc[0])
+				p.addNilSourceMapping()
 				p.print("}}")
 			}
 		} else {
@@ -130,8 +137,11 @@ func renderTsx(p *printer, n *Node) {
 		// No-op.
 	case CommentNode:
 		// p.addSourceMapping(n.Loc[0])
+		p.addNilSourceMapping()
 		p.print("{/**")
-		p.print(escapeBraces(n.Data))
+		p.addSourceMapping(n.Loc[0])
+		p.printTextWithSourcemap(escapeBraces(n.Data), n.Loc[0])
+		p.addNilSourceMapping()
 		p.print("*/}")
 		return
 	default:
@@ -152,16 +162,23 @@ func renderTsx(p *printer, n *Node) {
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				p.printTextWithSourcemap(c.Data, c.Loc[0])
+				p.printTextWithSourcemap(c.Data, loc.Loc{Start: c.Loc[0].Start - 1})
 				continue
 			}
 			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {
+				p.addNilSourceMapping()
 				p.print(`<Fragment>`)
 			}
 			renderTsx(p, c)
 			if c.NextSibling == nil || c.NextSibling.Type == TextNode {
+				p.addNilSourceMapping()
 				p.print(`</Fragment>`)
 			}
+		}
+		if len(n.Loc) == 2 {
+			p.addSourceMapping(n.Loc[1])
+		} else {
+			p.addSourceMapping(n.Loc[0])
 		}
 		p.print("}")
 		p.addNilSourceMapping()
@@ -186,7 +203,9 @@ func renderTsx(p *printer, n *Node) {
 
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start - 1})
 	p.print("<")
+	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start})
 	p.print(n.Data)
+
 	invalidTSXAttributes := make([]Attribute, 0)
 	for _, a := range n.Attr {
 		if isInvalidTSXAttributeName(a.Key) {
@@ -194,30 +213,33 @@ func renderTsx(p *printer, n *Node) {
 			continue
 		}
 		p.print(" ")
+		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
+		p.addSourceMapping(a.KeyLoc)
 		if a.Namespace != "" {
 			p.print(a.Namespace)
 			p.print(":")
 		}
 		switch a.Type {
 		case astro.QuotedAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
+			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print("=")
+			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.addSourceMapping(a.ValLoc)
 			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
 		case astro.EmptyAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
 		case astro.ExpressionAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			p.print("=")
-			p.addSourceMapping(a.ValLoc)
-			p.print(fmt.Sprintf(`{%s}`, a.Val))
+			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.print(`=`)
+			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
+			p.printTextWithSourcemap(fmt.Sprintf(`{%s}`, a.Val), a.ValLoc)
 		case astro.SpreadAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			p.print("=")
+			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.print(`=`)
+			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf(`{...%s}`, a.Val))
 		case astro.ShorthandAttribute:
@@ -225,17 +247,15 @@ func renderTsx(p *printer, n *Node) {
 			if len(withoutComments) == 0 {
 				return
 			}
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			p.print("=")
-			p.addSourceMapping(a.KeyLoc)
+			p.print(`=`)
 			p.print(fmt.Sprintf(`{%s}`, a.Key))
 		case astro.TemplateLiteralAttribute:
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			p.print("=")
-			p.addSourceMapping(a.ValLoc)
-			p.print(fmt.Sprintf("{`%s`}", escapeText(a.Val)))
+			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.print(`=`)
+			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
+			p.printTextWithSourcemap(fmt.Sprintf("{`%s`}", escapeText(a.Val)), a.ValLoc)
 		}
 	}
 	for i, a := range invalidTSXAttributes {
@@ -244,6 +264,7 @@ func renderTsx(p *printer, n *Node) {
 		} else {
 			p.print(",")
 		}
+		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
 		p.addSourceMapping(a.KeyLoc)
 		p.print(`"`)
 		if a.Namespace != "" {
@@ -254,7 +275,6 @@ func renderTsx(p *printer, n *Node) {
 		case astro.QuotedAttribute:
 			p.print(a.Key)
 			p.print(`"`)
-			eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print(`:`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
@@ -262,13 +282,20 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1 + len(a.Val) + 2})
 		case astro.EmptyAttribute:
 			p.print(a.Key)
-			p.print(`": true`)
+			p.print(`"`)
+			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.print(`:`)
+			p.addSourceMapping(a.KeyLoc)
+			p.print(`true`)
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
-			p.print(`":`)
-			p.addSourceMapping(a.ValLoc)
-			p.print(fmt.Sprintf(`(%s)`, a.Val))
+			p.print(`"`)
+			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.print(`:`)
+			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
+			p.printTextWithSourcemap(fmt.Sprintf(`(%s)`, a.Val), a.ValLoc)
 		case astro.SpreadAttribute:
+			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print("=")
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf(`...%s`, a.Val))
@@ -292,8 +319,17 @@ func renderTsx(p *printer, n *Node) {
 		}
 	}
 	if voidElements[n.Data] && n.FirstChild == nil {
+		p.addSourceMapping(n.Loc[0])
 		p.print("/>")
 		return
+	}
+	if len(n.Attr) > 0 {
+		start := n.Attr[len(n.Attr)-1].ValLoc.Start + len(n.Attr[len(n.Attr)-1].Val)
+		offset := strings.IndexRune(p.sourcetext[start:], '>')
+		start += offset
+		p.addSourceMapping(loc.Loc{Start: start})
+	} else {
+		p.addSourceMapping(n.Loc[0])
 	}
 	p.print(">")
 
@@ -301,10 +337,14 @@ func renderTsx(p *printer, n *Node) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		renderTsx(p, c)
 	}
-	// if len(n.Loc) == 2 {
-	// 	p.addSourceMapping(n.Loc[1])
-	// } else {
-	// 	p.addSourceMapping(n.Loc[0])
-	// }
-	p.print(fmt.Sprintf(`</%s>`, n.Data))
+	endLoc := n.Loc[0].Start
+	if len(n.Loc) == 2 {
+		endLoc = n.Loc[1].Start
+	}
+	p.addSourceMapping(loc.Loc{Start: endLoc - 2})
+	p.print("</")
+	p.addSourceMapping(loc.Loc{Start: endLoc})
+	p.print(n.Data)
+	p.addSourceMapping(loc.Loc{Start: endLoc + len(n.Data)})
+	p.print(">")
 }

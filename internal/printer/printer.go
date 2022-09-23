@@ -68,17 +68,15 @@ func (p *printer) println(text string) {
 
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start + 1
-	if !strings.Contains(text, "\n") {
-		p.addSourceMapping(loc.Loc{Start: start})
-		p.print(text)
-	} else {
-		for _, c := range text {
-			p.printRune(c)
-			if c == '\n' {
-				p.addSourceMapping(loc.Loc{Start: start})
-			}
-			start++
+	for i, c := range text {
+		if i == 0 {
+			p.addSourceMapping(loc.Loc{Start: start})
 		}
+		p.printRune(c)
+		if c == '\n' {
+			p.addSourceMapping(loc.Loc{Start: start})
+		}
+		start++
 	}
 }
 
