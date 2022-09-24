@@ -1,7 +1,6 @@
 package astro
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -1047,7 +1046,6 @@ func runTokenLocTest(t *testing.T, suite []LocTest) {
 					break
 				}
 				tok := tokenizer.Token()
-				fmt.Println(tt.input[tok.Loc.Start:])
 				locs = append(locs, tok.Loc.Start+1)
 			}
 			if !reflect.DeepEqual(locs, tt.expected) {
