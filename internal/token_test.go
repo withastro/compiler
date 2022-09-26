@@ -929,7 +929,7 @@ func TestLoc(t *testing.T) {
 		{
 			"doctype",
 			`<!DOCTYPE html>`,
-			[]int{0, 15},
+			[]int{0, 11},
 		},
 		{
 			"frontmatter",
@@ -937,22 +937,22 @@ func TestLoc(t *testing.T) {
 doesNotExist
 ---
 `,
-			[]int{0, 4, 18},
+			[]int{0, 1, 4},
 		},
 		{
 			"expression",
 			`<div>{console.log(hey)}</div>`,
-			[]int{0, 5, 6, 23, 24, 29},
+			[]int{0, 2, 6, 7, 23, 26},
 		},
 		{
 			"expression II",
 			`{"hello" + hey}`,
-			[]int{0, 1, 9, 15, 16},
+			[]int{0, 1, 2, 9, 15},
 		},
 		{
 			"element I",
 			`<div></div>`,
-			[]int{0, 5, 11},
+			[]int{0, 2, 8},
 		},
 	}
 
