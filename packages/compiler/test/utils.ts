@@ -1,6 +1,3 @@
-import type { OriginalMapping } from '@jridgewell/trace-mapping';
-import * as assert from 'uvu/assert';
-
 import { convertToTSX } from '@astrojs/compiler';
 import { originalPositionFor, TraceMap } from '@jridgewell/trace-mapping';
 import sass from 'sass';
@@ -51,8 +48,6 @@ function getGeneratedPosition(code: string, snippet: string) {
 export async function testSourcemap(input: string, snippet: string) {
   const { code: output, map } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
   const tracer = new TraceMap(map);
-
-  console.log(output);
 
   const generated = getGeneratedPosition(output, snippet);
   const value = input.split('\n')[generated.line - 1].slice(generated.column - 1, generated.column + snippet.length - 1);
