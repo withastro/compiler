@@ -61,9 +61,18 @@ export interface TransformResult {
   styleError: string[];
 }
 
+export interface SourceMap {
+  file: string;
+  mappings: string;
+  names: string[];
+  sources: string[];
+  sourcesContent: string[];
+  version: number;
+}
+
 export interface TSXResult {
   code: string;
-  map: string;
+  map: SourceMap;
 }
 
 export interface ParseResult {
