@@ -86,19 +86,17 @@ func renderTsx(p *printer, n *Node) {
 					p.addSourceMapping(c.Loc[0])
 				}
 				if n.LastChild.Data == c.Data {
-					if !strings.HasSuffix(c.Data, ";\n") || !strings.HasSuffix(c.Data, ";") {
-						text := strings.TrimSuffix(strings.TrimSpace(c.Data), "\n")
-						c.Loc[0].Start = c.Loc[0].Start + strings.Index(c.Data, text)
-						c.Data = fmt.Sprintf("\n%s", text)
-						p.addNilSourceMapping()
+					if !strings.HasSuffix(strings.TrimSpace(c.Data), ";") {
+						c.Data = strings.TrimSuffix(c.Data, "\n")
 						if !strings.HasSuffix(c.Data, ";") {
+							p.addNilSourceMapping()
 							c.Data += ";\n"
 						} else {
 							c.Data += "\n"
 						}
 					}
 				}
-				p.printTextWithSourcemap(c.Data, loc.Loc{Start: c.Loc[0].Start})
+				p.printTextWithSourcemap(c.Data, c.Loc[0])
 			} else {
 				renderTsx(p, c)
 			}
