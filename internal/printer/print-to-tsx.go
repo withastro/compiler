@@ -154,7 +154,11 @@ func renderTsx(p *printer, n *Node) {
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				p.printTextWithSourcemap(c.Data, loc.Loc{Start: start})
+				if c == n.FirstChild {
+					p.printTextWithSourcemap(c.Data, loc.Loc{Start: start})
+				} else {
+					p.printTextWithSourcemap(c.Data, c.Loc[0])
+				}
 				continue
 			}
 			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {
@@ -226,7 +230,10 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print(`=`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.printTextWithSourcemap(fmt.Sprintf(`{%s}`, a.Val), a.ValLoc)
+			p.print(`{`)
+			p.printTextWithSourcemap(a.Val, loc.Loc{Start: eqStart + 2})
+			p.addSourceMapping(loc.Loc{Start: eqStart + 2 + len(a.Val)})
+			p.print(`}`)
 		case astro.SpreadAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
@@ -285,7 +292,10 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print(`:`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.printTextWithSourcemap(fmt.Sprintf(`(%s)`, a.Val), a.ValLoc)
+			p.print(`(`)
+			p.printTextWithSourcemap(a.Val, loc.Loc{Start: eqStart + 2})
+			p.addSourceMapping(loc.Loc{Start: eqStart + 2 + len(a.Val)})
+			p.print(`)`)
 		case astro.SpreadAttribute:
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print("=")
