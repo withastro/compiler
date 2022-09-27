@@ -13,11 +13,11 @@ let value = 'world';
 `;
   const output = `
 let value = 'world';
-///
+
+
 <Fragment>
 <h1 name="value" empty shorthand={shorthand} expression={true} literal={\`tags\`}>Hello {value}</h1>
 <div></div>
-
 </Fragment>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
@@ -37,11 +37,11 @@ let value = 'world';
 `;
   const output = `
 let value = 'world';
-///
+
+
 <Fragment>
 <h1 name="value" empty shorthand={shorthand} expression={true} literal={\`tags\`}>Hello {value}</h1>
 <div></div>
-
 </Fragment>
 
 export default function Test__AstroComponent_(_props: Record<string, any>): any {}
@@ -52,9 +52,7 @@ export default function Test__AstroComponent_(_props: Record<string, any>): any 
 
 test('moves @attributes to spread', async () => {
   const input = `<div @click={() => {}} name="value"></div>`;
-  const output = `<Fragment>
-<div name="value" {...{"@click":(() => {})}}></div>
-</Fragment>
+  const output = `<div name="value" {...{"@click":(() => {})}}></div>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
@@ -62,20 +60,20 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
-test('add trailling semicolon to frontmatter', async () => {
+test('add trailing semicolon to frontmatter', async () => {
   const input = `
 ---
-const hello = ""
+console.log("hello")
 ---
 
 {hello}
 `;
   const output = `
-const hello = "";
-///
-<Fragment>
-{hello}
+console.log("hello")
 
+
+;<Fragment>
+{hello}
 </Fragment>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
@@ -88,9 +86,7 @@ test.run();
 
 test('moves attributes with dots in them to spread', async () => {
   const input = `<div x-on:keyup.shift.enter="alert('Astro')" name="value"></div>`;
-  const output = `<Fragment>
-<div name="value" {...{"x-on:keyup.shift.enter":"alert('Astro')"}}></div>
-</Fragment>
+  const output = `<div name="value" {...{"x-on:keyup.shift.enter":"alert('Astro')"}}></div>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/iancoleman/strcase"
 	"github.com/tdewolff/parse/v2"
@@ -177,6 +178,161 @@ func HoistImports(source []byte) HoistedScripts {
 	}
 	body = append(body, source[prev:]...)
 	return HoistedScripts{Hoisted: imports, Body: body}
+}
+
+type Props struct {
+	Ident     string
+	Statement string
+	Generics  string
+}
+
+func GetPropsType(source []byte) Props {
+	defaultPropType := "Record<string, any>"
+	ident := defaultPropType
+	genericsIdents := make([]string, 0)
+	generics := ""
+	statement := ""
+
+	if !bytes.Contains(source, []byte("Props")) {
+		return Props{
+			Ident:     ident,
+			Statement: statement,
+			Generics:  generics,
+		}
+	}
+	l := js.NewLexer(parse.NewInputBytes(source))
+	i := 0
+	pairs := make(map[byte]int)
+	idents := make([]string, 0)
+
+	start := 0
+	end := 0
+
+outer:
+	for {
+		token, value := l.Next()
+
+		if token == js.DivToken || token == js.DivEqToken {
+			lns := bytes.Split(source[i+1:], []byte{'\n'})
+			if bytes.Contains(lns[0], []byte{'/'}) {
+				token, value = l.RegExp()
+			}
+		}
+
+		if token == js.ErrorToken {
+			if l.Err() != io.EOF {
+				return Props{
+					Ident: ident,
+				}
+			}
+			break
+		}
+
+		// Common delimeters. Track their length, then skip.
+		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
+			i += len(value)
+			continue
+		}
+
+		if token == js.ExtendsToken {
+			if bytes.Equal(value, []byte("extends")) {
+				idents = append(idents, "extends")
+			}
+			i += len(value)
+			continue
+		}
+
+		if pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 && pairs['<'] == 1 && token == js.CommaToken {
+			idents = make([]string, 0)
+			i += len(value)
+			continue
+		}
+
+		if js.IsIdentifier(token) {
+			if isKeyword(value) {
+				i += len(value)
+				continue
+			}
+			if pairs['<'] == 1 && pairs['{'] == 0 {
+				foundExtends := false
+				for _, id := range idents {
+					if id == "extends" {
+						foundExtends = true
+					}
+				}
+				if !foundExtends {
+					genericsIdents = append(genericsIdents, string(value))
+				}
+				i += len(value)
+				continue
+			}
+			if string(value) == "Props" {
+				ident = "Props"
+			}
+			idents = append(idents, string(value))
+			i += len(value)
+			continue
+		}
+
+		if bytes.ContainsAny(value, "<>") {
+			if len(idents) > 0 && idents[len(idents)-1] == "Props" {
+				start = i
+				ident = "Props"
+				idents = make([]string, 0)
+			}
+			for _, c := range value {
+				if c == '<' {
+					pairs['<']++
+					i += len(value)
+					continue
+				}
+				if c == '>' {
+					pairs['<']--
+					if pairs['<'] == 0 {
+						end = i
+						break outer
+					}
+				}
+			}
+		}
+
+		if token == js.QuestionToken || (pairs['{'] == 0 && token == js.ColonToken) {
+			idents = make([]string, 0)
+			idents = append(idents, "extends")
+		}
+
+		// Track opening and closing braces
+		if js.IsPunctuator(token) {
+			if value[0] == '{' || value[0] == '(' || value[0] == '[' {
+				idents = make([]string, 0)
+				pairs[value[0]]++
+				i += len(value)
+				continue
+			} else if value[0] == '}' {
+				pairs['{']--
+				if pairs['<'] == 0 && pairs['{'] == 0 && ident != defaultPropType {
+					end = i
+					break outer
+				}
+			} else if value[0] == ')' {
+				pairs['(']--
+			} else if value[0] == ']' {
+				pairs['[']--
+			}
+		}
+
+		// Track our current position
+		i += len(value)
+	}
+	if len(genericsIdents) > 0 {
+		generics = fmt.Sprintf("<%s>", strings.Join(genericsIdents, ", "))
+		statement = strings.TrimSpace(string(source[start:end]))
+	}
+	return Props{
+		Ident:     ident,
+		Statement: statement,
+		Generics:  generics,
+	}
 }
 
 func isIdentifier(value []byte) bool {

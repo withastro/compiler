@@ -4,9 +4,7 @@ import { convertToTSX } from '@astrojs/compiler';
 
 test('script function', async () => {
   const input = `<script type="module">console.log({ test: \`literal\` })</script>`;
-  const output = `<Fragment>
-<script type="module">{() => {console.log({ test: \`literal\` })}}</script>
-</Fragment>
+  const output = `<script type="module">{() => {console.log({ test: \`literal\` })}}</script>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
@@ -16,9 +14,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}
 
 test('partytown function', async () => {
   const input = `<script type="text/partytown">console.log({ test: \`literal\` })</script>`;
-  const output = `<Fragment>
-<script type="text/partytown">{() => {console.log({ test: \`literal\` })}}</script>
-</Fragment>
+  const output = `<script type="text/partytown">{() => {console.log({ test: \`literal\` })}}</script>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
@@ -28,9 +24,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}
 
 test('ld+json wrapping', async () => {
   const input = `<script type="application/ld+json">{"a":"b"}</script>`;
-  const output = `<Fragment>
-<script type="application/ld+json">{\`{"a":"b"}\`}</script>
-</Fragment>
+  const output = `<script type="application/ld+json">{\`{"a":"b"}\`}</script>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;

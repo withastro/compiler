@@ -6,6 +6,7 @@ import (
 
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
 	"github.com/withastro/compiler/internal/transform"
@@ -66,12 +67,14 @@ func renderTsx(p *printer, n *Node) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
 				buf := strings.TrimSpace(string(p.output))
-				char := rune(buf[len(buf)-1:][0])
-				if char == '{' || char == '(' || char == '[' || char == ']' || char == ')' || char == '}' {
-					p.print(";")
+				if len(buf) > 1 {
+					char := rune(buf[len(buf)-1:][0])
+					if char == '{' || char == '(' || char == '[' || char == ']' || char == ')' || char == '}' {
+						p.print(";")
+					}
+					p.print("<Fragment>\n")
+					hasChildren = true
 				}
-				p.print("<Fragment>\n")
-				hasChildren = true
 			}
 			renderTsx(p, c)
 		}
@@ -79,21 +82,15 @@ func renderTsx(p *printer, n *Node) {
 			p.addNilSourceMapping()
 			p.print("\n</Fragment>")
 		}
-		propType := "Record<string, any>"
-		if p.hasTypedProps {
-			propType = "Props"
-		}
+		props := js_scanner.GetPropsType(p.output)
 		componentName := getTSXComponentName(p.opts.Filename)
-		p.print(fmt.Sprintf("\n\nexport default function %s(_props: %s): any {}\n", componentName, propType))
+		p.print(fmt.Sprintf("\n\nexport default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, props.Ident, props.Generics))
 		return
 	}
 
 	if n.Type == FrontmatterNode {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				if strings.Contains(c.Data, "Props") {
-					p.hasTypedProps = true
-				}
 				if len(c.Loc) > 0 {
 					p.addSourceMapping(c.Loc[0])
 				}
