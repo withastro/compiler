@@ -331,7 +331,7 @@ func renderTsx(p *printer, n *Node) {
 		start += offset
 		p.addSourceMapping(loc.Loc{Start: start})
 	} else {
-		p.addSourceMapping(n.Loc[0])
+		p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 	}
 	p.print(">")
 
