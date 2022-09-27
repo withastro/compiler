@@ -52,7 +52,7 @@ const (
 func getTextType(n *astro.Node) TextType {
 	if script := n.Closest(isScript); script != nil {
 		attr := astro.GetAttribute(script, "type")
-		if attr != nil && ScriptMimeTypes[strings.ToLower(attr.Val)] {
+		if attr == nil || (attr != nil && ScriptMimeTypes[strings.ToLower(attr.Val)]) {
 			return ScriptText
 		}
 	}
@@ -85,30 +85,19 @@ func renderTsx(p *printer, n *Node) {
 				if len(c.Loc) > 0 {
 					p.addSourceMapping(c.Loc[0])
 				}
-				if n.LastChild.Data == c.Data {
-					if !strings.HasSuffix(strings.TrimSpace(c.Data), ";") {
-						c.Data = strings.TrimSuffix(c.Data, "\n")
-						if !strings.HasSuffix(c.Data, ";") {
-							p.addNilSourceMapping()
-							c.Data += ";\n"
-						} else {
-							c.Data += "\n"
-						}
-					}
-				}
 				p.printTextWithSourcemap(c.Data, c.Loc[0])
 			} else {
 				renderTsx(p, c)
 			}
 		}
 		if n.FirstChild != nil {
-			// Convert closing `---` to a comment, just in case
+			// Convert closing `---` to a `\n`, just in case
 			p.addNilSourceMapping()
-			p.println("///")
+			p.println("\n")
 		}
 
 		p.addNilSourceMapping()
-		p.print("<Fragment>\n")
+		p.print(";<Fragment>\n")
 		return
 	}
 
