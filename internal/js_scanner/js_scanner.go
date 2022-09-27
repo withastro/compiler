@@ -266,7 +266,8 @@ outer:
 				i += len(value)
 				continue
 			}
-			if string(value) == "Props" {
+			// Note: do not check that `pairs['{'] == 0` to support named imports
+			if pairs['('] == 0 && pairs['['] == 0 && string(value) == "Props" {
 				ident = "Props"
 			}
 			idents = append(idents, string(value))

@@ -2,6 +2,32 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 import { convertToTSX } from '@astrojs/compiler';
 
+test('no props', async () => {
+  const input = `<div></div>`;
+  const output = `<div></div>
+
+export default function __AstroComponent_(_props: Record<string, any>): any {}
+`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+test('nested Props', async () => {
+  const input = `---
+function DoTheThing(Props) {}
+---`;
+  const output = `
+function DoTheThing(Props) {}
+
+
+
+
+export default function __AstroComponent_(_props: Record<string, any>): any {}
+`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test('props interface', async () => {
   const input = `
 ---
