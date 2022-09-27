@@ -1,5 +1,5 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { originalPositionFor, TraceMap } from '@jridgewell/trace-mapping';
+import { generatedPositionFor, originalPositionFor, TraceMap } from '@jridgewell/trace-mapping';
 import sass from 'sass';
 
 export async function preprocessStyle(value, attrs): Promise<any> {
@@ -25,35 +25,34 @@ export function transformSass(value: string) {
   });
 }
 
-function getGeneratedPosition(code: string, snippet: string) {
-  const generated = { line: 0, column: 0 };
+export function getPositionFor(input: string, snippet: string) {
+  let index = 0;
   let line = 0;
   let column = 0;
-  for (let i = 0; i < code.length; i++) {
-    const char = code[i];
-    if (char === '\n') {
+  for (const c of input) {
+    if (c === snippet[0] && input.slice(index).startsWith(snippet)) {
+      return { line: line + 1, column };
+    }
+    if (c === '\n') {
       line++;
       column = 0;
-    } else {
-      column++;
     }
-    if (snippet[0] === char && code.slice(i).startsWith(snippet)) {
-      generated.line = line;
-      generated.column = column;
-    }
+    column++;
+    index++;
   }
-  return generated;
+  return null;
 }
 
 export async function testSourcemap(input: string, snippet: string) {
-  const { code: output, map } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
+  const snippetLoc = getPositionFor(input, snippet);
+  if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
+
+  const { map } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
   const tracer = new TraceMap(map);
 
-  const generated = getGeneratedPosition(output, snippet);
-  const value = input.split('\n')[generated.line - 1].slice(generated.column - 1, generated.column + snippet.length - 1);
-  if (value !== snippet) {
-    throw new Error(`Unable to match "${snippet}", got "${value}"`);
-  }
-  const originalPosition = originalPositionFor(tracer, { line: generated.line, column: generated.column - 1 });
+  const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });
+  if (!generated || !generated.line) throw new Error(`"${snippet}" not found in generated output`);
+  const originalPosition = originalPositionFor(tracer, { line: generated.line, column: generated.column });
+
   return originalPosition;
 }

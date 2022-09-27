@@ -13,6 +13,7 @@ let value = 'world';
 `;
   const output = `
 let value = 'world';
+///
 <Fragment>
 <h1 name="value" empty shorthand={shorthand} expression={true} literal={\`tags\`}>Hello {value}</h1>
 <div></div>
@@ -36,6 +37,7 @@ let value = 'world';
 `;
   const output = `
 let value = 'world';
+///
 <Fragment>
 <h1 name="value" empty shorthand={shorthand} expression={true} literal={\`tags\`}>Hello {value}</h1>
 <div></div>
@@ -70,8 +72,10 @@ const hello = ""
 `;
   const output = `
 const hello = "";
+///
 <Fragment>
 {hello}
+
 </Fragment>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}

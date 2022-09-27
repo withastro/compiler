@@ -11,7 +11,7 @@ nonexistent
 
   assert.equal(output, {
     line: 2,
-    column: 0,
+    column: 1,
     source: 'index.astro',
     name: null,
   });

@@ -101,9 +101,11 @@ func renderTsx(p *printer, n *Node) {
 				renderTsx(p, c)
 			}
 		}
-		// Convert closing `---` to a comment, just in case
-		p.addNilSourceMapping()
-		p.println("///")
+		if n.FirstChild != nil {
+			// Convert closing `---` to a comment, just in case
+			p.addNilSourceMapping()
+			p.println("///")
+		}
 
 		p.addNilSourceMapping()
 		p.print("<Fragment>\n")

@@ -31,7 +31,7 @@ test('template expression with addition', async () => {
   assert.equal(output, {
     source: 'index.astro',
     line: 1,
-    column: 10,
+    column: 11,
     name: null,
   });
 });
@@ -63,8 +63,8 @@ return <div>{ITEMS}</div>
   assert.equal(items, {
     source: 'index.astro',
     name: null,
-    line: 2,
-    column: 24,
+    line: 3,
+    column: 14,
   });
 });
 

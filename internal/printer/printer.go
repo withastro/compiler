@@ -67,13 +67,13 @@ func (p *printer) println(text string) {
 }
 
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
-	start := l.Start + 1
+	start := l.Start
 	for i, c := range text {
 		if i == 0 {
 			p.addSourceMapping(loc.Loc{Start: start})
 		}
 		p.printRune(c)
-		if c == '\n' {
+		if c != '\n' {
 			p.addSourceMapping(loc.Loc{Start: start})
 		}
 		start++
@@ -400,7 +400,11 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 }
 
 func (p *printer) addSourceMapping(location loc.Loc) {
-	p.builder.AddSourceMapping(location, p.output)
+	if location.Start < 0 {
+		p.builder.AddSourceMapping(loc.Loc{Start: 0}, p.output)
+	} else {
+		p.builder.AddSourceMapping(location, p.output)
+	}
 }
 
 // Reset sourcemap by pointing to last possible index
