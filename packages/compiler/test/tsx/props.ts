@@ -204,7 +204,6 @@ export default function __AstroComponent_<T extends { [key: string]: any }, P ex
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
-
 test('props generic (very complex II)', async () => {
   const input = `
 ---
@@ -226,7 +225,6 @@ export default function __AstroComponent_<T extends Something<false> ? A : B, P 
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
-
 
 test('polymorphic props', async () => {
   const input = `
