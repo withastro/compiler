@@ -214,6 +214,7 @@ func renderTsx(p *printer, n *Node) {
 			invalidTSXAttributes = append(invalidTSXAttributes, a)
 			continue
 		}
+		p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
 		p.print(" ")
 		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
 		p.addSourceMapping(a.KeyLoc)
