@@ -149,11 +149,12 @@ func renderTsx(p *printer, n *Node) {
 		} else {
 			p.print("{")
 		}
-		p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
+		start := n.Loc[0].Start + 1
+		p.addSourceMapping(loc.Loc{Start: start})
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
-				p.printTextWithSourcemap(c.Data, loc.Loc{Start: c.Loc[0].Start - 1})
+				p.printTextWithSourcemap(c.Data, loc.Loc{Start: start})
 				continue
 			}
 			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {
@@ -172,7 +173,6 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(n.Loc[0])
 		}
 		p.print("}")
-		p.addNilSourceMapping()
 		return
 	}
 
