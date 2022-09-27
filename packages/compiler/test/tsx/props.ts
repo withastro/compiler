@@ -226,3 +226,30 @@ export default function __AstroComponent_<T extends Something<false> ? A : B, P 
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
+
+
+test('polymorphic props', async () => {
+  const input = `
+---
+interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<Tag> {
+  as?: Tag;
+}
+---
+
+<div></div>
+`;
+  const output = `
+interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<Tag> {
+  as?: Tag;
+}
+
+
+;<Fragment>
+<div></div>
+</Fragment>
+
+export default function __AstroComponent_<Tag extends keyof JSX.IntrinsicElements>(_props: Props<Tag>): any {}
+`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
