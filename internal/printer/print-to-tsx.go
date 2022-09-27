@@ -114,23 +114,23 @@ func renderTsx(p *printer, n *Node) {
 
 	switch n.Type {
 	case TextNode:
+		switch getTextType(n) {
+		case ScriptText:
+			p.addNilSourceMapping()
+			p.print("{() => {")
+			p.printTextWithSourcemap(n.Data, n.Loc[0])
+			p.addNilSourceMapping()
+			p.print("}}")
+			return
+		}
 		if strings.TrimSpace(n.Data) == "" {
 			p.printTextWithSourcemap(n.Data, n.Loc[0])
 		} else if strings.ContainsAny(n.Data, "{}") {
-			switch getTextType(n) {
-			case RawText:
-				p.addNilSourceMapping()
-				p.print("{`")
-				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
-				p.addNilSourceMapping()
-				p.print("`}")
-			case ScriptText:
-				p.addNilSourceMapping()
-				p.print("{() => {")
-				p.printTextWithSourcemap(n.Data, n.Loc[0])
-				p.addNilSourceMapping()
-				p.print("}}")
-			}
+			p.addNilSourceMapping()
+			p.print("{`")
+			p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
+			p.addNilSourceMapping()
+			p.print("`}")
 		} else {
 			p.printTextWithSourcemap(n.Data, n.Loc[0])
 		}
