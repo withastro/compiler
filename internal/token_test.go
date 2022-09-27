@@ -435,6 +435,21 @@ func TestBasic(t *testing.T) {
 			`<ul>{items.map((item: Item<Checkbox>)) => <Checkbox>{item.checked}</Checkbox>)}</ul>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
 		},
+		{
+			"incomplete tag",
+			`<MyAstroComponent`,
+			[]TokenType{TextToken},
+		},
+		{
+			"incomplete tag II",
+			`<MyAstroComponent` + "\n",
+			[]TokenType{TextToken},
+		},
+		{
+			"incomplete tag III",
+			`<div></div><MyAstroComponent` + "\n",
+			[]TokenType{StartTagToken, EndTagToken, TextToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

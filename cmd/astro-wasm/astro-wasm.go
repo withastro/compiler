@@ -217,7 +217,7 @@ func ConvertToTSX() interface{} {
 		transformOptions.Scope = "XXXXXX"
 
 		var doc *astro.Node
-		doc, err := astro.Parse(strings.NewReader(source))
+		doc, err := astro.Parse(strings.NewReader(strings.TrimRightFunc(source, unicode.IsSpace)))
 		if err != nil {
 			fmt.Println(err)
 		}

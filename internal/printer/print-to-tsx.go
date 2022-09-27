@@ -62,11 +62,23 @@ func getTextType(n *astro.Node) TextType {
 func renderTsx(p *printer, n *Node) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
+		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
+				buf := strings.TrimSpace(string(p.output))
+				char := rune(buf[len(buf)-1:][0])
+				if char == '{' || char == '(' || char == '[' || char == ']' || char == ')' || char == '}' {
+					p.print(";")
+				}
+				p.print("<Fragment>\n")
+				hasChildren = true
+			}
 			renderTsx(p, c)
 		}
-		p.addNilSourceMapping()
-		p.print("\n</Fragment>")
+		if hasChildren {
+			p.addNilSourceMapping()
+			p.print("\n</Fragment>")
+		}
 		propType := "Record<string, any>"
 		if p.hasTypedProps {
 			propType = "Props"
@@ -95,16 +107,12 @@ func renderTsx(p *printer, n *Node) {
 			p.addNilSourceMapping()
 			p.println("\n")
 		}
-
-		p.addNilSourceMapping()
-		p.print(";<Fragment>\n")
 		return
 	}
 
 	switch n.Type {
 	case TextNode:
-		switch getTextType(n) {
-		case ScriptText:
+		if getTextType(n) == ScriptText {
 			p.addNilSourceMapping()
 			p.print("{() => {")
 			p.printTextWithSourcemap(n.Data, n.Loc[0])
