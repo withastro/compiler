@@ -47,11 +47,15 @@ export async function testSourcemap(input: string, snippet: string) {
   const snippetLoc = getPositionFor(input, snippet);
   if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
 
-  const { map } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
+  const { code, map } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
   const tracer = new TraceMap(map);
 
   const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });
-  if (!generated || !generated.line) throw new Error(`"${snippet}" not found in generated output`);
+  if (!generated || generated.line === null) {
+    // eslint-disable-next-line no-console
+    console.log(code);
+    throw new Error(`"${snippet}" position incorrectly mapped in generated output.`);
+  }
   const originalPosition = originalPositionFor(tracer, { line: generated.line, column: generated.column });
 
   return originalPosition;
