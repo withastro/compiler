@@ -65,14 +65,19 @@ func renderTsx(p *printer, n *Node) {
 	if n.Type == DocumentNode {
 		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			// This checks for the first node that comes *after* the frontmatter
+			// to ensure that the statement is properly closed with a `;`.
+			// Without this, TypeScript can get tripped up by the body of our file.
 			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
 				buf := strings.TrimSpace(string(p.output))
 				if len(buf) > 1 {
 					char := rune(buf[len(buf)-1:][0])
+					// If the existing buffer ends with a punctuation character, we need a `;`
 					if char == '{' || char == '(' || char == '[' || char == ']' || char == ')' || char == '}' {
 						p.print(";")
 					}
 				}
+				// We always need to start the body with `<Fragment>`
 				p.addNilSourceMapping()
 				p.print("<Fragment>\n")
 				hasChildren = true
@@ -84,6 +89,7 @@ func renderTsx(p *printer, n *Node) {
 			}
 			renderTsx(p, c)
 		}
+		// Only close the body with `</Fragment>` if we printed a body
 		if hasChildren {
 			p.addNilSourceMapping()
 			p.print("\n</Fragment>")
