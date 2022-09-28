@@ -62,6 +62,7 @@ outer:
 		// Exports should be consumed until all opening braces are closed,
 		// a specifier is found, and a line terminator has been found
 		if token == js.ExportToken {
+			flags := make(map[string]bool, 0)
 			foundIdent := false
 			foundSemicolonOrLineTerminator := false
 			start := 0
@@ -78,6 +79,7 @@ outer:
 					}
 				}
 				i += len(nextValue)
+				flags[string(nextValue)] = true
 
 				if js.IsIdentifier(next) {
 					if isKeyword(nextValue) && next != js.FromToken {
@@ -87,9 +89,13 @@ outer:
 						foundIdent = true
 					}
 				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
+					if (flags["function"] || flags["=>"]) && !flags["{"] {
+						continue
+					}
 					foundSemicolonOrLineTerminator = true
 				} else if js.IsPunctuator(next) {
 					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
+						flags[string(nextValue[0])] = true
 						pairs[nextValue[0]]++
 					} else if nextValue[0] == '}' {
 						pairs['{']--
