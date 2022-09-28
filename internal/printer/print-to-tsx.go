@@ -3,6 +3,7 @@ package printer
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
@@ -73,7 +74,7 @@ func renderTsx(p *printer, n *Node) {
 				if len(buf) > 1 {
 					char := rune(buf[len(buf)-1:][0])
 					// If the existing buffer ends with a punctuation character, we need a `;`
-					if char == '{' || char == '(' || char == '[' || char == ']' || char == ')' || char == '}' {
+					if !unicode.IsLetter(char) && char != ';' {
 						p.print(";")
 					}
 				}
