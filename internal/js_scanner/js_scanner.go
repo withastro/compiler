@@ -336,6 +336,22 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					break
 				}
 
+				if next == js.DotToken {
+					isMeta := false
+					for {
+						next, _ := l.Next()
+						if next == js.MetaToken {
+							isMeta = true
+						}
+						if next != js.WhitespaceToken && next != js.MetaToken {
+							break
+						}
+					}
+					if isMeta {
+						continue
+					}
+				}
+
 				if !foundSpecifier && next == js.StringToken {
 					specifier = string(nextValue[1 : len(nextValue)-1])
 					foundSpecifier = true

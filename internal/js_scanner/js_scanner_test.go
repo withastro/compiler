@@ -88,6 +88,23 @@ const b = await fetch();`,
 `,
 		},
 		{
+			name: "import.meta.env",
+			source: `console.log(import.meta.env.FOO);
+import Test from "../components/Test.astro";`,
+			want: `import Test from "../components/Test.astro";`,
+		},
+		{
+			name: "import.meta.env II",
+			source: `console.log(
+	import
+		.meta
+		.env
+		.FOO
+);
+import Test from "../components/Test.astro";`,
+			want: `import Test from "../components/Test.astro";`,
+		},
+		{
 			name: "import/export",
 			source: `import { fn } from "package";
 export async fn() {}
