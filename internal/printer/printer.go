@@ -24,7 +24,6 @@ type printer struct {
 	output             []byte
 	builder            sourcemap.ChunkBuilder
 	hasFuncPrelude     bool
-	hasTypedProps      bool
 	hasInternalImports bool
 	hasCSSImports      bool
 }
