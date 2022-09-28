@@ -14,12 +14,23 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 RUN bash /tmp/library-scripts/common-debian.sh "${INSTALL_ZSH}" "${USERNAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" "true" "true" \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install Go tools
 ENV GO111MODULE=auto
 RUN bash /tmp/library-scripts/go-debian.sh "none" "/usr/local/go" "${GOPATH}" "${USERNAME}" "false" \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+# Install JS tools
+SHELL ["/bin/bash", "-c"]
+ENV BASH_ENV $HOME/.bashrc
+ENV VOLTA_HOME $HOME/.volta
+ENV PATH $VOLTA_HOME/bin:$PATH
+
+RUN curl https://get.volta.sh | bash
+RUN volta install node
+
+RUN volta install pnpm
 
 # Remove library scripts for final image
 RUN rm -rf /tmp/library-scripts
