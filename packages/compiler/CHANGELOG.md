@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.25.1
+
+### Patch Changes
+
+- 41fae67: Do not scope empty style blocks
+- 1ab8280: fix(#517): fix edge case with TypeScript transform
+- a3678f9: Fix import.meta.env usage above normal imports
+
 ## 0.25.0
 
 ### Minor Changes
