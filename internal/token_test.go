@@ -60,6 +60,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{EndTagToken},
 		},
 		{
+			"unclosed tag",
+			`<components.`,
+			[]TokenType{TextToken},
+		},
+		{
 			"self-closing tag (slash)",
 			`<meta charset="utf-8" />`,
 			[]TokenType{SelfClosingTagToken},

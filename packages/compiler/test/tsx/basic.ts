@@ -82,11 +82,19 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
-test.run();
-
 test('moves attributes with dots in them to spread', async () => {
   const input = `<div x-on:keyup.shift.enter="alert('Astro')" name="value"></div>`;
   const output = `<div name="value" {...{"x-on:keyup.shift.enter":"alert('Astro')"}}></div>
+
+export default function __AstroComponent_(_props: Record<string, any>): any {}
+`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+test('preserves unclosed tags', async () => {
+  const input = `<components.`;
+  const output = `<components.
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
