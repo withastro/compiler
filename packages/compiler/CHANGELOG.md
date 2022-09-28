@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.25.0
+
+### Minor Changes
+
+- 6446ea3: Make Astro styles being printed after user imports
+
+### Patch Changes
+
+- 51bc60f: Fix edge cases with `getStaticPaths` where valid JS syntax was improperly handled
+
 ## 0.24.0
 
 ### Minor Changes
