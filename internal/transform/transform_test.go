@@ -21,6 +21,7 @@ func TestTransformScoping(t *testing.T) {
 			`,
 			want: `<div class="astro-XXXXXX"></div>`,
 		},
+
 		{
 			name: "global empty",
 			source: `
@@ -52,6 +53,32 @@ func TestTransformScoping(t *testing.T) {
 				<div />
 			`,
 			want: `<div></div>`,
+		},
+		{
+			name: "empty (space)",
+			source: `
+				<style>
+				
+				</style>
+				<div />
+			`,
+			want: `<div></div>`,
+		},
+		{
+			name: "empty (nil)",
+			source: `
+				<style></style>
+				<div />
+			`,
+			want: `<div></div>`,
+		},
+		{
+			name: "empty (define:vars)",
+			source: `
+				<style define:vars={{ a }}></style>
+				<div />
+			`,
+			want: `<div class="astro-XXXXXX" style={$$definedVars}></div>`,
 		},
 		{
 			name: "scoped multiple",

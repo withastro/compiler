@@ -5,6 +5,7 @@ import (
 	// "strings"
 
 	"fmt"
+	"strings"
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/lib/esbuild/css_parser"
@@ -16,24 +17,28 @@ import (
 // Take a slice of DOM nodes, and scope CSS within every <style> tag
 func ScopeStyle(styles []*astro.Node, opts TransformOptions) bool {
 	didScope := false
-outer:
 	for _, n := range styles {
 		if n.DataAtom != a.Style {
 			continue
 		}
 		if hasTruthyAttr(n, "global") {
 			fmt.Printf("Found `<style global>` in %s! Please migrate to the `is:global` directive.\n", opts.Filename)
-			continue outer
+			continue
 		}
 		if hasTruthyAttr(n, "is:global") {
-			continue outer
+			continue
+		}
+		if n.FirstChild == nil || strings.TrimSpace(n.FirstChild.Data) == "" {
+			if !HasAttr(n, "define:vars") {
+				continue
+			}
 		}
 		didScope = true
 		n.Attr = append(n.Attr, astro.Attribute{
 			Key: "data-astro-id",
 			Val: opts.Scope,
 		})
-		if n.FirstChild == nil {
+		if n.FirstChild == nil || strings.TrimSpace(n.FirstChild.Data) == "" {
 			continue
 		}
 		// Use vendored version of esbuild internals to parse AST
