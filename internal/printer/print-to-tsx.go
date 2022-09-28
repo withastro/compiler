@@ -231,11 +231,7 @@ func renderTsx(p *printer, n *Node) {
 		}
 		p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - offset})
 		p.print(" ")
-		eqStartIndex := strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
-		eqStart := a.KeyLoc.Start
-		if eqStartIndex != -1 {
-			eqStart = eqStart + eqStartIndex
-		}
+		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
 		p.addSourceMapping(a.KeyLoc)
 		if a.Namespace != "" {
 			p.print(a.Namespace)
@@ -273,7 +269,6 @@ func renderTsx(p *printer, n *Node) {
 				return
 			}
 			p.print(a.Key)
-			p.addNilSourceMapping()
 			p.print(`=`)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
 			p.print(`{`)
