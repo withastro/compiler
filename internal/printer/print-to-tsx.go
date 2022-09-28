@@ -225,9 +225,17 @@ func renderTsx(p *printer, n *Node) {
 			invalidTSXAttributes = append(invalidTSXAttributes, a)
 			continue
 		}
-		p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
+		offset := 1
+		if a.Type == astro.ShorthandAttribute {
+			offset = 2
+		}
+		p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - offset})
 		p.print(" ")
-		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
+		eqStartIndex := strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
+		eqStart := a.KeyLoc.Start
+		if eqStartIndex != -1 {
+			eqStart = eqStart + eqStartIndex
+		}
 		p.addSourceMapping(a.KeyLoc)
 		if a.Namespace != "" {
 			p.print(a.Namespace)
@@ -245,7 +253,7 @@ func renderTsx(p *printer, n *Node) {
 			p.print(a.Key)
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
-			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
 			p.print(`=`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.print(`{`)
@@ -264,13 +272,14 @@ func renderTsx(p *printer, n *Node) {
 			if len(withoutComments) == 0 {
 				return
 			}
-			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
 			p.addNilSourceMapping()
-			p.print(`={`)
+			p.print(`=`)
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
+			p.print(`{`)
 			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			p.addNilSourceMapping()
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
 			p.print(`}`)
 		case astro.TemplateLiteralAttribute:
 			p.print(a.Key)
