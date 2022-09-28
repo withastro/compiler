@@ -128,6 +128,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Render frontmatter (will be the first node, if it exists)
 	if n.Type == FrontmatterNode {
+		if n.FirstChild == nil {
+			p.printCSSImports(opts.cssLen)
+		}
+
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
