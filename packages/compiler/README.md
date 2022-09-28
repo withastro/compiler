@@ -56,6 +56,13 @@ walk(result.ast, (node) => {
 });
 ```
 
+## Develop
+
+### VSCode / CodeSpaces / GitPod
+A `devcontianer` configuraiton is availible for use with VSCode's [Remote Development extenision pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) and GitHub CodeSpaces.
+
+When using the `devcontainer` configuraiton, you will need to manually need to finish the `node` and `pnpm` installation process with `$ volta install node && npm install --global pnpm`.
+
 ## Contributing
 
 [CONTRIBUTING.md](./CONTRIBUTING.md)
