@@ -251,3 +251,25 @@ export default function __AstroComponent_<Tag extends keyof JSX.IntrinsicElement
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
+
+test('unrelated prop import', async () => {
+  const input = `
+---
+import SvelteOptionalProps from './SvelteOptionalProps.svelte';
+---
+
+<SvelteOptionalProps />
+`;
+  const output = `
+import SvelteOptionalProps from './SvelteOptionalProps.svelte';
+
+
+<Fragment>
+<SvelteOptionalProps></SvelteOptionalProps>
+</Fragment>
+
+export default function __AstroComponent_(_props: Record<string, any>): any {}
+`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
