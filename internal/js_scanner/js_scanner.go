@@ -88,8 +88,14 @@ outer:
 					if !foundIdent {
 						foundIdent = true
 					}
+					if flags["&"] {
+						flags["&"] = false
+					}
 				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
 					if (flags["function"] || flags["=>"]) && !flags["{"] {
+						continue
+					}
+					if flags["&"] {
 						continue
 					}
 					foundSemicolonOrLineTerminator = true
