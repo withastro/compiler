@@ -263,9 +263,14 @@ func renderTsx(p *printer, n *Node) {
 			if len(withoutComments) == 0 {
 				return
 			}
+			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			p.print(`=`)
-			p.print(fmt.Sprintf(`{%s}`, a.Key))
+			p.addNilSourceMapping()
+			p.print(`={`)
+			p.addSourceMapping(a.KeyLoc)
+			p.print(a.Key)
+			p.addNilSourceMapping()
+			p.print(`}`)
 		case astro.TemplateLiteralAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
