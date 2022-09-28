@@ -123,10 +123,9 @@ func renderTsx(p *printer, n *Node) {
 	switch n.Type {
 	case TextNode:
 		if getTextType(n) == ScriptText {
-			p.addNilSourceMapping()
+			p.addSourceMapping(n.Loc[0])
 			p.print("{() => {")
 			p.printTextWithSourcemap(n.Data, n.Loc[0])
-			p.addNilSourceMapping()
 			p.print("}}")
 			return
 		}
