@@ -72,9 +72,15 @@ func renderTsx(p *printer, n *Node) {
 					if char == '{' || char == '(' || char == '[' || char == ']' || char == ')' || char == '}' {
 						p.print(";")
 					}
-					p.print("<Fragment>\n")
-					hasChildren = true
 				}
+				p.addNilSourceMapping()
+				p.print("<Fragment>\n")
+				hasChildren = true
+			}
+			if c.PrevSibling == nil && c.Type != FrontmatterNode {
+				p.addNilSourceMapping()
+				p.print("<Fragment>\n")
+				hasChildren = true
 			}
 			renderTsx(p, c)
 		}

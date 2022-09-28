@@ -4,7 +4,9 @@ import { convertToTSX } from '@astrojs/compiler';
 
 test('no props', async () => {
   const input = `<div></div>`;
-  const output = `<div></div>
+  const output = `<Fragment>
+<div></div>
+</Fragment>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;

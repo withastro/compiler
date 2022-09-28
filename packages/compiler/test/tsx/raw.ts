@@ -4,7 +4,9 @@ import { convertToTSX } from '@astrojs/compiler';
 
 test('style is raw', async () => {
   const input = `<style>div { color: red; }</style>`;
-  const output = `<style>{\`div { color: red; }\`}</style>
+  const output = `<Fragment>
+<style>{\`div { color: red; }\`}</style>
+</Fragment>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
@@ -14,7 +16,9 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}
 
 test('is:raw is raw', async () => {
   const input = `<div is:raw>A{B}C</div>`;
-  const output = `<div is:raw>{\`A{B}C\`}</div>
+  const output = `<Fragment>
+<div is:raw>{\`A{B}C\`}</div>
+</Fragment>
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}
 `;
