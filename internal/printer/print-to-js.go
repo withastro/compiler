@@ -106,7 +106,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL)
-		if opts.opts.StaticExtraction {
+		if opts.opts.StaticExtraction && n.FirstChild != nil && n.FirstChild.Type != FrontmatterNode {
 			p.printCSSImports(opts.cssLen)
 		}
 
@@ -116,6 +116,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				isExpression:     false,
 				depth:            depth + 1,
 				opts:             opts.opts,
+				cssLen:           opts.cssLen,
 				printedMaybeHead: opts.printedMaybeHead,
 			})
 		}
@@ -130,9 +131,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				p.printInternalImports(p.opts.InternalURL)
-				if opts.opts.StaticExtraction {
-					p.printCSSImports(opts.cssLen)
-				}
 
 				if len(n.Loc) > 0 {
 					p.addSourceMapping(n.Loc[0])
@@ -151,6 +149,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.addSourceMapping(c.Loc[0])
 				}
 				p.println(strings.TrimSpace(importStatements))
+
+				if opts.opts.StaticExtraction {
+					p.printCSSImports(opts.cssLen)
+				}
 
 				// 1. Component imports, if any exist.
 				p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
@@ -199,6 +201,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					isExpression:     true,
 					depth:            depth + 1,
 					opts:             opts.opts,
+					cssLen:           opts.cssLen,
 					printedMaybeHead: opts.printedMaybeHead,
 				})
 				if len(n.Loc) > 1 {
@@ -294,6 +297,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				isExpression:     true,
 				depth:            depth + 1,
 				opts:             opts.opts,
+				cssLen:           opts.cssLen,
 				printedMaybeHead: opts.printedMaybeHead,
 			})
 			if c.NextSibling == nil || c.NextSibling.Type == TextNode {
@@ -441,6 +445,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					isExpression:     opts.isExpression,
 					depth:            depth + 1,
 					opts:             opts.opts,
+					cssLen:           opts.cssLen,
 					printedMaybeHead: opts.printedMaybeHead,
 				})
 			}
@@ -474,6 +479,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						isExpression:     opts.isExpression,
 						depth:            depth + 1,
 						opts:             opts.opts,
+						cssLen:           opts.cssLen,
 						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
@@ -577,6 +583,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 								isExpression:     opts.isExpression,
 								depth:            depth + 1,
 								opts:             opts.opts,
+								cssLen:           opts.cssLen,
 								printedMaybeHead: opts.printedMaybeHead,
 							})
 						}
@@ -597,6 +604,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 								isExpression:     opts.isExpression,
 								depth:            depth + 1,
 								opts:             opts.opts,
+								cssLen:           opts.cssLen,
 								printedMaybeHead: opts.printedMaybeHead,
 							})
 							if child.Type == ElementNode {
@@ -615,6 +623,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						isExpression:     opts.isExpression,
 						depth:            depth + 1,
 						opts:             opts.opts,
+						cssLen:           opts.cssLen,
 						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
@@ -626,6 +635,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						isExpression:     opts.isExpression,
 						depth:            depth + 1,
 						opts:             opts.opts,
+						cssLen:           opts.cssLen,
 						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
