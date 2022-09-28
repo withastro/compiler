@@ -277,7 +277,7 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print(`=`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.printTextWithSourcemap(fmt.Sprintf("{`%s`}", escapeText(a.Val)), a.ValLoc)
+			p.printTextWithSourcemap(fmt.Sprintf("{`%s`}", a.Val), a.ValLoc)
 		}
 	}
 	for i, a := range invalidTSXAttributes {
@@ -336,7 +336,7 @@ func renderTsx(p *printer, n *Node) {
 			p.print(a.Key)
 			p.print(`":`)
 			p.addSourceMapping(a.ValLoc)
-			p.print(fmt.Sprintf("`%s`", escapeText(a.Val)))
+			p.print(fmt.Sprintf("`%s`", a.Val))
 		}
 		if i == len(invalidTSXAttributes)-1 {
 			p.addNilSourceMapping()
