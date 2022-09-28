@@ -1,20 +1,23 @@
 #!/bin/bash
 #-------------------------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
+# Copyright (c) Randall T. Vasquez
+# Licensed under the MIT License.
 #-------------------------------------------------------------------------------------------------------------
-#
+# Based on: https://github.com/microsoft/vscode-dev-containers/blob/main/containers/go/.devcontainer/library-scripts/node-debian.sh
 # Docs: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/docs/node.md
-# Maintainer: The VS Code and Codespaces Teams
 #
-# Syntax: ./node-debian.sh [directory to install nvm] [node version to install (use "none" to skip)] [non-root user] [Update rc files flag] [install node-gyp deps]
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
+#-------------------------------------------------------------------------------------------------------------
+# Maintainer: Randall T. Vasquez
+#
+# Syntax: ./node-volta-debian.sh [directory to install Volta] [node version to install (use "none" to skip)] [non-root user] [Update rc files flag] [install node-gyp deps]
 
-export NVM_DIR=${1:-"/usr/local/share/nvm"}
+export VOLTA_DIR=${1:-"/usr/local/share/volta"}
 export NODE_VERSION=${2:-"lts"}
 USERNAME=${3:-"automatic"}
 UPDATE_RC=${4:-"true"}
 INSTALL_TOOLS_FOR_NODE_GYP="${5:-true}"
-export NVM_VERSION="0.38.0"
 
 set -e
 
@@ -82,64 +85,47 @@ export DEBIAN_FRONTEND=noninteractive
 # Install dependencies
 check_packages apt-transport-https curl ca-certificates tar gnupg2 dirmngr
 
-# Install yarn
-if type yarn > /dev/null 2>&1; then
-    echo "Yarn already installed."
-else
-    # Import key safely (new method rather than deprecated apt-key approach) and install
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarn-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/yarn-archive-keyring.gpg] https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
-    apt-get update
-    apt-get -y install --no-install-recommends yarn
-fi
-
 # Adjust node version if required
 if [ "${NODE_VERSION}" = "none" ]; then
     export NODE_VERSION=
 elif [ "${NODE_VERSION}" = "lts" ]; then
-    export NODE_VERSION="lts/*"
+    export NODE_VERSION="lts"
 fi
 
-# Create a symlink to the installed version for use in Dockerfile PATH statements
-export NVM_SYMLINK_CURRENT=true
-
-# Install the specified node version if NVM directory already exists, then exit
-if [ -d "${NVM_DIR}" ]; then
-    echo "NVM already installed."
+# Install the specified node version if Volta directory already exists, then exit
+if [ -d "${VOLTA_DIR}" ]; then
+    echo "Volta is already installed."
     if [ "${NODE_VERSION}" != "" ]; then
-       su ${USERNAME} -c ". $NVM_DIR/nvm.sh && nvm install ${NODE_VERSION} && nvm clear-cache"
+       su ${USERNAME} -c "volta install ${NODE_VERSION}"
     fi
     exit 0
 fi
 
-# Create nvm group, nvm dir, and set sticky bit
-if ! cat /etc/group | grep -e "^nvm:" > /dev/null 2>&1; then
-    groupadd -r nvm
+# Create volta group, volta dir, and set sticky bit
+if ! cat /etc/group | grep -e "^volta:" > /dev/null 2>&1; then
+    groupadd -r volta
 fi
 umask 0002
-usermod -a -G nvm ${USERNAME}
-mkdir -p ${NVM_DIR}
-chown :nvm ${NVM_DIR}
-chmod g+s ${NVM_DIR}
+usermod -a -G volta ${USERNAME}
+mkdir -p ${VOLTA_DIR}
+chown :volta ${VOLTA_DIR}
+chmod g+s ${VOLTA_DIR}
 su ${USERNAME} -c "$(cat << EOF
     set -e
     umask 0002
     # Do not update profile - we'll do this manually
     export PROFILE=/dev/null
-    curl -so- https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh | bash 
-    source ${NVM_DIR}/nvm.sh
+    curl -so- https://get.volta.sh | bash -s -- --skip-setup
     if [ "${NODE_VERSION}" != "" ]; then
-        nvm alias default ${NODE_VERSION}
+        volta install ${NODE_VERSION}
     fi
-    nvm clear-cache 
 EOF
 )" 2>&1
 # Update rc files
 if [ "${UPDATE_RC}" = "true" ]; then
 updaterc "$(cat <<EOF
-export NVM_DIR="${NVM_DIR}"
-[ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
-[ -s "\$NVM_DIR/bash_completion" ] && . "\$NVM_DIR/bash_completion"
+export VOLTA_HOME="${VOLTA_DIR}"
+export PATH="${VOLTA_HOME}/bin:${PATH}"
 EOF
 )"
 fi

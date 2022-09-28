@@ -21,16 +21,12 @@ ENV GO111MODULE=auto
 RUN bash /tmp/library-scripts/go-debian.sh "none" "/usr/local/go" "${GOPATH}" "${USERNAME}" "false" \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# Install JS tools
-SHELL ["/bin/bash", "-c"]
-ENV BASH_ENV $HOME/.bashrc
-ENV VOLTA_HOME $HOME/.volta
-ENV PATH $VOLTA_HOME/bin:$PATH
-
-RUN curl https://get.volta.sh | bash
-RUN volta install node
-
-RUN volta install pnpm
+# [Choice] Node.js version: none, lts, 18, 16, 14
+ARG NODE_VERSION="none"
+ENV VOLTA_DIR=/usr/local/share/volta
+ENV VOLTA_HOME=${VOLTA_DIR}
+RUN bash /tmp/library-scripts/node-volta-debian.sh "${VOLTA_DIR}" "${NODE_VERSION}" "${USERNAME}" \
+  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Remove library scripts for final image
 RUN rm -rf /tmp/library-scripts
