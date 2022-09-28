@@ -126,6 +126,7 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(n.Loc[0])
 			p.print("{() => {")
 			p.printTextWithSourcemap(n.Data, n.Loc[0])
+			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 			p.print("}}")
 			return
 		}
