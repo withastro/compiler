@@ -2249,6 +2249,15 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<h1>Hello</h1>`,
 			},
 		},
+		{
+			name:   "component with only a script",
+			source: "<script>console.log('hello world');</script>",
+			want: want{
+				code:     `${$$maybeRenderHead($$result)}`,
+				metadata: metadata{hoisted: []string{"{ type: 'inline', value: `console.log('hello world');` }"}},
+				scripts:  []string{"{props:{},children:`console.log('hello world');`}"},
+			},
+		},
 	}
 
 	for _, tt := range tests {

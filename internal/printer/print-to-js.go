@@ -274,6 +274,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case RawNode:
 		p.print(n.Data)
 		return
+	case RenderHeadNode:
+		p.printMaybeRenderHead()
+		return
 	}
 
 	// Tip! Comment this block out to debug expressions
