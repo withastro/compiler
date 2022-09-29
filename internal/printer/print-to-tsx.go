@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"unicode"
@@ -66,6 +67,7 @@ func renderTsx(p *printer, n *Node) {
 	if n.Type == DocumentNode {
 		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			p.output = bytes.TrimSuffix(p.output, []byte{'\n'})
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
 			// Without this, TypeScript can get tripped up by the body of our file.
@@ -92,8 +94,11 @@ func renderTsx(p *printer, n *Node) {
 		}
 		// Only close the body with `</Fragment>` if we printed a body
 		if hasChildren {
+			lastNewline := strings.LastIndex(p.sourcetext, "\n")
+			p.addSourceMapping(loc.Loc{Start: lastNewline})
+			p.print("\n")
 			p.addNilSourceMapping()
-			p.print("\n</Fragment>")
+			p.print("</Fragment>")
 		}
 		props := js_scanner.GetPropsType(p.output)
 		componentName := getTSXComponentName(p.opts.Filename)
@@ -102,6 +107,7 @@ func renderTsx(p *printer, n *Node) {
 	}
 
 	if n.Type == FrontmatterNode {
+		p.addSourceMapping(loc.Loc{Start: 0})
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				if len(c.Loc) > 0 {
@@ -113,8 +119,7 @@ func renderTsx(p *printer, n *Node) {
 			}
 		}
 		if n.FirstChild != nil {
-			// Convert closing `---` to a `\n`, just in case
-			p.addNilSourceMapping()
+			p.addSourceMapping(loc.Loc{Start: n.FirstChild.Loc[0].Start + len(n.FirstChild.Data)})
 			p.println("\n")
 		}
 		return
@@ -129,9 +134,6 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 			p.print("}}")
 			return
-		}
-		if strings.TrimSpace(n.Data) == "" {
-			p.printTextWithSourcemap(n.Data, n.Loc[0])
 		} else if strings.ContainsAny(n.Data, "{}") {
 			p.addNilSourceMapping()
 			p.print("{`")
@@ -220,6 +222,7 @@ func renderTsx(p *printer, n *Node) {
 	p.print(n.Data)
 
 	invalidTSXAttributes := make([]Attribute, 0)
+	endLoc := n.Loc[0].Start + len(n.Data)
 	for _, a := range n.Attr {
 		if isInvalidTSXAttributeName(a.Key) {
 			invalidTSXAttributes = append(invalidTSXAttributes, a)
@@ -243,10 +246,11 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print("=")
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.addSourceMapping(a.ValLoc)
 			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
+			endLoc = a.ValLoc.Start + len(a.Val) + 1
 		case astro.EmptyAttribute:
 			p.print(a.Key)
+			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
@@ -256,6 +260,7 @@ func renderTsx(p *printer, n *Node) {
 			p.printTextWithSourcemap(a.Val, loc.Loc{Start: eqStart + 2})
 			p.addSourceMapping(loc.Loc{Start: eqStart + 2 + len(a.Val)})
 			p.print(`}`)
+			endLoc = eqStart + 2 + len(a.Val) + 1
 		case astro.SpreadAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
@@ -263,6 +268,7 @@ func renderTsx(p *printer, n *Node) {
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf(`{...%s}`, a.Val))
+			endLoc = a.ValLoc.Start + len(a.Val) + 2
 		case astro.ShorthandAttribute:
 			withoutComments := removeComments(a.Key)
 			if len(withoutComments) == 0 {
@@ -276,13 +282,16 @@ func renderTsx(p *printer, n *Node) {
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
 			p.print(`}`)
+			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.TemplateLiteralAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print(`=`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.printTextWithSourcemap(fmt.Sprintf("{`%s`}", a.Val), a.ValLoc)
+			endLoc = a.ValLoc.Start + len(a.Val) + 2
 		}
+		p.addSourceMapping(loc.Loc{Start: endLoc})
 	}
 	for i, a := range invalidTSXAttributes {
 		if i == 0 {
@@ -305,14 +314,15 @@ func renderTsx(p *printer, n *Node) {
 			p.print(`:`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
-			p.addSourceMapping(loc.Loc{Start: eqStart + 1 + len(a.Val) + 2})
+			endLoc = eqStart + 1 + len(a.Val) + 2
 		case astro.EmptyAttribute:
 			p.print(a.Key)
 			p.print(`"`)
-			p.addSourceMapping(loc.Loc{Start: eqStart})
+			p.addNilSourceMapping()
 			p.print(`:`)
 			p.addSourceMapping(a.KeyLoc)
 			p.print(`true`)
+			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
 			p.print(`"`)
@@ -323,11 +333,11 @@ func renderTsx(p *printer, n *Node) {
 			p.printTextWithSourcemap(a.Val, loc.Loc{Start: eqStart + 2})
 			p.addSourceMapping(loc.Loc{Start: eqStart + 2 + len(a.Val)})
 			p.print(`)`)
+			endLoc = eqStart + len(a.Val) + 3
 		case astro.SpreadAttribute:
-			p.addSourceMapping(loc.Loc{Start: eqStart})
-			p.print("=")
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf(`...%s`, a.Val))
+			endLoc = a.ValLoc.Start + len(a.Val) + 4
 		case astro.ShorthandAttribute:
 			withoutComments := removeComments(a.Key)
 			if len(withoutComments) == 0 {
@@ -335,45 +345,43 @@ func renderTsx(p *printer, n *Node) {
 			}
 			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
+			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.TemplateLiteralAttribute:
 			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
 			p.print(`":`)
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf("`%s`", a.Val))
+			endLoc = a.ValLoc.Start + len(a.Val) + 3
 		}
 		if i == len(invalidTSXAttributes)-1 {
 			p.addNilSourceMapping()
 			p.print("}}")
 		}
 	}
+	if len(n.Loc) > 1 {
+		endLoc = n.Loc[1].Start
+	} else if len(n.Attr) == 0 {
+		endLoc = n.Loc[0].Start + len(n.Data) + 1
+	}
+
 	if voidElements[n.Data] && n.FirstChild == nil {
-		p.addSourceMapping(n.Loc[0])
+		p.addSourceMapping(loc.Loc{Start: endLoc})
 		p.print("/>")
 		return
-	}
-	if len(n.Attr) > 0 {
-		start := n.Attr[len(n.Attr)-1].ValLoc.Start + len(n.Attr[len(n.Attr)-1].Val)
-		offset := strings.IndexRune(p.sourcetext[start:], '>')
-		start += offset
-		p.addSourceMapping(loc.Loc{Start: start})
 	} else {
-		p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
+		p.print(">")
 	}
-	p.print(">")
 
 	// Render any child nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		renderTsx(p, c)
 	}
-	endLoc := n.Loc[0].Start
-	if len(n.Loc) == 2 {
-		endLoc = n.Loc[1].Start
+	if n.DataAtom == atom.Script {
+		p.printf("</%s>", n.Data)
+		return
 	}
-	p.addSourceMapping(loc.Loc{Start: endLoc - 2})
-	p.print("</")
 	p.addSourceMapping(loc.Loc{Start: endLoc})
-	p.print(n.Data)
-	p.addSourceMapping(loc.Loc{Start: endLoc + len(n.Data)})
-	p.print(">")
+	p.printf("</%s>", n.Data)
+	p.addSourceMapping(loc.Loc{Start: endLoc})
 }

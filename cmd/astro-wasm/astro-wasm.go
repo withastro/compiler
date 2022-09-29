@@ -335,7 +335,7 @@ func Transform() interface{} {
 									output = append(output, []byte(strings.TrimSpace(node.FirstChild.Data))...)
 								}
 								sourcemap := fmt.Sprintf(
-									`{ "version": 3, "sources": ["%s"], "sourcesContent": [%s], "mappings": "%s", "names": [] }`,
+									`{ "version": 3, "sources": ["%s", "astro:runtime"], "sourcesContent": [%s, "Please open an issue: https://astro.build/issues"], "mappings": "%s", "names": [] }`,
 									transformOptions.Filename,
 									string(sourcesContent),
 									string(builder.GenerateChunk(output).Buffer),
@@ -415,8 +415,8 @@ func createSourceMapString(source string, result printer.PrintResult, transformO
 	}
 	return fmt.Sprintf(`{
   "version": 3,
-  "sources": ["%s"],
-  "sourcesContent": [%s],
+  "sources": ["%s", "astro:runtime"],
+  "sourcesContent": [%s, "Please open an issue: https://astro.build/issues"],
   "mappings": "%s",
   "names": []
 }`, sourcemap.Sources[0], sourcemap.SourcesContent[0], sourcemap.Mappings)

@@ -403,7 +403,7 @@ func (p *printer) addSourceMapping(location loc.Loc) {
 
 // Reset sourcemap by pointing to last possible index
 func (p *printer) addNilSourceMapping() {
-	p.builder.AddSourceMapping(loc.Loc{Start: len(p.sourcetext)}, p.output)
+	p.builder.AddSourceMapping(loc.Loc{Start: -1}, p.output)
 }
 
 func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
