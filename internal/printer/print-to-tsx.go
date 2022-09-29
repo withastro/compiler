@@ -92,17 +92,18 @@ func renderTsx(p *printer, n *Node) {
 			}
 			renderTsx(p, c)
 		}
+		p.addSourceMapping(loc.Loc{Start: len(p.sourcetext)})
+		p.print("\n")
+
+		p.addNilSourceMapping()
 		// Only close the body with `</Fragment>` if we printed a body
 		if hasChildren {
-			lastNewline := strings.LastIndex(p.sourcetext, "\n")
-			p.addSourceMapping(loc.Loc{Start: lastNewline})
-			p.print("\n")
-			p.addNilSourceMapping()
-			p.print("</Fragment>")
+			p.print("</Fragment>\n")
 		}
 		props := js_scanner.GetPropsType(p.output)
 		componentName := getTSXComponentName(p.opts.Filename)
-		p.print(fmt.Sprintf("\n\nexport default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, props.Ident, props.Generics))
+
+		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}", componentName, props.Statement, props.Ident, props.Generics))
 		return
 	}
 
@@ -120,7 +121,7 @@ func renderTsx(p *printer, n *Node) {
 		}
 		if n.FirstChild != nil {
 			p.addSourceMapping(loc.Loc{Start: n.FirstChild.Loc[0].Start + len(n.FirstChild.Data)})
-			p.println("\n")
+			p.println("")
 		}
 		return
 	}
