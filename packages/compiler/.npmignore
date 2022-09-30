@@ -1,5 +1,5 @@
 **/*.ts
 !**/*.d.ts
-deno
 test
+test/**
 tsconfig.json
