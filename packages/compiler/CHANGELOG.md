@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.25.2
+
+### Patch Changes
+
+- 3a51b8e: Ensure that head injection occurs if there is only a hoisted script
+
 ## 0.25.1
 
 ### Patch Changes
