@@ -28,6 +28,7 @@ const (
 	// Extensions
 	FrontmatterNode
 	ExpressionNode
+	RenderHeadNode
 )
 
 func (t NodeType) String() string {
