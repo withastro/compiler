@@ -1,7 +1,6 @@
 package printer
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"unicode"
@@ -67,7 +66,6 @@ func renderTsx(p *printer, n *Node) {
 	if n.Type == DocumentNode {
 		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			p.output = bytes.TrimSuffix(p.output, []byte{'\n'})
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
 			// Without this, TypeScript can get tripped up by the body of our file.
@@ -77,6 +75,7 @@ func renderTsx(p *printer, n *Node) {
 					char := rune(buf[len(buf)-1:][0])
 					// If the existing buffer ends with a punctuation character, we need a `;`
 					if !unicode.IsLetter(char) && char != ';' {
+						p.addNilSourceMapping()
 						p.print(";")
 					}
 				}
@@ -121,6 +120,8 @@ func renderTsx(p *printer, n *Node) {
 		}
 		if n.FirstChild != nil {
 			p.addSourceMapping(loc.Loc{Start: n.FirstChild.Loc[0].Start + len(n.FirstChild.Data)})
+			p.print("")
+			p.addSourceMapping(loc.Loc{Start: n.FirstChild.Loc[0].Start + len(n.FirstChild.Data) + 3})
 			p.println("")
 		}
 		return
@@ -129,11 +130,12 @@ func renderTsx(p *printer, n *Node) {
 	switch n.Type {
 	case TextNode:
 		if getTextType(n) == ScriptText {
-			p.addSourceMapping(n.Loc[0])
-			p.print("{() => {")
+			p.addNilSourceMapping()
+			p.print("\n{() => {")
 			p.printTextWithSourcemap(n.Data, n.Loc[0])
+			p.addNilSourceMapping()
+			p.print("}}\n")
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
-			p.print("}}")
 			return
 		} else if strings.ContainsAny(n.Data, "{}") {
 			p.addNilSourceMapping()
@@ -360,29 +362,60 @@ func renderTsx(p *printer, n *Node) {
 			p.print("}}")
 		}
 	}
-	if len(n.Loc) > 1 {
-		endLoc = n.Loc[1].Start
-	} else if len(n.Attr) == 0 {
-		endLoc = n.Loc[0].Start + len(n.Data) + 1
+	if len(n.Attr) == 0 {
+		endLoc = n.Loc[0].Start + len(n.Data) - 1
+	}
+	isSelfClosing := false
+	tmpLoc := endLoc
+	for i := 0; i < len(p.sourcetext[tmpLoc:]); i++ {
+		c := p.sourcetext[endLoc : endLoc+1][0]
+		if c == '/' && p.sourcetext[endLoc+1:][0] == '>' {
+			p.addSourceMapping(loc.Loc{Start: endLoc})
+			isSelfClosing = true
+			break
+		} else if c == '>' {
+			p.addSourceMapping(loc.Loc{Start: endLoc})
+			endLoc++
+			break
+		} else {
+			endLoc++
+		}
 	}
 
 	if voidElements[n.Data] && n.FirstChild == nil {
-		p.addSourceMapping(loc.Loc{Start: endLoc})
 		p.print("/>")
 		return
-	} else {
-		p.print(">")
 	}
+	if isSelfClosing && len(n.Attr) > 0 {
+		p.print(" ")
+		p.addSourceMapping(loc.Loc{Start: endLoc})
+	}
+	p.print(">")
 
 	// Render any child nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		renderTsx(p, c)
 	}
+	// Special case because of trailing expression close in scripts
 	if n.DataAtom == atom.Script {
 		p.printf("</%s>", n.Data)
 		return
 	}
+
+	if len(n.Loc) > 1 {
+		endLoc = n.Loc[1].Start - 2
+	}
 	p.addSourceMapping(loc.Loc{Start: endLoc})
-	p.printf("</%s>", n.Data)
+	p.print("</")
+	if !isSelfClosing {
+		endLoc += 2
+		p.addSourceMapping(loc.Loc{Start: endLoc})
+	}
+	p.print(n.Data)
+	if !isSelfClosing {
+		endLoc += len(n.Data)
+		p.addSourceMapping(loc.Loc{Start: endLoc})
+	}
+	p.print(">")
 	p.addSourceMapping(loc.Loc{Start: endLoc})
 }
