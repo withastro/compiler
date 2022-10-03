@@ -837,7 +837,7 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 				z.handler.AppendError(&loc.ErrorWithRange{
 					Text: `Unterminated comment`,
 					Range: loc.Range{
-						Loc: loc.Loc{Start: start},
+						Loc: loc.Loc{Start: start - 1},
 						Len: 2,
 					},
 				})
@@ -1088,6 +1088,17 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 	// Read the tag name and attribute key/value pairs.
 	z.readTagName()
 	if z.skipWhiteSpace(); z.err != nil {
+		if z.err == io.EOF {
+			start := z.prevToken.Loc.Start
+			end := z.data.Start
+			z.handler.AppendWarning(&loc.ErrorWithRange{
+				Text: `Unclosed tag`,
+				Range: loc.Range{
+					Loc: loc.Loc{Start: start},
+					Len: end - start,
+				},
+			})
+		}
 		return
 	}
 	for {
@@ -1490,7 +1501,7 @@ loop:
 				correct := fmt.Sprintf("<Fragment %s>", element[0])
 				z.handler.AppendError(&loc.ErrorWithRange{
 					Text:       `Unable to assign attributes when using <> Fragment shorthand syntax!`,
-					Range:      loc.Range{Loc: loc.Loc{Start: z.data.Start}, Len: len(trimmed)},
+					Range:      loc.Range{Loc: loc.Loc{Start: z.raw.End - 2}, Len: 3 + len(element[0])},
 					Suggestion: fmt.Sprintf("To fix this, please change %s to use the longhand Fragment syntax: %s", incorrect, correct),
 				})
 			}

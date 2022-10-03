@@ -7,6 +7,7 @@ import (
 
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -14,7 +15,7 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
-func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions) PrintResult {
+func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
 		opts:       opts,

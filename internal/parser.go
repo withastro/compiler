@@ -2967,7 +2967,7 @@ func ParseFragment(r io.Reader, context *Node) ([]*Node, error) {
 // ParseOption configures a parser.
 type ParseOption func(p *parser)
 
-func ParseOptionAddHandler(h *handler.Handler) ParseOption {
+func ParseOptionWithHandler(h *handler.Handler) ParseOption {
 	return func(p *parser) {
 		p.handler = h
 		p.tokenizer.handler = h

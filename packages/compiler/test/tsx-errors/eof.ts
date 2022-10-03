@@ -1,7 +1,6 @@
-
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler';
 
 const FIXTURE = `<html>
   <head>
@@ -16,7 +15,7 @@ const FIXTURE = `<html>
 
 let result;
 test.before(async () => {
-  result = await transform(FIXTURE, {
+  result = await convertToTSX(FIXTURE, {
     pathname: '/src/components/EOF.astro',
   });
 });

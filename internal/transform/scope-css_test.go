@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/test_utils"
 )
 
@@ -274,7 +275,7 @@ func TestScopeStyle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// note: the "{}" is only added to make it valid CSS
 			code := test_utils.Dedent("<style>\n" + tt.source + " \n</style>")
-			doc, err := astro.Parse(strings.NewReader(code))
+			doc, err := astro.Parse(strings.NewReader(code), &handler.Handler{})
 			if err != nil {
 				t.Error(err)
 			}

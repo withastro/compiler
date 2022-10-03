@@ -2283,7 +2283,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.Parse(strings.NewReader(code))
+			doc, err := astro.Parse(strings.NewReader(code), &handler.Handler{})
 			h := handler.NewHandler(code, "<stdin>")
 
 			if err != nil {
@@ -2513,7 +2513,7 @@ const c = '\''
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionEnableLiteral(true))
+			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(&handler.Handler{}))
 
 			if err != nil {
 				t.Error(err)
