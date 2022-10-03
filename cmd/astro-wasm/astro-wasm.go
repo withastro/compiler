@@ -158,6 +158,7 @@ type TSXResult struct {
 type TransformResult struct {
 	Code                 string              `js:"code"`
 	Errors               []loc.Message       `js:"errors"`
+	Warnings             []loc.Message       `js:"warnings"`
 	Map                  string              `js:"map"`
 	Scope                string              `js:"scope"`
 	CSS                  []string            `js:"css"`
@@ -242,10 +243,10 @@ func ConvertToTSX() interface{} {
 func Transform() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		source := jsString(args[0])
-		h := handler.NewHandler(source, transformOptions.Filename)
 
 		transformOptions := makeTransformOptions(js.Value(args[1]))
 		transformOptions.Scope = astro.HashFromSourceAndModuleId(source, transformOptions.ModuleId)
+		h := handler.NewHandler(source, transformOptions.Filename)
 
 		styleError := []string{}
 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
@@ -372,7 +373,7 @@ func Transform() interface{} {
 					}
 				}
 				var value interface{}
-				result := printer.PrintToJS(source, doc, len(css), transformOptions)
+				result := printer.PrintToJS(source, doc, len(css), transformOptions, h)
 				if h.HasErrors() {
 					value = vert.ValueOf(TransformResult{
 						Code:     "",
