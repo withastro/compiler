@@ -7,9 +7,7 @@ test('no props', async () => {
   const output = `<Fragment>
 <div></div>
 </Fragment>
-
-export default function __AstroComponent_(_props: Record<string, any>): any {}
-`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -22,10 +20,7 @@ function DoTheThing(Props) {}
 function DoTheThing(Props) {}
 
 
-
-
-export default function __AstroComponent_(_props: Record<string, any>): any {}
-`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -41,13 +36,11 @@ interface Props {}
   const output = `
 interface Props {}
 
-
 ;<Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_(_props: Props): any {}
-`;
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -63,13 +56,11 @@ import { Props } from './somewhere';
   const output = `
 import { Props } from './somewhere';
 
-
 <Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_(_props: Props): any {}
-`;
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -85,13 +76,11 @@ import { MyComponent as Props } from './somewhere';
   const output = `
 import { MyComponent as Props } from './somewhere';
 
-
 <Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_(_props: Props): any {}
-`;
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -107,13 +96,11 @@ import type { Props } from './somewhere';
   const output = `
 import type { Props } from './somewhere';
 
-
 <Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_(_props: Props): any {}
-`;
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -129,13 +116,11 @@ type Props = {}
   const output = `
 type Props = {}
 
-
 ;<Fragment>
 <div></div>
-</Fragment>
 
-export default function Test__AstroComponent_(_props: Props): any {}
-`;
+</Fragment>
+export default function Test__AstroComponent_(_props: Props): any {}`;
   const { code } = await convertToTSX(input, { sourcefile: '/Users/nmoo/test.astro', sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -151,13 +136,11 @@ interface Props<T> {}
   const output = `
 interface Props<T> {}
 
-
 ;<Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_<T>(_props: Props<T>): any {}
-`;
+</Fragment>
+export default function __AstroComponent_<T>(_props: Props<T>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -173,13 +156,11 @@ interface Props<T extends Other<{ [key: string]: any }>> {}
   const output = `
 interface Props<T extends Other<{ [key: string]: any }>> {}
 
-
 ;<Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_<T extends Other<{ [key: string]: any }>>(_props: Props<T>): any {}
-`;
+</Fragment>
+export default function __AstroComponent_<T extends Other<{ [key: string]: any }>>(_props: Props<T>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -195,13 +176,11 @@ interface Props<T extends { [key: string]: any }, P extends string ? { [key: str
   const output = `
 interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
 
-
 ;<Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
-`;
+</Fragment>
+export default function __AstroComponent_<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -217,13 +196,11 @@ interface Props<T extends Something<false> ? A : B, P extends string ? { [key: s
   const output = `
 interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
 
-
 ;<Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
-`;
+</Fragment>
+export default function __AstroComponent_<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -243,13 +220,11 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
   as?: Tag;
 }
 
-
 ;<Fragment>
 <div></div>
-</Fragment>
 
-export default function __AstroComponent_<Tag extends keyof JSX.IntrinsicElements>(_props: Props<Tag>): any {}
-`;
+</Fragment>
+export default function __AstroComponent_<Tag extends keyof JSX.IntrinsicElements>(_props: Props<Tag>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -265,13 +240,11 @@ import SvelteOptionalProps from './SvelteOptionalProps.svelte';
   const output = `
 import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 
-
 <Fragment>
 <SvelteOptionalProps></SvelteOptionalProps>
-</Fragment>
 
-export default function __AstroComponent_(_props: Record<string, any>): any {}
-`;
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
