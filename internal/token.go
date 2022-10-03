@@ -383,6 +383,9 @@ func (z *Tokenizer) skipWhiteSpace() {
 	for {
 		c := z.readByte()
 		if z.err != nil {
+			if z.err == io.EOF {
+				return
+			}
 			fmt.Printf("Unexpected character in skipWhiteSpace: \"%v\"\n", string(c))
 			return
 		}
@@ -1042,7 +1045,6 @@ func (z *Tokenizer) readUnclosedTag() {
 	}
 	if close == -1 {
 		// We can't find a closing tag...
-		z.data.Start = z.raw.End - 1
 		for i := 0; i < len(buf); i++ {
 			c := z.readByte()
 			if z.err != nil {

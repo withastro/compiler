@@ -642,7 +642,19 @@ func (b *ChunkBuilder) AddSourceMapping(location loc.Loc, output []byte) {
 		return
 	}
 	b.prevLoc = location
+	if location.Start == -1 {
+		b.appendMapping(SourceMapState{
+			GeneratedLine:   b.prevState.GeneratedLine,
+			GeneratedColumn: b.generatedColumn,
+			SourceIndex:     1,
+			OriginalLine:    0,
+			OriginalColumn:  0,
+		})
 
+		// This line now has a mapping on it, so don't insert another one
+		b.lineStartsWithMapping = true
+		return
+	}
 	// Binary search to find the line
 	lineOffsetTables := b.lineOffsetTables
 	count := len(lineOffsetTables)

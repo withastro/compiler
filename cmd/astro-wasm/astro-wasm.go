@@ -223,9 +223,16 @@ func ConvertToTSX() interface{} {
 		}
 		result := printer.PrintToTSX(source, doc, transformOptions)
 
+		sourcemapString := createSourceMapString(source, result, transformOptions)
+		code := string(result.Output)
+		if transformOptions.SourceMap != "external" {
+			inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
+			code += "\n" + inlineSourcemap
+		}
+
 		return vert.ValueOf(TSXResult{
-			Code: string(result.Output),
-			Map:  createSourceMapString(source, result, transformOptions),
+			Code: code,
+			Map:  sourcemapString,
 		})
 	})
 }
@@ -328,7 +335,7 @@ func Transform() interface{} {
 									output = append(output, []byte(strings.TrimSpace(node.FirstChild.Data))...)
 								}
 								sourcemap := fmt.Sprintf(
-									`{ "version": 3, "sources": ["%s"], "sourcesContent": [%s], "mappings": "%s", "names": [] }`,
+									`{ "version": 3, "sources": ["%s", "astro:runtime"], "sourcesContent": [%s, "Please open an issue: https://astro.build/issues"], "mappings": "%s", "names": [] }`,
 									transformOptions.Filename,
 									string(sourcesContent),
 									string(builder.GenerateChunk(output).Buffer),
@@ -408,8 +415,8 @@ func createSourceMapString(source string, result printer.PrintResult, transformO
 	}
 	return fmt.Sprintf(`{
   "version": 3,
-  "sources": ["%s"],
-  "sourcesContent": [%s],
+  "sources": ["%s", "astro:runtime"],
+  "sourcesContent": [%s, "Please open an issue: https://astro.build/issues"],
   "mappings": "%s",
   "names": []
 }`, sourcemap.Sources[0], sourcemap.SourcesContent[0], sourcemap.Mappings)

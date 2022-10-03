@@ -26,6 +26,12 @@ type AttributeTest struct {
 	expected []AttributeType
 }
 
+type LocTest struct {
+	name     string
+	input    string
+	expected []int
+}
+
 func TestBasic(t *testing.T) {
 	Basic := []TokenTypeTest{
 		{
@@ -52,6 +58,11 @@ func TestBasic(t *testing.T) {
 			"end tag",
 			`</html>`,
 			[]TokenType{EndTagToken},
+		},
+		{
+			"unclosed tag",
+			`<components.`,
+			[]TokenType{TextToken},
 		},
 		{
 			"self-closing tag (slash)",
@@ -428,6 +439,21 @@ func TestBasic(t *testing.T) {
 			"typescript generic II",
 			`<ul>{items.map((item: Item<Checkbox>)) => <Checkbox>{item.checked}</Checkbox>)}</ul>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"incomplete tag",
+			`<MyAstroComponent`,
+			[]TokenType{TextToken},
+		},
+		{
+			"incomplete tag II",
+			`<MyAstroComponent` + "\n",
+			[]TokenType{TextToken},
+		},
+		{
+			"incomplete tag III",
+			`<div></div><MyAstroComponent` + "\n",
+			[]TokenType{StartTagToken, EndTagToken, TextToken},
 		},
 	}
 
@@ -918,6 +944,41 @@ func TestAttributes(t *testing.T) {
 	runAttributeTypeTest(t, Attributes)
 }
 
+func TestLoc(t *testing.T) {
+	Locs := []LocTest{
+		{
+			"doctype",
+			`<!DOCTYPE html>`,
+			[]int{0, 11},
+		},
+		{
+			"frontmatter",
+			`---
+doesNotExist
+---
+`,
+			[]int{0, 1, 4},
+		},
+		{
+			"expression",
+			`<div>{console.log(hey)}</div>`,
+			[]int{0, 2, 6, 7, 23, 26},
+		},
+		{
+			"expression II",
+			`{"hello" + hey}`,
+			[]int{0, 1, 2, 9, 15},
+		},
+		{
+			"element I",
+			`<div></div>`,
+			[]int{0, 2, 8},
+		},
+	}
+
+	runTokenLocTest(t, Locs)
+}
+
 func runTokenTypeTest(t *testing.T, suite []TokenTypeTest) {
 	for _, tt := range suite {
 		value := test_utils.Dedent(tt.input)
@@ -986,6 +1047,29 @@ func runAttributeTypeTest(t *testing.T, suite []AttributeTest) {
 			}
 			if !reflect.DeepEqual(attributeTypes, tt.expected) {
 				t.Errorf("Attributes = %v\nExpected = %v", attributeTypes, tt.expected)
+			}
+		})
+	}
+}
+
+func runTokenLocTest(t *testing.T, suite []LocTest) {
+	for _, tt := range suite {
+		value := test_utils.Dedent(tt.input)
+		t.Run(tt.name, func(t *testing.T) {
+			locs := make([]int, 0)
+			tokenizer := NewTokenizer(strings.NewReader(value))
+			var next TokenType
+			locs = append(locs, tokenizer.Token().Loc.Start)
+			for {
+				next = tokenizer.Next()
+				if next == ErrorToken {
+					break
+				}
+				tok := tokenizer.Token()
+				locs = append(locs, tok.Loc.Start+1)
+			}
+			if !reflect.DeepEqual(locs, tt.expected) {
+				t.Errorf("Tokens = %v\nExpected = %v", locs, tt.expected)
 			}
 		})
 	}
