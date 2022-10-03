@@ -622,5 +622,4 @@ conly_loop:
 	}
 
 	p.print("] });\n\n")
-	return
 }

@@ -63,7 +63,7 @@ outer:
 		// Exports should be consumed until all opening braces are closed,
 		// a specifier is found, and a line terminator has been found
 		if token == js.ExportToken {
-			flags := make(map[string]bool, 0)
+			flags := make(map[string]bool)
 			foundIdent := false
 			foundSemicolonOrLineTerminator := false
 			start := 0
