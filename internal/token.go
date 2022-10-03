@@ -383,6 +383,9 @@ func (z *Tokenizer) skipWhiteSpace() {
 	for {
 		c := z.readByte()
 		if z.err != nil {
+			if z.err == io.EOF {
+				return
+			}
 			fmt.Printf("Unexpected character in skipWhiteSpace: \"%v\"\n", string(c))
 			return
 		}
