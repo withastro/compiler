@@ -250,10 +250,10 @@ func renderTsx(p *printer, n *Node) {
 			p.print("=")
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
-			endLoc = a.ValLoc.Start + len(a.Val) + 1
+			endLoc = a.ValLoc.Start + len(a.Val)
 		case astro.EmptyAttribute:
 			p.print(a.Key)
-			endLoc = a.KeyLoc.Start + len(a.Key) + 1
+			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
@@ -263,7 +263,7 @@ func renderTsx(p *printer, n *Node) {
 			p.printTextWithSourcemap(a.Val, loc.Loc{Start: eqStart + 2})
 			p.addSourceMapping(loc.Loc{Start: eqStart + 2 + len(a.Val)})
 			p.print(`}`)
-			endLoc = eqStart + 2 + len(a.Val) + 1
+			endLoc = eqStart + len(a.Val) + 2
 		case astro.SpreadAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
@@ -285,7 +285,7 @@ func renderTsx(p *printer, n *Node) {
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
 			p.print(`}`)
-			endLoc = a.KeyLoc.Start + len(a.Key) + 1
+			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.TemplateLiteralAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
@@ -325,7 +325,7 @@ func renderTsx(p *printer, n *Node) {
 			p.print(`:`)
 			p.addSourceMapping(a.KeyLoc)
 			p.print(`true`)
-			endLoc = a.KeyLoc.Start + len(a.Key) + 1
+			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
 			p.print(`"`)
@@ -336,11 +336,11 @@ func renderTsx(p *printer, n *Node) {
 			p.printTextWithSourcemap(a.Val, loc.Loc{Start: eqStart + 2})
 			p.addSourceMapping(loc.Loc{Start: eqStart + 2 + len(a.Val)})
 			p.print(`)`)
-			endLoc = eqStart + len(a.Val) + 3
+			endLoc = eqStart + len(a.Val) + 2
 		case astro.SpreadAttribute:
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf(`...%s`, a.Val))
-			endLoc = a.ValLoc.Start + len(a.Val) + 4
+			endLoc = a.ValLoc.Start + len(a.Val) + 3
 		case astro.ShorthandAttribute:
 			withoutComments := removeComments(a.Key)
 			if len(withoutComments) == 0 {
@@ -348,14 +348,14 @@ func renderTsx(p *printer, n *Node) {
 			}
 			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			endLoc = a.KeyLoc.Start + len(a.Key) + 1
+			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.TemplateLiteralAttribute:
 			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
 			p.print(`":`)
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf("`%s`", a.Val))
-			endLoc = a.ValLoc.Start + len(a.Val) + 3
+			endLoc = a.ValLoc.Start + len(a.Val) + 2
 		}
 		if i == len(invalidTSXAttributes)-1 {
 			p.addNilSourceMapping()
