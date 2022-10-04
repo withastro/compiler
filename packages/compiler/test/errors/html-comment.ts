@@ -8,7 +8,7 @@ const FIXTURE = `<html>
   </head>
   <body>
     <div>
-      {/*
+      <!--
     </div>
   </body>
 </html>`;
@@ -20,11 +20,11 @@ test.before(async () => {
   });
 });
 
-test('got a tokenizer error', () => {
-  assert.ok(Array.isArray(result.errors));
-  assert.is(result.errors.length, 1);
-  assert.is(result.errors[0].text, 'Unterminated comment');
-  assert.is(FIXTURE.split('\n')[result.errors[0].location.line - 1], `      {/*`);
+test('html comment error', () => {
+  assert.ok(Array.isArray(result.warnings));
+  assert.is(result.warnings.length, 1);
+  assert.is(result.warnings[0].text, 'Unterminated comment');
+  assert.is(FIXTURE.split('\n')[result.warnings[0].location.line - 1], `      <!--`);
 });
 
 test.run();

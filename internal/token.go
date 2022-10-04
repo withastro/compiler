@@ -706,7 +706,8 @@ scriptDataDoubleEscapeEnd:
 // readHTMLComment reads the next comment token starting with "<!--". The opening
 // "<!--" has already been consumed.
 func (z *Tokenizer) readHTMLComment() {
-	z.data.Start = z.raw.End
+	start := z.raw.End
+	z.data.Start = start
 	defer func() {
 		if z.data.End < z.data.Start {
 			// It's a comment with no data, like <!-->.
@@ -716,6 +717,15 @@ func (z *Tokenizer) readHTMLComment() {
 	for dashCount := 2; ; {
 		c := z.readByte()
 		if z.err != nil {
+			if z.err == io.EOF {
+				z.handler.AppendWarning(&loc.ErrorWithRange{
+					Text: `Unterminated comment`,
+					Range: loc.Range{
+						Loc: loc.Loc{Start: start},
+						Len: 4,
+					},
+				})
+			}
 			// Ignore up to two dashes at EOF.
 			if dashCount > 2 {
 				dashCount = 2
@@ -837,7 +847,7 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 				z.handler.AppendError(&loc.ErrorWithRange{
 					Text: `Unterminated comment`,
 					Range: loc.Range{
-						Loc: loc.Loc{Start: start - 1},
+						Loc: loc.Loc{Start: start},
 						Len: 2,
 					},
 				})
