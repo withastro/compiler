@@ -278,6 +278,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		return
 	case RenderHeadNode:
 		p.printMaybeRenderHead()
+		*opts.printedMaybeHead = true
 		return
 	}
 

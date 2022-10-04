@@ -45,9 +45,10 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 	addedHeadRenderingInsertion := false
 	for _, script := range doc.Scripts {
 		if !addedHeadRenderingInsertion {
-			doc.InsertBefore(&astro.Node{
+			renderHeadNode := &astro.Node{
 				Type: astro.RenderHeadNode,
-			}, script)
+			}
+			script.Parent.InsertBefore(renderHeadNode, script)
 			addedHeadRenderingInsertion = true
 		}
 
