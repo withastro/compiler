@@ -391,6 +391,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					slotted = true
 				default:
 					p.handler.AppendError(&loc.ErrorWithRange{
+						Code:  loc.ERROR_UNSUPPORTED_SLOT_ATTRIBUTE,
 						Text:  "slot[name] must be a static string",
 						Range: loc.Range{Loc: a.ValLoc, Len: len(a.Val)},
 					})
@@ -508,6 +509,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 								slotProp = fmt.Sprintf(`[%s]`, a.Val)
 							} else {
 								p.handler.AppendError(&loc.ErrorWithRange{
+									Code:  loc.ERROR_UNSUPPORTED_SLOT_ATTRIBUTE,
 									Text:  "slot[name] must be a static string",
 									Range: loc.Range{Loc: a.ValLoc, Len: len(a.Val)},
 								})

@@ -153,29 +153,26 @@ type HydratedComponent struct {
 }
 
 type ParseResult struct {
-	AST      string        `js:"ast"`
-	Errors   []loc.Message `js:"errors"`
-	Warnings []loc.Message `js:"warnings"`
+	AST         string                  `js:"ast"`
+	Diagnostics []loc.DiagnosticMessage `js:"diagnostics"`
 }
 
 type TSXResult struct {
-	Code     string        `js:"code"`
-	Map      string        `js:"map"`
-	Errors   []loc.Message `js:"errors"`
-	Warnings []loc.Message `js:"warnings"`
+	Code        string                  `js:"code"`
+	Map         string                  `js:"map"`
+	Diagnostics []loc.DiagnosticMessage `js:"diagnostics"`
 }
 
 type TransformResult struct {
-	Code                 string              `js:"code"`
-	Errors               []loc.Message       `js:"errors"`
-	Warnings             []loc.Message       `js:"warnings"`
-	Map                  string              `js:"map"`
-	Scope                string              `js:"scope"`
-	CSS                  []string            `js:"css"`
-	Scripts              []HoistedScript     `js:"scripts"`
-	HydratedComponents   []HydratedComponent `js:"hydratedComponents"`
-	ClientOnlyComponents []HydratedComponent `js:"clientOnlyComponents"`
-	StyleError           []string            `js:"styleError"`
+	Code                 string                  `js:"code"`
+	Diagnostics          []loc.DiagnosticMessage `js:"diagnostics"`
+	Map                  string                  `js:"map"`
+	Scope                string                  `js:"scope"`
+	CSS                  []string                `js:"css"`
+	Scripts              []HoistedScript         `js:"scripts"`
+	HydratedComponents   []HydratedComponent     `js:"hydratedComponents"`
+	ClientOnlyComponents []HydratedComponent     `js:"clientOnlyComponents"`
+	StyleError           []string                `js:"styleError"`
 }
 
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
@@ -209,14 +206,19 @@ func Parse() interface{} {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		source := jsString(args[0])
 		parseOptions := makeParseOptions(js.Value(args[1]))
+		transformOptions := makeTransformOptions(js.Value(args[1]))
+		transformOptions.Scope = "XXXXXX"
 		h := handler.NewHandler(source, parseOptions.Filename)
 
 		var doc *astro.Node
 		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
-			fmt.Println(err)
+			h.AppendError(err)
 		}
 		result := printer.PrintToJSON(source, doc, parseOptions)
+
+		// AFTER printing, exec transformations to pickup any errors/warnings
+		transform.Transform(doc, transformOptions, h)
 
 		return vert.ValueOf(ParseResult{
 			AST: string(result.Output),
@@ -234,9 +236,12 @@ func ConvertToTSX() interface{} {
 		var doc *astro.Node
 		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
-			fmt.Println(err)
+			h.AppendError(err)
 		}
 		result := printer.PrintToTSX(source, doc, transformOptions, h)
+
+		// AFTER printing, exec transformations to pickup any errors/warnings
+		transform.Transform(doc, transformOptions, h)
 
 		sourcemapString := createSourceMapString(source, result, transformOptions)
 		code := string(result.Output)
@@ -246,10 +251,9 @@ func ConvertToTSX() interface{} {
 		}
 
 		return vert.ValueOf(TSXResult{
-			Code:     code,
-			Map:      sourcemapString,
-			Errors:   h.Errors(),
-			Warnings: h.Warnings(),
+			Code:        code,
+			Map:         sourcemapString,
+			Diagnostics: h.Diagnostics(),
 		})
 	})
 }
@@ -388,36 +392,26 @@ func Transform() interface{} {
 				}
 				var value vert.Value
 				result := printer.PrintToJS(source, doc, len(css), transformOptions, h)
-				if h.HasErrors() {
+				switch transformOptions.SourceMap {
+				case "external":
+					value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
+				case "both":
+					value = createBothSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
+				case "inline":
+					value = createInlineSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
+				default:
 					value = vert.ValueOf(TransformResult{
-						Code:   "",
-						Map:    "",
-						Errors: h.Errors(),
+						CSS:                  css,
+						Code:                 string(result.Output),
+						Map:                  "",
+						Scope:                transformOptions.Scope,
+						Scripts:              scripts,
+						HydratedComponents:   hydratedComponents,
+						ClientOnlyComponents: clientOnlyComponents,
+						StyleError:           styleError,
 					})
-				} else {
-
-					switch transformOptions.SourceMap {
-					case "external":
-						value = createExternalSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
-					case "both":
-						value = createBothSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
-					case "inline":
-						value = createInlineSourceMap(source, result, css, &scripts, &hydratedComponents, &clientOnlyComponents, &styleError, transformOptions)
-					default:
-						value = vert.ValueOf(TransformResult{
-							CSS:                  css,
-							Errors:               []loc.Message{},
-							Code:                 string(result.Output),
-							Map:                  "",
-							Scope:                transformOptions.Scope,
-							Scripts:              scripts,
-							HydratedComponents:   hydratedComponents,
-							ClientOnlyComponents: clientOnlyComponents,
-							StyleError:           styleError,
-						})
-					}
 				}
-				value.Set("warnings", vert.ValueOf(h.Warnings()))
+				value.Set("diagnostics", vert.ValueOf(h.Diagnostics()))
 				resolve.Invoke(value)
 			}()
 
@@ -452,7 +446,6 @@ func createExternalSourceMap(source string, result printer.PrintResult, css []st
 	return vert.ValueOf(TransformResult{
 		CSS:                  css,
 		Code:                 string(result.Output),
-		Errors:               []loc.Message{},
 		Map:                  createSourceMapString(source, result, transformOptions),
 		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,
@@ -468,7 +461,6 @@ func createInlineSourceMap(source string, result printer.PrintResult, css []stri
 	return vert.ValueOf(TransformResult{
 		CSS:                  css,
 		Code:                 string(result.Output) + "\n" + inlineSourcemap,
-		Errors:               []loc.Message{},
 		Map:                  "",
 		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,
@@ -484,7 +476,6 @@ func createBothSourceMap(source string, result printer.PrintResult, css []string
 	return vert.ValueOf(TransformResult{
 		CSS:                  css,
 		Code:                 string(result.Output) + "\n" + inlineSourcemap,
-		Errors:               []loc.Message{},
 		Map:                  sourcemapString,
 		Scope:                transformOptions.Scope,
 		Scripts:              *scripts,

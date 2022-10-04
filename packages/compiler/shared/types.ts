@@ -1,5 +1,7 @@
 import { RootNode } from './ast';
+import { DiagnosticCode } from './diagnostics';
 export * from './ast';
+export * from './diagnostics';
 
 export interface PreprocessorResult {
   code: string;
@@ -15,20 +17,28 @@ export interface ParseOptions {
   position?: boolean;
 }
 
-export interface Message {
-  location: MessageLocation;
+// eslint-disable-next-line no-shadow
+export enum DiagnosticSeverity {
+  Error = 1,
+  Warning = 2,
+  Information = 3,
+  Hint = 4,
+}
+
+export interface DiagnosticMessage {
+  severity: DiagnosticSeverity;
+  code: DiagnosticCode;
+  location: DiagnosticLocation;
+  hint?: string;
   text: string;
 }
 
-export interface MessageLocation {
+export interface DiagnosticLocation {
   file: string;
-  lineText?: string;
-  suggestion?: string;
   // 1-based
   line: number;
-  // 0-based, in bytes
+  // 1-based
   column: number;
-  // in bytes
   length: number;
 }
 
@@ -72,8 +82,7 @@ export interface TransformResult {
   map: string;
   scope: string;
   styleError: string[];
-  errors: Message[];
-  warnings: Message[];
+  diagnostics: DiagnosticMessage[];
   css: string[];
   scripts: HoistedScript[];
   hydratedComponents: HydratedComponent[];
@@ -92,10 +101,12 @@ export interface SourceMap {
 export interface TSXResult {
   code: string;
   map: SourceMap;
+  diagnostics: DiagnosticMessage[];
 }
 
 export interface ParseResult {
   ast: RootNode;
+  diagnostics: DiagnosticMessage[];
 }
 
 // This function transforms a single JavaScript file. It can be used to minify

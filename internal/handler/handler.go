@@ -14,6 +14,8 @@ type Handler struct {
 	builder    sourcemap.ChunkBuilder
 	errors     []error
 	warnings   []error
+	infos      []error
+	hints      []error
 }
 
 func NewHandler(sourcetext string, filename string) *Handler {
@@ -23,6 +25,8 @@ func NewHandler(sourcetext string, filename string) *Handler {
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 		errors:     make([]error, 0),
 		warnings:   make([]error, 0),
+		infos:      make([]error, 0),
+		hints:      make([]error, 0),
 	}
 }
 
@@ -38,41 +42,73 @@ func (h *Handler) AppendWarning(err error) {
 	h.warnings = append(h.warnings, err)
 }
 
-func (h *Handler) Errors() []loc.Message {
-	msgs := make([]loc.Message, 0)
+func (h *Handler) AppendInfo(err error) {
+	h.infos = append(h.infos, err)
+}
+func (h *Handler) AppendHint(err error) {
+	h.hints = append(h.hints, err)
+}
+
+func (h *Handler) Errors() []loc.DiagnosticMessage {
+	msgs := make([]loc.DiagnosticMessage, 0)
 	for _, err := range h.errors {
 		if err != nil {
-			msgs = append(msgs, ErrorToMessage(h, err))
+			msgs = append(msgs, ErrorToMessage(h, loc.ErrorType, err))
 		}
 	}
 	return msgs
 }
 
-func (h *Handler) Warnings() []loc.Message {
-	msgs := make([]loc.Message, 0)
+func (h *Handler) Warnings() []loc.DiagnosticMessage {
+	msgs := make([]loc.DiagnosticMessage, 0)
 	for _, err := range h.warnings {
 		if err != nil {
-			msgs = append(msgs, ErrorToMessage(h, err))
+			msgs = append(msgs, ErrorToMessage(h, loc.WarningType, err))
 		}
 	}
 	return msgs
 }
 
-func ErrorToMessage(h *Handler, err error) loc.Message {
+func (h *Handler) Diagnostics() []loc.DiagnosticMessage {
+	msgs := make([]loc.DiagnosticMessage, 0)
+	for _, err := range h.errors {
+		if err != nil {
+			msgs = append(msgs, ErrorToMessage(h, loc.ErrorType, err))
+		}
+	}
+	for _, err := range h.warnings {
+		if err != nil {
+			msgs = append(msgs, ErrorToMessage(h, loc.WarningType, err))
+		}
+	}
+	for _, err := range h.infos {
+		if err != nil {
+			msgs = append(msgs, ErrorToMessage(h, loc.InformationType, err))
+		}
+	}
+	for _, err := range h.hints {
+		if err != nil {
+			msgs = append(msgs, ErrorToMessage(h, loc.HintType, err))
+		}
+	}
+	return msgs
+}
+
+func ErrorToMessage(h *Handler, severity loc.DiagnosticSeverity, err error) loc.DiagnosticMessage {
 	var rangedError *loc.ErrorWithRange
 	switch {
 	case errors.As(err, &rangedError):
 		pos := h.builder.GetLineAndColumnForLocation(rangedError.Range.Loc)
-		location := &loc.MessageLocation{
-			File:       h.filename,
-			Line:       pos[0],
-			Column:     pos[1],
-			Length:     rangedError.Range.Len,
-			LineText:   h.sourcetext[rangedError.Range.Loc.Start:rangedError.Range.End()],
-			Suggestion: rangedError.Suggestion,
+		location := &loc.DiagnosticLocation{
+			File:   h.filename,
+			Line:   pos[0],
+			Column: pos[1],
+			Length: rangedError.Range.Len,
 		}
-		return rangedError.ToMessage(location)
+		message := rangedError.ToMessage(location)
+		message.Severity = severity
+		return message
 	default:
-		return loc.Message{Text: err.Error()}
+		return loc.DiagnosticMessage{Text: err.Error()}
 	}
 }

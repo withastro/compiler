@@ -144,9 +144,10 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 			}
 			if shouldWarn {
 				h.AppendWarning(&loc.ErrorWithRange{
-					Text:       fmt.Sprintf("%s directive will overwrite child nodes.", directive.Key),
-					Range:      loc.Range{Loc: directive.KeyLoc, Len: len(directive.Key)},
-					Suggestion: "Remove the child nodes to suppress this warning.",
+					Code:  loc.WARNING_SET_WITH_CHILDREN,
+					Text:  fmt.Sprintf("%s directive will overwrite child nodes.", directive.Key),
+					Range: loc.Range{Loc: directive.KeyLoc, Len: len(directive.Key)},
+					Hint:  "Remove the child nodes to suppress this warning.",
 				})
 			}
 			n.AppendChild(expr)
@@ -274,6 +275,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			for _, attr := range n.Attr {
 				if attr.Key == "hoist" {
 					h.AppendWarning(&loc.ErrorWithRange{
+						Code:  loc.WARNING_DEPRECATED_DIRECTIVE,
 						Text:  "<script hoist> is no longer needed. You may remove the `hoist` attribute.",
 						Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
 					})
@@ -283,9 +285,10 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 						if opts.StaticExtraction {
 							shouldAdd = false
 							h.AppendWarning(&loc.ErrorWithRange{
-								Text:       "<script> uses an expression for the src attribute and will be ignored.",
-								Suggestion: fmt.Sprintf("Replace src={%s} with a string literal", attr.Val),
-								Range:      loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+								Code:  loc.WARNING_UNSUPPORTED_EXPRESSION,
+								Text:  "<script> uses an expression for the src attribute and will be ignored.",
+								Hint:  fmt.Sprintf("Replace src={%s} with a string literal", attr.Val),
+								Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
 							})
 						}
 						break
@@ -301,6 +304,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			for _, attr := range n.Attr {
 				if strings.HasPrefix(attr.Key, "client:") {
 					h.AppendWarning(&loc.ErrorWithRange{
+						Code:  loc.WARNING_IGNORED_DIRECTIVE,
 						Text:  fmt.Sprintf("<script> does not need the %s directive and is always added as a module script.", attr.Key),
 						Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
 					})

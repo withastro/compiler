@@ -519,9 +519,10 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	if len(unfoundconly) > 0 {
 		for _, n := range unfoundconly {
 			p.handler.AppendError(&loc.ErrorWithRange{
-				Text:       "Unable to find matching import statement for client:only component",
-				Suggestion: "A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.",
-				Range:      loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+				Code:  loc.ERROR_FRAGMENT_SHORTHAND_ATTRS,
+				Text:  "Unable to find matching import statement for client:only component",
+				Hint:  "A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.",
+				Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
 			})
 		}
 	}

@@ -20,33 +20,47 @@ type Span struct {
 	Start, End int
 }
 
-type Message struct {
-	Location *MessageLocation `js:"location"`
-	Text     string           `js:"text"`
+// A NodeType is the type of a Node.
+type DiagnosticSeverity int
+
+const (
+	ErrorType DiagnosticSeverity = 1
+	WarningType
+	InformationType
+	HintType
+)
+
+type DiagnosticMessage struct {
+	Severity DiagnosticSeverity  `js:"severity"`
+	Code     DiagnosticCode      `js:"code"`
+	Location *DiagnosticLocation `js:"location"`
+	Hint     string              `js:"hint"`
+	Text     string              `js:"text"`
 }
 
-type MessageLocation struct {
-	File       string `js:"file"`
-	LineText   string `js:"lineText"`
-	Suggestion string `js:"suggestion"`
-	Line       int    `js:"line"`
-	Column     int    `js:"column"`
-	Length     int    `js:"length"`
+type DiagnosticLocation struct {
+	File   string `js:"file"`
+	Line   int    `js:"line"`
+	Column int    `js:"column"`
+	Length int    `js:"length"`
 }
 
 type ErrorWithRange struct {
-	Text       string
-	Suggestion string
-	Range      Range
+	Code  DiagnosticCode
+	Text  string
+	Hint  string
+	Range Range
 }
 
 func (e *ErrorWithRange) Error() string {
 	return e.Text
 }
 
-func (e *ErrorWithRange) ToMessage(location *MessageLocation) Message {
-	return Message{
+func (e *ErrorWithRange) ToMessage(location *DiagnosticLocation) DiagnosticMessage {
+	return DiagnosticMessage{
+		Code:     e.Code,
 		Text:     e.Error(),
+		Hint:     e.Hint,
 		Location: location,
 	}
 }

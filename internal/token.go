@@ -719,6 +719,7 @@ func (z *Tokenizer) readHTMLComment() {
 		if z.err != nil {
 			if z.err == io.EOF {
 				z.handler.AppendWarning(&loc.ErrorWithRange{
+					Code: loc.WARNING_UNTERMINATED_HTML_COMMENT,
 					Text: `Unterminated comment`,
 					Range: loc.Range{
 						Loc: loc.Loc{Start: start},
@@ -845,6 +846,7 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 			}
 			if z.err == io.EOF {
 				z.handler.AppendError(&loc.ErrorWithRange{
+					Code: loc.ERROR_UNTERMINATED_JS_COMMENT,
 					Text: `Unterminated comment`,
 					Range: loc.Range{
 						Loc: loc.Loc{Start: start},
@@ -1102,6 +1104,7 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 			start := z.prevToken.Loc.Start
 			end := z.data.Start
 			z.handler.AppendWarning(&loc.ErrorWithRange{
+				Code: loc.WARNING_UNCLOSED_HTML_TAG,
 				Text: `Unclosed tag`,
 				Range: loc.Range{
 					Loc: loc.Loc{Start: start},
@@ -1510,9 +1513,10 @@ loop:
 				incorrect := fmt.Sprintf("< %s>", element[0])
 				correct := fmt.Sprintf("<Fragment %s>", element[0])
 				z.handler.AppendError(&loc.ErrorWithRange{
-					Text:       `Unable to assign attributes when using <> Fragment shorthand syntax!`,
-					Range:      loc.Range{Loc: loc.Loc{Start: z.raw.End - 2}, Len: 3 + len(element[0])},
-					Suggestion: fmt.Sprintf("To fix this, please change %s to use the longhand Fragment syntax: %s", incorrect, correct),
+					Code:  loc.ERROR_FRAGMENT_SHORTHAND_ATTRS,
+					Text:  `Unable to assign attributes when using <> Fragment shorthand syntax!`,
+					Range: loc.Range{Loc: loc.Loc{Start: z.raw.End - 2}, Len: 3 + len(element[0])},
+					Hint:  fmt.Sprintf("To fix this, please change %s to use the longhand Fragment syntax: %s", incorrect, correct),
 				})
 			}
 			// Reconsume the current character.
