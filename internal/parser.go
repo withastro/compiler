@@ -702,6 +702,14 @@ func beforeHeadIM(p *parser) bool {
 		return true
 	case StartTagToken:
 		switch p.tok.DataAtom {
+		case a.Slot:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
 		case a.Head:
 			p.addElement()
 			p.head = p.top()
