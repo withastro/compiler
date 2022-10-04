@@ -23,10 +23,10 @@ test.before(async () => {
 });
 
 test('got an error because client:only component not found import', () => {
-  assert.ok(Array.isArray(result.errors));
-  assert.is(result.errors.length, 1);
-  assert.is(result.errors[0].text, 'Unable to find matching import statement for client:only component');
-  assert.is(FIXTURE.split('\n')[result.errors[0].location.line - 1], `    <MyComponent client:only />`);
+  assert.ok(Array.isArray(result.diagnostics));
+  assert.is(result.diagnostics.length, 1);
+  assert.is(result.diagnostics[0].text, 'Unable to find matching import statement for client:only component');
+  assert.is(FIXTURE.split('\n')[result.diagnostics[0].location.line - 1], `    <MyComponent client:only />`);
 });
 
 test.run();

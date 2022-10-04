@@ -12,9 +12,9 @@ test.before(async () => {
 });
 
 test('logs a warning for using a client directive', () => {
-  assert.ok(Array.isArray(result.warnings));
-  assert.is(result.warnings.length, 1);
-  assert.match(result.warnings[0].text, 'does not need the client:load directive');
+  assert.ok(Array.isArray(result.diagnostics));
+  assert.is(result.diagnostics.length, 1);
+  assert.match(result.diagnostics[0].text, 'does not need the client:load directive');
 });
 
 test.run();

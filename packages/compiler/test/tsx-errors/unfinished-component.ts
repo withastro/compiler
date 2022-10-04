@@ -13,11 +13,9 @@ test.before(async () => {
 
 test('did not crash on unfinished component', () => {
   assert.ok(result);
-  assert.ok(Array.isArray(result.errors));
-  assert.is(result.errors.length, 0);
-  assert.is(result.warnings.length, 1);
-  assert.match(result.warnings[0].text, 'Unclosed tag');
-  assert.is(result.warnings[0].location.lineText, '<div');
+  assert.ok(Array.isArray(result.diagnostics));
+  assert.is(result.diagnostics.length, 1);
+  assert.match(result.diagnostics[0].text, 'Unclosed tag');
 });
 
 test.run();
