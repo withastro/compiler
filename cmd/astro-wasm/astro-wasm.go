@@ -221,7 +221,8 @@ func Parse() interface{} {
 		transform.Transform(doc, transformOptions, h)
 
 		return vert.ValueOf(ParseResult{
-			AST: string(result.Output),
+			AST:         string(result.Output),
+			Diagnostics: h.Diagnostics(),
 		})
 	})
 }

@@ -31,8 +31,8 @@ const (
 )
 
 type DiagnosticMessage struct {
-	Severity DiagnosticSeverity  `js:"severity"`
-	Code     DiagnosticCode      `js:"code"`
+	Severity int                 `js:"severity"`
+	Code     int                 `js:"code"`
 	Location *DiagnosticLocation `js:"location"`
 	Hint     string              `js:"hint"`
 	Text     string              `js:"text"`
@@ -58,7 +58,7 @@ func (e *ErrorWithRange) Error() string {
 
 func (e *ErrorWithRange) ToMessage(location *DiagnosticLocation) DiagnosticMessage {
 	return DiagnosticMessage{
-		Code:     e.Code,
+		Code:     int(e.Code),
 		Text:     e.Error(),
 		Hint:     e.Hint,
 		Location: location,

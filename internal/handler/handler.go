@@ -106,7 +106,7 @@ func ErrorToMessage(h *Handler, severity loc.DiagnosticSeverity, err error) loc.
 			Length: rangedError.Range.Len,
 		}
 		message := rangedError.ToMessage(location)
-		message.Severity = severity
+		message.Severity = int(severity)
 		return message
 	default:
 		return loc.DiagnosticMessage{Text: err.Error()}
