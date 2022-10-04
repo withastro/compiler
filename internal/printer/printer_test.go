@@ -1131,6 +1131,15 @@ import Widget2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
+			name:   "script before elements",
+			source: `<script>Here</script><div></div>`,
+			want: want{
+				scripts:  []string{"{props:{},children:`Here`}"},
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sHere%s }`, BACKTICK, BACKTICK)}},
+				code:     `${$$maybeRenderHead($$result)}<div></div>`,
+			},
+		},
+		{
 			name:   "text after title expression",
 			source: `<title>a {expr} b</title>`,
 			want: want{
