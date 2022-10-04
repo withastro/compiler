@@ -2494,6 +2494,16 @@ const c = '\''
 			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></svg>`,
 			want:   []ASTNode{{Type: "element", Name: "svg", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "xmlns", Value: "http://www.w3.org/2000/svg"}, {Type: "attribute", Kind: "quoted", Name: "xmlns:xlink", Value: "http://www.w3.org/1999/xlink"}}, Children: []ASTNode{{Type: "element", Name: "rect", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "xlink:href", Value: "#id"}}}}}},
 		},
+		{
+			name:   "style before html",
+			source: `<style></style><html><body><h1>Hello world!</h1></body></html>`,
+			want:   []ASTNode{{Type: "element", Name: "style"}, {Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}},
+		},
+		{
+			name:   "style after html",
+			source: `<html><body><h1>Hello world!</h1></body></html><style></style>`,
+			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}, {Type: "element", Name: "style"}}}},
+		},
 	}
 
 	for _, tt := range tests {
@@ -2501,7 +2511,7 @@ const c = '\''
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.Parse(strings.NewReader(code))
+			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionEnableLiteral(true))
 
 			if err != nil {
 				t.Error(err)

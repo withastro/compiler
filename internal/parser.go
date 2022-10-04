@@ -53,6 +53,8 @@ type parser struct {
 	quirks bool
 	// fragment is whether the parser is parsing an HTML fragment.
 	fragment bool
+	// literal is whether the parser should handle exceptions literally.
+	literal bool
 	// context is the context element when parsing an HTML fragment
 	// (section 12.4).
 	context *Node
@@ -672,6 +674,10 @@ func beforeHTMLIM(p *parser) bool {
 				p.acknowledgeSelfClosingTag()
 			}
 			return true
+		}
+		if p.literal {
+			p.im = inLiteralIM
+			return false
 		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
@@ -2408,6 +2414,10 @@ func afterBodyIM(p *parser) bool {
 			return inBodyIM(p)
 		}
 	case EndTagToken:
+		if p.literal {
+			p.im = inLiteralIM
+			return false
+		}
 		if p.tok.DataAtom == a.Html {
 			if !p.fragment {
 				p.im = afterAfterBodyIM
@@ -2639,8 +2649,8 @@ func frontmatterIM(p *parser) bool {
 	}
 }
 
-// Handle expressions inside tables very literally
-func inExpressionTableIM(p *parser) bool {
+// Handle content very literally
+func inLiteralIM(p *parser) bool {
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
@@ -2673,7 +2683,7 @@ func inExpressionTableIM(p *parser) bool {
 func inExpressionIM(p *parser) bool {
 	if p.oe.contains(a.Table) {
 		p.clearActiveFormattingElements()
-		return inExpressionTableIM(p)
+		return inLiteralIM(p)
 	}
 	switch p.tok.Type {
 	case ErrorToken:
@@ -2962,6 +2972,12 @@ type ParseOption func(p *parser)
 func ParseOptionEnableScripting(enable bool) ParseOption {
 	return func(p *parser) {
 		p.scripting = enable
+	}
+}
+
+func ParseOptionEnableLiteral(enable bool) ParseOption {
+	return func(p *parser) {
+		p.literal = enable
 	}
 }
 
