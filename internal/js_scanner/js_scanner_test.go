@@ -384,6 +384,28 @@ export B from "./_types"
 export type C from "./_types"`,
 		},
 		{
+			name: "multi-line export",
+			source: `export interface Props
+{
+	foo: 'bar';
+}`,
+			want: `export interface Props
+{
+	foo: 'bar';
+}`,
+		},
+		{
+			name: "multi-line type export",
+			source: `export type Props =
+{
+	foo: 'bar';
+}`,
+			want: `export type Props =
+{
+	foo: 'bar';
+}`,
+		},
+		{
 			name: "Picture",
 			source: `// @ts-ignore
 import loader from 'virtual:image-loader';

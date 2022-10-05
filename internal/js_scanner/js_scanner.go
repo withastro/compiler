@@ -86,6 +86,10 @@ outer:
 					if isKeyword(nextValue) && next != js.FromToken {
 						continue
 					}
+					// ensure type declarations are defined or exported from package
+					if flags["type"] && !(flags["="] || flags["from"]) {
+						continue
+					}
 					if !foundIdent {
 						foundIdent = true
 					}
@@ -93,7 +97,7 @@ outer:
 						flags["&"] = false
 					}
 				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
-					if (flags["function"] || flags["=>"]) && !flags["{"] {
+					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
 						continue
 					}
 					if flags["&"] {
