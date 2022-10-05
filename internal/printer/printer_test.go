@@ -111,7 +111,7 @@ func TestPrinter(t *testing.T) {
 		},
 		{
 			name:   "head inside slot",
-			source: `<html><slot><head></head></html>`,
+			source: `<html><slot><head></head></slot></html>`,
 			want: want{
 				code: `<html>${$$renderSlot($$result,$$slots["default"],$$render` + BACKTICK + `<head>` + RENDER_HEAD_RESULT + `</head>` + BACKTICK + `)}</html>`,
 			},
