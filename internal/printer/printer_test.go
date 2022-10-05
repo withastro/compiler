@@ -523,6 +523,13 @@ import * as ns from '../components';
 			},
 		},
 		{
+			name:   "noscript only",
+			source: `<noscript><h1>Hello world</h1></noscript>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<noscript><h1>Hello world</h1></noscript>`,
+			},
+		},
+		{
 			name: "client:only component (default)",
 			source: `---
 import Component from '../components';
