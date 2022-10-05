@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 0.26.0
+
+### Minor Changes
+
+- 0be58ab: Improve sourcemap support for TSX output
+
+### Patch Changes
+
+- e065e29: Prevent head injection from removing script siblings
+
 ## 0.25.2
 
 ### Patch Changes
