@@ -198,7 +198,7 @@ func Parse() interface{} {
 		parseOptions := makeParseOptions(js.Value(args[1]))
 
 		var doc *astro.Node
-		doc, err := astro.Parse(strings.NewReader(source))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -217,7 +217,7 @@ func ConvertToTSX() interface{} {
 		transformOptions.Scope = "XXXXXX"
 
 		var doc *astro.Node
-		doc, err := astro.Parse(strings.NewReader(source))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
 			fmt.Println(err)
 		}
