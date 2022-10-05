@@ -33,7 +33,7 @@ interface Props {}
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 interface Props {}
 
 ;<Fragment>
@@ -53,7 +53,7 @@ import { Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 import { Props } from './somewhere';
 
 <Fragment>
@@ -73,7 +73,7 @@ import { MyComponent as Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 import { MyComponent as Props } from './somewhere';
 
 <Fragment>
@@ -93,7 +93,7 @@ import type { Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 import type { Props } from './somewhere';
 
 <Fragment>
@@ -113,7 +113,7 @@ type Props = {}
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 type Props = {}
 
 ;<Fragment>
@@ -133,7 +133,7 @@ interface Props<T> {}
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 interface Props<T> {}
 
 ;<Fragment>
@@ -153,7 +153,7 @@ interface Props<T extends Other<{ [key: string]: any }>> {}
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 interface Props<T extends Other<{ [key: string]: any }>> {}
 
 ;<Fragment>
@@ -173,7 +173,7 @@ interface Props<T extends { [key: string]: any }, P extends string ? { [key: str
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
 
 ;<Fragment>
@@ -193,7 +193,7 @@ interface Props<T extends Something<false> ? A : B, P extends string ? { [key: s
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
 
 ;<Fragment>
@@ -215,7 +215,7 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
 
 <div></div>
 `;
-  const output = `
+  const output = `declare const Astro: { props: Props } & Omit<import('astro').AstroGlobal, 'props'>
 interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<Tag> {
   as?: Tag;
 }
