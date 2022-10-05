@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	astro "github.com/withastro/compiler/internal"
-	"github.com/withastro/compiler/internal/handler"
 	"golang.org/x/net/html/atom"
 )
 
@@ -88,7 +87,7 @@ func TestScopeHTML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodes, err := astro.ParseFragment(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, &handler.Handler{})
+			nodes, err := astro.ParseFragment(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()})
 			if err != nil {
 				t.Error(err)
 			}

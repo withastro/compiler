@@ -130,7 +130,7 @@ func TestTransformScoping(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source), &handler.Handler{})
+			doc, err := astro.Parse(strings.NewReader(tt.source))
 			if err != nil {
 				t.Error(err)
 			}
@@ -210,7 +210,7 @@ func TestFullTransform(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source), &handler.Handler{})
+			doc, err := astro.Parse(strings.NewReader(tt.source))
 			if err != nil {
 				t.Error(err)
 			}
@@ -258,7 +258,7 @@ func TestTransformTrailingSpace(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source), &handler.Handler{})
+			doc, err := astro.Parse(strings.NewReader(tt.source))
 			if err != nil {
 				t.Error(err)
 			}
@@ -371,7 +371,7 @@ func TestCompactTransform(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source), &handler.Handler{})
+			doc, err := astro.Parse(strings.NewReader(tt.source))
 			if err != nil {
 				t.Error(err)
 			}
