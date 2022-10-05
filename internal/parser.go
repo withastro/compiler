@@ -799,10 +799,6 @@ func inHeadIM(p *parser) bool {
 			}
 			return true
 		case a.Noscript:
-			if p.scripting {
-				p.parseGenericRawTextElement()
-				return true
-			}
 			p.addElement()
 			p.im = inHeadNoscriptIM
 			// Don't let the tokenizer go into raw text mode when scripting is disabled.
@@ -961,6 +957,11 @@ func inHeadNoscriptIM(p *parser) bool {
 			p.tokenizer.NextIsNotRawText()
 			// Ignore the token.
 			return true
+		default:
+			// #519: handle any content inside <noscript>
+			p.im = inLiteralIM
+			p.originalIM = inHeadIM
+			return false
 		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
@@ -980,9 +981,6 @@ func inHeadNoscriptIM(p *parser) bool {
 		return inHeadIM(p)
 	}
 	p.oe.pop()
-	if p.top().DataAtom != a.Head {
-		panic("html: the new current node will be a head element.")
-	}
 	p.im = inHeadIM
 	return p.tok.DataAtom == a.Noscript
 }
@@ -2997,7 +2995,6 @@ func ParseWithOptions(r io.Reader, opts ...ParseOption) (*Node, error) {
 			Type:                DocumentNode,
 			HydrationDirectives: make(map[string]bool),
 		},
-		scripting:        true,
 		framesetOK:       true,
 		im:               initialIM,
 		frontmatterState: FrontmatterInitial,
