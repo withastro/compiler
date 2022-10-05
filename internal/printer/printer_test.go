@@ -1741,6 +1741,19 @@ import ProductPageContent from '../../components/ProductPageContent.jsx';`,
 			},
 		},
 		{
+			name: "import.meta",
+			source: `---
+const components = import.meta.glob("../components/*.astro", {
+  import: 'default'
+});
+---`,
+			want: want{
+				frontmatter: []string{"", `const components = import.meta.glob("../components/*.astro", {
+  import: 'default'
+});`},
+			},
+		},
+		{
 			name:   "doctype",
 			source: `<!DOCTYPE html><div/>`,
 			want: want{

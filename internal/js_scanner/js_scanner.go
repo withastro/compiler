@@ -599,6 +599,11 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					break
 				}
 
+				// do not hoist `{ import: "value" }`
+				if next == js.ColonToken && len(specifier) == 0 {
+					break
+				}
+
 				// if this is import.meta.*, ignore (watch for first dot)
 				if next == js.DotToken && len(specifier) == 0 {
 					break
