@@ -66,7 +66,7 @@ func renderTsx(p *printer, n *Node) {
 	if n.Type == DocumentNode {
 		props := js_scanner.GetPropsType([]byte(p.sourcetext))
 		if props.Ident != "Record<string, any>" {
-			p.printf(`declare const Astro: { props: %s } & Omit<import('astro').AstroGlobal, 'props'>`, props.Ident)
+			p.printf(`declare const Astro: import('astro').AstroGlobal<%s>`, props.Ident)
 		}
 		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
