@@ -65,6 +65,15 @@ func getTextType(n *astro.Node) TextType {
 func renderTsx(p *printer, n *Node) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
+		props := js_scanner.GetPropsType([]byte(p.sourcetext))
+		if props.Ident != "Record<string, any>" {
+			p.printf(`/**
+ * Astro global available in all contexts in .astro files
+ *
+ * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
+*/
+declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
+		}
 		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
@@ -100,7 +109,6 @@ func renderTsx(p *printer, n *Node) {
 		if hasChildren {
 			p.print("</Fragment>\n")
 		}
-		props := js_scanner.GetPropsType(p.output)
 		componentName := getTSXComponentName(p.opts.Filename)
 
 		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}", componentName, props.Statement, props.Ident, props.Generics))
