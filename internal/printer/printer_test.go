@@ -290,6 +290,7 @@ const b = 0;
 <div></div>`,
 			want: want{
 				frontmatter: []string{"", `const a = 0;
+
 const b = 0;`},
 				getStaticPaths: `export async function getStaticPaths() {
 	return { paths: [] }
@@ -306,6 +307,19 @@ mod.export();
 			want: want{
 				frontmatter: []string{``, `mod.export();`},
 				code:        `${$$maybeRenderHead($$result)}<div></div>`,
+			},
+		},
+		{
+			name: "export comments",
+			source: `---
+//
+export const foo = 0
+/*
+*/
+---`,
+			want: want{
+				frontmatter:    []string{"", "//\n/*\n*/"},
+				getStaticPaths: "export const foo = 0",
 			},
 		},
 		{

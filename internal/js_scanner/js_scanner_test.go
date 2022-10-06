@@ -475,6 +475,14 @@ export interface RemoteImageProps extends TransformOptions, ImageAttributes {
 }
 export type Props = LocalImageProps | RemoteImageProps;`,
 		},
+		{
+			name: "comments",
+			source: `//
+export const foo = 0
+/*
+*/`,
+			want: `export const foo = 0`,
+		},
 	}
 
 	for _, tt := range tests {

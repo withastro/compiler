@@ -66,10 +66,7 @@ outer:
 			flags := make(map[string]bool, 0)
 			foundIdent := false
 			foundSemicolonOrLineTerminator := false
-			start := 0
-			if i > 0 {
-				start = i - 1
-			}
+			start := i
 			i += len(value)
 			for {
 				next, nextValue := l.Next()
