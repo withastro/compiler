@@ -15,25 +15,18 @@ const { MyComponent } = components;
   </body>
 </html>`;
 
-let error: Error;
+let result;
 test.before(async () => {
-  try {
-    await transform(FIXTURE, {
-      pathname: '/src/components/Cool.astro',
-    });
-  } catch (err) {
-    error = err;
-  }
+  result = await transform(FIXTURE, {
+    pathname: '/src/components/Cool.astro',
+  });
 });
 
 test('got an error because client:only component not found import', () => {
-  assert.ok(error, 'paniced');
+  assert.ok(Array.isArray(result.diagnostics));
+  assert.is(result.diagnostics.length, 1);
+  assert.is(result.diagnostics[0].text, 'Unable to find matching import statement for client:only component');
+  assert.is(FIXTURE.split('\n')[result.diagnostics[0].location.line - 1], `    <MyComponent client:only />`);
 });
-
-/*
-test('exports named component', () => {
-  assert.match(result.code, 'export default $$Cool', 'Expected output to contain named export');
-});
-*/
 
 test.run();

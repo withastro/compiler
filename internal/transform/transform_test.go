@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 )
 
 func TestTransformScoping(t *testing.T) {
@@ -134,7 +135,7 @@ func TestTransformScoping(t *testing.T) {
 				t.Error(err)
 			}
 			ExtractStyles(doc)
-			Transform(doc, TransformOptions{Scope: "XXXXXX"})
+			Transform(doc, TransformOptions{Scope: "XXXXXX"}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()
 			if tt.want != got {
@@ -216,7 +217,7 @@ func TestFullTransform(t *testing.T) {
 			ExtractStyles(doc)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, TransformOptions{})
+			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {
@@ -264,7 +265,7 @@ func TestTransformTrailingSpace(t *testing.T) {
 			ExtractStyles(doc)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, TransformOptions{})
+			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := b.String()
 			if tt.want != got {
@@ -379,7 +380,7 @@ func TestCompactTransform(t *testing.T) {
 			doc.Styles = make([]*astro.Node, 0)
 			Transform(doc, TransformOptions{
 				Compact: true,
-			})
+			}, &handler.Handler{})
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {

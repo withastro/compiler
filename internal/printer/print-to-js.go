@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	. "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -42,18 +43,12 @@ import (
 // text node would become a tree containing <html>, <head> and <body> elements.
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
-func PrintToJS(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
+func PrintToJS(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
-		opts:    opts,
-		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
-	}
-	return printToJs(p, n, cssLen, opts)
-}
-
-func PrintToJSFragment(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
-	p := &printer{
-		opts:    opts,
-		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+		sourcetext: sourcetext,
+		opts:       opts,
+		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+		handler:    h,
 	}
 	return printToJs(p, n, cssLen, opts)
 }
@@ -93,11 +88,12 @@ const whitespace = " \t\r\n\f"
 
 // Returns true if the expression only contains a comment block (e.g. {/* a comment */})
 func expressionOnlyHasCommentBlock(n *Node) bool {
+	clean, _ := removeComments(n.FirstChild.Data)
 	return n.FirstChild.NextSibling == nil &&
 		n.FirstChild.Type == TextNode &&
 		// removeComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* before iterating
 		strings.HasPrefix(strings.TrimLeft(n.FirstChild.Data, whitespace), "/*") &&
-		len(removeComments(n.FirstChild.Data)) == 0
+		len(clean) == 0
 }
 
 func render1(p *printer, n *Node, opts RenderOptions) {
@@ -394,7 +390,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(`"` + escapeDoubleQuote(a.Val) + `"`)
 					slotted = true
 				default:
-					panic("slot[name] must be a static string")
+					p.handler.AppendError(&loc.ErrorWithRange{
+						Code:  loc.ERROR_UNSUPPORTED_SLOT_ATTRIBUTE,
+						Text:  "slot[name] must be a static string",
+						Range: loc.Range{Loc: a.ValLoc, Len: len(a.Val)},
+					})
 				}
 			}
 			if !slotted {
@@ -508,7 +508,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							} else if a.Type == ExpressionAttribute {
 								slotProp = fmt.Sprintf(`[%s]`, a.Val)
 							} else {
-								panic(`unknown slot attribute type`)
+								p.handler.AppendError(&loc.ErrorWithRange{
+									Code:  loc.ERROR_UNSUPPORTED_SLOT_ATTRIBUTE,
+									Text:  "slot[name] must be a static string",
+									Range: loc.Range{Loc: a.ValLoc, Len: len(a.Val)},
+								})
 							}
 						}
 					}

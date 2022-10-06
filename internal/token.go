@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
 	"golang.org/x/net/html/atom"
 )
@@ -294,6 +295,8 @@ type Tokenizer struct {
 	convertNUL bool
 	// allowCDATA is whether CDATA sections are allowed in the current context.
 	allowCDATA bool
+
+	handler *handler.Handler
 }
 
 // AllowCDATA sets whether or not the tokenizer recognizes <![CDATA[foo]]> as
@@ -703,7 +706,8 @@ scriptDataDoubleEscapeEnd:
 // readHTMLComment reads the next comment token starting with "<!--". The opening
 // "<!--" has already been consumed.
 func (z *Tokenizer) readHTMLComment() {
-	z.data.Start = z.raw.End
+	start := z.raw.End
+	z.data.Start = start
 	defer func() {
 		if z.data.End < z.data.Start {
 			// It's a comment with no data, like <!-->.
@@ -713,6 +717,16 @@ func (z *Tokenizer) readHTMLComment() {
 	for dashCount := 2; ; {
 		c := z.readByte()
 		if z.err != nil {
+			if z.err == io.EOF {
+				z.handler.AppendWarning(&loc.ErrorWithRange{
+					Code: loc.WARNING_UNTERMINATED_HTML_COMMENT,
+					Text: `Unterminated comment`,
+					Range: loc.Range{
+						Loc: loc.Loc{Start: start},
+						Len: 4,
+					},
+				})
+			}
 			// Ignore up to two dashes at EOF.
 			if dashCount > 2 {
 				dashCount = 2
@@ -823,6 +837,7 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 	case '*':
 		// look for "*/"
 		for {
+			start := z.data.Start
 			z.readUntilChar([]byte{'*'})
 			c = z.readByte()
 			if c == '/' {
@@ -830,7 +845,15 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 				return
 			}
 			if z.err == io.EOF {
-				panic("unterminated comment")
+				z.handler.AppendError(&loc.ErrorWithRange{
+					Code: loc.ERROR_UNTERMINATED_JS_COMMENT,
+					Text: `Unterminated comment`,
+					Range: loc.Range{
+						Loc: loc.Loc{Start: start},
+						Len: 2,
+					},
+				})
+				return
 			}
 		}
 	// RegExp
@@ -1077,6 +1100,18 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 	// Read the tag name and attribute key/value pairs.
 	z.readTagName()
 	if z.skipWhiteSpace(); z.err != nil {
+		if z.err == io.EOF {
+			start := z.prevToken.Loc.Start
+			end := z.data.Start
+			z.handler.AppendWarning(&loc.ErrorWithRange{
+				Code: loc.WARNING_UNCLOSED_HTML_TAG,
+				Text: `Unclosed tag`,
+				Range: loc.Range{
+					Loc: loc.Loc{Start: start},
+					Len: end - start,
+				},
+			})
+		}
 		return
 	}
 	for {
@@ -1471,12 +1506,18 @@ loop:
 			tokenType = CommentToken
 		default:
 			raw := z.Raw()
+			trimmed := []byte(strings.TrimLeftFunc(string(raw), unicode.IsSpace))
 			// Error: encountered an attempted use of <> syntax with attributes, like `< slot="named">Hello world!</>`
-			if len(raw) > 1 && bytes.HasPrefix(raw, []byte{'<'}) {
+			if len(raw) > 1 && bytes.HasPrefix(trimmed, []byte{'<'}) {
 				element := bytes.Split(z.Buffered(), []byte{'>'})
 				incorrect := fmt.Sprintf("< %s>", element[0])
 				correct := fmt.Sprintf("<Fragment %s>", element[0])
-				panic(fmt.Sprintf("Unable to assign attributes when using <> Fragment shorthand syntax!\n\nTo fix this, please change\n  %s\nto use the longhand Fragment syntax:\n  %s\n", incorrect, correct))
+				z.handler.AppendError(&loc.ErrorWithRange{
+					Code:  loc.ERROR_FRAGMENT_SHORTHAND_ATTRS,
+					Text:  `Unable to assign attributes when using <> Fragment shorthand syntax!`,
+					Range: loc.Range{Loc: loc.Loc{Start: z.raw.End - 2}, Len: 3 + len(element[0])},
+					Hint:  fmt.Sprintf("To fix this, please change %s to use the longhand Fragment syntax: %s", incorrect, correct),
+				})
 			}
 			// Reconsume the current character.
 			z.raw.End--

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -23,6 +24,7 @@ type printer struct {
 	opts               transform.TransformOptions
 	output             []byte
 	builder            sourcemap.ChunkBuilder
+	handler            *handler.Handler
 	hasFuncPrelude     bool
 	hasInternalImports bool
 	hasCSSImports      bool
@@ -264,7 +266,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
 			p.print(`...(` + strings.TrimSpace(a.Key) + `)`)
 		case astro.ShorthandAttribute:
-			withoutComments := removeComments(a.Key)
+			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
 				lastAttributeSkipped = true
 				continue
@@ -375,7 +377,7 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 			p.printf(`,"%s",{"class":"astro-%s"})}`, strings.TrimSpace(attr.Key), p.opts.Scope)
 		}
 	case astro.ShorthandAttribute:
-		withoutComments := removeComments(attr.Key)
+		withoutComments, _ := removeComments(attr.Key)
 		if len(withoutComments) == 0 {
 			return
 		}
@@ -435,8 +437,8 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	copy(unfoundconly, doc.ClientOnlyComponentNodes)
 
 	modCount := 1
-	loc, statement := js_scanner.NextImportStatement(source, 0)
-	for loc != -1 {
+	l, statement := js_scanner.NextImportStatement(source, 0)
+	for l != -1 {
 		isClientOnlyImport := false
 	component_loop:
 		for _, n := range doc.ClientOnlyComponentNodes {
@@ -512,17 +514,17 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 				modCount++
 			}
 		}
-		loc, statement = js_scanner.NextImportStatement(source, loc)
+		l, statement = js_scanner.NextImportStatement(source, l)
 	}
 	if len(unfoundconly) > 0 {
-		componentnames := ""
-		for cindex, n := range unfoundconly {
-			if cindex > 0 {
-				componentnames += ", "
-			}
-			componentnames += n.Data
+		for _, n := range unfoundconly {
+			p.handler.AppendError(&loc.ErrorWithRange{
+				Code:  loc.ERROR_FRAGMENT_SHORTHAND_ATTRS,
+				Text:  "Unable to find matching import statement for client:only component",
+				Hint:  "A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.",
+				Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+			})
 		}
-		panic(fmt.Sprintf("Unable to find matching import statements for the client:only component: %s. A client:only component must match an import statement, either the default export or a named exported, and can't be derived from a variable in the frontmatter.", componentnames))
 	}
 	// If we added imports, add a line break.
 	if modCount > 1 {

@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	a "golang.org/x/net/html/atom"
@@ -26,11 +27,11 @@ type TransformOptions struct {
 	StaticExtraction bool
 }
 
-func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
+func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	definedVars := GetDefineVars(doc.Styles)
 	walk(doc, func(n *astro.Node) {
-		ExtractScript(doc, n, &opts)
+		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
 			ScopeElement(n, opts)
@@ -39,7 +40,7 @@ func Transform(doc *astro.Node, opts TransformOptions) *astro.Node {
 			AddDefineVars(n, definedVars)
 		}
 	})
-	NormalizeSetDirectives(doc)
+	NormalizeSetDirectives(doc, h)
 
 	// Important! Remove scripts from original location *after* walking the doc
 	addedHeadRenderingInsertion := false
@@ -97,7 +98,7 @@ func ExtractStyles(doc *astro.Node) {
 	}
 }
 
-func NormalizeSetDirectives(doc *astro.Node) {
+func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 	var nodes []*astro.Node
 	var directives []*astro.Attribute
 	walk(doc, func(n *astro.Node) {
@@ -121,8 +122,8 @@ func NormalizeSetDirectives(doc *astro.Node) {
 				Data:       "astro:expression",
 				Expression: true,
 			}
-			loc := make([]loc.Loc, 1)
-			loc = append(loc, directive.ValLoc)
+			l := make([]loc.Loc, 1)
+			l = append(l, directive.ValLoc)
 			data := directive.Val
 			if directive.Key == "set:html" {
 				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
@@ -130,7 +131,7 @@ func NormalizeSetDirectives(doc *astro.Node) {
 			expr.AppendChild(&astro.Node{
 				Type: astro.TextNode,
 				Data: data,
-				Loc:  loc,
+				Loc:  l,
 			})
 
 			shouldWarn := false
@@ -142,7 +143,12 @@ func NormalizeSetDirectives(doc *astro.Node) {
 				n.RemoveChild(c)
 			}
 			if shouldWarn {
-				fmt.Printf("<%s> uses the \"%s\" directive, but has child nodes which will be overwritten. Remove the child nodes to suppress this warning.\n", n.Data, directive.Key)
+				h.AppendWarning(&loc.ErrorWithRange{
+					Code:  loc.WARNING_SET_WITH_CHILDREN,
+					Text:  fmt.Sprintf("%s directive will overwrite child nodes.", directive.Key),
+					Range: loc.Range{Loc: directive.KeyLoc, Len: len(directive.Key)},
+					Hint:  "Remove the child nodes to suppress this warning.",
+				})
 			}
 			n.AppendChild(expr)
 		}
@@ -251,7 +257,7 @@ func collapseWhitespace(doc *astro.Node) {
 	})
 }
 
-func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
+func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *handler.Handler) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
 		if HasSetDirective(n) || HasInlineDirective(n) {
 			return
@@ -268,13 +274,22 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 			shouldAdd := true
 			for _, attr := range n.Attr {
 				if attr.Key == "hoist" {
-					fmt.Printf("%s: <script hoist> is no longer needed. You may remove the `hoist` attribute.\n", opts.Filename)
+					h.AppendWarning(&loc.ErrorWithRange{
+						Code:  loc.WARNING_DEPRECATED_DIRECTIVE,
+						Text:  "<script hoist> is no longer needed. You may remove the `hoist` attribute.",
+						Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+					})
 				}
 				if attr.Key == "src" {
 					if attr.Type == astro.ExpressionAttribute {
 						if opts.StaticExtraction {
 							shouldAdd = false
-							fmt.Printf("%s: <script> uses the expression {%s} on the src attribute and will be ignored. Use a string literal on the src attribute instead.\n", opts.Filename, attr.Val)
+							h.AppendWarning(&loc.ErrorWithRange{
+								Code:  loc.WARNING_UNSUPPORTED_EXPRESSION,
+								Text:  "<script> uses an expression for the src attribute and will be ignored.",
+								Hint:  fmt.Sprintf("Replace src={%s} with a string literal", attr.Val),
+								Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+							})
 						}
 						break
 					}
@@ -288,7 +303,11 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 		} else {
 			for _, attr := range n.Attr {
 				if strings.HasPrefix(attr.Key, "client:") {
-					fmt.Printf("%s: <script> does not need the %s directive and is always added as a module script.\n", opts.Filename, attr.Key)
+					h.AppendWarning(&loc.ErrorWithRange{
+						Code:  loc.WARNING_IGNORED_DIRECTIVE,
+						Text:  fmt.Sprintf("<script> does not need the %s directive and is always added as a module script.", attr.Key),
+						Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+					})
 				}
 			}
 		}

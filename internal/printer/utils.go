@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 
@@ -87,7 +88,7 @@ func encodeDoubleQuote(str string) string {
 }
 
 // Remove comment blocks from string (e.g. "/* a comment */aProp" => "aProp")
-func removeComments(input string) string {
+func removeComments(input string) (string, error) {
 	var (
 		sb        = strings.Builder{}
 		inComment = false
@@ -106,8 +107,8 @@ func removeComments(input string) string {
 	}
 
 	if inComment {
-		panic("unterminated comment")
+		return "", errors.New("unterminated comment")
 	}
 
-	return strings.TrimSpace(sb.String())
+	return strings.TrimSpace(sb.String()), nil
 }
