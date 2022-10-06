@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 0.26.1
+
+### Patch Changes
+
+- 920898c: Handle edge case with `noscript` tags
+- 8ee78a6: handle slots that contains the head element
+- 244e43e: Do not hoist import inside object
+- b8cd954: Fix edge case with line comments and export hoisting
+- 52ebfb7: Fix parse/tsx output to gracefully handle invalid HTML (style outside of body, etc)
+- 884efc6: Fix edge case with multi-line export hoisting
+
 ## 0.26.0
 
 ### Minor Changes
