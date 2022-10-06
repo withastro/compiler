@@ -2,6 +2,13 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 import { convertToTSX } from '@astrojs/compiler';
 
+const PREFIX = `/**
+ * Astro global available in all contexts in .astro files
+ *
+ * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
+*/
+declare const Astro: Readonly<import('astro').AstroGlobal<Props>>`;
+
 test('no props', async () => {
   const input = `<div></div>`;
   const output = `<Fragment>
@@ -33,7 +40,7 @@ interface Props {}
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 interface Props {}
 
 ;<Fragment>
@@ -53,7 +60,7 @@ import { Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 import { Props } from './somewhere';
 
 <Fragment>
@@ -73,7 +80,7 @@ import { MyComponent as Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 import { MyComponent as Props } from './somewhere';
 
 <Fragment>
@@ -93,7 +100,7 @@ import type { Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 import type { Props } from './somewhere';
 
 <Fragment>
@@ -113,7 +120,7 @@ type Props = {}
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 type Props = {}
 
 ;<Fragment>
@@ -133,7 +140,7 @@ interface Props<T> {}
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 interface Props<T> {}
 
 ;<Fragment>
@@ -153,7 +160,7 @@ interface Props<T extends Other<{ [key: string]: any }>> {}
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 interface Props<T extends Other<{ [key: string]: any }>> {}
 
 ;<Fragment>
@@ -173,7 +180,7 @@ interface Props<T extends { [key: string]: any }, P extends string ? { [key: str
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
 
 ;<Fragment>
@@ -193,7 +200,7 @@ interface Props<T extends Something<false> ? A : B, P extends string ? { [key: s
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
 
 ;<Fragment>
@@ -215,7 +222,7 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
 
 <div></div>
 `;
-  const output = `declare const Astro: import('astro').AstroGlobal<Props>
+  const output = `${PREFIX}
 interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<Tag> {
   as?: Tag;
 }

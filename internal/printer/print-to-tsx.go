@@ -66,7 +66,12 @@ func renderTsx(p *printer, n *Node) {
 	if n.Type == DocumentNode {
 		props := js_scanner.GetPropsType([]byte(p.sourcetext))
 		if props.Ident != "Record<string, any>" {
-			p.printf(`declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
+			p.printf(`/**
+ * Astro global available in all contexts in .astro files
+ *
+ * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
+*/
+declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 		}
 		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
