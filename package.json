@@ -18,14 +18,10 @@
     "test:stress": "tsm packages/compiler/test/stress/index.ts",
     "test:ci": "pnpm run test && pnpm run test:stress"
   },
-  "packageManager": "pnpm@7.0.1",
+  "packageManager": "pnpm@7.13.4",
   "workspaces": [
     "packages/*"
   ],
-  "volta": {
-    "node": "14.19.3",
-    "npm": "7.11.2"
-  },
   "devDependencies": {
     "@changesets/cli": "^2.16.0",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
