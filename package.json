@@ -14,8 +14,8 @@
     "format": "prettier -w .",
     "prerelease": "pnpm run build:compiler",
     "release": "changeset publish",
-    "test": "tsm node_modules/uvu/bin.js packages test -i utils -i stress",
-    "test:stress": "tsm packages/compiler/test/stress/index.ts",
+    "test": "tsx node_modules/uvu/bin.js packages test -i utils -i stress",
+    "test:stress": "tsx packages/compiler/test/stress/index.ts",
     "test:ci": "pnpm run test && pnpm run test:stress"
   },
   "packageManager": "pnpm@7.13.4",
@@ -31,7 +31,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "^2.7.1",
     "sass": "^1.55.0",
-    "tsm": "^2.2.1",
+    "tsx": "^3.10.1",
     "typescript": "~4.8.4",
     "uvu": "^0.5.6"
   },
