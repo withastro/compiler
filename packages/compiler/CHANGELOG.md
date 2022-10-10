@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.27.1
+
+### Patch Changes
+
+- cc9f174: fixed regression caused by #546
+
 ## 0.27.0
 
 ### Minor Changes
