@@ -406,6 +406,27 @@ export type C from "./_types"`,
 }`,
 		},
 		{
+			name: "multi-line type export with multiple exports",
+			source: `export type Theme = 'light' | 'dark';
+
+export type Props =
+{
+	theme: Theme;
+};
+
+export interface Foo {
+	bar: string;
+}`,
+			want: `export type Theme = 'light' | 'dark';
+export type Props =
+{
+	theme: Theme;
+}
+export interface Foo {
+	bar: string;
+}`,
+		},
+		{
 			name: "Picture",
 			source: `// @ts-ignore
 import loader from 'virtual:image-loader';

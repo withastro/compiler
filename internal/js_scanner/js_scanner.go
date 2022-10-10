@@ -83,21 +83,17 @@ outer:
 					if isKeyword(nextValue) && next != js.FromToken {
 						continue
 					}
-					// ensure type declarations are defined or exported from package
-					if flags["type"] && !(flags["="] || flags["from"]) {
+					if string(nextValue) == "type" {
 						continue
 					}
 					if !foundIdent {
 						foundIdent = true
 					}
-					if flags["&"] {
-						flags["&"] = false
-					}
 				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
 					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
 						continue
 					}
-					if flags["&"] {
+					if flags["&"] || flags["="] {
 						continue
 					}
 					foundSemicolonOrLineTerminator = true
@@ -111,6 +107,21 @@ outer:
 						pairs['(']--
 					} else if nextValue[0] == ']' {
 						pairs['[']--
+					}
+				} else {
+					// Sometimes, exports are written in multiple lines, like
+					//
+					// export const foo =
+					//   [...]
+					// export type Props = ThisProps &
+					// 	 SomeWeirdType<{ thatsSuperLong: SoItEndsUpFormattedLikeThis }>
+					//
+					// So, we omit the semicolon check if the line ends up with one of these
+					if flags["&"] && nextValue[0] != '&' {
+						flags["&"] = false
+					}
+					if flags["="] && nextValue[0] != '=' {
+						flags["="] = false
 					}
 				}
 
