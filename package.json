@@ -14,30 +14,26 @@
     "format": "prettier -w .",
     "prerelease": "pnpm run build:compiler",
     "release": "changeset publish",
-    "test": "tsm node_modules/uvu/bin.js packages test -i utils -i stress",
-    "test:stress": "tsm packages/compiler/test/stress/index.ts",
+    "test": "tsx node_modules/uvu/bin.js packages test -i utils -i stress",
+    "test:stress": "tsx packages/compiler/test/stress/index.ts",
     "test:ci": "pnpm run test && pnpm run test:stress"
   },
-  "packageManager": "pnpm@7.0.1",
+  "packageManager": "pnpm@7.13.4",
   "workspaces": [
     "packages/*"
   ],
-  "volta": {
-    "node": "14.19.3",
-    "npm": "7.11.2"
-  },
   "devDependencies": {
-    "@changesets/cli": "^2.16.0",
-    "@typescript-eslint/eslint-plugin": "^5.1.0",
-    "@typescript-eslint/parser": "^5.1.0",
-    "eslint": "^8.0.1",
+    "@changesets/cli": "^2.25.0",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "@typescript-eslint/parser": "^5.39.0",
+    "eslint": "^8.25.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "prettier": "^2.4.1",
-    "sass": "^1.43.3",
-    "tsm": "^2.2.1",
-    "typescript": "^4.4.3",
-    "uvu": "^0.5.3"
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1",
+    "sass": "^1.55.0",
+    "tsx": "^3.10.1",
+    "typescript": "~4.8.4",
+    "uvu": "^0.5.6"
   },
   "engines": {
     "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
