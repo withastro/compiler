@@ -60,7 +60,7 @@ walk(result.ast, (node) => {
 
 ### VSCode / CodeSpaces
 
-A `devcontianer` configuration is available for use with VSCode's [Remote Development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) and GitHub CodeSpaces.
+A `devcontainer` configuration is available for use with VSCode's [Remote Development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) and GitHub CodeSpaces.
 
 ## Contributing
 
