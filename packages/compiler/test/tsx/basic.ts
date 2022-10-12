@@ -143,4 +143,23 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('unclosed tags II', async () => {
+  const input = `---
+const myMarkdown = await import('../content/post.md');
+---
+
+<myMarkdown.
+`;
+  const output = `
+const myMarkdown = await import('../content/post.md');
+
+<Fragment>
+<myMarkdown.
+
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test.run();

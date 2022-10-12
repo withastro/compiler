@@ -1053,7 +1053,7 @@ func (z *Tokenizer) readStartTag() TokenType {
 // readUnclosedTag reads up until an unclosed tag is implicitly closed.
 // Without this function, the tokenizer could get stuck in infinite loops if a
 // user is in the middle of typing
-func (z *Tokenizer) readUnclosedTag() {
+func (z *Tokenizer) readUnclosedTag() bool {
 	buf := z.buf[z.data.Start:]
 	var close int
 	if z.fm == FrontmatterOpen {
@@ -1072,18 +1072,19 @@ func (z *Tokenizer) readUnclosedTag() {
 			c := z.readByte()
 			if z.err != nil {
 				z.data.End = z.raw.End
-				return
+				return true
 			}
 
 			switch c {
 			case ' ', '\n', '\r', '\t', '\f':
 				// Safely read up until a whitespace character
-				z.data.End = z.raw.End - 1
-				return
+				z.data.End = z.raw.End
+				return true
 			}
 		}
-		return
+		return false
 	}
+	return false
 }
 
 // readTag reads the next tag token and its attributes. If saveAttr, those
@@ -1536,7 +1537,12 @@ loop:
 
 		// If necessary, implicity close an unclosed tag to bail out before
 		// an infinite loop occurs. Helpful for IDEs which compile as user types.
-		if z.readUnclosedTag(); z.err != nil {
+		if x := z.readUnclosedTag(); x {
+			z.handler.AppendWarning(&loc.ErrorWithRange{
+				Code:  loc.ERROR_FRAGMENT_SHORTHAND_ATTRS,
+				Text:  `Unclosed tag`,
+				Range: loc.Range{Loc: loc.Loc{Start: z.raw.Start}, Len: z.raw.End - z.raw.Start},
+			})
 			break loop
 		}
 
