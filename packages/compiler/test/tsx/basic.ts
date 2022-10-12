@@ -76,6 +76,26 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('add trailing semicolon to frontmatter II', async () => {
+  const input = `
+---
+const { hello } = Astro.props
+---
+
+<div class={hello}></div>
+`;
+  const output = `
+const { hello } = Astro.props
+
+;<Fragment>
+<div class={hello}></div>
+
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test('moves attributes with dots in them to spread', async () => {
   const input = `<div x-on:keyup.shift.enter="alert('Astro')" name="value"></div>`;
   const output = `<Fragment>
@@ -100,6 +120,23 @@ test('template literal attribute', async () => {
   const input = `<div class=\`\${hello}\`></div>`;
   const output = `<Fragment>
 <div class={\`\${hello}\`}></div>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+test('unclosed tags', async () => {
+  const input = `---
+const myMarkdown = await import('../content/post.md');
+---
+
+<myMarkdown.`;
+  const output = `
+const myMarkdown = await import('../content/post.md');
+
+<Fragment>
+<myMarkdown.
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });

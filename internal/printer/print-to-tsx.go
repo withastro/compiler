@@ -3,7 +3,6 @@ package printer
 import (
 	"fmt"
 	"strings"
-	"unicode"
 
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
@@ -84,7 +83,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 				if len(buf) > 1 {
 					char := rune(buf[len(buf)-1:][0])
 					// If the existing buffer ends with a punctuation character, we need a `;`
-					if !unicode.IsLetter(char) && char != ';' {
+					if char != ';' {
 						p.addNilSourceMapping()
 						p.print(";")
 					}
