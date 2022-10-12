@@ -256,9 +256,17 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print("=")
-			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
-			endLoc = a.ValLoc.Start + len(a.Val)
+			if len(a.Val) > 0 {
+				p.addSourceMapping(loc.Loc{Start: eqStart + 1})
+				p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
+				endLoc = a.ValLoc.Start + len(a.Val)
+			} else {
+				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start - 1})
+				p.print(`"`)
+				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start})
+				p.print(`"`)
+				endLoc = a.ValLoc.Start
+			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
 			endLoc = a.KeyLoc.Start + len(a.Key)

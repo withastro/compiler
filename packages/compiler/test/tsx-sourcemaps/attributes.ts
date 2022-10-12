@@ -14,4 +14,16 @@ test('shorthand attribute', async () => {
   });
 });
 
+test('empty quoted attribute', async () => {
+  const input = `<div src="" />`;
+
+  const open = await testSourcemap(input, '"');
+  assert.equal(open, {
+    source: 'index.astro',
+    line: 1,
+    column: 9,
+    name: null,
+  });
+});
+
 test.run();
