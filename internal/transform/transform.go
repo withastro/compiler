@@ -442,7 +442,7 @@ func resolveIdForMatch(match *ImportMatch, opts *TransformOptions) string {
 }
 
 func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatement) bool) {
-	if doc.FirstChild.Type == astro.FrontmatterNode {
+	if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
 		source := []byte(doc.FirstChild.FirstChild.Data)
 		loc, statement := js_scanner.NextImportStatement(source, 0)
 		for loc != -1 {
