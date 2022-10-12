@@ -1538,12 +1538,8 @@ loop:
 		// If necessary, implicity close an unclosed tag to bail out before
 		// an infinite loop occurs. Helpful for IDEs which compile as user types.
 		if x := z.readUnclosedTag(); x {
-			z.handler.AppendWarning(&loc.ErrorWithRange{
-				Code:  loc.ERROR_FRAGMENT_SHORTHAND_ATTRS,
-				Text:  `Unclosed tag`,
-				Range: loc.Range{Loc: loc.Loc{Start: z.raw.Start}, Len: z.raw.End - z.raw.Start},
-			})
-			break loop
+			z.tt = TextToken
+			return z.tt
 		}
 
 		switch tokenType {
