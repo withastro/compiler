@@ -420,6 +420,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 
 	if len(n.Loc) > 1 {
 		endLoc = n.Loc[1].Start - 2
+	} else if n.LastChild != nil && n.LastChild.Expression {
+		if len(n.LastChild.Loc) > 1 {
+			endLoc = n.LastChild.Loc[1].Start + 1
+		}
 	}
 	p.addSourceMapping(loc.Loc{Start: endLoc})
 	p.print("</")
