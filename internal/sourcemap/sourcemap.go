@@ -646,7 +646,7 @@ func (b *ChunkBuilder) AddSourceMapping(location loc.Loc, output []byte) {
 		b.appendMapping(SourceMapState{
 			GeneratedLine:   b.prevState.GeneratedLine,
 			GeneratedColumn: b.generatedColumn,
-			SourceIndex:     1,
+			SourceIndex:     0,
 			OriginalLine:    0,
 			OriginalColumn:  0,
 		})
