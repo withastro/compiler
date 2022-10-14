@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 0.27.2
+
+### Patch Changes
+
+- 959f96b: Fix "missing sourcemap" issue
+- 94f6f3e: Fix edge case with multi-line comment usage
+- 85a654a: Fix `parse` causing a compiler panic when a component with a client directive was imported but didn't have a matching import
+- 5e32cbe: Improvements to TSX output
+
 ## 0.27.1
 
 ### Patch Changes
