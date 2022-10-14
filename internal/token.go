@@ -1053,7 +1053,7 @@ func (z *Tokenizer) readStartTag() TokenType {
 // readUnclosedTag reads up until an unclosed tag is implicitly closed.
 // Without this function, the tokenizer could get stuck in infinite loops if a
 // user is in the middle of typing
-func (z *Tokenizer) readUnclosedTag() {
+func (z *Tokenizer) readUnclosedTag() bool {
 	buf := z.buf[z.data.Start:]
 	var close int
 	if z.fm == FrontmatterOpen {
@@ -1072,18 +1072,19 @@ func (z *Tokenizer) readUnclosedTag() {
 			c := z.readByte()
 			if z.err != nil {
 				z.data.End = z.raw.End
-				return
+				return true
 			}
 
 			switch c {
 			case ' ', '\n', '\r', '\t', '\f':
 				// Safely read up until a whitespace character
-				z.data.End = z.raw.End - 1
-				return
+				z.data.End = z.raw.End
+				return true
 			}
 		}
-		return
+		return false
 	}
+	return false
 }
 
 // readTag reads the next tag token and its attributes. If saveAttr, those
@@ -1536,8 +1537,9 @@ loop:
 
 		// If necessary, implicity close an unclosed tag to bail out before
 		// an infinite loop occurs. Helpful for IDEs which compile as user types.
-		if z.readUnclosedTag(); z.err != nil {
-			break loop
+		if x := z.readUnclosedTag(); x {
+			z.tt = TextToken
+			return z.tt
 		}
 
 		switch tokenType {
@@ -1830,38 +1832,6 @@ func (z *Tokenizer) Raw() []byte {
 	return z.buf[z.raw.Start:z.raw.End]
 }
 
-// convertNewlines converts "\r" and "\r\n" in s to "\n".
-// The conversion happens in place, but the resulting slice may be shorter.
-func convertNewlines(s []byte) []byte {
-	for i, c := range s {
-		if c != '\r' {
-			continue
-		}
-
-		src := i + 1
-		if src >= len(s) || s[src] != '\n' {
-			s[i] = '\n'
-			continue
-		}
-
-		dst := i
-		for src < len(s) {
-			if s[src] == '\r' {
-				if src+1 < len(s) && s[src+1] == '\n' {
-					src++
-				}
-				s[dst] = '\n'
-			} else {
-				s[dst] = s[src]
-			}
-			src++
-			dst++
-		}
-		return s[:dst]
-	}
-	return s
-}
-
 var (
 	nul         = []byte("\x00")
 	replacement = []byte("\ufffd")
@@ -1875,7 +1845,6 @@ func (z *Tokenizer) Text() []byte {
 		s := z.buf[z.data.Start:z.data.End]
 		z.data.Start = z.raw.End
 		z.data.End = z.raw.End
-		s = convertNewlines(s)
 		if (z.convertNUL || z.tt == CommentToken) && bytes.Contains(s, nul) {
 			s = bytes.Replace(s, nul, replacement, -1)
 		}
@@ -1924,7 +1893,7 @@ func (z *Tokenizer) TagAttr() (key []byte, keyLoc loc.Loc, val []byte, valLoc lo
 			if attrType == ExpressionAttribute {
 				attrVal = val
 			} else {
-				attrVal = unescape(convertNewlines(val), true)
+				attrVal = unescape(val, true)
 			}
 
 			return key, keyLoc, attrVal, valLoc, attrType, z.nAttrReturned < len(z.attr)

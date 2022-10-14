@@ -3,7 +3,6 @@ package printer
 import (
 	"fmt"
 	"strings"
-	"unicode"
 
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
@@ -84,7 +83,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 				if len(buf) > 1 {
 					char := rune(buf[len(buf)-1:][0])
 					// If the existing buffer ends with a punctuation character, we need a `;`
-					if !unicode.IsLetter(char) && char != ';' {
+					if char != ';' {
 						p.addNilSourceMapping()
 						p.print(";")
 					}
@@ -257,9 +256,17 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print("=")
-			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
-			endLoc = a.ValLoc.Start + len(a.Val)
+			if len(a.Val) > 0 {
+				p.addSourceMapping(loc.Loc{Start: eqStart + 1})
+				p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
+				endLoc = a.ValLoc.Start + len(a.Val)
+			} else {
+				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start - 1})
+				p.print(`"`)
+				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start})
+				p.print(`"`)
+				endLoc = a.ValLoc.Start
+			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
 			endLoc = a.KeyLoc.Start + len(a.Key)
@@ -413,6 +420,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 
 	if len(n.Loc) > 1 {
 		endLoc = n.Loc[1].Start - 2
+	} else if n.LastChild != nil && n.LastChild.Expression {
+		if len(n.LastChild.Loc) > 1 {
+			endLoc = n.LastChild.Loc[1].Start + 1
+		}
 	}
 	p.addSourceMapping(loc.Loc{Start: endLoc})
 	p.print("</")
