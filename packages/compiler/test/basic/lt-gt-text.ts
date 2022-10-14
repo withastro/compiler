@@ -1,0 +1,47 @@
+import { test } from 'uvu';
+import * as assert from 'uvu/assert';
+import { transform } from '@astrojs/compiler';
+
+const FIXTURE = `---
+// Component Imports
+import MainHead from '../components/MainHead.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import PortfolioPreview from '../components/PortfolioPreview.astro';
+
+// Data Fetching: List all Markdown posts in the repo.
+const projects = await Astro.glob('./project/**/*.md');
+const featuredProject = projects[0];
+
+// Full Astro Component Syntax:
+// https://docs.astro.build/core-concepts/astro-components/
+---
+
+<html lang="en">
+	<head>
+		<MainHead
+			title="Jeanine White: Personal Site"
+			description="Jeanine White: Developer, Speaker, and Writer..."
+		/>
+		
+	</head>
+	<body>
+	    <Nav />
+		<small>< header ></small>
+	    <Footer />
+	</body>
+</html>
+`;
+
+let result;
+test.before(async () => {
+  result = await transform(FIXTURE);
+});
+
+test('< and > as raw text', () => {
+  assert.ok(result.code, 'Expected to compile');
+  console.log(result.code);
+  assert.match(result.code, '< header >', 'Expected output to contain < header >');
+});
+
+test.run();
