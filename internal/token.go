@@ -835,26 +835,29 @@ func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 		z.readUntilChar([]byte{'\r', '\n'})
 	// multi-line comment
 	case '*':
-		// look for "*/"
+		start := z.data.Start
+		prev := c
 		for {
-			start := z.data.Start
-			z.readUntilChar([]byte{'*'})
 			c = z.readByte()
-			if c == '/' {
+			if z.err != nil {
+				if z.err == io.EOF {
+					z.handler.AppendError(&loc.ErrorWithRange{
+						Code: loc.ERROR_UNTERMINATED_JS_COMMENT,
+						Text: `Unterminated comment`,
+						Range: loc.Range{
+							Loc: loc.Loc{Start: start},
+							Len: 2,
+						},
+					})
+				}
+				return
+			}
+			// look for "*/"
+			if prev == '*' && c == '/' {
 				z.data.End = z.raw.End
 				return
 			}
-			if z.err == io.EOF {
-				z.handler.AppendError(&loc.ErrorWithRange{
-					Code: loc.ERROR_UNTERMINATED_JS_COMMENT,
-					Text: `Unterminated comment`,
-					Range: loc.Range{
-						Loc: loc.Loc{Start: start},
-						Len: 2,
-					},
-				})
-				return
-			}
+			prev = c
 		}
 	// RegExp
 	default:
