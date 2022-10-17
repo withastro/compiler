@@ -114,6 +114,8 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		staticExtraction = true
 	}
 
+	resolvePath := options.Get("resolvePath")
+
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
@@ -125,6 +127,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		Site:             site,
 		ProjectRoot:      projectRoot,
 		Compact:          compact,
+		ResolvePath:      resolvePath,
 		PreprocessStyle:  preprocessStyle,
 		StaticExtraction: staticExtraction,
 	}

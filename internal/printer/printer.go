@@ -456,7 +456,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 						// Inject metadata attributes to `client:only` Component
 						pathAttr := astro.Attribute{
 							Key:  "client:component-path",
-							Val:  fmt.Sprintf(`$$metadata.resolvePath("%s")`, statement.Specifier),
+							Val:  fmt.Sprintf(`"%s"`, transform.ResolveIdForMatch(statement.Specifier, &opts)),
 							Type: astro.ExpressionAttribute,
 						}
 						n.Attr = append(n.Attr, pathAttr)
@@ -477,7 +477,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					// Inject metadata attributes to `client:only` Component
 					pathAttr := astro.Attribute{
 						Key:  "client:component-path",
-						Val:  fmt.Sprintf(`$$metadata.resolvePath("%s")`, statement.Specifier),
+						Val:  fmt.Sprintf(`"%s"`, transform.ResolveIdForMatch(statement.Specifier, &opts)),
 						Type: astro.ExpressionAttribute,
 					}
 					n.Attr = append(n.Attr, pathAttr)
