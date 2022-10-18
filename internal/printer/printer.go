@@ -453,10 +453,14 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					if strings.HasPrefix(n.Data, prefix) {
 						exportParts := strings.Split(n.Data[len(prefix):], ".")
 						exportName := exportParts[0]
+						attrTemplate :=`"%s"`
+						if opts.ResolvePath == nil {
+							attrTemplate = `$$metadata.resolvePath("%s")`
+						}
 						// Inject metadata attributes to `client:only` Component
 						pathAttr := astro.Attribute{
 							Key:  "client:component-path",
-							Val:  fmt.Sprintf(`"%s"`, transform.ResolveIdForMatch(statement.Specifier, &opts)),
+							Val:  fmt.Sprintf(attrTemplate, transform.ResolveIdForMatch(statement.Specifier, &opts)),
 							Type: astro.ExpressionAttribute,
 						}
 						n.Attr = append(n.Attr, pathAttr)
@@ -474,10 +478,14 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 						continue component_loop
 					}
 				} else if imported.LocalName == n.Data {
+					attrTemplate :=`"%s"`
+					if opts.ResolvePath == nil {
+						attrTemplate = `$$metadata.resolvePath("%s")`
+					}
 					// Inject metadata attributes to `client:only` Component
 					pathAttr := astro.Attribute{
 						Key:  "client:component-path",
-						Val:  fmt.Sprintf(`"%s"`, transform.ResolveIdForMatch(statement.Specifier, &opts)),
+						Val:  fmt.Sprintf(attrTemplate, transform.ResolveIdForMatch(statement.Specifier, &opts)),
 						Type: astro.ExpressionAttribute,
 					}
 					n.Attr = append(n.Attr, pathAttr)
