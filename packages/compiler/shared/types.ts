@@ -55,7 +55,7 @@ export interface TransformOptions {
    */
   as?: 'document' | 'fragment';
   projectRoot?: string;
-  resolvePath?: (specifier: string) => string | Promise<string>;
+  resolvePath?: (specifier: string) => Promise<string>;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
   experimentalStaticExtraction?: boolean;
 }
