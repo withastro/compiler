@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"syscall/js"
 	"unicode"
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
-	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 	a "golang.org/x/net/html/atom"
 )
 
@@ -25,7 +23,7 @@ type TransformOptions struct {
 	Site             string
 	ProjectRoot      string
 	Compact          bool
-	ResolvePath      interface{}
+	ResolvePath      func(string) string
 	PreprocessStyle  interface{}
 	StaticExtraction bool
 }
@@ -430,13 +428,8 @@ func trimExtension(pathname string) string {
 
 func ResolveIdForMatch(id string, opts *TransformOptions) string {
 	// Try custom resolvePath if provided
-	if opts.ResolvePath.(js.Value).Type() == js.TypeFunction {
-		result, _ := wasm_utils.Await(opts.ResolvePath.(js.Value).Invoke(id))
-		if result[0].Equal(js.Undefined()) || result[0].Equal(js.Null()) {
-			return id
-		} else {
-			return result[0].String()
-		}
+	if opts.ResolvePath != nil {
+		return opts.ResolvePath(id)
 	}
 	// Else use default resolvePath
 	if strings.HasPrefix(id, ".") && len(opts.Pathname) > 0 {

@@ -114,7 +114,18 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		staticExtraction = true
 	}
 
-	resolvePath := options.Get("resolvePath")
+	var resolvePath interface{} = options.Get("resolvePath")
+	var resolvePathFn func(string) string
+	if resolvePath.(js.Value).Type() == js.TypeFunction {
+		resolvePathFn = func(id string) string {
+			result, _ := wasm_utils.Await(resolvePath.(js.Value).Invoke(id))
+			if result[0].Equal(js.Undefined()) || result[0].Equal(js.Null()) {
+				return id
+			} else {
+				return result[0].String()
+			}
+		}
+	}
 
 	preprocessStyle := options.Get("preprocessStyle")
 
@@ -127,7 +138,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		Site:             site,
 		ProjectRoot:      projectRoot,
 		Compact:          compact,
-		ResolvePath:      resolvePath,
+		ResolvePath:      resolvePathFn,
 		PreprocessStyle:  preprocessStyle,
 		StaticExtraction: staticExtraction,
 	}
