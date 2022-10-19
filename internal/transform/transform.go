@@ -23,6 +23,7 @@ type TransformOptions struct {
 	Site             string
 	ProjectRoot      string
 	Compact          bool
+	ResolvePath      func(string) string
 	PreprocessStyle  interface{}
 	StaticExtraction bool
 }
@@ -338,7 +339,7 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 						doc.ClientOnlyComponents = append(doc.ClientOnlyComponents, &astro.HydratedComponentMetadata{
 							ExportName:   match.ExportName,
 							Specifier:    match.Specifier,
-							ResolvedPath: resolveIdForMatch(match, opts),
+							ResolvedPath: ResolveIdForMatch(match.Specifier, opts),
 						})
 					}
 
@@ -352,12 +353,12 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 					doc.HydratedComponents = append(doc.HydratedComponents, &astro.HydratedComponentMetadata{
 						ExportName:   match.ExportName,
 						Specifier:    match.Specifier,
-						ResolvedPath: resolveIdForMatch(match, opts),
+						ResolvedPath: ResolveIdForMatch(match.Specifier, opts),
 					})
 
 					pathAttr := astro.Attribute{
 						Key:  "client:component-path",
-						Val:  fmt.Sprintf(`"%s"`, resolveIdForMatch(match, opts)),
+						Val:  fmt.Sprintf(`"%s"`, ResolveIdForMatch(match.Specifier, opts)),
 						Type: astro.ExpressionAttribute,
 					}
 					n.Attr = append(n.Attr, pathAttr)
@@ -425,12 +426,21 @@ func trimExtension(pathname string) string {
 	return pathname
 }
 
-func resolveIdForMatch(match *ImportMatch, opts *TransformOptions) string {
-	if strings.HasPrefix(match.Specifier, ".") && len(opts.Pathname) > 0 {
+func ResolveIdForMatch(id string, opts *TransformOptions) string {
+	// Try custom resolvePath if provided
+	if opts.ResolvePath != nil {
+		return opts.ResolvePath(id)
+	}
+	// Else use default resolvePath
+	// NOTE: We want to remove this opinionated resolve in the future and simply
+	// return the `id` as is. The consumer would need to pass `resolvePath` option
+	// to customize it. The main Astro repo would have a custom `resolvePath` option
+	// by then so this won't be breaking it.
+	if strings.HasPrefix(id, ".") && len(opts.Pathname) > 0 {
 		pathname := safeURL(opts.Pathname)
 		u, err := url.Parse(pathname)
 		if err == nil {
-			spec := safeURL(match.Specifier)
+			spec := safeURL(id)
 			ref, _ := url.Parse(spec)
 			ou := u.ResolveReference(ref)
 			unescaped, _ := url.PathUnescape(ou.String())
@@ -438,7 +448,7 @@ func resolveIdForMatch(match *ImportMatch, opts *TransformOptions) string {
 		}
 	}
 	// If we can't manipulate the URLs, fallback to the exact specifier
-	return trimExtension(match.Specifier)
+	return trimExtension(id)
 }
 
 func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatement) bool) {
