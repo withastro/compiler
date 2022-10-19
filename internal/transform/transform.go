@@ -432,6 +432,10 @@ func ResolveIdForMatch(id string, opts *TransformOptions) string {
 		return opts.ResolvePath(id)
 	}
 	// Else use default resolvePath
+	// NOTE: We want to remove this opinionated resolve in the future and simply
+	// return the `id` as is. The consumer would need to pass `resolvePath` option
+	// to customize it. The main Astro repo would have a custom `resolvePath` option
+	// by then so this won't be breaking it.
 	if strings.HasPrefix(id, ".") && len(opts.Pathname) > 0 {
 		pathname := safeURL(opts.Pathname)
 		u, err := url.Parse(pathname)
