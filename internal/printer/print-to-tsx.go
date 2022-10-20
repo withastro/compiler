@@ -82,10 +82,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 				buf := strings.TrimSpace(string(p.output))
 				if len(buf) > 1 {
 					char := rune(buf[len(buf)-1:][0])
-					// If the existing buffer ends with a punctuation character, we need a `;`
+					// If the existing buffer ends with any character other than ;, we need to add a `;`
 					if char != ';' {
 						p.addNilSourceMapping()
-						p.print(";")
+						p.print("\"\";")
 					}
 				}
 				// We always need to start the body with `<Fragment>`
