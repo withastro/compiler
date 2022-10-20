@@ -273,7 +273,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
-			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
 			p.print(`=`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.print(`{`)
