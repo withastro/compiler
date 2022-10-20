@@ -5,6 +5,8 @@ import { transform } from '@astrojs/compiler';
 const FIXTURE = `
 ---
 import Foo from './Foo.jsx'
+import Bar from './Bar.jsx'
+import { name } './foo.module.css'
 ---
 <Foo />
 <Foo client:load />
@@ -21,6 +23,13 @@ test.before(async () => {
 test('preserve path', () => {
   assert.match(result.code, /"client:load":true.*"client:component-path":\("\.\/Foo\.jsx"\)/);
   assert.match(result.code, /"client:only":"react".*"client:component-path":\("\.\/Foo\.jsx"\)/);
+});
+
+test('no metadata', () => {
+  assert.not.match(result.code, /\$\$metadata/);
+  assert.not.match(result.code, /\$\$createMetadata/);
+  assert.not.match(result.code, /createMetadata as \$\$createMetadata/);
+  assert.not.match(result.code, /import \* as \$\$module\d/);
 });
 
 test.run();
