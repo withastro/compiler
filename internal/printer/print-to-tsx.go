@@ -240,13 +240,14 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			continue
 		}
 		offset := 1
-		if a.Type == astro.ShorthandAttribute {
-			offset = 2
+		if a.Type != astro.ShorthandAttribute {
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - offset})
 		}
-		p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - offset})
 		p.print(" ")
 		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
-		p.addSourceMapping(a.KeyLoc)
+		if a.Type != astro.ShorthandAttribute {
+			p.addSourceMapping(a.KeyLoc)
+		}
 		if a.Namespace != "" {
 			p.print(a.Namespace)
 			p.print(":")
@@ -293,15 +294,15 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			if len(withoutComments) == 0 {
 				return
 			}
-			p.print(a.Key)
-			p.print(`=`)
-			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
-			p.print(`{`)
 			p.addSourceMapping(a.KeyLoc)
+			p.printf(a.Key)
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
+			p.printf("={")
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start})
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
-			p.print(`}`)
-			endLoc = a.KeyLoc.Start + len(a.Key)
+			p.print("}")
+			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.TemplateLiteralAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
