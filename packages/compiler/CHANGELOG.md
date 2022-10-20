@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.28.0
+
+### Minor Changes
+
+- 5da0dc2: Add `resolvePath` option to control hydration path resolution
+- e816a61: Remove metadata export if `resolvePath` option provided
+
 ## 0.27.2
 
 ### Patch Changes
