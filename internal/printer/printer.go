@@ -80,7 +80,7 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	}
 }
 
-func (p *printer) printInternalImports(importSpecifier string) {
+func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptions) {
 	if p.hasInternalImports {
 		return
 	}
@@ -100,7 +100,10 @@ func (p *printer) printInternalImports(importSpecifier string) {
 	p.print("spreadAttributes as " + SPREAD_ATTRIBUTES + ",\n  ")
 	p.print("defineStyleVars as " + DEFINE_STYLE_VARS + ",\n  ")
 	p.print("defineScriptVars as " + DEFINE_SCRIPT_VARS + ",\n  ")
-	p.print("createMetadata as " + CREATE_METADATA)
+	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
+	if opts.opts.ResolvePath == nil {
+		p.print("createMetadata as " + CREATE_METADATA)
+	}
 	p.print("\n} from \"")
 	p.print(importSpecifier)
 	p.print("\";\n")
@@ -507,7 +510,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 				continue component_loop
 			}
 		}
-		if !isClientOnlyImport {
+		if !isClientOnlyImport && opts.ResolvePath == nil {
 			assertions := ""
 			if statement.Assertions != "" {
 				assertions += " assert "
@@ -541,6 +544,11 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	// If we added imports, add a line break.
 	if modCount > 1 {
 		p.print("\n")
+	}
+
+	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
+	if opts.ResolvePath != nil {
+		return
 	}
 
 	// Call createMetadata
