@@ -4,8 +4,7 @@ import { convertToTSX } from '@astrojs/compiler';
 
 // https://mathiasbynens.be/notes/javascript-identifiers
 const value = `
-// Let's goooooo
-🚀🚀🚀
+// Let's goooooo 🚀🚀🚀
 
 // How convenient!
 var π = Math.PI;
