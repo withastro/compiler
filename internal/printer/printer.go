@@ -23,6 +23,7 @@ type printer struct {
 	sourcetext         string
 	opts               transform.TransformOptions
 	output             []byte
+	runes              []rune
 	builder            sourcemap.ChunkBuilder
 	handler            *handler.Handler
 	hasFuncPrelude     bool
@@ -52,19 +53,26 @@ var BACKTICK = "`"
 var styleModuleSpecExp = regexp.MustCompile(`(\.css|\.pcss|\.postcss|\.sass|\.scss|\.styl|\.stylus|\.less)$`)
 
 func (p *printer) print(text string) {
-	p.output = append(p.output, text...)
+	for _, c := range text {
+		p.printRune(c)
+	}
+}
+
+func runesToUTF8(rs []rune) []byte {
+	return []byte(string(rs))
 }
 
 func (p *printer) printRune(c rune) {
-	p.output = append(p.output, byte(c))
+	p.runes = append(p.runes, c)
+	p.output = runesToUTF8(p.runes)
 }
 
 func (p *printer) printf(format string, a ...interface{}) {
-	p.output = append(p.output, []byte(fmt.Sprintf(format, a...))...)
+	p.print(fmt.Sprintf(format, a...))
 }
 
 func (p *printer) println(text string) {
-	p.output = append(p.output, (text + "\n")...)
+	p.print(text + "\n")
 }
 
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
@@ -456,7 +464,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					if strings.HasPrefix(n.Data, prefix) {
 						exportParts := strings.Split(n.Data[len(prefix):], ".")
 						exportName := exportParts[0]
-						attrTemplate :=`"%s"`
+						attrTemplate := `"%s"`
 						if opts.ResolvePath == nil {
 							attrTemplate = `$$metadata.resolvePath("%s")`
 						}
@@ -481,7 +489,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 						continue component_loop
 					}
 				} else if imported.LocalName == n.Data {
-					attrTemplate :=`"%s"`
+					attrTemplate := `"%s"`
 					if opts.ResolvePath == nil {
 						attrTemplate = `$$metadata.resolvePath("%s")`
 					}
