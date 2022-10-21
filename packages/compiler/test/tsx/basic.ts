@@ -172,4 +172,16 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('spread object II', async () => {
+  const input = `<MainLayout {...Astro.props}>
+</MainLayout>`;
+  const output = `<Fragment>
+<MainLayout {...Astro.props}>
+</MainLayout>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test.run();
