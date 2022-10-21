@@ -165,7 +165,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}`;
 test('spread object', async () => {
   const input = `<DocSearch {...{ lang, labels: { modal, placeholder } }} client:only="preact" />`;
   const output = `<Fragment>
-<DocSearch {...{ lang, labels: { modal, placeholder } }} client:only="preact" ></DocSearch>
+<DocSearch {...{ lang, labels: { modal, placeholder } }} client:only="preact" />
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
