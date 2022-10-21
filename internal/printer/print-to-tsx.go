@@ -240,12 +240,12 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			continue
 		}
 		offset := 1
-		if a.Type != astro.ShorthandAttribute {
+		if a.Type != astro.ShorthandAttribute && a.Type != astro.SpreadAttribute {
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - offset})
 		}
 		p.print(" ")
 		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
-		if a.Type != astro.ShorthandAttribute {
+		if a.Type != astro.ShorthandAttribute && a.Type != astro.SpreadAttribute {
 			p.addSourceMapping(a.KeyLoc)
 		}
 		if a.Namespace != "" {
@@ -282,13 +282,13 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print(`}`)
 			endLoc = eqStart + len(a.Val) + 2
 		case astro.SpreadAttribute:
-			p.print(a.Key)
-			p.addSourceMapping(loc.Loc{Start: eqStart})
-			p.print(`=`)
-			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.addSourceMapping(a.ValLoc)
-			p.print(fmt.Sprintf(`{...%s}`, a.Val))
-			endLoc = a.ValLoc.Start + len(a.Val) + 2
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 4})
+			p.print("{")
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 3})
+			p.print(fmt.Sprintf(`...%s`, a.Key))
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
+			p.print("}")
+			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.ShorthandAttribute:
 			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
