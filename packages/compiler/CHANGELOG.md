@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.28.1
+
+### Patch Changes
+
+- aac8c89: Fix end tag sourcemappings for TSX mode
+- d7f3288: TSX: Improve self-closing tag behavior and mappings
+- 75dd7cc: Fix spread attribute mappings
+
 ## 0.28.0
 
 ### Minor Changes
