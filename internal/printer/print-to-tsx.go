@@ -40,8 +40,11 @@ var ScriptMimeTypes map[string]bool = map[string]bool{
 	"application/node":       true,
 }
 
-func isInvalidTSXAttributeName(k string) bool {
-	return strings.HasPrefix(k, "@") || strings.Contains(k, ".")
+func isInvalidTSXAttribute(a Attribute) bool {
+	if a.Type == SpreadAttribute {
+		return false
+	}
+	return strings.HasPrefix(a.Key, "@") || strings.Contains(a.Key, ".")
 }
 
 type TextType uint32
@@ -235,7 +238,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	invalidTSXAttributes := make([]Attribute, 0)
 	endLoc := n.Loc[0].Start + len(n.Data)
 	for _, a := range n.Attr {
-		if isInvalidTSXAttributeName(a.Key) {
+		if isInvalidTSXAttribute(a) {
 			invalidTSXAttributes = append(invalidTSXAttributes, a)
 			continue
 		}
@@ -356,9 +359,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print(`)`)
 			endLoc = eqStart + len(a.Val) + 2
 		case astro.SpreadAttribute:
-			p.addSourceMapping(a.ValLoc)
-			p.print(fmt.Sprintf(`...%s`, a.Val))
-			endLoc = a.ValLoc.Start + len(a.Val) + 3
+			// noop
 		case astro.ShorthandAttribute:
 			withoutComments, _ := removeComments(a.Key)
 			if len(withoutComments) == 0 {
