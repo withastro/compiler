@@ -387,7 +387,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	for i := 0; i < len(p.sourcetext[tmpLoc:]); i++ {
 		c := p.sourcetext[endLoc : endLoc+1][0]
 		if c == '/' && p.sourcetext[endLoc+1:][0] == '>' {
-			p.addSourceMapping(loc.Loc{Start: endLoc})
 			isSelfClosing = true
 			break
 		} else if c == '>' {
@@ -403,9 +402,12 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 		p.print("/>")
 		return
 	}
-	if isSelfClosing && len(n.Attr) > 0 {
+	if isSelfClosing && n.FirstChild == nil {
+		p.addSourceMapping(loc.Loc{Start: endLoc - 1})
 		p.print(" ")
 		p.addSourceMapping(loc.Loc{Start: endLoc})
+		p.print("/>")
+		return
 	}
 	p.print(">")
 

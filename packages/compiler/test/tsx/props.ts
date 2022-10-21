@@ -248,7 +248,7 @@ import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 
 <Fragment>
-<SvelteOptionalProps></SvelteOptionalProps>
+<SvelteOptionalProps />
 
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}`;
