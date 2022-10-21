@@ -67,7 +67,7 @@ console.log("hello")
   const output = `
 console.log("hello")
 
-;<Fragment>
+"";<Fragment>
 {hello}
 
 </Fragment>
@@ -87,7 +87,7 @@ const { hello } = Astro.props
   const output = `
 const { hello } = Astro.props
 
-;<Fragment>
+"";<Fragment>
 <div class={hello}></div>
 
 </Fragment>

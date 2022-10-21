@@ -82,10 +82,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 				buf := strings.TrimSpace(string(p.output))
 				if len(buf) > 1 {
 					char := rune(buf[len(buf)-1:][0])
-					// If the existing buffer ends with a punctuation character, we need a `;`
+					// If the existing buffer ends with any character other than ;, we need to add a `;`
 					if char != ';' {
 						p.addNilSourceMapping()
-						p.print(";")
+						p.print("\"\";")
 					}
 				}
 				// We always need to start the body with `<Fragment>`
@@ -202,7 +202,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 				p.print(`</Fragment>`)
 			}
 		}
-		if len(n.Loc) == 2 {
+		if len(n.Loc) > 1 {
 			p.addSourceMapping(n.Loc[1])
 		} else {
 			p.addSourceMapping(n.Loc[0])
@@ -240,13 +240,14 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			continue
 		}
 		offset := 1
-		if a.Type == astro.ShorthandAttribute {
-			offset = 2
+		if a.Type != astro.ShorthandAttribute {
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - offset})
 		}
-		p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - offset})
 		p.print(" ")
 		eqStart := a.KeyLoc.Start + strings.IndexRune(p.sourcetext[a.KeyLoc.Start:], '=')
-		p.addSourceMapping(a.KeyLoc)
+		if a.Type != astro.ShorthandAttribute {
+			p.addSourceMapping(a.KeyLoc)
+		}
 		if a.Namespace != "" {
 			p.print(a.Namespace)
 			p.print(":")
@@ -257,9 +258,9 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print("=")
 			if len(a.Val) > 0 {
-				p.addSourceMapping(loc.Loc{Start: eqStart + 1})
+				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start - 1})
 				p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
-				endLoc = a.ValLoc.Start + len(a.Val)
+				endLoc = a.ValLoc.Start + len(a.Val) + 1
 			} else {
 				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start - 1})
 				p.print(`"`)
@@ -272,7 +273,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
-			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
 			p.print(`=`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.print(`{`)
@@ -293,15 +294,15 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			if len(withoutComments) == 0 {
 				return
 			}
-			p.print(a.Key)
-			p.print(`=`)
-			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
-			p.print(`{`)
 			p.addSourceMapping(a.KeyLoc)
+			p.printf(a.Key)
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
+			p.printf("={")
+			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start})
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start + len(a.Key)})
-			p.print(`}`)
-			endLoc = a.KeyLoc.Start + len(a.Key)
+			p.print("}")
+			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.TemplateLiteralAttribute:
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
@@ -411,6 +412,11 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	// Render any child nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		renderTsx(p, c)
+		if len(c.Loc) > 1 {
+			endLoc = c.Loc[1].Start + len(c.Data) + 1
+		} else if len(c.Loc) == 1 {
+			endLoc = c.Loc[0].Start + len(c.Data)
+		}
 	}
 	// Special case because of trailing expression close in scripts
 	if n.DataAtom == atom.Script {
@@ -437,5 +443,5 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 		p.addSourceMapping(loc.Loc{Start: endLoc})
 	}
 	p.print(">")
-	p.addSourceMapping(loc.Loc{Start: endLoc})
+	p.addSourceMapping(loc.Loc{Start: endLoc + 1})
 }

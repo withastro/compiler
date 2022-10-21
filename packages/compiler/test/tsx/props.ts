@@ -43,7 +43,7 @@ interface Props {}
   const output = `${PREFIX}
 interface Props {}
 
-;<Fragment>
+"";<Fragment>
 <div></div>
 
 </Fragment>
@@ -123,7 +123,7 @@ type Props = {}
   const output = `${PREFIX}
 type Props = {}
 
-;<Fragment>
+"";<Fragment>
 <div></div>
 
 </Fragment>
@@ -143,7 +143,7 @@ interface Props<T> {}
   const output = `${PREFIX}
 interface Props<T> {}
 
-;<Fragment>
+"";<Fragment>
 <div></div>
 
 </Fragment>
@@ -163,7 +163,7 @@ interface Props<T extends Other<{ [key: string]: any }>> {}
   const output = `${PREFIX}
 interface Props<T extends Other<{ [key: string]: any }>> {}
 
-;<Fragment>
+"";<Fragment>
 <div></div>
 
 </Fragment>
@@ -183,7 +183,7 @@ interface Props<T extends { [key: string]: any }, P extends string ? { [key: str
   const output = `${PREFIX}
 interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
 
-;<Fragment>
+"";<Fragment>
 <div></div>
 
 </Fragment>
@@ -203,7 +203,7 @@ interface Props<T extends Something<false> ? A : B, P extends string ? { [key: s
   const output = `${PREFIX}
 interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
 
-;<Fragment>
+"";<Fragment>
 <div></div>
 
 </Fragment>
@@ -227,7 +227,7 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
   as?: Tag;
 }
 
-;<Fragment>
+"";<Fragment>
 <div></div>
 
 </Fragment>
