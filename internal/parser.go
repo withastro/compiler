@@ -2678,6 +2678,7 @@ func inLiteralIM(p *parser) bool {
 		}
 		return true
 	case EndTagToken:
+		p.addLoc()
 		p.oe.pop()
 		return true
 	case StartExpressionToken:
