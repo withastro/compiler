@@ -1,5 +1,17 @@
 # @astrojs/compiler
 
+## 0.29.0
+
+### Minor Changes
+
+- fd2fc28: Fix some utf8 compatability issues
+
+### Patch Changes
+
+- 4b68670: TSX: fix edge case with spread attribute printing
+- 6b204bd: Fix bug with trailing `style` tags being moved into the `html` element
+- 66fe230: Fix: include element end location in `parse` AST
+
 ## 0.28.1
 
 ### Patch Changes
