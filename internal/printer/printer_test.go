@@ -2545,7 +2545,17 @@ const c = '\''
 		{
 			name:   "style after html",
 			source: `<html><body><h1>Hello world!</h1></body></html><style></style>`,
+			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}, {Type: "element", Name: "style"}},
+		},
+		{
+			name:   "style in html",
+			source: `<html><body><h1>Hello world!</h1></body><style></style></html>`,
 			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}, {Type: "element", Name: "style"}}}},
+		},
+		{
+			name:   "style in body",
+			source: `<html><body><h1>Hello world!</h1><style></style></body></html>`,
+			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}, {Type: "element", Name: "style"}}}}}},
 		},
 	}
 
