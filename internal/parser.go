@@ -2427,6 +2427,10 @@ func afterBodyIM(p *parser) bool {
 			return inBodyIM(p)
 		}
 	case EndTagToken:
+		if p.literal {
+			p.im = inLiteralIM
+			return false
+		}
 		if p.tok.DataAtom == a.Html {
 			if !p.fragment {
 				p.im = afterAfterBodyIM
