@@ -9,7 +9,11 @@ test('include start and end positions', async () => {
 
 <iframe>Hello</iframe><div></div>`;
   const { ast } = await parse(input);
-  assert.ok(ast.children.slice(1)[0].position.end, `Expected serialized output to contain an end position`);
+
+  const iframe = ast.children[1];
+  assert.is(iframe.name, 'iframe');
+  assert.ok(iframe.position.start, `Expected serialized output to contain a start position`);
+  assert.ok(iframe.position.end, `Expected serialized output to contain an end position`);
 });
 
 test.run();
