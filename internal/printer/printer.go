@@ -53,18 +53,7 @@ var BACKTICK = "`"
 var styleModuleSpecExp = regexp.MustCompile(`(\.css|\.pcss|\.postcss|\.sass|\.scss|\.styl|\.stylus|\.less)$`)
 
 func (p *printer) print(text string) {
-	for _, c := range text {
-		p.printRune(c)
-	}
-}
-
-func runesToUTF8(rs []rune) []byte {
-	return []byte(string(rs))
-}
-
-func (p *printer) printRune(c rune) {
-	p.runes = append(p.runes, c)
-	p.output = runesToUTF8(p.runes)
+	p.output = append(p.output, []byte(text)...)
 }
 
 func (p *printer) printf(format string, a ...interface{}) {
@@ -85,7 +74,7 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 			continue
 		}
 		p.addSourceMapping(loc.Loc{Start: start})
-		p.printRune(c)
+		p.print(string(c))
 		start += diff
 		lastPos = pos
 	}
