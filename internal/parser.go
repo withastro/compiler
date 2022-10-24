@@ -1107,6 +1107,11 @@ func inBodyIM(p *parser) bool {
 			p.framesetOK = false
 		}
 	case StartTagToken:
+		// if literal and we only have html and body open
+		if p.literal {
+			p.im = inLiteralIM
+			return false
+		}
 		// It's possible we were moved here from inHeadIM
 		// via the children of a Component. We need to clear the originalIM
 		// and switch the implicit `head` tag to `body`
@@ -2422,10 +2427,6 @@ func afterBodyIM(p *parser) bool {
 			return inBodyIM(p)
 		}
 	case EndTagToken:
-		if p.literal {
-			p.im = inLiteralIM
-			return false
-		}
 		if p.tok.DataAtom == a.Html {
 			if !p.fragment {
 				p.im = afterAfterBodyIM
