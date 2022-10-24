@@ -16,4 +16,33 @@ test('include start and end positions', async () => {
   assert.ok(iframe.position.end, `Expected serialized output to contain an end position`);
 });
 
+test('include start and end positions for comments', async () => {
+  const input = `---
+// Hello world!
+---
+
+<!-- prettier:ignore -->
+<iframe>Hello</iframe><div></div>`;
+  const { ast } = await parse(input);
+
+  const comment = ast.children[1];
+  assert.is(comment.type, 'comment');
+  assert.ok(comment.position.start, `Expected serialized output to contain a start position`);
+  assert.ok(comment.position.end, `Expected serialized output to contain an end position`);
+});
+
+test('include start and end positions for text', async () => {
+  const input = `---
+// Hello world!
+---
+
+Hello world!`;
+  const { ast } = await parse(input);
+
+  const text = ast.children[1];
+  assert.is(text.type, 'text');
+  assert.ok(text.position.start, `Expected serialized output to contain a start position`);
+  assert.ok(text.position.end, `Expected serialized output to contain an end position`);
+});
+
 test.run();

@@ -209,6 +209,12 @@ func (p *parser) parseGenericRawTextElement() {
 func (p *parser) generateLoc() []loc.Loc {
 	locs := make([]loc.Loc, 0, 2)
 	locs = append(locs, p.tok.Loc)
+	switch p.tok.Type {
+	case TextToken:
+		locs = append(locs, loc.Loc{Start: p.tok.Loc.Start + len(p.tok.Data)})
+	case CommentToken:
+		locs = append(locs, loc.Loc{Start: p.tok.Loc.Start + len(p.tok.Data) + 3})
+	}
 	return locs
 }
 
