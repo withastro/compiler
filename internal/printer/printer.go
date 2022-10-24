@@ -23,7 +23,6 @@ type printer struct {
 	sourcetext         string
 	opts               transform.TransformOptions
 	output             []byte
-	runes              []rune
 	builder            sourcemap.ChunkBuilder
 	handler            *handler.Handler
 	hasFuncPrelude     bool
