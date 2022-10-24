@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: ["main", "next"]
+    branches: ['main', 'next']
   pull_request:
-    branches: ["main", "next"]
+    branches: ['main', 'next']
 
 # Automatically cancel in-progress actions on the same branch
 concurrency:
@@ -45,7 +45,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 14
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Build WASM
         run: make wasm
@@ -78,6 +78,6 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 14
-          cache: "pnpm"
+          cache: 'pnpm'
       - run: pnpm install
       - run: pnpm run lint

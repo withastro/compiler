@@ -52,31 +52,30 @@ var BACKTICK = "`"
 var styleModuleSpecExp = regexp.MustCompile(`(\.css|\.pcss|\.postcss|\.sass|\.scss|\.styl|\.stylus|\.less)$`)
 
 func (p *printer) print(text string) {
-	p.output = append(p.output, text...)
-}
-
-func (p *printer) printRune(c rune) {
-	p.output = append(p.output, byte(c))
+	p.output = append(p.output, []byte(text)...)
 }
 
 func (p *printer) printf(format string, a ...interface{}) {
-	p.output = append(p.output, []byte(fmt.Sprintf(format, a...))...)
+	p.print(fmt.Sprintf(format, a...))
 }
 
 func (p *printer) println(text string) {
-	p.output = append(p.output, (text + "\n")...)
+	p.print(text + "\n")
 }
 
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
-	for _, c := range text {
+	lastPos := -1
+	for pos, c := range text {
+		diff := pos - lastPos
 		if c == '\r' {
-			start++
+			start += diff
 			continue
 		}
 		p.addSourceMapping(loc.Loc{Start: start})
-		p.printRune(c)
-		start++
+		p.print(string(c))
+		start += diff
+		lastPos = pos
 	}
 }
 
@@ -456,7 +455,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					if strings.HasPrefix(n.Data, prefix) {
 						exportParts := strings.Split(n.Data[len(prefix):], ".")
 						exportName := exportParts[0]
-						attrTemplate :=`"%s"`
+						attrTemplate := `"%s"`
 						if opts.ResolvePath == nil {
 							attrTemplate = `$$metadata.resolvePath("%s")`
 						}
@@ -481,7 +480,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 						continue component_loop
 					}
 				} else if imported.LocalName == n.Data {
-					attrTemplate :=`"%s"`
+					attrTemplate := `"%s"`
 					if opts.ResolvePath == nil {
 						attrTemplate = `$$metadata.resolvePath("%s")`
 					}
