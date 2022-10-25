@@ -1,6 +1,8 @@
 browser/**/*.js
 browser/**/*.d.ts
 node/**/*.js
+node/**/*.cjs
+node/**/*.mjs
 node/**/*.d.ts
 shared/**/*.js
 shared/**/*.d.ts

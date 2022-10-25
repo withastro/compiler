@@ -121,6 +121,8 @@ export declare function transform(input: string, options?: TransformOptions): Pr
 
 export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
 
+export declare function parseSync(input: string, options?: ParseOptions): ParseResult;
+
 export declare function convertToTSX(input: string, options?: { sourcefile?: string }): Promise<TSXResult>;
 
 // This configures the browser-based version of astro. It is necessary to

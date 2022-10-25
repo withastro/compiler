@@ -30,6 +30,7 @@ func main() {
 	module := js.Global().Get("@astrojs/compiler")
 	module.Set("transform", Transform())
 	module.Set("parse", Parse())
+	module.Set("parseSync", Parse())
 	module.Set("convertToTSX", ConvertToTSX())
 
 	<-make(chan struct{})

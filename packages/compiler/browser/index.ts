@@ -9,9 +9,17 @@ export const parse: typeof types.parse = (input, options) => {
   return ensureServiceIsRunning().parse(input, options);
 };
 
+export const parseSync: typeof types.parseSync = (input, options) => {
+  if (!longLivedService) {
+    throw new Error(`You need to call "initialize" before calling "parseSync"`);
+  }
+  return longLivedService.parseSync(input, options);
+};
+
 interface Service {
   transform: typeof types.transform;
   parse: typeof types.parse;
+  parseSync: typeof types.parseSync;
 }
 
 let initializePromise: Promise<Service> | undefined;
@@ -64,5 +72,9 @@ const startRunningService = async (wasmURL: string): Promise<Service> => {
   return {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),
     parse: (input, options) => new Promise((resolve) => resolve(service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
+    parseSync: (input, options) => {
+      const result = service.parseSync(input, options || {});
+      return { ...result, ast: JSON.parse(result.ast) };
+    },
   };
 };

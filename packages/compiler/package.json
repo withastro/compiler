@@ -18,8 +18,9 @@
   "exports": {
     ".": {
       "browser": "./browser/index.js",
-      "import": "./node/index.js",
-      "default": "./browser/index.js"
+      "import": "./node/index.mjs",
+      "require": "./node/index.cjs",
+      "default": "./browser/index.mjs"
     },
     "./utils": {
       "browser": "./browser/utils.js",
