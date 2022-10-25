@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.3
+
+### Patch Changes
+
+- 85e1d31: AST: move `start` position of elements to the first index of their opening tag
+
 ## 0.29.2
 
 ### Patch Changes
