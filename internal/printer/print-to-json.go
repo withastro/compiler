@@ -145,8 +145,10 @@ func positionAt(p *printer, n *Node, opts t.ParseOptions) ASTPosition {
 		e := n.Loc[1]
 		// `s` and `e` mark the start location of the tag name
 		if n.Type == ElementNode {
-			// this adjusts `s` to be the first index of the element tag
-			s.Start = s.Start - 1
+			if (s.Start != 0) {
+				// this adjusts `s` to be the first index of the element tag
+				s.Start = s.Start - 1
+			}
 			// this adjusts `e` to be the last index of the end tag
 			e.Start = e.Start + len(n.Data) + 1
 		}
