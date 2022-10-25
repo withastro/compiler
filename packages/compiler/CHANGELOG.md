@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.2
+
+### Patch Changes
+
+- 035829b: AST: move end position of elements to the last index of their end tag
+
 ## 0.29.1
 
 ### Patch Changes
