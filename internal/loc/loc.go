@@ -24,10 +24,10 @@ type Span struct {
 type DiagnosticSeverity int
 
 const (
-	ErrorType DiagnosticSeverity = 1
-	WarningType
-	InformationType
-	HintType
+	ErrorType       DiagnosticSeverity = 1
+	WarningType     DiagnosticSeverity = 2
+	InformationType DiagnosticSeverity = 3
+	HintType        DiagnosticSeverity = 4
 )
 
 type DiagnosticMessage struct {
