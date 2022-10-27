@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.4
+
+### Patch Changes
+
+- 4381efa: Return proper diagnostic code for warnings
+
 ## 0.29.3
 
 ### Patch Changes
