@@ -1148,7 +1148,8 @@ import Widget2 from '../components/Widget2.astro';`},
 			staticExtraction: true,
 			source:           `<script define:vars={{ value: 0 }}>console.log(value);</script>`,
 			want: want{
-				code: `<script>{${$$defineScriptVars({ value: 0 })}console.log(value);}</script>`,
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'define:vars', value: %sconsole.log(value);%s, keys: 'value' }`, BACKTICK, BACKTICK)}},
+				code:     `${$$maybeRenderHead($$result)}<script type="module">${$$defineScriptVars({ value: 0 })}</script>`,
 			},
 		},
 		{
@@ -1156,7 +1157,7 @@ import Widget2 from '../components/Widget2.astro';`},
 			staticExtraction: true,
 			source:           `<script define:vars={{ "dash-case": true }}>console.log(dashCase);</script>`,
 			want: want{
-				code:     `<script type="module">${$$defineScriptVars({ "dash-case": true })}</script>`,
+				code:     `${$$maybeRenderHead($$result)}<script type="module">${$$defineScriptVars({ "dash-case": true })}</script>`,
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'define:vars', value: %sconsole.log(dashCase);%s, keys: '"dash-case": dashCase' }`, BACKTICK, BACKTICK)}},
 			},
 		},
@@ -2250,19 +2251,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:             "multiple define:vars on style",
-			source:           "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>",
-			staticExtraction: true,
-			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
-				definedVars: []string{"{color:'red'}", "{color:'green'}"},
-				styles: []string{
-					"{props:{\"define:vars\":({color:'red'}),\"data-astro-id\":\"6OXBQCST\"},children:`h2.astro-6OXBQCST{color:var(--color)}`}",
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"6OXBQCST\"},children:`h1.astro-6OXBQCST{color:var(--color)}`}",
-				},
-			},
-		},
-		{
 			name: "define:vars on script with StaticExpression turned on",
 			// 1. An inline script with is:inline - right
 			// 2. A hoisted script - wrong, shown up in scripts.add
@@ -2271,7 +2259,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script define:vars={{foo:'bar'}}>var three = foo;</script><script is:inline type="module" define:vars={{foo:'bar'}}>var four = foo;</script>`,
 			staticExtraction: true,
 			want: want{
-				code: `<script>var one = 'one';</script><script type="module">${$$defineScriptVars({foo:'bar'})}</script><script type="module">${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
+				code: `<script>var one = 'one';</script>${$$maybeRenderHead($$result)}<script type="module">${$$defineScriptVars({foo:'bar'})}</script><script type="module">${$$defineScriptVars({foo:'bar'})}var four = foo;</script>`,
 				metadata: metadata{
 					hoisted: []string{"{ type: 'define:vars', value: `var three = foo;`, keys: 'foo' }", "{ type: 'inline', value: `var two = 'two';` }"},
 				},
