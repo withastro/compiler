@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.5
+
+### Patch Changes
+
+- 73a2b69: Use an IIFE for define:vars scripts
+
 ## 0.29.4
 
 ### Patch Changes
