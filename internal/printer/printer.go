@@ -174,7 +174,7 @@ func (p *printer) printDefineVarsOpen(n *astro.Node) {
 	}
 	if n.DataAtom == atom.Script {
 		if !isTypeModuleScript(n) {
-			p.print("{")
+			p.print("(function(){")
 		}
 	}
 	for _, attr := range n.Attr {
@@ -211,7 +211,7 @@ func (p *printer) printDefineVarsClose(n *astro.Node) {
 		return
 	}
 	if !isTypeModuleScript(n) {
-		p.print("}")
+		p.print("})();")
 	}
 }
 

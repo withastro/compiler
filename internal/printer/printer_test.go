@@ -1148,7 +1148,7 @@ import Widget2 from '../components/Widget2.astro';`},
 			staticExtraction: true,
 			source:           `<script define:vars={{ value: 0 }}>console.log(value);</script>`,
 			want: want{
-				code: `<script>{${$$defineScriptVars({ value: 0 })}console.log(value);}</script>`,
+				code: `<script>(function(){${$$defineScriptVars({ value: 0 })}console.log(value);})();</script>`,
 			},
 		},
 		{
@@ -1156,7 +1156,7 @@ import Widget2 from '../components/Widget2.astro';`},
 			staticExtraction: true,
 			source:           `<script define:vars={{ "dash-case": true }}>console.log(dashCase);</script>`,
 			want: want{
-				code: `<script>{${$$defineScriptVars({ "dash-case": true })}console.log(dashCase);}</script>`,
+				code: `<script>(function(){${$$defineScriptVars({ "dash-case": true })}console.log(dashCase);})();</script>`,
 			},
 		},
 		{
@@ -2257,7 +2257,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:           `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script define:vars={{foo:'bar'}}>var three = foo;</script><script is:inline define:vars={{foo:'bar'}}>var four = foo;</script>`,
 			staticExtraction: true,
 			want: want{
-				code: `<script>var one = 'one';</script>${$$maybeRenderHead($$result)}<script>{${$$defineScriptVars({foo:'bar'})}var three = foo;}</script><script>{${$$defineScriptVars({foo:'bar'})}var four = foo;}</script>`,
+				code: `<script>var one = 'one';</script>${$$maybeRenderHead($$result)}<script>(function(){${$$defineScriptVars({foo:'bar'})}var three = foo;})();</script><script>(function(){${$$defineScriptVars({foo:'bar'})}var four = foo;})();</script>`,
 				metadata: metadata{
 					hoisted: []string{"{ type: 'inline', value: `var two = 'two';` }"},
 				},
