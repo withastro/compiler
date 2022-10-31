@@ -192,6 +192,37 @@ func HoistImports(source []byte) HoistedScripts {
 	return HoistedScripts{Hoisted: imports, Body: body}
 }
 
+type HoistedStatement struct {
+	Value []byte
+	Start int
+}
+
+type HoistedStatements struct {
+	Imports []HoistedStatement
+	Exports []HoistedStatement
+	Body    []HoistedStatement
+}
+
+func HoistStatements(source []byte, start int) HoistedStatements {
+	imports := make([]HoistedStatement, 0)
+	body := make([]HoistedStatement, 0)
+	prevImport := 0
+	for i, importStatement := NextImportStatement(source, 0); i > -1; i, importStatement = NextImportStatement(source, i) {
+		currBody := source[prevImport:importStatement.Span.Start]
+		if len(bytes.TrimSpace(currBody)) != 0 {
+			body = append(body, HoistedStatement{Value: currBody, Start: start + prevImport})
+		}
+		imports = append(imports, HoistedStatement{Value: importStatement.Value, Start: start + importStatement.Span.Start})
+		prevImport = i
+	}
+	if prevImport == 0 {
+		return HoistedStatements{Body: []HoistedStatement{{Value: source, Start: start}}}
+	}
+	body = append(body, HoistedStatement{Value: source[prevImport:], Start: start + prevImport})
+
+	return HoistedStatements{Imports: imports, Body: body}
+}
+
 type Props struct {
 	Ident     string
 	Statement string

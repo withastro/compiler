@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTsxSourcemap } from '../utils';
+import { testJsSourcemap } from '../utils';
 
 test('script is:inline', async () => {
   const input = `<script is:inline>
@@ -8,7 +8,7 @@ test('script is:inline', async () => {
   console.log(MyNumber.toStrang());
 </script>
 `;
-  const output = await testTsxSourcemap(input, '\n');
+  const output = await testJsSourcemap(input, '\n');
 
   assert.equal(output, {
     line: 1,

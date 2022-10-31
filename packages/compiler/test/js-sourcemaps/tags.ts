@@ -1,10 +1,10 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTsxSourcemap } from '../utils';
+import { testJsSourcemap } from '../utils';
 
 test('tag close', async () => {
   const input = `<Hello></Hello>`;
-  const output = await testTsxSourcemap(input, '>');
+  const output = await testJsSourcemap(input, '>');
 
   assert.equal(output, {
     line: 1,

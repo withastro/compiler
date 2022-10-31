@@ -5,3 +5,4 @@ node_modules
 /astro
 debug.test
 packages/compiler/sourcemap.mjs
+packages/compiler/sourcemap.astro.js

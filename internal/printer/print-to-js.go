@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode"
 
 	. "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
@@ -84,18 +85,6 @@ func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions)
 	}
 }
 
-const whitespace = " \t\r\n\f"
-
-// Returns true if the expression only contains a comment block (e.g. {/* a comment */})
-func expressionOnlyHasCommentBlock(n *Node) bool {
-	clean, _ := removeComments(n.FirstChild.Data)
-	return n.FirstChild.NextSibling == nil &&
-		n.FirstChild.Type == TextNode &&
-		// removeComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* before iterating
-		strings.HasPrefix(strings.TrimLeft(n.FirstChild.Data, whitespace), "/*") &&
-		len(clean) == 0
-}
-
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
@@ -125,92 +114,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Render frontmatter (will be the first node, if it exists)
 	if n.Type == FrontmatterNode {
-		if n.FirstChild == nil {
-			p.printCSSImports(opts.cssLen)
-		}
-
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if c.Type == TextNode {
-				p.addNilSourceMapping()
-				p.printInternalImports(p.opts.InternalURL, &opts)
-
-				if len(n.Loc) > 0 {
-					p.addSourceMapping(n.Loc[0])
-				}
-				render := js_scanner.HoistImports([]byte(c.Data))
-				importStatements := ""
-				if len(render.Hoisted) > 0 {
-					for _, hoisted := range render.Hoisted {
-						statement := string(bytes.TrimSpace(hoisted)) + "\n"
-						importStatements += statement
-					}
-				}
-				preprocessed := js_scanner.HoistExports(render.Body)
-
-				if len(c.Loc) > 0 {
-					p.addSourceMapping(c.Loc[0])
-				}
-				p.println(strings.TrimSpace(importStatements))
-
-				if opts.opts.StaticExtraction {
-					p.printCSSImports(opts.cssLen)
-				}
-
-				// 1. Component imports, if any exist.
-				p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
-				// 2. Top-level Astro global.
-				p.printTopLevelAstro(opts.opts)
-
-				if len(preprocessed.Hoisted) > 0 {
-					for _, hoisted := range preprocessed.Hoisted {
-						p.println(strings.TrimSpace(string(hoisted)))
-					}
-				}
-
-				p.printFuncPrelude(opts.opts)
-				p.print(strings.TrimSpace(string(preprocessed.Body)))
-
-				// Print empty just to ensure a newline
-				p.println("")
-				if len(n.Parent.Styles) > 0 {
-					definedVars := transform.GetDefineVars(n.Parent.Styles)
-					if len(definedVars) > 0 {
-						p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
-					}
-					p.println("const STYLES = [")
-					for _, style := range n.Parent.Styles {
-						p.printStyleOrScript(opts, style)
-					}
-					p.println("];")
-					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
-				}
-
-				if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
-					p.println("const SCRIPTS = [")
-					for _, script := range n.Parent.Scripts {
-						p.printStyleOrScript(opts, script)
-					}
-					p.println("];")
-					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("for (const SCRIPT of SCRIPTS) %s.scripts.add(SCRIPT);", RESULT))
-				}
-
-				p.printReturnOpen()
-			} else {
-				render1(p, c, RenderOptions{
-					isRoot:           false,
-					isExpression:     true,
-					depth:            depth + 1,
-					opts:             opts.opts,
-					cssLen:           opts.cssLen,
-					printedMaybeHead: opts.printedMaybeHead,
-				})
-				if len(n.Loc) > 1 {
-					p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
-				}
-			}
-		}
+		printFrontmatterNode(p, n, opts)
 		return
 	} else if !p.hasFuncPrelude {
 		p.printComponentMetadata(n.Parent, opts.opts, []byte{})
@@ -249,22 +153,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 	switch n.Type {
 	case TextNode:
-		if strings.TrimSpace(n.Data) == "" {
-			p.addSourceMapping(n.Loc[0])
-			p.print(n.Data)
-			return
-		}
-		text := escapeText(n.Data)
-		p.addSourceMapping(n.Loc[0])
-		p.print(text)
+		printTextNode(p, n)
 		return
 	case ElementNode:
 		// No-op.
 	case CommentNode:
-		p.addSourceMapping(n.Loc[0])
-		p.print("<!--")
-		p.print(escapeText(n.Data))
-		p.print("-->")
+		printCommentNode(p, n)
 		return
 	case DoctypeNode:
 		// Doctype doesn't get printed because the Astro runtime always appends it
@@ -290,9 +184,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			p.addSourceMapping(c.Loc[0])
 			if c.Type == TextNode {
-				p.print(c.Data)
+				p.printTextWithSourcemap(c.Data, c.Loc[0])
 				continue
 			}
 			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {
@@ -331,13 +224,15 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 	}
 
-	p.addSourceMapping(n.Loc[0])
 	switch true {
 	case isFragment:
+		p.addSourceMapping(n.Loc[0])
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, "Fragment"))
 	case isComponent:
+		p.addSourceMapping(n.Loc[0])
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, n.Data))
 	case isSlot:
+		p.addSourceMapping(n.Loc[0])
 		p.print(fmt.Sprintf("${%s(%s,%s[", RENDER_SLOT, RESULT, SLOTS))
 	case isImplicit:
 		// do nothing
@@ -353,10 +248,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printMaybeRenderHead()
 			}
 		}
+		p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start - 1})
 		p.print("<")
 	}
 
-	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + 1})
 	switch true {
 	case isFragment:
 		p.print("Fragment")
@@ -366,10 +261,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(fmt.Sprintf("'%s'", n.Data))
 	case !isSlot && !isImplicit:
 		// Print the tag name
+		p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start})
 		p.print(n.Data)
+		p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 	}
 
-	p.addSourceMapping(n.Loc[0])
+	// p.addSourceMapping(n.Loc[0])
 	if isImplicit {
 		// do nothing
 	} else if isComponent {
@@ -414,20 +311,20 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				// Note: if we encounter "slot" NOT inside a component, that's fine
 				// These should be perserved in the output
 				p.printAttribute(a, n)
-				p.addSourceMapping(n.Loc[0])
 			} else {
 				p.printAttribute(a, n)
-				p.addSourceMapping(n.Loc[0])
 			}
 		}
-		p.addSourceMapping(n.Loc[0])
-		p.print(">")
+		if !voidElements[n.Data] {
+			p.print(">")
+		}
 	}
 
 	if voidElements[n.Data] {
-		if n.FirstChild != nil {
-			// return fmt.Errorf("html: void element <%s> has child nodes", n.Data)
+		if len(n.Loc) > 1 {
+			p.addSourceMapping(n.Loc[1])
 		}
+		p.print(">")
 		return
 	}
 
@@ -657,11 +554,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 	}
 
-	if len(n.Loc) == 2 {
-		p.addSourceMapping(n.Loc[1])
-	} else {
-		p.addSourceMapping(n.Loc[0])
-	}
 	if n.DataAtom == atom.Script || n.DataAtom == atom.Style {
 		p.printDefineVarsClose(n)
 	}
@@ -672,7 +564,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			*opts.printedMaybeHead = true
 			p.printRenderHead()
 		}
-		p.print(`</` + n.Data + `>`)
+		start := n.Loc[0].Start - 2
+		if len(n.Loc) > 1 {
+			start = n.Loc[1].Start - 2
+		}
+		p.addSourceMapping(loc.Loc{Start: start})
+		p.print(`</`)
+		start += 2
+		p.addSourceMapping(loc.Loc{Start: start})
+		p.print(n.Data)
+		start += len(n.Data)
+		p.addSourceMapping(loc.Loc{Start: start})
+		p.print(`>`)
 	}
 }
 
@@ -695,4 +598,115 @@ var voidElements = map[string]bool{
 	"source": true,
 	"track":  true,
 	"wbr":    true,
+}
+
+// Returns true if the expression only contains a comment block (e.g. {/* a comment */})
+func expressionOnlyHasCommentBlock(n *Node) bool {
+	clean, _ := removeComments(n.FirstChild.Data)
+	return n.FirstChild.NextSibling == nil &&
+		n.FirstChild.Type == TextNode &&
+		// removeComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* before iterating
+		strings.HasPrefix(strings.TrimLeftFunc(n.FirstChild.Data, unicode.IsSpace), "/*") &&
+		len(clean) == 0
+}
+
+func printFrontmatterNode(p *printer, n *Node, opts RenderOptions) {
+	start := 0
+	if len(n.Loc) > 0 {
+		start = n.Loc[0].Start
+	}
+	p.addSourceMapping(loc.Loc{Start: start})
+	p.println("// ---")
+	if n.FirstChild == nil {
+		p.printCSSImports(opts.cssLen)
+	}
+
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == TextNode {
+			p.addNilSourceMapping()
+			p.printInternalImports(p.opts.InternalURL, &opts)
+
+			if len(c.Loc) > 0 {
+				start = c.Loc[0].Start
+			}
+
+			statements := js_scanner.HoistStatements([]byte(c.Data), start)
+			for _, statement := range statements.Imports {
+				p.printNewlineIfNeeded()
+				p.printTextWithSourcemap(string(bytes.TrimSpace(statement.Value)), loc.Loc{Start: statement.Start})
+			}
+
+			if opts.opts.StaticExtraction {
+				p.addNilSourceMapping()
+				p.printCSSImports(opts.cssLen)
+			}
+
+			// 1. Component imports, if any exist.
+			// p.printComponentMetadata(n.Parent, opts.opts, []byte(importStatements))
+
+			// 2. Top-level Astro global.
+			p.printTopLevelAstro(opts.opts)
+
+			// TODO: ensure exports are properly hoisted
+			// for _, statement := range statements.Exports {
+			// 	p.printNewlineIfNeeded()
+			// 	p.printTextWithSourcemap(string(bytes.TrimSpace(statement.Value)), loc.Loc{Start: statement.Start})
+			// }
+
+			p.printFuncPrelude(opts.opts)
+
+			for _, statement := range statements.Body {
+				p.printTextWithSourcemap(string(statement.Value), loc.Loc{Start: statement.Start})
+			}
+
+			// Print empty just to ensure a newline
+			p.printNewlineIfNeeded()
+
+			if len(n.Parent.Styles) > 0 {
+				definedVars := transform.GetDefineVars(n.Parent.Styles)
+				if len(definedVars) > 0 {
+					p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
+				}
+				p.println("const STYLES = [")
+				for _, style := range n.Parent.Styles {
+					p.printStyleOrScript(opts, style)
+				}
+				p.println("];")
+				p.addNilSourceMapping()
+				p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
+			}
+
+			if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
+				p.println("const SCRIPTS = [")
+				for _, script := range n.Parent.Scripts {
+					p.printStyleOrScript(opts, script)
+				}
+				p.println("];")
+				p.addNilSourceMapping()
+				p.println(fmt.Sprintf("for (const SCRIPT of SCRIPTS) %s.scripts.add(SCRIPT);", RESULT))
+			}
+
+			p.printReturnOpen()
+		} else {
+			render1(p, c, RenderOptions{
+				isRoot:           false,
+				isExpression:     true,
+				depth:            opts.depth + 1,
+				opts:             opts.opts,
+				cssLen:           opts.cssLen,
+				printedMaybeHead: opts.printedMaybeHead,
+			})
+			if len(n.Loc) > 1 {
+				p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
+			}
+		}
+	}
+}
+
+func printCommentNode(p *printer, n *Node) {
+	p.printSegments([]string{"<!--", escapeText(n.Data), "-->"}, n.Loc[0].Start-4)
+}
+
+func printTextNode(p *printer, n *Node) {
+	p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 }

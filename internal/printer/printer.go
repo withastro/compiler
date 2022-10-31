@@ -63,6 +63,13 @@ func (p *printer) println(text string) {
 	p.print(text + "\n")
 }
 
+func (p *printer) printNewlineIfNeeded() {
+	final := p.output[len(p.output)-1]
+	if final != '\n' {
+		p.print("\n")
+	}
+}
+
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
 	lastPos := -1
@@ -76,6 +83,14 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 		p.print(string(c))
 		start += diff
 		lastPos = pos
+	}
+}
+
+func (p *printer) printSegments(segments []string, start int) {
+	for _, segment := range segments {
+		p.addSourceMapping(loc.Loc{Start: start})
+		p.print(segment)
+		start += len(segment)
 	}
 }
 
@@ -120,7 +135,7 @@ func (p *printer) printCSSImports(cssLen int) {
 		p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.css\";", p.opts.Filename, i))
 		i++
 	}
-	p.print("\n")
+	p.printNewlineIfNeeded()
 	p.hasCSSImports = true
 }
 
@@ -342,9 +357,14 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 	case astro.QuotedAttribute:
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
+		p.addSourceMapping(loc.Loc{Start: attr.KeyLoc.Start + len(attr.Key)})
 		p.print("=")
-		p.addSourceMapping(attr.ValLoc)
-		p.print(`"` + encodeDoubleQuote(escapeInterpolation(escapeBackticks(attr.Val))) + `"`)
+		p.addSourceMapping(loc.Loc{Start: attr.ValLoc.Start - 1})
+		p.print(`"`)
+		p.printTextWithSourcemap(encodeDoubleQuote(escapeInterpolation(escapeBackticks(attr.Val))), attr.ValLoc)
+		p.addSourceMapping(loc.Loc{Start: attr.ValLoc.Start + len(attr.Val)})
+		p.print(`"`)
+		p.addSourceMapping(loc.Loc{Start: attr.ValLoc.Start + len(attr.Val) + 1})
 	case astro.EmptyAttribute:
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
@@ -422,7 +442,10 @@ func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
 		patharg = fmt.Sprintf("\"%s\"", patharg)
 	}
 
-	p.println(fmt.Sprintf("const $$Astro = %s(%s, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, patharg, p.opts.Site, p.opts.ProjectRoot))
+	p.addNilSourceMapping()
+	p.println(fmt.Sprintf("const $$Astro = %s(%s, '%s', '%s');", CREATE_ASTRO, patharg, p.opts.Site, p.opts.ProjectRoot))
+	p.addNilSourceMapping()
+	p.println("const Astro = $$Astro;")
 }
 
 func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {
