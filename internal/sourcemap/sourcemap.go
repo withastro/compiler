@@ -209,7 +209,6 @@ func (offset *LineColumnOffset) AdvanceBytes(bytes []byte) {
 		case '\r', '\n', '\u2028', '\u2029':
 			// Handle Windows-specific "\r\n" newlines
 			if c == '\r' && len(bytes) > 0 && bytes[0] == '\n' {
-				columns++
 				continue
 			}
 
@@ -235,7 +234,6 @@ func (offset *LineColumnOffset) AdvanceString(text string) {
 		case '\r', '\n', '\u2028', '\u2029':
 			// Handle Windows-specific "\r\n" newlines
 			if c == '\r' && i+1 < len(text) && text[i+1] == '\n' {
-				columns++
 				continue
 			}
 
@@ -505,7 +503,6 @@ func GenerateLineOffsetTables(contents string, approximateLineCount int) []LineO
 		case '\r', '\n', '\u2028', '\u2029':
 			// Handle Windows-specific "\r\n" newlines
 			if c == '\r' && i+1 < len(contents) && contents[i+1] == '\n' {
-				column++
 				continue
 			}
 
