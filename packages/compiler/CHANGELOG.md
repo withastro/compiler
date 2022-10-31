@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.7
+
+### Patch Changes
+
+- 108c6c9: Fix TSX sourcemap bug on Windows (again)
+
 ## 0.29.6
 
 ### Patch Changes
