@@ -639,7 +639,7 @@ func (b *ChunkBuilder) AddSourceMapping(location loc.Loc, output []byte) {
 		return
 	}
 	b.prevLoc = location
-	if location.Start == -1 {
+	if location.Start < 0 {
 		b.appendMapping(SourceMapState{
 			GeneratedLine:   b.prevState.GeneratedLine,
 			GeneratedColumn: b.generatedColumn,
@@ -659,7 +659,7 @@ func (b *ChunkBuilder) AddSourceMapping(location loc.Loc, output []byte) {
 	for count > 0 {
 		step := count / 2
 		i := originalLine + step
-		if lineOffsetTables[i].byteOffsetToStartOfLine <= location.Start {
+		if i > -1 && lineOffsetTables[i].byteOffsetToStartOfLine <= location.Start {
 			originalLine = i + 1
 			count = count - step - 1
 		} else {
