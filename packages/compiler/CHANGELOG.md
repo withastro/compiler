@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.8
+
+### Patch Changes
+
+- 01b62ea: Fix sourcemap bug on Windows (again x2)
+
 ## 0.29.7
 
 ### Patch Changes
