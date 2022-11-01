@@ -118,9 +118,12 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	}
 
 	if n.Type == FrontmatterNode {
-		p.addSourceMapping(n.Loc[0])
+		p.addSourceMapping(loc.Loc{Start: 0})
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
+				if len(c.Loc) > 0 {
+					p.addSourceMapping(c.Loc[0])
+				}
 				p.printTextWithSourcemap(c.Data, c.Loc[0])
 			} else {
 				renderTsx(p, c)
