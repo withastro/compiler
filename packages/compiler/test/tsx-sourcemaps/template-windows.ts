@@ -1,5 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { convertToTSX } from '@astrojs/compiler';
 import { testSourcemap } from '../utils';
 
 test('template expression basic', async () => {
@@ -117,6 +118,20 @@ test('special attributes', async () => {
     name: null,
     line: 2,
     column: 6,
+  });
+});
+
+test('whitespace', async () => {
+  const input = `---\r\nimport A from "a";\r\n\timport B from "b";\r\n---\r\n`;
+  const { code } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
+  assert.match(code, '\t', 'output includes \\t');
+
+  const B = await testSourcemap(input, 'B');
+  assert.equal(B, {
+    source: 'index.astro',
+    name: null,
+    line: 3,
+    column: 9,
   });
 });
 

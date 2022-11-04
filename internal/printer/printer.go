@@ -68,10 +68,6 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	lastPos := -1
 	for pos, c := range text {
 		diff := pos - lastPos
-		if c == '\r' {
-			start += diff
-			continue
-		}
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
 		start += diff
