@@ -406,7 +406,7 @@ func (p *printer) addSourceMapping(location loc.Loc) {
 	// actually an off-by-one error...
 	offset := 0
 	if strings.Contains(p.sourcetext, "\r\n") {
-		offset = -1
+		offset = 1
 	}
 
 	if location.Start < 0 {
