@@ -402,10 +402,17 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 }
 
 func (p *printer) addSourceMapping(location loc.Loc) {
+	// HACK: This is gross. Using to verify that Windows is
+	// actually an off-by-one error...
+	offset := 0
+	if strings.Contains(p.sourcetext, "\r\n") {
+		offset = -1
+	}
+
 	if location.Start < 0 {
 		p.builder.AddSourceMapping(loc.Loc{Start: 0}, p.output)
 	} else {
-		p.builder.AddSourceMapping(location, p.output)
+		p.builder.AddSourceMapping(loc.Loc{Start: location.Start + offset}, p.output)
 	}
 }
 
