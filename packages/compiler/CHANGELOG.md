@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.29.10
+
+### Patch Changes
+
+- 07a65df: Print `\r` when printing TSX output
+- 1250d0b: Add warning when `define:vars` won't work because of compilation limitations
+
 ## 0.29.9
 
 ### Patch Changes
