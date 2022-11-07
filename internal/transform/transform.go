@@ -31,6 +31,7 @@ type TransformOptions struct {
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	definedVars := GetDefineVars(doc.Styles)
+	didAddDefinedVars := false
 	walk(doc, func(n *astro.Node) {
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
@@ -38,9 +39,27 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 			ScopeElement(n, opts)
 		}
 		if len(definedVars) > 0 {
-			AddDefineVars(n, definedVars)
+			didAdd := AddDefineVars(n, definedVars)
+			fmt.Println(didAdd, n.Data)
+			if !didAddDefinedVars {
+				didAddDefinedVars = didAdd
+			}
 		}
 	})
+	if len(definedVars) > 0 && !didAddDefinedVars {
+		for _, style := range doc.Styles {
+			for _, a := range style.Attr {
+				if a.Key == "define:vars" {
+					h.AppendWarning(&loc.ErrorWithRange{
+						Code:  loc.WARNING_CANNOT_DEFINE_VARS,
+						Text:  "Unable to inject `define:vars` declaration",
+						Range: loc.Range{Loc: a.KeyLoc, Len: len("define:vars")},
+						Hint:  "Try wrapping this component in an element so that Astro can inject a \"style\" attribute.",
+					})
+				}
+			}
+		}
+	}
 	NormalizeSetDirectives(doc, h)
 
 	// Important! Remove scripts from original location *after* walking the doc

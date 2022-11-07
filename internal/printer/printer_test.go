@@ -2224,7 +2224,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:             "define:vars on style with StaticExpression turned on",
+			name:             "define:vars on style with StaticExtraction turned on",
 			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			staticExtraction: true,
 			want: want{

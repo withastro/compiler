@@ -14,14 +14,16 @@ func ScopeElement(n *astro.Node, opts TransformOptions) {
 	}
 }
 
-func AddDefineVars(n *astro.Node, values []string) {
+func AddDefineVars(n *astro.Node, values []string) bool {
 	if n.Type == astro.ElementNode && !n.Component {
 		if _, noScope := NeverScopedElements[n.Data]; !noScope {
 			if IsTopLevel(n) {
 				injectDefineVars(n, values)
+				return true
 			}
 		}
 	}
+	return false
 }
 
 var NeverScopedElements map[string]bool = map[string]bool{
@@ -37,6 +39,7 @@ var NeverScopedElements map[string]bool = map[string]bool{
 	"noscript": true,
 	"script":   true,
 	"style":    true,
+	"slot":     true,
 	"title":    true,
 }
 
