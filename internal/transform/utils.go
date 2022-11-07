@@ -59,6 +59,9 @@ func IsImplictNodeMarker(attr astro.Attribute) bool {
 }
 
 func IsTopLevel(n *astro.Node) bool {
+	if IsImplictNode(n) || n.Data == "" {
+		return false
+	}
 	p := n.Parent
 	if p == nil {
 		return true
