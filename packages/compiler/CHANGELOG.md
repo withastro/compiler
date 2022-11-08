@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.11
+
+### Patch Changes
+
+- ee907f1: Fix #5308, duplicate style bug when using `define:vars`
+
 ## 0.29.10
 
 ### Patch Changes
