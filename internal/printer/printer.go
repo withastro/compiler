@@ -293,16 +293,7 @@ func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
 	// styles should be included in the STYLES array
 	transformOpts := opts.opts
 	if transformOpts.StaticExtraction {
-		hasDefineVars := false
-		for _, attr := range n.Attr {
-			if attr.Key == "define:vars" {
-				hasDefineVars = true
-			}
-		}
-
-		if !hasDefineVars {
-			return
-		}
+		return
 	}
 
 	p.addNilSourceMapping()

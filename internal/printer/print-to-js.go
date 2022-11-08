@@ -177,13 +177,15 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					if len(definedVars) > 0 {
 						p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
 					}
-					p.println("const STYLES = [")
-					for _, style := range n.Parent.Styles {
-						p.printStyleOrScript(opts, style)
+					if !opts.opts.StaticExtraction {
+						p.println("const STYLES = [")
+						for _, style := range n.Parent.Styles {
+							p.printStyleOrScript(opts, style)
+						}
+						p.println("];")
+						p.addNilSourceMapping()
+						p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
 					}
-					p.println("];")
-					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
 				}
 
 				if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
@@ -227,13 +229,15 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			if len(definedVars) > 0 {
 				p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
 			}
-			p.println("const STYLES = [")
-			for _, style := range n.Parent.Styles {
-				p.printStyleOrScript(opts, style)
+			if !opts.opts.StaticExtraction {
+				p.println("const STYLES = [")
+				for _, style := range n.Parent.Styles {
+					p.printStyleOrScript(opts, style)
+				}
+				p.println("];")
+				p.addNilSourceMapping()
+				p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
 			}
-			p.println("];")
-			p.addNilSourceMapping()
-			p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
 		}
 		if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
 			p.println("const SCRIPTS = [")

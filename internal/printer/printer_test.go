@@ -2230,9 +2230,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			want: want{
 				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
-				styles: []string{
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"VFS5OEMV\"},children:`h1:where(.astro-VFS5OEMV){color:var(--color)}`}",
-				},
 			},
 		},
 		{
@@ -2242,10 +2239,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			want: want{
 				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
 				definedVars: []string{"{color:'red'}", "{color:'green'}"},
-				styles: []string{
-					"{props:{\"define:vars\":({color:'red'}),\"data-astro-id\":\"6OXBQCST\"},children:`h2:where(.astro-6OXBQCST){color:var(--color)}`}",
-					"{props:{\"define:vars\":({color:'green'}),\"data-astro-id\":\"6OXBQCST\"},children:`h1:where(.astro-6OXBQCST){color:var(--color)}`}",
-				},
 			},
 		},
 		{

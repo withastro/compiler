@@ -40,7 +40,6 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
-			fmt.Println(didAdd, n.Data)
 			if !didAddDefinedVars {
 				didAddDefinedVars = didAdd
 			}
