@@ -29,7 +29,7 @@ test.before(async () => {
 });
 
 test('does not include define:vars in generated markup', () => {
-  assert.ok(result.code.includes('STYLES = [\n];'));
+  assert.ok(!result.code.includes('STYLES'));
   assert.equal(result.css.length, 1);
 });
 
