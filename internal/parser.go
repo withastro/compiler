@@ -46,7 +46,8 @@ type parser struct {
 	im insertionMode
 	// originalIM is the insertion mode to go back to after completing a text
 	// or inTableText insertion mode.
-	originalIM insertionMode
+	originalIM    insertionMode
+	exitLiteralIM func() bool
 	// fosterParenting is whether new elements should be inserted according to
 	// the foster parenting rules (section 12.2.6.1).
 	fosterParenting bool
@@ -782,13 +783,12 @@ func inHeadIM(p *parser) bool {
 	case StartTagToken:
 		// Allow components in Head
 		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
-			p.addElement()
-			if p.hasSelfClosingToken {
-				p.addLoc()
-				p.oe.pop()
-				p.acknowledgeSelfClosingTag()
+			p.im = inLiteralIM
+			oe := len(p.oe)
+			p.exitLiteralIM = func() bool {
+				return len(p.oe) == oe
 			}
-			return true
+			return false
 		}
 		switch p.tok.DataAtom {
 		case a.Html:
@@ -2670,30 +2670,32 @@ func frontmatterIM(p *parser) bool {
 
 // Handle content very literally
 func inLiteralIM(p *parser) bool {
-	switch p.tok.Type {
-	case ErrorToken:
-		p.oe.pop()
-	case TextToken:
-		p.addText(p.tok.Data)
-		return true
-	case StartTagToken:
-		p.addElement()
-		if p.hasSelfClosingToken {
+	if !p.exitLiteralIM() {
+		switch p.tok.Type {
+		case ErrorToken:
 			p.oe.pop()
-			p.acknowledgeSelfClosingTag()
+		case TextToken:
+			p.addText(p.tok.Data)
+			return true
+		case StartTagToken:
+			p.addElement()
+			if p.hasSelfClosingToken {
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
+			return true
+		case EndTagToken:
+			p.addLoc()
+			p.oe.pop()
+			return true
+		case StartExpressionToken:
+			p.addExpression()
+			return true
+		case EndExpressionToken:
+			p.addLoc()
+			p.oe.pop()
+			return true
 		}
-		return true
-	case EndTagToken:
-		p.addLoc()
-		p.oe.pop()
-		return true
-	case StartExpressionToken:
-		p.addExpression()
-		return true
-	case EndExpressionToken:
-		p.addLoc()
-		p.oe.pop()
-		return true
 	}
 	p.im = p.originalIM
 	p.originalIM = nil
@@ -2711,10 +2713,6 @@ func inExpressionIM(p *parser) bool {
 	case TextToken:
 		return textIM(p)
 	case StartTagToken:
-		if isComponent(p.tok.Data) {
-			return inBodyIM(p)
-		}
-		n := p.oe.top()
 		if p.isInsideHead() {
 			switch p.tok.DataAtom {
 			case a.Noframes, a.Style, a.Script, a.Title, a.Noscript, a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta:
@@ -2725,23 +2723,8 @@ func inExpressionIM(p *parser) bool {
 				p.originalIM = origIm
 				return ret
 			default:
-				for {
-					if n.Expression {
-						p.oe.pop()
-						p.im = inHeadIM
-						p.parseImpliedToken(EndTagToken, a.Head, a.Head.String())
-						p.parseImpliedToken(StartTagToken, a.Body, a.Body.String())
-						n.Parent.RemoveChild(n)
-						p.addChild(n)
-						p.im = inExpressionIM
-						break
-					}
-
-					p.oe.pop()
-					n = p.oe.top()
-				}
-
-				p.originalIM = inBodyIM
+				p.im = inLiteralIM
+				p.exitLiteralIM = getExitLiteralFunc(p)
 				return false
 			}
 		} else {
@@ -2762,6 +2745,18 @@ func inExpressionIM(p *parser) bool {
 
 func ignoreTheRemainingTokens(p *parser) bool {
 	return true
+}
+
+// Generate a function that will exit `inLiteralIM` when all expressions are closed
+func getExitLiteralFunc(p *parser) func() bool {
+	return func() bool {
+		for _, n := range p.oe {
+			if n.Expression {
+				return false
+			}
+		}
+		return true
+	}
 }
 
 const whitespaceOrNUL = whitespace + "\x00"
@@ -3019,6 +3014,7 @@ func ParseWithOptions(r io.Reader, opts ...ParseOption) (*Node, error) {
 		framesetOK:       true,
 		im:               initialIM,
 		frontmatterState: FrontmatterInitial,
+		exitLiteralIM:    func() bool { return false },
 	}
 
 	for _, f := range opts {
@@ -3054,6 +3050,7 @@ func ParseFragmentWithOptions(r io.Reader, context *Node, opts ...ParseOption) (
 		fragment:         true,
 		context:          context,
 		frontmatterState: FrontmatterInitial,
+		exitLiteralIM:    func() bool { return false },
 	}
 	if context != nil && context.Namespace != "" {
 		p.tokenizer = NewTokenizer(r)
