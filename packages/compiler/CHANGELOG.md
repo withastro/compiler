@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.12
+
+### Patch Changes
+
+- a41982a: Fix expression edge cases, improve literal parsing
+
 ## 0.29.11
 
 ### Patch Changes
