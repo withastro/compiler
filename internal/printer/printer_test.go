@@ -139,6 +139,20 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "ternary component",
+			source: `{special ? <ChildDiv><p>Special</p></ChildDiv> : <p>Not special</p>}`,
+			want: want{
+				code: `${special ? $$render` + BACKTICK + `${$$renderComponent($$result,'ChildDiv',ChildDiv,{},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<p>Special</p>` + BACKTICK + `,})}` + BACKTICK + ` : $$render` + BACKTICK + `<p>Not special</p>` + BACKTICK + `}`,
+			},
+		},
+		{
+			name:   "ternary layout",
+			source: `{toggleError ? <BaseLayout><h1>SITE: {Astro.site}</h1></BaseLayout> : <><h1>SITE: {Astro.site}</h1></>}`,
+			want: want{
+				code: `${toggleError ? $$render` + BACKTICK + `${$$renderComponent($$result,'BaseLayout',BaseLayout,{},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<h1>SITE: ${Astro.site}</h1>` + BACKTICK + `,})}` + BACKTICK + ` : $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<h1>SITE: ${Astro.site}</h1>` + BACKTICK + `,})}` + BACKTICK + `}`,
+			},
+		},
+		{
 			name:   "orphan slot",
 			source: `<slot />`,
 			want: want{
