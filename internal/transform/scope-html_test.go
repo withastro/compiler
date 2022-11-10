@@ -3,14 +3,19 @@ package transform
 import (
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"golang.org/x/net/html/atom"
 )
 
-func TestScopeHTML(t *testing.T) {
-	tests := []struct {
+func tests() []struct {
+	name   string
+	source string
+	want   string
+} {
+	return []struct {
 		name   string
 		source string
 		want   string
@@ -91,9 +96,14 @@ func TestScopeHTML(t *testing.T) {
 			want:   `<A  0>={0>} class="astro-XXXXXX"></A>`,
 		},
 	}
+
+}
+
+func TestScopeHTML(t *testing.T) {
+	tests := tests()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := handler.NewHandler(tt.source, "FuzzScopeHTML.astro")
+			h := handler.NewHandler(tt.source, "TestScopeHTML.astro")
 			nodes, err := astro.ParseFragmentWithOptions(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
@@ -115,4 +125,37 @@ func TestScopeHTML(t *testing.T) {
 			astro.PrintToSource(&b, nodes[0])
 		})
 	}
+
+}
+
+func FuzzScopeHTML(f *testing.F) {
+	tests := tests()
+	for _, tt := range tests {
+		f.Add(tt.source) // Use f.Add to provide a seed corpus
+	}
+	f.Fuzz(func(t *testing.T, source string) {
+		h := handler.NewHandler(source, "FuzzScopeHTML.astro")
+		nodes, err := astro.ParseFragmentWithOptions(strings.NewReader(source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
+		if err != nil {
+			t.Error(err)
+		}
+		// if the doc doesn't parse as an element node, we don't care
+		if len(nodes) == 0 || nodes[0].Type != astro.ElementNode {
+			t.Skip(nodes)
+		}
+		ScopeElement(nodes[0], TransformOptions{Scope: "XXXXXX"})
+		// nodes[0] should still be an element node
+		if len(nodes) == 0 || nodes[0].Type != astro.ElementNode {
+			t.Errorf("`nodes[0]` is not an element node: %q\n nodes[0].Type: %q", source, nodes[0].Type)
+		}
+		var b strings.Builder
+		astro.PrintToSource(&b, nodes[0])
+		got := b.String()
+		if !strings.Contains(got, "astro-XXXXXX") {
+			t.Errorf("HTML scoping failed to include the astro scope\n source: %q\n got: %q\n `nodes[0].Data: %q", source, got, nodes[0].Data)
+		}
+		if utf8.ValidString(source) && !utf8.ValidString(got) {
+			t.Errorf("HTML scoping produced invalid html string: %q", got)
+		}
+	})
 }
