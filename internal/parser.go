@@ -3073,6 +3073,10 @@ func ParseFragmentWithOptions(r io.Reader, context *Node, opts ...ParseOption) (
 		f(p)
 	}
 
+	if p.handler == nil {
+		return nil, errors.New("html: handler must be passed to ParseFragmentWithOptions")
+	}
+
 	root := &Node{
 		Type:     ElementNode,
 		DataAtom: a.Html,
