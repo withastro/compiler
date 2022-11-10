@@ -1196,8 +1196,8 @@ func (z *Tokenizer) readTagAttrKey() {
 			z.attrTemplateLiteralStack = append(z.attrTemplateLiteralStack, 0)
 			z.readTagAttrExpression()
 			pendingAttr := z.buf[z.pendingAttr[0].Start:]
-			if len(pendingAttr) > 3 {
-				if strings.TrimSpace(string(pendingAttr))[0:3] == "..." {
+			if trimmed := strings.TrimSpace(string(pendingAttr)); len(trimmed) > 3 {
+				if trimmed[0:3] == "..." {
 					z.pendingAttr[0].Start += strings.Index(string(pendingAttr), "...") + 3
 					z.pendingAttrType = SpreadAttribute
 				}
