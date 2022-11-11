@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.13
+
+### Patch Changes
+
+- 8f3e488: Fix regression introduced to `parse` handling in the last patch
+
 ## 0.29.12
 
 ### Patch Changes
