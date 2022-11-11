@@ -2672,16 +2672,22 @@ func frontmatterIM(p *parser) bool {
 func inLiteralIM(p *parser) bool {
 	shouldExit := p.exitLiteralIM()
 	switch p.tok.Type {
-	case ErrorToken:
-		// Stop parsing.
-	case TextToken:
-		p.addText(p.tok.Data)
 	case StartTagToken:
 		p.addElement()
 		if p.hasSelfClosingToken {
 			p.oe.pop()
 			p.acknowledgeSelfClosingTag()
 		}
+		// always continue `inLiteralIM`
+		return true
+	case StartExpressionToken:
+		p.addExpression()
+		// always continue `inLiteralIM`
+		return true
+	case ErrorToken:
+		// Stop parsing.
+	case TextToken:
+		p.addText(p.tok.Data)
 	case CommentToken:
 		p.addChild(&Node{
 			Type: CommentNode,
@@ -2691,8 +2697,6 @@ func inLiteralIM(p *parser) bool {
 	case EndTagToken:
 		p.addLoc()
 		p.oe.pop()
-	case StartExpressionToken:
-		p.addExpression()
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
