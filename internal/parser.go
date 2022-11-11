@@ -2670,36 +2670,42 @@ func frontmatterIM(p *parser) bool {
 
 // Handle content very literally
 func inLiteralIM(p *parser) bool {
-	if !p.exitLiteralIM() {
-		switch p.tok.Type {
-		case ErrorToken:
+	shouldExit := p.exitLiteralIM()
+	switch p.tok.Type {
+	case StartTagToken:
+		p.addElement()
+		if p.hasSelfClosingToken {
 			p.oe.pop()
-		case TextToken:
-			p.addText(p.tok.Data)
-			return true
-		case StartTagToken:
-			p.addElement()
-			if p.hasSelfClosingToken {
-				p.oe.pop()
-				p.acknowledgeSelfClosingTag()
-			}
-			return true
-		case EndTagToken:
-			p.addLoc()
-			p.oe.pop()
-			return true
-		case StartExpressionToken:
-			p.addExpression()
-			return true
-		case EndExpressionToken:
-			p.addLoc()
-			p.oe.pop()
-			return true
+			p.acknowledgeSelfClosingTag()
 		}
+		// always continue `inLiteralIM`
+		return true
+	case StartExpressionToken:
+		p.addExpression()
+		// always continue `inLiteralIM`
+		return true
+	case ErrorToken:
+		// Stop parsing.
+	case TextToken:
+		p.addText(p.tok.Data)
+	case CommentToken:
+		p.addChild(&Node{
+			Type: CommentNode,
+			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
+		})
+	case EndTagToken:
+		p.addLoc()
+		p.oe.pop()
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
 	}
-	p.im = p.originalIM
-	p.originalIM = nil
-	return p.tok.Type == EndTagToken
+	if shouldExit {
+		p.im = p.originalIM
+		p.originalIM = nil
+	}
+	return true
 }
 
 func inExpressionIM(p *parser) bool {
