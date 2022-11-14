@@ -686,6 +686,7 @@ func beforeHTMLIM(p *parser) bool {
 		}
 		if p.literal {
 			p.im = inLiteralIM
+			p.originalIM = beforeHTMLIM
 			return false
 		}
 	case EndTagToken:
@@ -784,10 +785,8 @@ func inHeadIM(p *parser) bool {
 		// Allow components in Head
 		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
 			p.im = inLiteralIM
-			oe := len(p.oe)
-			p.exitLiteralIM = func() bool {
-				return len(p.oe) == oe
-			}
+			p.originalIM = inHeadIM
+			p.exitLiteralIM = getExitLiteralFunc(p)
 			return false
 		}
 		switch p.tok.DataAtom {
@@ -1116,6 +1115,7 @@ func inBodyIM(p *parser) bool {
 		// if literal and we only have html and body open
 		if p.literal {
 			p.im = inLiteralIM
+			p.originalIM = inBodyIM
 			return false
 		}
 		// It's possible we were moved here from inHeadIM
@@ -2435,6 +2435,7 @@ func afterBodyIM(p *parser) bool {
 	case EndTagToken:
 		if p.literal {
 			p.im = inLiteralIM
+			p.originalIM = afterBodyIM
 			return false
 		}
 		if p.tok.DataAtom == a.Html {
@@ -2755,13 +2756,9 @@ func ignoreTheRemainingTokens(p *parser) bool {
 
 // Generate a function that will exit `inLiteralIM` when all expressions are closed
 func getExitLiteralFunc(p *parser) func() bool {
+	oe := len(p.oe)
 	return func() bool {
-		for _, n := range p.oe {
-			if n.Expression {
-				return false
-			}
-		}
-		return true
+		return len(p.oe) == oe
 	}
 }
 
