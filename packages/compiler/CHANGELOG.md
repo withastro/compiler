@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.14
+
+### Patch Changes
+
+- 6ff1d80: Fix regression introduced by https://github.com/withastro/compiler/pull/617
+
 ## 0.29.13
 
 ### Patch Changes
