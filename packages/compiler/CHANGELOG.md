@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.15
+
+### Patch Changes
+
+- 5f6e69b: Fix expression literal handling
+
 ## 0.29.14
 
 ### Patch Changes
