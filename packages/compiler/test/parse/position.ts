@@ -45,7 +45,6 @@ Hello world!`;
   assert.ok(text.position.end, `Expected serialized output to contain an end position`);
 });
 
-
 test('include start and end positions for self-closing tags', async () => {
   const input = `<input/>`;
   const { ast } = await parse(input);
