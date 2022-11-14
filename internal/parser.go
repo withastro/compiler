@@ -2731,6 +2731,7 @@ func inExpressionIM(p *parser) bool {
 				return ret
 			default:
 				p.im = inLiteralIM
+				p.originalIM = inExpressionIM
 				p.exitLiteralIM = getExitLiteralFunc(p)
 				return false
 			}
