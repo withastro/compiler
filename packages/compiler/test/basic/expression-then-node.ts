@@ -34,9 +34,13 @@ test.before(async () => {
 });
 
 test('expression followed by node', () => {
-  assert.match(result.code, `yield '
+  assert.match(
+    result.code,
+    `yield '
 ';
-}`, 'Expected output to properly handle expression!');
+}`,
+    'Expected output to properly handle expression!'
+  );
 });
 
 test.run();
