@@ -2675,6 +2675,7 @@ func inLiteralIM(p *parser) bool {
 	case StartTagToken:
 		p.addElement()
 		if p.hasSelfClosingToken {
+			p.addLoc()
 			p.oe.pop()
 			p.acknowledgeSelfClosingTag()
 		}
