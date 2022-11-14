@@ -23,7 +23,6 @@ test.before(async () => {
 });
 
 test('has body in output', () => {
-  console.log(result.code);
   assert.match(result.code, '<body>', 'Expected output to contain body element!');
 });
 
