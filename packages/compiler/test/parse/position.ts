@@ -45,4 +45,15 @@ Hello world!`;
   assert.ok(text.position.end, `Expected serialized output to contain an end position`);
 });
 
+test('include start and end positions for self-closing tags', async () => {
+  const input = `<input/>`;
+  const { ast } = await parse(input);
+
+  const element = ast.children[0];
+  assert.is(element.type, 'element');
+  assert.is(element.name, 'input');
+  assert.ok(element.position.start, `Expected serialized output to contain a start position`);
+  assert.ok(element.position.end, `Expected serialized output to contain an end position`);
+});
+
 test.run();
