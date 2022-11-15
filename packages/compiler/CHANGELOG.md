@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.29.16
+
+### Patch Changes
+
+- ec745f4: Self-closing tags will now retreive "end" positional data
+- a6c2822: Fix a few TSX output errors
+
 ## 0.29.15
 
 ### Patch Changes
