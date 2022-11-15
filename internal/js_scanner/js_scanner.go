@@ -225,9 +225,11 @@ outer:
 		token, value := l.Next()
 
 		if token == js.DivToken || token == js.DivEqToken {
-			lns := bytes.Split(source[i+1:], []byte{'\n'})
-			if bytes.Contains(lns[0], []byte{'/'}) {
-				token, value = l.RegExp()
+			if len(source) > i {
+				lns := bytes.Split(source[i+1:], []byte{'\n'})
+				if bytes.Contains(lns[0], []byte{'/'}) {
+					token, value = l.RegExp()
+				}
 			}
 		}
 
@@ -348,7 +350,7 @@ outer:
 	}
 }
 
-func isIdentifier(value []byte) bool {
+func IsIdentifier(value []byte) bool {
 	valid := true
 	for i, b := range value {
 		if i == 0 {
@@ -410,7 +412,7 @@ func GetObjectKeys(source []byte) [][]byte {
 					} else {
 						key := value[1 : len(value)-1]
 						ident := string(key)
-						if !isIdentifier(key) {
+						if !IsIdentifier(key) {
 							ident = strcase.ToLowerCamel(string(key))
 						}
 						if string(key) == ident {

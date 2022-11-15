@@ -311,9 +311,16 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: eqStart})
 			p.print(`=`)
-			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
-			p.printTextWithSourcemap(fmt.Sprintf("{`%s`}", a.Val), a.ValLoc)
-			endLoc = a.ValLoc.Start + len(a.Val) + 2
+			p.addNilSourceMapping()
+			p.print(`{`)
+			p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start - 1})
+			p.print("`")
+			p.printTextWithSourcemap(a.Val, a.ValLoc)
+			p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start + len(a.Val)})
+			p.print("`")
+			p.addNilSourceMapping()
+			p.print(`}`)
+			endLoc = a.ValLoc.Start + len(a.Val) + 1
 		}
 		p.addSourceMapping(loc.Loc{Start: endLoc})
 	}

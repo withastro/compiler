@@ -26,4 +26,18 @@ test('empty quoted attribute', async () => {
   });
 });
 
+test('template literal attribute', async () => {
+  const input = `---
+---
+<Tag src=\`bar\${foo}\` />`;
+
+  const open = await testSourcemap(input, 'foo');
+  assert.equal(open, {
+    source: 'index.astro',
+    line: 3,
+    column: 16,
+    name: null,
+  });
+});
+
 test.run();
