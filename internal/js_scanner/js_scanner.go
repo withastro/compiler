@@ -348,7 +348,7 @@ outer:
 	}
 }
 
-func isIdentifier(value []byte) bool {
+func IsIdentifier(value []byte) bool {
 	valid := true
 	for i, b := range value {
 		if i == 0 {
@@ -410,7 +410,7 @@ func GetObjectKeys(source []byte) [][]byte {
 					} else {
 						key := value[1 : len(value)-1]
 						ident := string(key)
-						if !isIdentifier(key) {
+						if !IsIdentifier(key) {
 							ident = strcase.ToLowerCamel(string(key))
 						}
 						if string(key) == ident {

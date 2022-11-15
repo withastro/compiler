@@ -2,10 +2,12 @@ package printer
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/iancoleman/strcase"
+	"github.com/withastro/compiler/internal/js_scanner"
 )
 
 func escapeText(src string) string {
@@ -35,7 +37,11 @@ func getTSXComponentName(filename string) string {
 		return "__AstroComponent_"
 	}
 	basename := strcase.ToCamel(strings.Split(part, ".")[0])
-	return strings.Join([]string{basename, "__AstroComponent_"}, "")
+	if js_scanner.IsIdentifier([]byte(basename)) {
+		return fmt.Sprintf("%s%s", basename, "__AstroComponent_")
+	} else {
+		return "__AstroComponent_"
+	}
 }
 
 func getComponentName(pathname string) string {
