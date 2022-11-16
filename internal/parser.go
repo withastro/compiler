@@ -1765,6 +1765,12 @@ func inTableIM(p *parser) bool {
 		p.im = inExpressionIM
 		return true
 	case StartTagToken:
+		if isComponent(p.tok.Data) {
+			p.originalIM = inTableIM
+			p.im = inLiteralIM
+			p.exitLiteralIM = getExitLiteralFunc(p)
+			return false
+		}
 		switch p.tok.DataAtom {
 		case a.Slot:
 			p.addElement()
@@ -1830,14 +1836,6 @@ func inTableIM(p *parser) bool {
 			p.fosterParenting = false
 			p.framesetOK = false
 			p.im = inSelectInTableIM
-			return true
-		}
-		if isComponent(p.tok.Data) {
-			p.addElement()
-			if p.hasSelfClosingToken {
-				p.oe.pop()
-				p.acknowledgeSelfClosingTag()
-			}
 			return true
 		}
 	case EndTagToken:
@@ -2737,7 +2735,15 @@ func inExpressionIM(p *parser) bool {
 				return false
 			}
 		} else {
-			return inBodyIM(p)
+			switch p.tok.DataAtom {
+			case a.Table, a.Tbody, a.Thead, a.Tr, a.Td:
+				p.im = inLiteralIM
+				p.originalIM = inExpressionIM
+				p.exitLiteralIM = getExitLiteralFunc(p)
+				return false
+			default:
+				return inBodyIM(p)
+			}
 		}
 	case EndTagToken:
 		return inBodyIM(p)
