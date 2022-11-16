@@ -84,6 +84,11 @@ func TestScopeHTML(t *testing.T) {
 			source: "<Component class:list={{ a: true }} />",
 			want:   `<Component class:list={[({ a: true }), "astro-XXXXXX"]}></Component>`,
 		},
+		{
+			name:   "fault input currently accepted",
+			source: `<A { 0>`,
+			want:   `<A  0>={0>} class="astro-XXXXXX"></A>`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -98,6 +103,13 @@ func TestScopeHTML(t *testing.T) {
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
+			// check whether another pass doesn't error
+			nodes, err = astro.ParseFragment(strings.NewReader(got), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()})
+			if err != nil {
+				t.Error(err)
+			}
+			ScopeElement(nodes[0], TransformOptions{Scope: "XXXXXX"})
+			astro.PrintToSource(&b, nodes[0])
 		})
 	}
 }
