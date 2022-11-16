@@ -1130,6 +1130,23 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 		if saveAttr && z.pendingAttr[0].Start != z.pendingAttr[0].End {
 			z.attr = append(z.attr, z.pendingAttr)
 			z.attrTypes = append(z.attrTypes, z.pendingAttrType)
+
+			// Warn for common mistakes
+			attr := z.attr[len(z.attr)-1]
+			// Possible ...spread attribute without wrapping expression
+			if attr[0].End-attr[0].Start > 3 {
+				text := string(z.buf[attr[0].Start:attr[0].End])
+				if len(strings.TrimSpace(text)) > 3 && strings.TrimSpace(text)[0:3] == "..." {
+					z.handler.AppendWarning(&loc.ErrorWithRange{
+						Code: loc.WARNING_INVALID_SPREAD,
+						Text: fmt.Sprintf(`Invalid spread attribute. Did you mean %s?`, fmt.Sprintf("`{%s}`", text)),
+						Range: loc.Range{
+							Loc: loc.Loc{Start: attr[0].Start},
+							Len: len(text),
+						},
+					})
+				}
+			}
 		}
 		if z.skipWhiteSpace(); z.err != nil {
 			break
