@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 0.29.17
+
+### Patch Changes
+
+- 1e7e098: Add warning for invalid spread attributes
+- 3cc6f55: Fix handling of unterminated template literal attributes
+- 48c5677: Update default `internalURL` to `astro/runtime/server/index.js`
+- 2893f33: Fix a number of `table` and `expression` related bugs
+
 ## 0.29.16
 
 ### Patch Changes
