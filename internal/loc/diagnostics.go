@@ -8,6 +8,7 @@ const (
 	ERROR_FRAGMENT_SHORTHAND_ATTRS    DiagnosticCode = 1002
 	ERROR_UNMATCHED_IMPORT            DiagnosticCode = 1003
 	ERROR_UNSUPPORTED_SLOT_ATTRIBUTE  DiagnosticCode = 1004
+	ERROR_UNTERMINATED_STRING         DiagnosticCode = 1005
 	WARNING                           DiagnosticCode = 2000
 	WARNING_UNTERMINATED_HTML_COMMENT DiagnosticCode = 2001
 	WARNING_UNCLOSED_HTML_TAG         DiagnosticCode = 2002
