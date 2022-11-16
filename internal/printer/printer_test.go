@@ -163,28 +163,28 @@ func TestPrinter(t *testing.T) {
 			name:   "conditional slot",
 			source: `<Component>{value && <div slot="test">foo</div>}</Component>`,
 			want: want{
-				code: "${$$renderComponent($$result,'Component',Component,{},{\"test\": () => $$render`${value && $$render`${$$maybeRenderHead($$result)}<div>foo</div>`}`,})}",
+				code: "${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{\"test\": () => $$render`${value && $$render`<div>foo</div>`}`,})}",
 			},
 		},
 		{
 			name:   "ternary slot",
 			source: `<Component>{Math.random() > 0.5 ? <div slot="a">A</div> : <div slot="b">B</div>}</Component>`,
 			want: want{
-				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},Math.random() > 0.5 ? {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`} : {\"b\": () => $$render`<div>B</div>`}))}",
+				code: "${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},Math.random() > 0.5 ? {\"a\": () => $$render`$<div>A</div>`} : {\"b\": () => $$render`<div>B</div>`}))}",
 			},
 		},
 		{
 			name:   "function expression slots",
 			source: "<Component>\n{() => { switch (value) {\ncase 'a': return <div slot=\"a\">A</div>\ncase 'b': return <div slot=\"b\">B</div>\ncase 'c': return <div slot=\"c\">C</div>\n}\n}}\n</Component>",
 			want: want{
-				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},() => { switch (value) {\ncase 'a': return {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`}\ncase 'b': return {\"b\": () => $$render`<div>B</div>`}\ncase 'c': return {\"c\": () => $$render`<div>C</div>`}}\n}))}",
+				code: "${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},() => { switch (value) {\ncase 'a': return {\"a\": () => $$render`<div>A</div>`}\ncase 'b': return {\"b\": () => $$render`<div>B</div>`}\ncase 'c': return {\"c\": () => $$render`<div>C</div>`}}\n}))}",
 			},
 		},
 		{
 			name:   "expression slot",
 			source: `<Component>{true && <div slot="a">A</div>}{false && <div slot="b">B</div>}</Component>`,
 			want: want{
-				code: "${$$renderComponent($$result,'Component',Component,{},{\"a\": () => $$render`${true && $$render`${$$maybeRenderHead($$result)}<div>A</div>`}`,\"b\": () => $$render`${false && $$render`<div>B</div>`}`,})}",
+				code: "${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{\"a\": () => $$render`${true && $$render`<div>A</div>`}`,\"b\": () => $$render`${false && $$render`<div>B</div>`}`,})}",
 			},
 		},
 		{
@@ -233,7 +233,7 @@ func TestPrinter(t *testing.T) {
 			name:   "custom-element",
 			source: "{show && <client-only-element></client-only-element>}",
 			want: want{
-				code: "${show && $$render`${$$renderComponent($$result,'client-only-element','client-only-element',{})}`}",
+				code: "${show && $$render`${$$maybeRenderHead($$result)}${$$renderComponent($$result,'client-only-element','client-only-element',{})}`}",
 			},
 		},
 		{
@@ -505,14 +505,14 @@ import * as ns from '../components';
 			name:   "component with quoted attributes",
 			source: `<Component is='"cool"' />`,
 			want: want{
-				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{"is":"\"cool\""})}`,
+				code: `${$$maybeRenderHead($$result)}${` + RENDER_COMPONENT + `($$result,'Component',Component,{"is":"\"cool\""})}`,
 			},
 		},
 		{
 			name:   "slot with quoted attributes",
 			source: `<Component><div slot='"name"' /></Component>`,
 			want: want{
-				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},{"\"name\"": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div></div>` + BACKTICK + `,})}`,
+				code: `${$$maybeRenderHead($$result)}${` + RENDER_COMPONENT + `($$result,'Component',Component,{},{"\"name\"": () => $$render` + BACKTICK + `<div></div>` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -882,7 +882,7 @@ import Component from "test";
 			want: want{
 				frontmatter: []string{`import Component from "test";`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -898,7 +898,7 @@ import Component from 'test';
 			want: want{
 				frontmatter: []string{`import Component from 'test';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -908,7 +908,7 @@ import Component from 'test';
 	{items.map(item => <div>{item}</div>)}
 </Component>`,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{"data":(data)},{"default": () => $$render` + BACKTICK + `${items.map(item => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>${item}</div>` + BACKTICK + `)}` + BACKTICK + `,})}`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{"data":(data)},{"default": () => $$render` + BACKTICK + `${items.map(item => $$render` + BACKTICK + `<div>${item}</div>` + BACKTICK + `)}` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -1209,7 +1209,7 @@ import Widget2 from '../components/Widget2.astro';`},
 				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
 				styles:      []string{},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -1236,7 +1236,7 @@ import 'test';
 				frontmatter: []string{`import 'test';`},
 				styles:      []string{},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'my-element','my-element',{})}`,
+				code:        `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'my-element','my-element',{})}`,
 			},
 		},
 		{
@@ -1265,7 +1265,7 @@ import 'custom-element';`,
 					hydratedComponents:  []string{"'my-element'", "Two", "One"},
 					hydrationDirectives: []string{"load"},
 				},
-				code: `${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-hydration":"load","client:component-path":("one"),"client:component-export":("default")})}
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'One',One,{"client:load":true,"client:component-hydration":"load","client:component-path":("one"),"client:component-export":("default")})}
 ${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-hydration":"load","client:component-path":("two"),"client:component-export":("default")})}
 ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-hydration":"load"})}`,
 			},
@@ -1274,14 +1274,14 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 			name:   "Component siblings are siblings",
 			source: `<BaseHead></BaseHead><link href="test">`,
 			want: want{
-				code: `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
 		{
 			name:   "Self-closing components siblings are siblings",
 			source: `<BaseHead /><link href="test">`,
 			want: want{
-				code: `${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`,
 			},
 		},
 		{
@@ -1574,7 +1574,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			want: want{
 				frontmatter: []string{`import { Container, Col, Row } from 'react-bootstrap';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap', assert: {} }`}},
-				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`${$$maybeRenderHead($$result)}<h1>Hi!</h1>`,})}`,})}`,})}",
+				code:        "${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`<h1>Hi!</h1>`,})}`,})}`,})}",
 			},
 		},
 		{
@@ -1978,7 +1978,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "textarea in form",
 			source: `<html><Component><form><textarea></textarea></form></Component></html>`,
 			want: want{
-				code: `<html>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<form><textarea></textarea></form>` + BACKTICK + `,})}</html>`,
+				code: `<html>${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `<form><textarea></textarea></form>` + BACKTICK + `,})}</html>`,
 			},
 		},
 		{
@@ -1992,7 +1992,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "slot inside of Base",
 			source: `<Base title="Home"><div>Hello</div></Base>`,
 			want: want{
-				code: `${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>Hello</div>` + BACKTICK + `,})}`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render` + BACKTICK + `<div>Hello</div>` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -2100,7 +2100,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "XElement",
 			source: `<XElement {...attrs}></XElement>{onLoadString ? <script data-something></script> : null }`,
 			want: want{
-				code: fmt.Sprintf(`${$$renderComponent($$result,'XElement',XElement,{...(attrs)})}${onLoadString ? $$render%s<script data-something></script>%s : null }`, BACKTICK, BACKTICK),
+				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}${$$renderComponent($$result,'XElement',XElement,{...(attrs)})}${onLoadString ? $$render%s<script data-something></script>%s : null }`, BACKTICK, BACKTICK),
 			},
 		},
 		{
@@ -2128,7 +2128,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "Component is:raw",
 			source: "<Component is:raw>{<% awesome %>}</Component>",
 			want: want{
-				code: "${$$renderComponent($$result,'Component',Component,{},{\"default\": () => $$render`{<% awesome %>}`,})}",
+				code: "${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{\"default\": () => $$render`{<% awesome %>}`,})}",
 			},
 		},
 		{
@@ -2149,28 +2149,28 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on Component",
 			source: "<Component set:html={content} />",
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:text on Component",
 			source: "<Component set:text={content} />",
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${content}`," + `})}`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`${content}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:html on custom-element",
 			source: "<custom-element set:html={content} />",
 			want: want{
-				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${$$unescapeHTML(content)}`," + `})}`,
 			},
 		},
 		{
 			name:   "set:text on custom-element",
 			source: "<custom-element set:text={content} />",
 			want: want{
-				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${content}`," + `})}`,
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + "`${content}`," + `})}`,
 			},
 		},
 		{
@@ -2314,6 +2314,13 @@ const items = ["Dog", "Cat", "Platipus"];
 				code:     `${$$maybeRenderHead($$result)}`,
 				metadata: metadata{hoisted: []string{"{ type: 'inline', value: `console.log('hello world');` }"}},
 				scripts:  []string{"{props:{},children:`console.log('hello world');`}"},
+			},
+		},
+		{
+			name:   "component with only another component",
+			source: "<Component />",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}${$$renderComponent($$result,'Component',Component,{})}`,
 			},
 		},
 	}

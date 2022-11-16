@@ -96,6 +96,13 @@ func expressionOnlyHasCommentBlock(n *Node) bool {
 		len(clean) == 0
 }
 
+func tryPrintMaybeRenderHead(p *printer, opts *RenderOptions) {
+	if !*opts.printedMaybeHead {
+		*opts.printedMaybeHead = true
+		p.printMaybeRenderHead()
+	}
+}
+
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
@@ -340,6 +347,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	case isFragment:
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, "Fragment"))
 	case isComponent:
+		tryPrintMaybeRenderHead(p, &opts)
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, n.Data))
 	case isSlot:
 		p.print(fmt.Sprintf("${%s(%s,%s[", RENDER_SLOT, RESULT, SLOTS))
@@ -352,10 +360,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		case atom.Html, atom.Head, atom.Base, atom.Basefont, atom.Bgsound, atom.Link, atom.Meta, atom.Noframes, atom.Script, atom.Style, atom.Template, atom.Title:
 			break
 		default:
-			if !*opts.printedMaybeHead {
-				*opts.printedMaybeHead = true
-				p.printMaybeRenderHead()
-			}
+			tryPrintMaybeRenderHead(p, &opts)
 		}
 		p.print("<")
 	}
