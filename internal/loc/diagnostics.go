@@ -16,6 +16,7 @@ const (
 	WARNING_UNSUPPORTED_EXPRESSION    DiagnosticCode = 2005
 	WARNING_SET_WITH_CHILDREN         DiagnosticCode = 2006
 	WARNING_CANNOT_DEFINE_VARS        DiagnosticCode = 2007
+	WARNING_INVALID_SPREAD            DiagnosticCode = 2008
 	INFO                              DiagnosticCode = 3000
 	HINT                              DiagnosticCode = 4000
 )
