@@ -393,18 +393,22 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	}
 	isSelfClosing := false
 	tmpLoc := endLoc
-	for i := 0; i < len(p.sourcetext[tmpLoc:]); i++ {
-		c := p.sourcetext[endLoc : endLoc+1][0]
-		if c == '/' && p.sourcetext[endLoc+1:][0] == '>' {
-			isSelfClosing = true
-			break
-		} else if c == '>' {
-			p.addSourceMapping(loc.Loc{Start: endLoc})
-			endLoc++
-			break
-		} else {
-			endLoc++
+	if len(p.sourcetext) > tmpLoc {
+		for i := 0; i < len(p.sourcetext[tmpLoc:]); i++ {
+			c := p.sourcetext[endLoc : endLoc+1][0]
+			if c == '/' && p.sourcetext[endLoc+1:][0] == '>' {
+				isSelfClosing = true
+				break
+			} else if c == '>' {
+				p.addSourceMapping(loc.Loc{Start: endLoc})
+				endLoc++
+				break
+			} else {
+				endLoc++
+			}
 		}
+	} else {
+		endLoc++
 	}
 
 	if voidElements[n.Data] && n.FirstChild == nil {
