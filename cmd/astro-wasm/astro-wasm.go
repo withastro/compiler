@@ -86,7 +86,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 
 	internalURL := jsString(options.Get("internalURL"))
 	if internalURL == "" {
-		internalURL = "astro/internal"
+		internalURL = "astro/runtime/server/index.js"
 	}
 
 	sourcemap := jsString(options.Get("sourcemap"))

@@ -17,7 +17,7 @@ The Astro compiler can convert `.astro` syntax to a TypeScript Module whose defa
 **Some notes**...
 
 - TypeScript is valid `.astro` syntax! The output code may need an additional post-processing step to generate valid JavaScript.
-- `.astro` files rely on a server implementation exposed as `astro/internal` in the Node ecosystem. Other runtimes currently need to bring their own rendering implementation and reference it via `internalURL`. This is a pain point we're looking into fixing.
+- `.astro` files rely on a server implementation exposed as `astro/runtime/server/index.js` in the Node ecosystem. Other runtimes currently need to bring their own rendering implementation and reference it via `internalURL`. This is a pain point we're looking into fixing.
 
 ```js
 import { transform } from '@astrojs/compiler';
@@ -26,7 +26,7 @@ const result = await transform(source, {
   site: 'https://mysite.dev',
   sourcefile: '/Users/astro/Code/project/src/pages/index.astro',
   sourcemap: 'both',
-  internalURL: 'astro/internal',
+  internalURL: 'astro/runtime/server/index.js',
 });
 ```
 
