@@ -116,7 +116,6 @@ func TestScopeHTML(t *testing.T) {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 			// check whether another pass doesn't error
-
 			nodes, err = astro.ParseFragmentWithOptions(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
