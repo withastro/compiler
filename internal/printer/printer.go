@@ -227,7 +227,7 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
 	componentName := getComponentName(opts.Pathname)
 	p.addNilSourceMapping()
-	p.println(fmt.Sprintf("}, %s);", opts.ModuleId))
+	p.println(fmt.Sprintf("}, '%s');", opts.ModuleId))
 	p.println(fmt.Sprintf("export default %s;", componentName))
 }
 
