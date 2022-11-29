@@ -1751,11 +1751,14 @@ func inTableIM(p *parser) bool {
 	switch p.tok.Type {
 	case TextToken:
 		p.tok.Data = strings.Replace(p.tok.Data, "\x00", "", -1)
-		switch p.oe.top().DataAtom {
-		case a.Table, a.Tbody, a.Tfoot, a.Thead, a.Tr:
-			if strings.Trim(p.tok.Data, whitespace) == "" {
-				p.addText(p.tok.Data)
-				return true
+		top := p.oe.top()
+		if top != nil {
+			switch top.DataAtom {
+			case a.Table, a.Tbody, a.Tfoot, a.Thead, a.Tr:
+				if strings.Trim(p.tok.Data, whitespace) == "" {
+					p.addText(p.tok.Data)
+					return true
+				}
 			}
 		}
 	case StartExpressionToken:
