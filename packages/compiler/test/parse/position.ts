@@ -56,4 +56,34 @@ test('include start and end positions for self-closing tags', async () => {
   assert.ok(element.position.end, `Expected serialized output to contain an end position`);
 });
 
+test('include correct start and end position for self-closing tag', async () => {
+  const input = `
+<!-- prettier-ignore -->
+<li />`;
+  const { ast } = await parse(input);
+
+  const li = ast.children[1];
+  assert.is(li.name, 'li');
+  assert.ok(li.position.start, `Expected serialized output to contain a start position`);
+  assert.ok(li.position.end, `Expected serialized output to contain an end position`);
+
+  assert.equal(li.position.start, { line: 3, column: 1, offset: 26 }, `Expected serialized output to contain a start position`);
+  assert.equal(li.position.end, { line: 3, column: 6, offset: 31 }, `Expected serialized output to contain an end position`);
+});
+
+test('include correct start and end position for normal closing tag', async () => {
+  const input = `
+<!-- prettier-ignore -->
+<li></li>`;
+  const { ast } = await parse(input);
+
+  const li = ast.children[1];
+  assert.is(li.name, 'li');
+  assert.ok(li.position.start, `Expected serialized output to contain a start position`);
+  assert.ok(li.position.end, `Expected serialized output to contain an end position`);
+
+  assert.equal(li.position.start, { line: 3, column: 1, offset: 26 }, `Expected serialized output to contain a start position`);
+  assert.equal(li.position.end, { line: 3, column: 10, offset: 35 }, `Expected serialized output to contain an end position`);
+});
+
 test.run();
