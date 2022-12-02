@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.29.18
+
+### Patch Changes
+
+- 80de395: fix: avoid nil pointer dereference in table parsing
+- aa3ad9d: Fix `parse` output to properly account for the location of self-closing tags
+- b89dec4: Internally, replace `astro.ParseFragment` in favor of `astro.ParseFragmentWithOptions`. We now check whether an error handler is passed when calling `astro.ParseFragmentWithOptions`
+
 ## 0.29.17
 
 ### Patch Changes
