@@ -256,4 +256,4 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
-test.run()
+test.run();
