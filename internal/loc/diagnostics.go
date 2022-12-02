@@ -18,6 +18,7 @@ const (
 	WARNING_SET_WITH_CHILDREN         DiagnosticCode = 2006
 	WARNING_CANNOT_DEFINE_VARS        DiagnosticCode = 2007
 	WARNING_INVALID_SPREAD            DiagnosticCode = 2008
+	WARNING_UNEXPECTED_CHARACTER      DiagnosticCode = 2009
 	INFO                              DiagnosticCode = 3000
 	HINT                              DiagnosticCode = 4000
 )
