@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 	"golang.org/x/net/html/atom"
 )
 
@@ -92,7 +93,8 @@ func TestScopeHTML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodes, err := astro.ParseFragment(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()})
+			h := handler.NewHandler(tt.source, "FuzzScopeHTML.astro")
+			nodes, err := astro.ParseFragmentWithOptions(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
 			}
@@ -104,7 +106,8 @@ func TestScopeHTML(t *testing.T) {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 			// check whether another pass doesn't error
-			nodes, err = astro.ParseFragment(strings.NewReader(got), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()})
+
+			nodes, err = astro.ParseFragmentWithOptions(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
 			}
