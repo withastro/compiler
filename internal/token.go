@@ -389,7 +389,14 @@ func (z *Tokenizer) skipWhiteSpace() {
 			if z.err == io.EOF {
 				return
 			}
-			fmt.Printf("Unexpected character in skipWhiteSpace: \"%v\"\n", string(c))
+			z.handler.AppendWarning(&loc.ErrorWithRange{
+				Code: loc.WARNING_UNEXPECTED_CHARACTER,
+				Text: fmt.Sprintf("Unexpected character in skipWhiteSpace: \"%v\"\n", string(c)),
+				Range: loc.Range{
+					Loc: loc.Loc{Start: z.raw.End - 1},
+					Len: 1,
+				},
+			})
 			return
 		}
 		if !unicode.IsSpace(rune(c)) {
@@ -420,7 +427,17 @@ loop:
 	for {
 		c := z.readByte()
 		if z.err != nil {
-			fmt.Printf("Unexpected character in loop: \"%v\"\n", string(c))
+			if z.err == io.EOF {
+				return
+			}
+			z.handler.AppendWarning(&loc.ErrorWithRange{
+				Code: loc.WARNING_UNEXPECTED_CHARACTER,
+				Text: fmt.Sprintf("Unexpected character in loop: \"%v\"\n", string(c)),
+				Range: loc.Range{
+					Loc: loc.Loc{Start: z.raw.End - 1},
+					Len: 1,
+				},
+			})
 			break loop
 		}
 		if c != '<' {
@@ -461,7 +478,17 @@ func (z *Tokenizer) readRawEndTag() bool {
 	}
 	c := z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in readRawEndTag: %v\n", string(c))
+		if z.err == io.EOF {
+			return false
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in readRawEndTag: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return false
 	}
 	switch c {
@@ -485,7 +512,17 @@ func (z *Tokenizer) readScript() {
 scriptData:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptData: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptData: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	if c == '<' {
@@ -496,7 +533,17 @@ scriptData:
 scriptDataLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataLessThanSign: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataLessThanSign: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	switch c {
@@ -510,7 +557,17 @@ scriptDataLessThanSign:
 
 scriptDataEndTagOpen:
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataEndTagOpen: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEndTagOpen: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	if z.readRawEndTag() {
@@ -521,7 +578,17 @@ scriptDataEndTagOpen:
 scriptDataEscapeStart:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataEscapeStart: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEscapeStart: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	if c == '-' {
@@ -533,7 +600,17 @@ scriptDataEscapeStart:
 scriptDataEscapeStartDash:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataEscapeStartDash: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEscapeStartDash: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	if c == '-' {
@@ -545,7 +622,17 @@ scriptDataEscapeStartDash:
 scriptDataEscaped:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataEscaped: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEscaped: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	switch c {
@@ -557,9 +644,19 @@ scriptDataEscaped:
 	goto scriptDataEscaped
 
 scriptDataEscapedDash:
-	fmt.Printf("Unexpected character in scriptDataEscapedDash: %v\n", string(c))
 	c = z.readByte()
 	if z.err != nil {
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEscapedDash: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	switch c {
@@ -573,7 +670,17 @@ scriptDataEscapedDash:
 scriptDataEscapedDashDash:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataEscapedDashDash: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEscapedDashDash: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	switch c {
@@ -589,7 +696,17 @@ scriptDataEscapedDashDash:
 scriptDataEscapedLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataEscapedLessThanSign: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEscapedLessThanSign: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	if c == '/' {
@@ -603,7 +720,17 @@ scriptDataEscapedLessThanSign:
 
 scriptDataEscapedEndTagOpen:
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataEscapedEndTagOpen: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataEscapedEndTagOpen: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	if z.readRawEndTag() || z.err != nil {
@@ -616,7 +743,17 @@ scriptDataDoubleEscapeStart:
 	for i := 0; i < len("script"); i++ {
 		c = z.readByte()
 		if z.err != nil {
-			fmt.Printf("Unexpected character in scriptDataDoubleEscapeStart: %v\n", string(c))
+			if z.err == io.EOF {
+				return
+			}
+			z.handler.AppendWarning(&loc.ErrorWithRange{
+				Code: loc.WARNING_UNEXPECTED_CHARACTER,
+				Text: fmt.Sprintf("Unexpected character in scriptDataDoubleEscapeStart: %v\n", string(c)),
+				Range: loc.Range{
+					Loc: loc.Loc{Start: z.raw.End - 1},
+					Len: 1,
+				},
+			})
 			return
 		}
 		if c != "script"[i] && c != "SCRIPT"[i] {
@@ -638,7 +775,17 @@ scriptDataDoubleEscapeStart:
 scriptDataDoubleEscaped:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataDoubleEscaped: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataDoubleEscaped: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	switch c {
@@ -652,7 +799,17 @@ scriptDataDoubleEscaped:
 scriptDataDoubleEscapedDash:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataDoubleEscapedDash: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataDoubleEscapedDash: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	switch c {
@@ -666,7 +823,17 @@ scriptDataDoubleEscapedDash:
 scriptDataDoubleEscapedDashDash:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataDoubleEscapedDashDash: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataDoubleEscapedDashDash: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	switch c {
@@ -682,7 +849,17 @@ scriptDataDoubleEscapedDashDash:
 scriptDataDoubleEscapedLessThanSign:
 	c = z.readByte()
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataDoubleEscapedLessThanSign: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataDoubleEscapedLessThanSign: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	if c == '/' {
@@ -697,7 +874,17 @@ scriptDataDoubleEscapeEnd:
 		goto scriptDataEscaped
 	}
 	if z.err != nil {
-		fmt.Printf("Unexpected character in scriptDataDoubleEscapeEnd: %v\n", string(c))
+		if z.err == io.EOF {
+			return
+		}
+		z.handler.AppendWarning(&loc.ErrorWithRange{
+			Code: loc.WARNING_UNEXPECTED_CHARACTER,
+			Text: fmt.Sprintf("Unexpected character in scriptDataDoubleEscapeEnd: %v\n", string(c)),
+			Range: loc.Range{
+				Loc: loc.Loc{Start: z.raw.End - 1},
+				Len: 1,
+			},
+		})
 		return
 	}
 	goto scriptDataDoubleEscaped
