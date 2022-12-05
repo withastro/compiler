@@ -60,7 +60,7 @@ jobs:
         run: pnpm install
 
       - name: Build Packages
-        run: pnpm run build
+        run: pnpm run build:all
 
       - name: Bump Package Versions
         id: changesets
