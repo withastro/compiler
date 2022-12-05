@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.30.0
+
+### Minor Changes
+
+- 963aaab: Provide the moduleId of the astro component
+
 ## 0.29.19
 
 ### Patch Changes
