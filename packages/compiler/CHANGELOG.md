@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.29.19
+
+### Patch Changes
+
+- 3365233: Replace internal tokenizer state logs with proper warnings
+
 ## 0.29.18
 
 ### Patch Changes
