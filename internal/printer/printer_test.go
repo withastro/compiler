@@ -50,6 +50,13 @@ var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
 
+func suffixWithModuleId(moduleId string) string {
+
+	return fmt.Sprintf("%s;", BACKTICK) + fmt.Sprintf(`
+}, '%s');
+export default $$Component;`, moduleId)
+}
+
 type want struct {
 	frontmatter    []string
 	definedVars    []string
@@ -73,6 +80,7 @@ type testcase struct {
 	source           string
 	only             bool
 	staticExtraction bool
+	moduleId         string
 	want             want
 }
 
@@ -2316,6 +2324,14 @@ const items = ["Dog", "Cat", "Platipus"];
 				scripts:  []string{"{props:{},children:`console.log('hello world');`}"},
 			},
 		},
+		{
+			name:     "passes moduleId into createComponent if passed into the compiler options",
+			source:   `<div>test</div>`,
+			moduleId: "/projects/app/src/pages/page.astro",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div>test</div>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -2345,6 +2361,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				Scope:            "XXXX",
 				Site:             "https://astro.build",
 				InternalURL:      "http://localhost:3000/",
+				ModuleId:         tt.moduleId,
 				ProjectRoot:      ".",
 				StaticExtraction: tt.staticExtraction,
 			}, h)
@@ -2464,7 +2481,12 @@ const items = ["Dog", "Cat", "Platipus"];
 			if strings.HasSuffix(toMatch, ".") {
 				toMatch = strings.TrimRight(toMatch, ".")
 			}
-			toMatch += SUFFIX
+
+			if len(tt.moduleId) > 0 {
+				toMatch += suffixWithModuleId(tt.moduleId)
+			} else {
+				toMatch += SUFFIX
+			}
 
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
