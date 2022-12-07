@@ -232,7 +232,7 @@ func Parse() interface{} {
 		return vert.ValueOf(ParseResult{
 			AST:         string(result.Output),
 			Diagnostics: h.Diagnostics(),
-		})
+		}).Value
 	})
 }
 
@@ -264,7 +264,7 @@ func ConvertToTSX() interface{} {
 			Code:        code,
 			Map:         sourcemapString,
 			Diagnostics: h.Diagnostics(),
-		})
+		}).Value
 	})
 }
 
@@ -421,8 +421,8 @@ func Transform() interface{} {
 						StyleError:           styleError,
 					})
 				}
-				value.Set("diagnostics", vert.ValueOf(h.Diagnostics()))
-				resolve.Invoke(value)
+				value.Set("diagnostics", vert.ValueOf(h.Diagnostics()).Value)
+				resolve.Invoke(value.Value)
 			}()
 
 			return nil
