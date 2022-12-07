@@ -339,7 +339,7 @@ outer:
 		// Track our current position
 		i += len(value)
 	}
-	if len(genericsIdents) > 0 && ident != defaultPropType {
+	if start > 0 && len(genericsIdents) > 0 && ident != defaultPropType {
 		generics = fmt.Sprintf("<%s>", strings.Join(genericsIdents, ", "))
 		statement = strings.TrimSpace(string(source[start:end]))
 	}
