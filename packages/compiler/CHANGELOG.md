@@ -1,8 +1,8 @@
 # @astrojs/compiler
 
-## 0.30.2
+## 0.31.0
 
-### Patch Changes
+### Minor Changes
 
 - abdddeb: Update Go to 1.19
 
