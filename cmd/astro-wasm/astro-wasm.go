@@ -1,6 +1,3 @@
-//go:build js && wasm
-// +build js,wasm
-
 package main
 
 import (
@@ -22,8 +19,6 @@ import (
 	"github.com/withastro/compiler/internal/transform"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 )
-
-var done chan bool
 
 func main() {
 	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
