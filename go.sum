@@ -6,8 +6,9 @@ github.com/iancoleman/strcase v0.2.0 h1:05I4QRnGpI0m37iZQRuskXh+w77mr6Z41lwQzuHL
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/lithammer/dedent v1.1.0 h1:VNzHMVCBNG1j0fh3OrsFRkVUwStdDArbgBWoPAffktY=
 github.com/lithammer/dedent v1.1.0/go.mod h1:jrXYCQtgg0nJiN+StA2KgR7w6CiQNv9Fd/Z9BP0jIOc=
-github.com/natemoo-re/vert v0.0.0-natemoo-re.8 h1:RCxCOL0e2bvB0wrmF/77X8/uewz/K7iU4TjVqpZm/T4=
-github.com/natemoo-re/vert v0.0.0-natemoo-re.8/go.mod h1:67MuD9cDWe6pmhyQrElFlSNMMzL0CMUdFURKxJSvxUM=
+github.com/norunners/vert v0.0.0-20211229045251-b4c39e2856da/go.mod h1:8iuQLyTSvuzwy6R6l6w6J+i9c/6xPEVoVdcMz9E8FEw=
+github.com/norunners/vert v0.0.0-20221203075838-106a353d42dd h1:tHn7K76q9eJ2rXLH/OoxHkdprM3l2A+0kdxOrKYcV7U=
+github.com/norunners/vert v0.0.0-20221203075838-106a353d42dd/go.mod h1:8iuQLyTSvuzwy6R6l6w6J+i9c/6xPEVoVdcMz9E8FEw=
 github.com/tdewolff/parse/v2 v2.5.22 h1:KXMHTyx4VTL6Zu9a94SULQalDMvtP5FQq10mnSfaoGs=
 github.com/tdewolff/parse/v2 v2.5.22/go.mod h1:WzaJpRSbwq++EIQHYIRTpbYKNA3gn9it1Ik++q4zyho=
 github.com/tdewolff/parse/v2 v2.5.27 h1:PL3LzzXaOpmdrknnOlIeO2muIBHAwiKp6TxN1RbU5gI=
