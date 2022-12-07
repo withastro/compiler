@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.30.1
+
+### Patch Changes
+
+- ff9e7ba: Fix edge case where `<` was not handled properly inside of expressions
+- f31d535: Fix edge case with Prop detection for TSX output
+
 ## 0.30.0
 
 ### Minor Changes
