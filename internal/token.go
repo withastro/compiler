@@ -1977,7 +1977,18 @@ expression_loop:
 		}
 
 		if c == '<' {
-			z.raw.End--
+			// Check next byte to see if this is an element or a JS expression.
+			// Note: this is not a perfect check, just good enough for most cases!
+			c1 := z.readByte()
+			if z.err != nil {
+				break expression_loop
+			}
+			if unicode.IsSpace(rune(c1)) || unicode.IsNumber(rune(c1)) {
+				continue
+			}
+
+			// Otherwise, we have an element. Reset pointer and try again.
+			z.raw.End -= 2
 			z.data.End = z.raw.End
 			if z.rawTag != "" {
 				goto raw_with_expression_loop
