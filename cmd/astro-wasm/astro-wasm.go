@@ -1,6 +1,3 @@
-//go:build js && wasm
-// +build js,wasm
-
 package main
 
 import (
@@ -22,8 +19,6 @@ import (
 	"github.com/withastro/compiler/internal/transform"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 )
-
-var done chan bool
 
 func main() {
 	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
@@ -114,7 +109,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		staticExtraction = true
 	}
 
-	var resolvePath interface{} = options.Get("resolvePath")
+	var resolvePath any = options.Get("resolvePath")
 	var resolvePathFn func(string) string
 	if resolvePath.(js.Value).Type() == js.TypeFunction {
 		resolvePathFn = func(id string) string {
@@ -216,8 +211,8 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	style.FirstChild.Data = str
 }
 
-func Parse() interface{} {
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+func Parse() any {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 		parseOptions := makeParseOptions(js.Value(args[1]))
 		transformOptions := makeTransformOptions(js.Value(args[1]))
@@ -237,12 +232,12 @@ func Parse() interface{} {
 		return vert.ValueOf(ParseResult{
 			AST:         string(result.Output),
 			Diagnostics: h.Diagnostics(),
-		})
+		}).Value
 	})
 }
 
-func ConvertToTSX() interface{} {
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+func ConvertToTSX() any {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 		transformOptions := makeTransformOptions(js.Value(args[1]))
 		transformOptions.Scope = "XXXXXX"
@@ -269,12 +264,12 @@ func ConvertToTSX() interface{} {
 			Code:        code,
 			Map:         sourcemapString,
 			Diagnostics: h.Diagnostics(),
-		})
+		}).Value
 	})
 }
 
-func Transform() interface{} {
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+func Transform() any {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 
 		transformOptions := makeTransformOptions(js.Value(args[1]))
@@ -282,7 +277,7 @@ func Transform() interface{} {
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		styleError := []string{}
-		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		handler := js.FuncOf(func(this js.Value, args []js.Value) any {
 			resolve := args[0]
 
 			go func() {
@@ -426,8 +421,8 @@ func Transform() interface{} {
 						StyleError:           styleError,
 					})
 				}
-				value.Set("diagnostics", vert.ValueOf(h.Diagnostics()))
-				resolve.Invoke(value)
+				value.Set("diagnostics", vert.ValueOf(h.Diagnostics()).Value)
+				resolve.Invoke(value.Value)
 			}()
 
 			return nil

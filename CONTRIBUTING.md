@@ -6,7 +6,7 @@ Contributions are welcome to the Go compiler!
 
 ### Go
 
-[Go][go] `1.17.x` is needed to work with this repo. On Macs, installing via [Homebrew][homebrew] is recommended: `brew install go`. For Windows & Linux, you can [follow Go’s installation guide][go] if you don’t have your own preferred method of package installation.
+[Go][go] `1.19.x` is needed to work with this repo. On Macs, installing via [Homebrew][homebrew] is recommended: `brew install go`. For Windows & Linux, you can [follow Go’s installation guide][go] if you don’t have your own preferred method of package installation.
 
 If you use VS Code as your primary editor, installing the [Go extension][go-vscode] is highly recommended.
 
