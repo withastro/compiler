@@ -35,6 +35,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	walk(doc, func(n *astro.Node) {
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
+		TransformJoinBase(n)
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
@@ -391,6 +392,21 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 
 				break
 			}
+		}
+	}
+}
+
+func TransformJoinBase(n *astro.Node) {
+	key := "join-base:"
+	for i, attr := range n.Attr {
+		if strings.HasPrefix(attr.Key, key) {
+			attrName := attr.Key[len(key):]
+			newAttr := astro.Attribute{
+				Key:  attrName,
+				Val:  fmt.Sprintf("Astro.joinBase('%s')", attr.Val),
+				Type: astro.ExpressionAttribute,
+			}
+			n.Attr[i] = newAttr
 		}
 	}
 }

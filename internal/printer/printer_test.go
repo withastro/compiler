@@ -2332,6 +2332,13 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<div>test</div>`,
 			},
 		},
+		{
+			name:   "join-base: directive transforms to Astro.joinBase call",
+			source: `<img join-base:src="/images/penguin.png" />`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<img${$$addAttribute(Astro.joinBase('/images/penguin.png'), "src")}>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
