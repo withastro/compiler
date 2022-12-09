@@ -7,6 +7,7 @@ const FIXTURE = `
   // anything ...
 </script>
 
+<!DOCTYPE html>
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
