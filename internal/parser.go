@@ -675,7 +675,7 @@ func beforeHTMLIM(p *parser) bool {
 			p.addElement()
 			p.im = beforeHeadIM
 			return true
-		case a.Script, a.Style:
+		case a.Script:
 			p.addElement()
 			if p.originalIM == nil {
 				p.setOriginalIM()
@@ -704,7 +704,7 @@ func beforeHTMLIM(p *parser) bool {
 		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
-		case a.Script, a.Style:
+		case a.Script:
 			p.oe.pop()
 			return true
 		case a.Head, a.Body, a.Html, a.Br:

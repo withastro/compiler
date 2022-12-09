@@ -68,10 +68,8 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 			renderHeadNode := &astro.Node{
 				Type: astro.RenderHeadNode,
 			}
-			if script.Parent.Type != astro.DocumentNode {
-				script.Parent.InsertBefore(renderHeadNode, script)
-				addedHeadRenderingInsertion = true
-			}
+			script.Parent.InsertBefore(renderHeadNode, script)
+			addedHeadRenderingInsertion = true
 		}
 
 		script.Parent.RemoveChild(script)
