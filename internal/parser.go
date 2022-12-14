@@ -670,9 +670,22 @@ func beforeHTMLIM(p *parser) bool {
 			return true
 		}
 	case StartTagToken:
-		if p.tok.DataAtom == a.Html {
+		switch p.tok.DataAtom {
+		case a.Html:
 			p.addElement()
 			p.im = beforeHeadIM
+			return true
+		case a.Script:
+			p.addElement()
+			if p.originalIM == nil {
+				p.setOriginalIM()
+			}
+			p.im = textIM
+			if p.hasSelfClosingToken {
+				p.addLoc()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+			}
 			return true
 		}
 		if isComponent(p.tok.Data) {
@@ -691,6 +704,9 @@ func beforeHTMLIM(p *parser) bool {
 		}
 	case EndTagToken:
 		switch p.tok.DataAtom {
+		case a.Script:
+			p.oe.pop()
+			return true
 		case a.Head, a.Body, a.Html, a.Br:
 			p.parseImpliedToken(StartTagToken, a.Html, a.Html.String())
 			return false

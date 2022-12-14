@@ -682,7 +682,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 // Section 12.1.2, "Elements", gives this list of void elements. Void elements
 // are those that can't have any contents.
-//nolint
+// nolint
 var voidElements = map[string]bool{
 	"area":   true,
 	"base":   true,
