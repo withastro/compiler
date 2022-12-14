@@ -1,15 +1,21 @@
 package transform
 
 import (
+	"regexp"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 )
 
-func TestTransformScoping(t *testing.T) {
-	tests := []struct {
+func transformScopingFixtures() []struct {
+	name   string
+	source string
+	want   string
+} {
+	return []struct {
 		name   string
 		source string
 		want   string
@@ -126,6 +132,10 @@ func TestTransformScoping(t *testing.T) {
 			want: `<div></div>`,
 		},
 	}
+}
+
+func TestTransformScoping(t *testing.T) {
+	tests := transformScopingFixtures()
 	var b strings.Builder
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -143,6 +153,32 @@ func TestTransformScoping(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzTransformScoping(f *testing.F) {
+	tests := transformScopingFixtures()
+	for _, tt := range tests {
+		f.Add(tt.source) // Use f.Add to provide a seed corpus
+	}
+	f.Fuzz(func(t *testing.T, source string) {
+		doc, err := astro.Parse(strings.NewReader(source))
+		if err != nil {
+			t.Skip("Invalid parse, skipping rest of fuzz test")
+		}
+		ExtractStyles(doc)
+		Transform(doc, TransformOptions{Scope: "XXXXXX"}, handler.NewHandler(source, "/test.astro"))
+		var b strings.Builder
+		astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+		got := b.String()
+		// hacky - we only expect scoping for non global styles / non inline styles
+		testRegex := regexp.MustCompile(`is:global|:global\(|is:inline|<style>\s*</style>`)
+		if !testRegex.MatchString(source) && !strings.Contains(got, "astro-XXXXXX") {
+			t.Errorf("HTML scoping failed to include the astro scope\n source: %q\n got: %q", source, got)
+		}
+		if utf8.ValidString(source) && !utf8.ValidString(got) {
+			t.Errorf("HTML scoping produced invalid html string: %q", got)
+		}
+	})
 }
 
 func TestFullTransform(t *testing.T) {
