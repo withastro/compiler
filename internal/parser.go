@@ -2740,7 +2740,7 @@ func inExpressionIM(p *parser) bool {
 	case StartTagToken:
 		if p.isInsideHead() {
 			switch p.tok.DataAtom {
-			case a.Noframes, a.Style, a.Script, a.Title, a.Noscript, a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta:
+			case a.Noframes, a.Style, a.Script, a.Title, a.Noscript, a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta, a.Slot:
 				origIm := p.originalIM
 				p.originalIM = nil
 				ret := inHeadIM(p)
