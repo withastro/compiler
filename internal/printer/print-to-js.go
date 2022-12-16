@@ -296,7 +296,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			p.addSourceMapping(c.Loc[0])
 			if c.Type == TextNode {
-				p.print(c.Data)
+				p.printTextWithSourcemap(c.Data, c.Loc[0])
 				continue
 			}
 			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {

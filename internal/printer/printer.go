@@ -333,22 +333,29 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 	case astro.QuotedAttribute:
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
-		p.print("=")
-		p.addSourceMapping(attr.ValLoc)
-		p.print(`"` + encodeDoubleQuote(escapeInterpolation(escapeBackticks(attr.Val))) + `"`)
+		p.addNilSourceMapping()
+		p.print(`="`)
+		p.printTextWithSourcemap(encodeDoubleQuote(escapeInterpolation(escapeBackticks(attr.Val))), attr.ValLoc)
+		p.addNilSourceMapping()
+		p.print(`"`)
 	case astro.EmptyAttribute:
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
 	case astro.ExpressionAttribute:
+		p.addNilSourceMapping()
 		p.print(fmt.Sprintf("${%s(", ADD_ATTRIBUTE))
-		p.addSourceMapping(attr.ValLoc)
 		if strings.TrimSpace(attr.Val) == "" {
+			p.addNilSourceMapping()
 			p.print("(void 0)")
 		} else {
-			p.print(strings.TrimSpace(attr.Val))
+			p.printTextWithSourcemap(attr.Val, attr.ValLoc)
 		}
+		p.addNilSourceMapping()
+		p.print(`, "`)
 		p.addSourceMapping(attr.KeyLoc)
-		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
+		p.print(attr.Key)
+		p.addNilSourceMapping()
+		p.print(`")}`)
 	case astro.SpreadAttribute:
 		injectClass := false
 		for p := n.Parent; p != nil; p = p.Parent {
