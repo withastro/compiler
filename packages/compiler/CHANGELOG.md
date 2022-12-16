@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.31.1
+
+### Patch Changes
+
+- 24dcf7e: Allow `script` and `style` before HTML
+- ef391fa: fix: corner case with slot expression in head will cause body tag missing
+
 ## 0.31.0
 
 ### Minor Changes
