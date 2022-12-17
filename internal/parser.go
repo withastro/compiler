@@ -2739,6 +2739,15 @@ func inExpressionIM(p *parser) bool {
 		return textIM(p)
 	case StartTagToken:
 		if p.isInsideHead() {
+			// Allow components in Head Expression
+			if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
+				origIm := p.originalIM
+				p.originalIM = nil
+				ret := inLiteralIM(p)
+				p.im = inExpressionIM
+				p.originalIM = origIm
+				return ret
+			}
 			switch p.tok.DataAtom {
 			case a.Noframes, a.Style, a.Script, a.Title, a.Noscript, a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta, a.Slot:
 				origIm := p.originalIM
