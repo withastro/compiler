@@ -1,12 +1,12 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 import { convertToTSX } from '@astrojs/compiler';
-import { testSourcemap } from '../utils';
+import { testTSXSourcemap } from '../utils';
 
 test('template expression basic', async () => {
   const input = `<div>{\r\nnonexistent\r\n}</div>`;
 
-  const output = await testSourcemap(input, 'nonexistent');
+  const output = await testTSXSourcemap(input, 'nonexistent');
   assert.equal(output, {
     source: 'index.astro',
     line: 2,
@@ -17,7 +17,7 @@ test('template expression basic', async () => {
 
 test('template expression has dot', async () => {
   const input = `<div>{\nconsole.log(hey)\n}</div>`;
-  const output = await testSourcemap(input, 'log');
+  const output = await testTSXSourcemap(input, 'log');
   assert.equal(output, {
     source: 'index.astro',
     line: 2,
@@ -28,7 +28,7 @@ test('template expression has dot', async () => {
 
 test('template expression has dot', async () => {
   const input = `<div>{\r\nconsole.log(hey)\r\n}</div>`;
-  const output = await testSourcemap(input, 'log');
+  const output = await testTSXSourcemap(input, 'log');
   assert.equal(output, {
     source: 'index.astro',
     line: 2,
@@ -39,7 +39,7 @@ test('template expression has dot', async () => {
 
 test('template expression with addition', async () => {
   const input = `{"hello" + \nhey}`;
-  const output = await testSourcemap(input, 'hey');
+  const output = await testTSXSourcemap(input, 'hey');
   assert.equal(output, {
     source: 'index.astro',
     line: 2,
@@ -50,7 +50,7 @@ test('template expression with addition', async () => {
 
 test('template expression with addition', async () => {
   const input = `{"hello" + \r\nhey}`;
-  const output = await testSourcemap(input, 'hey');
+  const output = await testTSXSourcemap(input, 'hey');
   assert.equal(output, {
     source: 'index.astro',
     line: 2,
@@ -61,7 +61,7 @@ test('template expression with addition', async () => {
 
 test('html attribute', async () => {
   const input = `<svg\nvalue="foo" color="#000"></svg>`;
-  const output = await testSourcemap(input, 'color');
+  const output = await testTSXSourcemap(input, 'color');
   assert.equal(output, {
     source: 'index.astro',
     name: null,
@@ -72,7 +72,7 @@ test('html attribute', async () => {
 
 test('html attribute', async () => {
   const input = `<svg\r\nvalue="foo" color="#000"></svg>`;
-  const output = await testSourcemap(input, 'color');
+  const output = await testTSXSourcemap(input, 'color');
   assert.equal(output, {
     source: 'index.astro',
     name: null,
@@ -83,8 +83,8 @@ test('html attribute', async () => {
 
 test('complex template expression', async () => {
   const input = `{[].map(ITEM => {\r\nv = "what";\r\nreturn <div>{ITEMS}</div>\r\n})}`;
-  const item = await testSourcemap(input, 'ITEM');
-  const items = await testSourcemap(input, 'ITEMS');
+  const item = await testTSXSourcemap(input, 'ITEM');
+  const items = await testTSXSourcemap(input, 'ITEMS');
   assert.equal(item, {
     source: 'index.astro',
     name: null,
@@ -101,7 +101,7 @@ test('complex template expression', async () => {
 
 test('attributes', async () => {
   const input = `<div\r\na="b" className="hello" />`;
-  const className = await testSourcemap(input, 'className');
+  const className = await testTSXSourcemap(input, 'className');
   assert.equal(className, {
     source: 'index.astro',
     name: null,
@@ -112,7 +112,7 @@ test('attributes', async () => {
 
 test('special attributes', async () => {
   const input = `<div\r\na="b" @on.click="fn" />`;
-  const onClick = await testSourcemap(input, '@on.click');
+  const onClick = await testTSXSourcemap(input, '@on.click');
   assert.equal(onClick, {
     source: 'index.astro',
     name: null,
@@ -126,7 +126,7 @@ test('whitespace', async () => {
   const { code } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
   assert.match(code, '\t', 'output includes \\t');
 
-  const B = await testSourcemap(input, 'B');
+  const B = await testTSXSourcemap(input, 'B');
   assert.equal(B, {
     source: 'index.astro',
     name: null,
