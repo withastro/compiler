@@ -189,9 +189,6 @@ outer:
 		i += len(value)
 	}
 
-	// body = append(body, source[end:])
-	// hoistedLocs = append(bodyLocs, loc.Loc{Start: end})
-
 	body = append(body, source[end:])
 	bodyLocs = append(bodyLocs, loc.Loc{Start: end})
 
@@ -505,7 +502,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 	for {
 		token, value := l.Next()
 
-		if token == js.DivToken || token == js.DivEqToken {
+		if len(source) > i && token == js.DivToken || token == js.DivEqToken {
 			lns := bytes.Split(source[i+1:], []byte{'\n'})
 			if bytes.Contains(lns[0], []byte{'/'}) {
 				token, value = l.RegExp()

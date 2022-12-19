@@ -156,7 +156,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.addNilSourceMapping()
 				p.printComponentMetadata(n.Parent, opts.opts, []byte(p.sourcetext))
 				// 2. Top-level Astro global.
-				p.addNilSourceMapping()
+
 				p.printTopLevelAstro(opts.opts)
 
 				exports := make([][]byte, 0)
@@ -177,7 +177,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							for j, exported := range preprocessed.Hoisted {
 								exportedLoc := preprocessed.HoistedLocs[j]
 								exportLocs = append(exportLocs, loc.Loc{Start: start + innerStart + exportedLoc.Start})
-								exports = append(exports, append(exported, '\n'))
+								exports = append(exports, exported)
 							}
 						}
 
