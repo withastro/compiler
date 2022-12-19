@@ -8,7 +8,7 @@ const isProd = true;
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <TestHead />
+    {isProd && <TestHead />}
     <title>document</title>
     {isProd && <slot />}
   </head>
