@@ -10,6 +10,7 @@ defaults:
 
 jobs:
   snapshot-release:
+    timeout-minutes: 3
     name: Create a snapshot release of a pull request
     if: ${{ github.repository_owner == 'withastro' && github.event.issue.pull_request && startsWith(github.event.comment.body, '!preview') }}
     runs-on: ubuntu-latest
