@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   test:
+    timeout-minutes: 3
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,6 +27,7 @@ jobs:
         run: go test -v ./internal/...
 
   test-wasm:
+    timeout-minutes: 3
     strategy:
       matrix:
         OS: [ubuntu-latest, windows-latest]
@@ -62,6 +64,7 @@ jobs:
         run: pnpm test:ci
 
   lint:
+    timeout-minutes: 3
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -71,6 +74,7 @@ jobs:
           version: latest
 
   lint-js:
+    timeout-minutes: 3
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
