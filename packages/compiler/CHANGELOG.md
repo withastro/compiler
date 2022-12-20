@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 0.31.2
+
+### Patch Changes
+
+- 89c0cee: fix: corner case that component in head expression will case body tag missing
+- 20497f4: Improve fidelity of sourcemaps for frontmatter
+
 ## 0.31.1
 
 ### Patch Changes
