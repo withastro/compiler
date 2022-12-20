@@ -527,6 +527,11 @@ export const foo = 0
 */`,
 			want: `export const foo = 0`,
 		},
+		{
+			name:   "incomplete interface",
+			source: "import { a } from \"a\";\nexport interface ",
+			want:   "import { a } from \"a\";\nexport interface ",
+		},
 	}
 }
 
