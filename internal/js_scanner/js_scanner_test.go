@@ -244,7 +244,7 @@ func FuzzHoistImport(f *testing.F) {
 			got = append(got, '\n')
 		}
 		if utf8.ValidString(source) && !utf8.ValidString(string(got)) {
-			t.Errorf("HTML scoping produced invalid html string: %q", got)
+			t.Errorf("Import hoisting produced an invalid string: %q", got)
 		}
 	})
 }
