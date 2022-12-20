@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testSourcemap } from '../utils';
 
 test('script is:inline', async () => {
   const input = `---
@@ -14,7 +14,7 @@ test('script is:inline', async () => {
   foo;baz;ComponentAstro;ComponentSvelte;ComponentVue;
 ---
 `;
-  const output = await testTSXSourcemap(input, `'./script'`);
+  const output = await testSourcemap(input, `'./script'`);
 
   assert.equal(output, {
     line: 8,

@@ -1,13 +1,13 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testSourcemap } from '../utils';
 
 test('frontmatter', async () => {
   const input = `---
 nonexistent
 ---
 `;
-  const output = await testTSXSourcemap(input, 'nonexistent');
+  const output = await testSourcemap(input, 'nonexistent');
 
   assert.equal(output, {
     line: 2,

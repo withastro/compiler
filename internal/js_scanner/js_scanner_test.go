@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/withastro/compiler/internal/test_utils"
 )
@@ -17,8 +16,8 @@ type testcase struct {
 	only   bool
 }
 
-func fixturesHoistImport() []testcase {
-	return []testcase{
+func TestHoistImport(t *testing.T) {
+	tests := []testcase{
 		{
 			name:   "basic",
 			source: `const value = "test"`,
@@ -41,18 +40,18 @@ const article2 = await import('../markdown/article2.md')
 		{
 			name: "big import",
 			source: `import {
-a,
-b,
-c,
-d,
+  a,
+  b,
+  c,
+  d,
 } from "package"
 
 const b = await fetch();`,
 			want: `import {
-a,
-b,
-c,
-d,
+  a,
+  b,
+  c,
+  d,
 } from "package"
 `,
 		},
@@ -74,18 +73,18 @@ const b = await fetch();`,
 			name: "import assertion 2",
 			source: `// comment
 import {
-fn
+  fn
 } from
-"package" assert {
-it: 'works'
-};
+  "package" assert {
+    it: 'works'
+  };
 const b = await fetch();`,
 			want: `import {
-fn
+  fn
 } from
-"package" assert {
-it: 'works'
-};
+  "package" assert {
+    it: 'works'
+  };
 `,
 		},
 		{
@@ -97,10 +96,10 @@ import Test from "../components/Test.astro";`,
 		{
 			name: "import.meta.env II",
 			source: `console.log(
-import
-	.meta
-	.env
-	.FOO
+	import
+		.meta
+		.env
+		.FOO
 );
 import Test from "../components/Test.astro";`,
 			want: `import Test from "../components/Test.astro";`,
@@ -116,7 +115,7 @@ const b = await fetch()`,
 			name: "getStaticPaths",
 			source: `import { fn } from "package";
 export async function getStaticPaths() {
-const content = Astro.fetchContent('**/*.md');
+	const content = Astro.fetchContent('**/*.md');
 }
 const b = await fetch()`,
 			want: `import { fn } from "package";`,
@@ -125,7 +124,7 @@ const b = await fetch()`,
 			name: "getStaticPaths with comments",
 			source: `import { fn } from "package";
 export async function getStaticPaths() {
-const content = Astro.fetchContent('**/*.md');
+  const content = Astro.fetchContent('**/*.md');
 }
 const b = await fetch()`,
 			want: `import { fn } from "package";`,
@@ -134,14 +133,14 @@ const b = await fetch()`,
 			name: "getStaticPaths with semicolon",
 			source: `import { fn } from "package";
 export async function getStaticPaths() {
-const content = Astro.fetchContent('**/*.md');
+  const content = Astro.fetchContent('**/*.md');
 }; const b = await fetch()`,
 			want: `import { fn } from "package";`,
 		},
 		{
 			name: "getStaticPaths with RegExp escape",
 			source: `export async function getStaticPaths() {
-const pattern = /\.md$/g.test('value');
+  const pattern = /\.md$/g.test('value');
 }
 import a from "a";`,
 			want: `import a from "a";`,
@@ -149,14 +148,14 @@ import a from "a";`,
 		{
 			name: "getStaticPaths with divider",
 			source: `export async function getStaticPaths() {
-const pattern = a / b;
+  const pattern = a / b;
 }`,
 			want: ``,
 		},
 		{
 			name: "getStaticPaths with divider and following content",
 			source: `export async function getStaticPaths() {
-const value = 1 / 2;
+  const value = 1 / 2;
 }
 // comment
 import { b } from "b";
@@ -166,7 +165,7 @@ const { a } = Astro.props;`,
 		{
 			name: "getStaticPaths with regex and following content",
 			source: `export async function getStaticPaths() {
-const value = /2/g;
+  const value = /2/g;
 }
 // comment
 import { b } from "b";
@@ -204,10 +203,6 @@ import { c } from "c";
 `,
 		},
 	}
-}
-
-func TestHoistImport(t *testing.T) {
-	tests := fixturesHoistImport()
 	for _, tt := range tests {
 		if tt.only {
 			tests = make([]testcase, 0)
@@ -229,24 +224,6 @@ func TestHoistImport(t *testing.T) {
 			}
 		})
 	}
-}
-
-func FuzzHoistImport(f *testing.F) {
-	tests := fixturesHoistImport()
-	for _, tt := range tests {
-		f.Add(tt.source) // Use f.Add to provide a seed corpus
-	}
-	f.Fuzz(func(t *testing.T, source string) {
-		result := HoistImports([]byte(source))
-		got := []byte{}
-		for _, imp := range result.Hoisted {
-			got = append(got, bytes.TrimSpace(imp)...)
-			got = append(got, '\n')
-		}
-		if utf8.ValidString(source) && !utf8.ValidString(string(got)) {
-			t.Errorf("Import hoisting produced an invalid string: %q", got)
-		}
-	})
 }
 
 func TestHoistExport(t *testing.T) {

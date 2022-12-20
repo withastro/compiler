@@ -80,47 +80,28 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 		return
 	}
 	p.addNilSourceMapping()
-	p.print("")
 	p.print("import {\n  ")
-	p.addNilSourceMapping()
 	p.print(FRAGMENT + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("render as " + TEMPLATE_TAG + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("createAstro as " + CREATE_ASTRO + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("createComponent as " + CREATE_COMPONENT + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("renderComponent as " + RENDER_COMPONENT + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("renderHead as " + RENDER_HEAD + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("maybeRenderHead as " + MAYBE_RENDER_HEAD + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("unescapeHTML as " + UNESCAPE_HTML + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("mergeSlots as " + MERGE_SLOTS + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("spreadAttributes as " + SPREAD_ATTRIBUTES + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("defineStyleVars as " + DEFINE_STYLE_VARS + ",\n  ")
-	p.addNilSourceMapping()
 	p.print("defineScriptVars as " + DEFINE_SCRIPT_VARS + ",\n  ")
-
 	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
 	if opts.opts.ResolvePath == nil {
-		p.addNilSourceMapping()
 		p.print("createMetadata as " + CREATE_METADATA)
 	}
-	p.addNilSourceMapping()
 	p.print("\n} from \"")
 	p.print(importSpecifier)
 	p.print("\";\n")
-	p.addNilSourceMapping()
 	p.hasInternalImports = true
 }
 
@@ -236,10 +217,9 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 	}
 	componentName := getComponentName(opts.Pathname)
 	p.addNilSourceMapping()
+	p.println("\n//@ts-ignore")
 	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
-	p.addNilSourceMapping()
 	p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
-	p.addNilSourceMapping()
 	p.println(fmt.Sprintf("Astro.self = %s;", componentName))
 	p.hasFuncPrelude = true
 }
@@ -353,29 +333,22 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 	case astro.QuotedAttribute:
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
-		p.addNilSourceMapping()
-		p.print(`="`)
-		p.printTextWithSourcemap(encodeDoubleQuote(escapeInterpolation(escapeBackticks(attr.Val))), attr.ValLoc)
-		p.addNilSourceMapping()
-		p.print(`"`)
+		p.print("=")
+		p.addSourceMapping(attr.ValLoc)
+		p.print(`"` + encodeDoubleQuote(escapeInterpolation(escapeBackticks(attr.Val))) + `"`)
 	case astro.EmptyAttribute:
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
 	case astro.ExpressionAttribute:
-		p.addNilSourceMapping()
 		p.print(fmt.Sprintf("${%s(", ADD_ATTRIBUTE))
+		p.addSourceMapping(attr.ValLoc)
 		if strings.TrimSpace(attr.Val) == "" {
-			p.addNilSourceMapping()
 			p.print("(void 0)")
 		} else {
-			p.printTextWithSourcemap(attr.Val, attr.ValLoc)
+			p.print(strings.TrimSpace(attr.Val))
 		}
-		p.addNilSourceMapping()
-		p.print(`, "`)
 		p.addSourceMapping(attr.KeyLoc)
-		p.print(attr.Key)
-		p.addNilSourceMapping()
-		p.print(`")}`)
+		p.print(`, "` + strings.TrimSpace(attr.Key) + `")}`)
 	case astro.SpreadAttribute:
 		injectClass := false
 		for p := n.Parent; p != nil; p = p.Parent {
