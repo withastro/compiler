@@ -107,6 +107,9 @@ outer:
 					}
 				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
 					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
+						if next == js.ErrorToken && l.Err() == io.EOF {
+							break
+						}
 						continue
 					}
 					if flags["&"] || flags["="] {
