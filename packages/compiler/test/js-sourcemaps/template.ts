@@ -1,11 +1,11 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testJSSourcemap } from '../utils';
 
 test('template expression basic', async () => {
   const input = `<div>{nonexistent}</div>`;
 
-  const output = await testTSXSourcemap(input, 'nonexistent');
+  const output = await testJSSourcemap(input, 'nonexistent');
   assert.equal(output, {
     source: 'index.astro',
     line: 1,
@@ -16,7 +16,7 @@ test('template expression basic', async () => {
 
 test('template expression has dot', async () => {
   const input = `<div>{console.log(hey)}</div>`;
-  const output = await testTSXSourcemap(input, 'log');
+  const output = await testJSSourcemap(input, 'log');
   assert.equal(output, {
     source: 'index.astro',
     line: 1,
@@ -27,7 +27,7 @@ test('template expression has dot', async () => {
 
 test('template expression with addition', async () => {
   const input = `{"hello" + hey}`;
-  const output = await testTSXSourcemap(input, 'hey');
+  const output = await testJSSourcemap(input, 'hey');
   assert.equal(output, {
     source: 'index.astro',
     line: 1,
@@ -38,7 +38,7 @@ test('template expression with addition', async () => {
 
 test('html attribute', async () => {
   const input = `<svg color="#000"></svg>`;
-  const output = await testTSXSourcemap(input, 'color');
+  const output = await testJSSourcemap(input, 'color');
   assert.equal(output, {
     source: 'index.astro',
     name: null,
@@ -52,8 +52,8 @@ test('complex template expression', async () => {
 v = "what";
 return <div>{ITEMS}</div>
 })}`;
-  const item = await testTSXSourcemap(input, 'ITEM');
-  const items = await testTSXSourcemap(input, 'ITEMS');
+  const item = await testJSSourcemap(input, 'ITEM');
+  const items = await testJSSourcemap(input, 'ITEMS');
   assert.equal(item, {
     source: 'index.astro',
     name: null,
@@ -70,7 +70,7 @@ return <div>{ITEMS}</div>
 
 test('attributes', async () => {
   const input = `<div className="hello" />`;
-  const className = await testTSXSourcemap(input, 'className');
+  const className = await testJSSourcemap(input, 'className');
   assert.equal(className, {
     source: 'index.astro',
     name: null,
@@ -81,7 +81,7 @@ test('attributes', async () => {
 
 test('special attributes', async () => {
   const input = `<div @on.click="fn" />`;
-  const onClick = await testTSXSourcemap(input, '@on.click');
+  const onClick = await testJSSourcemap(input, '@on.click');
   assert.equal(onClick, {
     source: 'index.astro',
     name: null,
