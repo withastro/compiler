@@ -27,7 +27,7 @@ jobs:
         run: go test -v -timeout 30s ./internal/...
 
   test-wasm:
-    timeout-minutes: 3
+    timeout-minutes: 10
     strategy:
       matrix:
         OS: [ubuntu-latest, windows-latest]
