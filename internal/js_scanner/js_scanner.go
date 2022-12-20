@@ -210,7 +210,7 @@ func HoistImports(source []byte) HoistedScripts {
 	body := make([][]byte, 0)
 	bodyLocs := make([]loc.Loc, 0)
 	prev := 0
-	for i, statement := NextImportStatement(source, 0); i > -1; i, statement = NextImportStatement(source, i) {
+	for i, statement := NextImportStatement(source, 0); i > -1 && i < len(source)+1; i, statement = NextImportStatement(source, i) {
 		bodyLocs = append(bodyLocs, loc.Loc{Start: prev})
 		body = append(body, source[prev:statement.Span.Start])
 		imports = append(imports, statement.Value)
@@ -529,7 +529,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 			pairs := make(map[byte]int)
 			for {
 				next, nextValue := l.Next()
-				if next == js.DivToken || next == js.DivEqToken {
+				if len(source) > i && (next == js.DivToken || next == js.DivEqToken) {
 					lns := bytes.Split(source[i+1:], []byte{'\n'})
 					if bytes.Contains(lns[0], []byte{'/'}) {
 						next, nextValue = l.RegExp()
@@ -559,8 +559,10 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 				}
 
 				if !foundSpecifier && next == js.StringToken {
-					specifier = string(nextValue[1 : len(nextValue)-1])
-					foundSpecifier = true
+					if len(nextValue) > 1 {
+						specifier = string(nextValue[1 : len(nextValue)-1])
+						foundSpecifier = true
+					}
 					continue
 				}
 
