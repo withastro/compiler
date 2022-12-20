@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testJSSourcemap } from '../utils';
 
 const fixture = `---
     const MyVariable = "Astro"
@@ -15,7 +15,7 @@ const fixture = `---
 
 test('hover I', async () => {
   const input = fixture;
-  const output = await testTSXSourcemap(input, 'MyVariable');
+  const output = await testJSSourcemap(input, 'MyVariable');
 
   assert.equal(output, {
     line: 2,
@@ -27,7 +27,7 @@ test('hover I', async () => {
 
 test('hover II', async () => {
   const input = fixture;
-  const output = await testTSXSourcemap(input, 'MyDocumentedVariable');
+  const output = await testJSSourcemap(input, 'MyDocumentedVariable');
 
   assert.equal(output, {
     line: 5,
@@ -39,7 +39,7 @@ test('hover II', async () => {
 
 test('hover III', async () => {
   const input = fixture;
-  const output = await testTSXSourcemap(input, 'MyJSDocVariable');
+  const output = await testJSSourcemap(input, 'MyJSDocVariable');
 
   assert.equal(output, {
     line: 8,

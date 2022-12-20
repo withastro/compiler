@@ -1,11 +1,11 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testSourcemap } from '../utils';
+import { testTSXSourcemap } from '../utils';
 
 test('shorthand attribute', async () => {
   const input = `<div {name} />`;
 
-  const output = await testSourcemap(input, 'name');
+  const output = await testTSXSourcemap(input, 'name');
   assert.equal(output, {
     source: 'index.astro',
     line: 1,
@@ -17,7 +17,7 @@ test('shorthand attribute', async () => {
 test('empty quoted attribute', async () => {
   const input = `<div src="" />`;
 
-  const open = await testSourcemap(input, '"');
+  const open = await testTSXSourcemap(input, '"');
   assert.equal(open, {
     source: 'index.astro',
     line: 1,
@@ -31,7 +31,7 @@ test('template literal attribute', async () => {
 ---
 <Tag src=\`bar\${foo}\` />`;
 
-  const open = await testSourcemap(input, 'foo');
+  const open = await testTSXSourcemap(input, 'foo');
   assert.equal(open, {
     source: 'index.astro',
     line: 3,
