@@ -1,4 +1,4 @@
-import { transform, convertToTSX } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler';
 import { generatedPositionFor, originalPositionFor, TraceMap } from '@jridgewell/trace-mapping';
 import sass from 'sass';
 
@@ -43,29 +43,11 @@ export function getPositionFor(input: string, snippet: string) {
   return null;
 }
 
-export async function testTSXSourcemap(input: string, snippet: string) {
+export async function testSourcemap(input: string, snippet: string) {
   const snippetLoc = getPositionFor(input, snippet);
   if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
 
   const { code, map } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
-  const tracer = new TraceMap(map);
-
-  const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });
-  if (!generated || generated.line === null) {
-    // eslint-disable-next-line no-console
-    console.log(code);
-    throw new Error(`"${snippet}" position incorrectly mapped in generated output.`);
-  }
-  const originalPosition = originalPositionFor(tracer, { line: generated.line, column: generated.column });
-
-  return originalPosition;
-}
-
-export async function testJSSourcemap(input: string, snippet: string) {
-  const snippetLoc = getPositionFor(input, snippet);
-  if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
-
-  const { code, map } = await transform(input, { sourcemap: 'both', sourcefile: 'index.astro', experimentalStaticExtraction: true, resolvePath: (i: string) => i });
   const tracer = new TraceMap(map);
 
   const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });

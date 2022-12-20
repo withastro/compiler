@@ -32,9 +32,10 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
-var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
+var PRELUDE = fmt.Sprintf(`//@ts-ignore
+const $$Component = %s(async ($$result, $$props, %s) => {
 const Astro = $$result.createAstro($$Astro, $$props, %s);
-Astro.self = $$Component;%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n\n")
+Astro.self = $$Component;%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n")
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
@@ -332,29 +333,16 @@ mod.export();
 			},
 		},
 		{
-			name: "export comments I",
+			name: "export comments",
 			source: `---
-// hmm
+//
 export const foo = 0
 /*
 */
 ---`,
 			want: want{
-				frontmatter:    []string{"", "// hmm\n/*\n*/"},
+				frontmatter:    []string{"", "//\n/*\n*/"},
 				getStaticPaths: "export const foo = 0",
-			},
-		},
-		{
-			name: "export comments II",
-			source: `---
-// hmm
-export const foo = 0;
-/*
-*/
----`,
-			want: want{
-				frontmatter:    []string{"", "// hmm\n/*\n*/"},
-				getStaticPaths: "export const foo = 0;",
 			},
 		},
 		{
@@ -1219,8 +1207,8 @@ import Widget2 from '../components/Widget2.astro';`},
 		{
 			name: "slots (dynamic name)",
 			source: `---
-import Component from 'test';
-const name = 'named';
+		import Component from 'test';
+		const name = 'named';
 		---
 		<Component>
 			<div slot={name}>Named</div>
@@ -2454,13 +2442,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			metadata += "] }"
 
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
-			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n"
+			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n\n"
 			if len(tt.want.getStaticPaths) > 0 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
 			}
 			toMatch += test_utils.Dedent(PRELUDE) + "\n"
 			if len(tt.want.frontmatter) > 1 {
-				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.frontmatter[1]))
+				toMatch += test_utils.Dedent(tt.want.frontmatter[1])
 			}
 			toMatch += "\n"
 			if len(tt.want.definedVars) > 0 {
@@ -2501,7 +2489,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			}
 
 			// compare to expected string, show diff if mismatch
-			if diff := test_utils.ANSIDiff(test_utils.RemoveNewlines(test_utils.Dedent(toMatch)), test_utils.RemoveNewlines(test_utils.Dedent(output))); diff != "" {
+			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 		})
