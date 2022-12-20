@@ -532,6 +532,11 @@ export const foo = 0
 			source: "import { a } from \"a\";\nexport interface ",
 			want:   "",
 		},
+		{
+			name:   "gobbely-gook",
+			source: "i t n m\"\"export c n s t t o\xc6t''t b=tf",
+			want:   "i t n m\"\"export c n s t t o\xc6t''t b=tf",
+		},
 	}
 }
 
