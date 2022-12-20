@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 0.31.3
+
+### Patch Changes
+
+- fd5cb57: Rollback https://github.com/withastro/compiler/pull/674
+
 ## 0.31.2
 
 ### Patch Changes
