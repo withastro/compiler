@@ -249,8 +249,8 @@ func FuzzHoistImport(f *testing.F) {
 	})
 }
 
-func TestHoistExport(t *testing.T) {
-	tests := []testcase{
+func fixturesHoistExport() []testcase {
+	return []testcase{
 		{
 			name: "getStaticPaths",
 			source: `import { fn } from "package";
@@ -528,6 +528,10 @@ export const foo = 0
 			want: `export const foo = 0`,
 		},
 	}
+}
+
+func TestHoistExport(t *testing.T) {
+	tests := fixturesHoistExport()
 
 	for _, tt := range tests {
 		if tt.only {
@@ -550,6 +554,24 @@ export const foo = 0
 			}
 		})
 	}
+}
+
+func FuzzHoistExport(f *testing.F) {
+	tests := fixturesHoistExport()
+	for _, tt := range tests {
+		f.Add(tt.source) // Use f.Add to provide a seed corpus
+	}
+	f.Fuzz(func(t *testing.T, source string) {
+		result := HoistExports([]byte(source))
+		got := []byte{}
+		for _, imp := range result.Hoisted {
+			got = append(got, bytes.TrimSpace(imp)...)
+			got = append(got, '\n')
+		}
+		if utf8.ValidString(source) && !utf8.ValidString(string(got)) {
+			t.Errorf("Import hoisting produced an invalid string: %q", got)
+		}
+	})
 }
 
 type keytestcase struct {
