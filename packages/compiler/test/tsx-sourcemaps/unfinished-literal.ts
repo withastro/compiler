@@ -14,5 +14,5 @@ test('does not panic on unfinished template literal attribute', async () => {
     error = 1;
   }
 
-  assert.equal(error, 0, `compiler should not have paniced`);
+  assert.equal(error, 0, `compiler should not have panicked`);
 });

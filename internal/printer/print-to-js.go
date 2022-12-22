@@ -416,7 +416,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					continue
 				}
 				// Note: if we encounter "slot" NOT inside a component, that's fine
-				// These should be perserved in the output
+				// These should be preserved in the output
 				p.printAttribute(a, n)
 				p.addSourceMapping(n.Loc[0])
 			} else {
