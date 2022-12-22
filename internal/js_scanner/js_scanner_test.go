@@ -534,8 +534,8 @@ export const foo = 0
 		},
 		{
 			name:   "gobbely-gook",
-			source: "\"\"export =",
-			want:   "\"\"export =",
+			source: "\"\"export=",
+			want:   "\"\"export=",
 		},
 	}
 }
