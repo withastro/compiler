@@ -66,7 +66,7 @@
 
 ### Patch Changes
 
-- ec745f4: Self-closing tags will now retreive "end" positional data
+- ec745f4: Self-closing tags will now retrieve "end" positional data
 - a6c2822: Fix a few TSX output errors
 
 ## 0.29.15

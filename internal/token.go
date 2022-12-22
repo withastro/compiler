@@ -976,12 +976,12 @@ func (z *Tokenizer) readString(c byte) {
 	case '`':
 		// Note that we DO NOT have to handle `${}` here because our expression
 		// behavior already handles `{}` and `z.readTagAttrExpression()` handles
-		// template literals seperately.
+		// template literals separately.
 		z.readUntilChar([]byte{'`'})
 	}
 }
 
-// generic utilty to look ahead until the first char is encountered from given splice
+// generic utility to look ahead until the first char is encountered from given splice
 func (z *Tokenizer) readUntilChar(chars []byte) {
 find_next:
 	for {
@@ -1017,7 +1017,7 @@ find_next:
 func (z *Tokenizer) readCommentOrRegExp(boundaryChars []byte) {
 	c := z.readByte() // find next character after '/' to know how to handle it
 	switch c {
-	// single-line commment (ends on newline)
+	// single-line comment (ends on newline)
 	case '/':
 		z.readUntilChar([]byte{'\r', '\n'})
 	// multi-line comment
@@ -1754,7 +1754,7 @@ loop:
 			return z.tt
 		}
 
-		// If necessary, implicity close an unclosed tag to bail out before
+		// If necessary, implicitly close an unclosed tag to bail out before
 		// an infinite loop occurs. Helpful for IDEs which compile as user types.
 		if x := z.readUnclosedTag(); x {
 			z.tt = TextToken

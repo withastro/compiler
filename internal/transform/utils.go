@@ -54,7 +54,7 @@ func IsImplictNode(n *astro.Node) bool {
 	return HasAttr(n, astro.ImplicitNodeMarker)
 }
 
-func IsImplictNodeMarker(attr astro.Attribute) bool {
+func IsImplicitNodeMarker(attr astro.Attribute) bool {
 	return attr.Key == astro.ImplicitNodeMarker
 }
 

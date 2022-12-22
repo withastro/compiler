@@ -216,7 +216,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 
 	isImplicit := false
 	for _, a := range n.Attr {
-		if transform.IsImplictNodeMarker(a) {
+		if transform.IsImplicitNodeMarker(a) {
 			isImplicit = true
 			break
 		}
