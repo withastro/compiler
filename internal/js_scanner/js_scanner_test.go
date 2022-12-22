@@ -534,8 +534,8 @@ export const foo = 0
 		},
 		{
 			name:   "gobbely-gook",
-			source: "i t n m\"\"export c n s t t o\xc6t''t b=tf",
-			want:   "i t n m\"\"export c n s t t o\xc6t''t b=tf",
+			source: "\"\"export =",
+			want:   "\"\"export =",
 		},
 	}
 }
