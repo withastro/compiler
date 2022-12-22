@@ -85,11 +85,3 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install
       - run: pnpm run lint
-
-  typos:
-    timeout-minutes: 3
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: typos-action
-        uses: crate-ci/typos@v1.0.4
