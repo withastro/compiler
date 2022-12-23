@@ -537,6 +537,11 @@ export const foo = 0
 			source: "\"\"export=",
 			want:   "",
 		},
+		{
+			name:   "gobbely-gook-part-ii",
+			source: "0\nexport A000000000000&#0000000000000000000",
+			want:   "",
+		},
 	}
 }
 

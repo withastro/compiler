@@ -139,10 +139,10 @@ outer:
 					// 	 SomeWeirdType<{ thatsSuperLong: SoItEndsUpFormattedLikeThis }>
 					//
 					// So, we omit the semicolon check if the line ends up with one of these
-					if flags["&"] && nextValue[0] != '&' {
+					if flags["&"] && len(nextValue) > 0 && nextValue[0] != '&' {
 						flags["&"] = false
 					}
-					if flags["="] && nextValue[0] != '=' {
+					if flags["="] && len(nextValue) > 0 && nextValue[0] != '=' {
 						flags["="] = false
 					}
 				}
