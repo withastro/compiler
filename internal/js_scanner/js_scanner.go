@@ -113,6 +113,9 @@ outer:
 						continue
 					}
 					if flags["&"] || flags["="] {
+						if next == js.ErrorToken && l.Err() == io.EOF {
+							break
+						}
 						continue
 					}
 					foundSemicolonOrLineTerminator = true
