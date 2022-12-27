@@ -1095,7 +1095,7 @@ const someProps = {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  
+
   ` + RENDER_HEAD_RESULT + `</head>
   <body class="astro-HMNNHVCQ">
     <main class="astro-HMNNHVCQ">
@@ -2332,6 +2332,14 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<div>test</div>`,
 			},
 		},
+		{
+			name:     "passes escaped moduleId into createComponent if it contains single quotes",
+			source:   `<div>test</div>`,
+			moduleId: "/projects/app/src/pages/page-with-'-quotes.astro",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div>test</div>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -2483,7 +2491,8 @@ const items = ["Dog", "Cat", "Platipus"];
 			}
 
 			if len(tt.moduleId) > 0 {
-				toMatch += suffixWithModuleId(tt.moduleId)
+				escapedModuleId := strings.ReplaceAll(tt.moduleId, "'", "\\'")
+				toMatch += suffixWithModuleId(escapedModuleId)
 			} else {
 				toMatch += SUFFIX
 			}
