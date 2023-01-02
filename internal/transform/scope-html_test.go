@@ -113,6 +113,12 @@ func TestScopeHTML(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
+			if nodes == nil {
+				t.Error("`nodes` should not be nil")
+			}
+			if len(nodes) == 0 {
+				t.Error("`nodes` should contain at least one node")
+			}
 			ScopeElement(nodes[0], TransformOptions{Scope: "XXXXXX"})
 			var b strings.Builder
 			astro.PrintToSource(&b, nodes[0])
