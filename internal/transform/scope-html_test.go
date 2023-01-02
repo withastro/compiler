@@ -95,6 +95,11 @@ func tests() []struct {
 			source: `<A { 0>`,
 			want:   `<A  0>={0>} class="astro-XXXXXX"></A>`,
 		},
+		{
+			name:   "incomplete props spread",
+			source: "<a {...>",
+			want:   "<a {...}></a>",
+		},
 	}
 
 }
@@ -150,11 +155,11 @@ func FuzzScopeHTML(f *testing.F) {
 		var b strings.Builder
 		astro.PrintToSource(&b, nodes[0])
 		got := b.String()
-		if !strings.Contains(got, "astro-XXXXXX") {
-			t.Errorf("HTML scoping failed to include the astro scope\n source: %q\n got: %q\n `nodes[0].Data: %q", source, got, nodes[0].Data)
-		}
 		if utf8.ValidString(source) && !utf8.ValidString(got) {
 			t.Errorf("HTML scoping produced invalid html string: %q", got)
+		}
+		if !strings.Contains(got, "astro-XXXXXX") {
+			t.Errorf("HTML scoping failed to include the astro scope\n source: %q\n got: %q\n `nodes[0].Data: %q", source, got, nodes[0].Data)
 		}
 	})
 }
