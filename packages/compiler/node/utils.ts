@@ -102,11 +102,11 @@ function serializeAttributes(node: TagLikeNode): string {
   return output;
 }
 
-export interface SerializeOtions {
+export interface SerializeOptions {
   selfClose: boolean;
 }
 
-export function serialize(root: Node, opts: SerializeOtions = { selfClose: true }): string {
+export function serialize(root: Node, opts: SerializeOptions = { selfClose: true }): string {
   let output = '';
   function visitor(node: Node) {
     if (is.root(node)) {

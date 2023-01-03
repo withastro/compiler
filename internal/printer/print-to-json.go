@@ -185,7 +185,7 @@ func attrPositionAt(p *printer, n *Attribute, opts t.ParseOptions) ASTPosition {
 func renderNode(p *printer, parent *ASTNode, n *Node, opts t.ParseOptions) {
 	isImplicit := false
 	for _, a := range n.Attr {
-		if transform.IsImplictNodeMarker(a) {
+		if transform.IsImplicitNodeMarker(a) {
 			isImplicit = true
 			break
 		}

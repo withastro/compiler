@@ -66,7 +66,7 @@
 
 ### Patch Changes
 
-- ec745f4: Self-closing tags will now retreive "end" positional data
+- ec745f4: Self-closing tags will now retrieve "end" positional data
 - a6c2822: Fix a few TSX output errors
 
 ## 0.29.15
@@ -164,7 +164,7 @@
 
 ### Minor Changes
 
-- fd2fc28: Fix some utf8 compatability issues
+- fd2fc28: Fix some utf8 compatibility issues
 
 ### Patch Changes
 
@@ -344,7 +344,7 @@
 
 - a28c3d8: Fix handling of unbalanced quotes in expression attributes
 - 28d1d4d: Fix handling of TS generics inside of expressions
-- 356d3b6: Prevent wraping module scripts with scope
+- 356d3b6: Prevent wrapping module scripts with scope
 
 ## 0.22.1
 

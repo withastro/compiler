@@ -330,7 +330,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if isSlot && a.Key == "is:inline" {
 			isSlot = false
 		}
-		if transform.IsImplictNodeMarker(a) {
+		if transform.IsImplicitNodeMarker(a) {
 			isImplicit = true
 		}
 	}
@@ -408,7 +408,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(`]`)
 	} else {
 		for _, a := range n.Attr {
-			if transform.IsImplictNodeMarker(a) || a.Key == "is:inline" {
+			if transform.IsImplicitNodeMarker(a) || a.Key == "is:inline" {
 				continue
 			}
 			if a.Key == "slot" {
@@ -416,7 +416,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					continue
 				}
 				// Note: if we encounter "slot" NOT inside a component, that's fine
-				// These should be perserved in the output
+				// These should be preserved in the output
 				p.printAttribute(a, n)
 				p.addSourceMapping(n.Loc[0])
 			} else {

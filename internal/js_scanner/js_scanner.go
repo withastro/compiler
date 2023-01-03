@@ -54,7 +54,7 @@ outer:
 			break
 		}
 
-		// Common delimeters. Track their length, then skip.
+		// Common delimiters. Track their length, then skip.
 		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
 			i += len(value)
 			continue
@@ -242,7 +242,7 @@ outer:
 			break
 		}
 
-		// Common delimeters. Track their length, then skip.
+		// Common delimiters. Track their length, then skip.
 		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
 			i += len(value)
 			continue

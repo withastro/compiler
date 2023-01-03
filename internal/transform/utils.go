@@ -50,23 +50,23 @@ func IsHoistable(n *astro.Node) bool {
 	return parent == nil
 }
 
-func IsImplictNode(n *astro.Node) bool {
+func IsImplicitNode(n *astro.Node) bool {
 	return HasAttr(n, astro.ImplicitNodeMarker)
 }
 
-func IsImplictNodeMarker(attr astro.Attribute) bool {
+func IsImplicitNodeMarker(attr astro.Attribute) bool {
 	return attr.Key == astro.ImplicitNodeMarker
 }
 
 func IsTopLevel(n *astro.Node) bool {
-	if IsImplictNode(n) || n.Data == "" {
+	if IsImplicitNode(n) || n.Data == "" {
 		return false
 	}
 	p := n.Parent
 	if p == nil {
 		return true
 	}
-	if IsImplictNode(p) || p.Data == "" {
+	if IsImplicitNode(p) || p.Data == "" {
 		return true
 	}
 	if p.Component {

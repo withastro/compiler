@@ -187,7 +187,7 @@ func TrimTrailingSpace(doc *astro.Node) {
 	n := doc.LastChild
 	for i := 0; i < 2; i++ {
 		// Loop through implicit nodes to find final trailing text node (html > body > #text)
-		if n != nil && n.Type == astro.ElementNode && IsImplictNode(n) {
+		if n != nil && n.Type == astro.ElementNode && IsImplicitNode(n) {
 			n = n.LastChild
 			continue
 		} else {
