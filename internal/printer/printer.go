@@ -228,7 +228,8 @@ func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
 	componentName := getComponentName(opts.Pathname)
 	p.addNilSourceMapping()
 	if len(opts.ModuleId) > 0 {
-		p.println(fmt.Sprintf("}, '%s');", opts.ModuleId))
+		escapedModuleId := strings.ReplaceAll(opts.ModuleId, "'", "\\'")
+		p.println(fmt.Sprintf("}, '%s');", escapedModuleId))
 	} else {
 		p.println("});")
 	}
