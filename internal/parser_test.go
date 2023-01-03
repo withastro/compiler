@@ -5,8 +5,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/test_utils"
+	"golang.org/x/net/html/atom"
 )
 
 type ParserLocTest struct {
@@ -125,4 +128,65 @@ func findTargetNode(doc *Node) *Node {
 		}
 	})
 	return target
+}
+
+func fixturesParseFragmentWithOptions() []struct {
+	name   string
+	source string
+	want   []*Node
+} {
+	return []struct {
+		name   string
+		source string
+		want   []*Node
+	}{
+		{
+			name:   "none",
+			source: "<div />",
+			want:   []*Node{{Type: ElementNode, DataAtom: atom.Div, Data: "div", Namespace: "", Loc: []loc.Loc{{Start: 1}}}},
+		},
+		{
+			name:   "quoted",
+			source: `<div class="test" />`,
+			want:   nil,
+		},
+		{
+			name:   "fault input currently accepted",
+			source: `<A { 0>`,
+			want:   []*Node{{Component: true, Type: ElementNode, DataAtom: 0, Data: "A", Namespace: "", Attr: []Attribute{{Namespace: "", Key: " 0>", KeyLoc: loc.Loc{Start: 4}, Val: "", ValLoc: loc.Loc{Start: 7}, Tokenizer: nil, Type: ShorthandAttribute}}, Loc: []loc.Loc{{Start: 1}}}},
+		},
+		{
+			name:   "weird control characters",
+			source: "\x00</F></a>",
+			want:   nil,
+		}}
+}
+
+func TestParseFragmentWithOptions(t *testing.T) {
+	tests := fixturesParseFragmentWithOptions()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := handler.NewHandler(tt.source, "TestParseFragmentWithOptions.astro")
+			nodes, err := ParseFragmentWithOptions(strings.NewReader(tt.source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
+			if err != nil {
+				t.Error(err)
+			}
+			assert.Equal(t, nodes, tt.want)
+		})
+	}
+
+}
+
+func FuzzParseFragmentWithOptions(f *testing.F) {
+	tests := fixturesParseFragmentWithOptions()
+	for _, tt := range tests {
+		f.Add(tt.source) // Use f.Add to provide a seed corpus
+	}
+	f.Fuzz(func(t *testing.T, source string) {
+		h := handler.NewHandler(source, "TestParseFragmentWithOptions.astro")
+		_, err := ParseFragmentWithOptions(strings.NewReader(source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
+		if err != nil {
+			t.Error(err)
+		}
+	})
 }
