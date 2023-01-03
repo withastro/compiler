@@ -199,6 +199,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 							continue
 						}
 						p.printTextWithSourcemap(string(exported), exportLoc)
+						p.addNilSourceMapping()
+						p.println("")
 					}
 				}
 
