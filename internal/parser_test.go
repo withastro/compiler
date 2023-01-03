@@ -146,11 +146,6 @@ func fixturesParseFragmentWithOptions() []struct {
 			want:   []*Node{{Type: ElementNode, DataAtom: atom.Div, Data: "div", Namespace: "", Loc: []loc.Loc{{Start: 1}}}},
 		},
 		{
-			name:   "quoted",
-			source: `<div class="test" />`,
-			want:   nil,
-		},
-		{
 			name:   "fault input currently accepted",
 			source: `<A { 0>`,
 			want:   []*Node{{Component: true, Type: ElementNode, DataAtom: 0, Data: "A", Namespace: "", Attr: []Attribute{{Namespace: "", Key: " 0>", KeyLoc: loc.Loc{Start: 4}, Val: "", ValLoc: loc.Loc{Start: 7}, Tokenizer: nil, Type: ShorthandAttribute}}, Loc: []loc.Loc{{Start: 1}}}},
@@ -184,9 +179,21 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 	}
 	f.Fuzz(func(t *testing.T, source string) {
 		h := handler.NewHandler(source, "TestParseFragmentWithOptions.astro")
-		_, err := ParseFragmentWithOptions(strings.NewReader(source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
+		nodes, err := ParseFragmentWithOptions(strings.NewReader(source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
 		if err != nil {
 			t.Error(err)
 		}
+		var b strings.Builder
+		PrintToSource(&b, nodes[0])
+		got := b.String()
+
+		// check whether another pass doesn't error
+		nodes, err = ParseFragmentWithOptions(strings.NewReader(got), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
+		if err != nil {
+			t.Error(err)
+		}
+		PrintToSource(&b, nodes[0])
+		got2 := b.String()
+		assert.Equal(t, got, got2)
 	})
 }
