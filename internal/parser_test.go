@@ -143,7 +143,7 @@ func fixturesParseFragmentWithOptions() []struct {
 		{
 			name:   "none",
 			source: "<div />",
-			want:   []*Node{{Type: ElementNode, DataAtom: atom.Div, Data: "div", Namespace: "", Loc: []loc.Loc{{Start: 1}}}},
+			want:   []*Node{{Type: ElementNode, DataAtom: atom.Div, Data: atom.Div.String(), Namespace: "", Loc: []loc.Loc{{Start: 1}}}},
 		},
 		{
 			name:   "fault input currently accepted",
@@ -154,7 +154,8 @@ func fixturesParseFragmentWithOptions() []struct {
 			name:   "weird control characters",
 			source: "\x00</F></a>",
 			want:   nil,
-		}}
+		},
+	}
 }
 
 func TestParseFragmentWithOptions(t *testing.T) {
@@ -167,6 +168,21 @@ func TestParseFragmentWithOptions(t *testing.T) {
 				t.Error(err)
 			}
 			assert.Equal(t, nodes, tt.want)
+			if tt.want == nil {
+				return
+			}
+			var b strings.Builder
+			PrintToSource(&b, nodes[0])
+			got := b.String()
+			b.Reset()
+			// check whether another pass doesn't error
+			nodes, err = ParseFragmentWithOptions(strings.NewReader(got), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
+			if err != nil {
+				t.Error(err)
+			}
+			PrintToSource(&b, nodes[0])
+			got2 := b.String()
+			assert.Equal(t, got, got2)
 		})
 	}
 
@@ -183,9 +199,13 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 		if err != nil {
 			t.Error(err)
 		}
+		if len(nodes) == 0 {
+			return
+		}
 		var b strings.Builder
 		PrintToSource(&b, nodes[0])
 		got := b.String()
+		b.Reset()
 
 		// check whether another pass doesn't error
 		nodes, err = ParseFragmentWithOptions(strings.NewReader(got), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
