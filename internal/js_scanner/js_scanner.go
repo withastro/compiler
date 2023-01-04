@@ -13,15 +13,22 @@ import (
 )
 
 type HoistedScripts struct {
-	Hoisted [][]byte
-	Body    []byte
+	Hoisted     [][]byte
+	HoistedLocs []loc.Loc
+	Body        [][]byte
+	BodyLocs    []loc.Loc
 }
 
 func HoistExports(source []byte) HoistedScripts {
 	shouldHoist := bytes.Contains(source, []byte("export"))
 	if !shouldHoist {
+		body := make([][]byte, 0)
+		body = append(body, source)
+		bodyLocs := make([]loc.Loc, 0)
+		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
 		return HoistedScripts{
-			Body: source,
+			Body:     body,
+			BodyLocs: bodyLocs,
 		}
 	}
 
@@ -29,8 +36,10 @@ func HoistExports(source []byte) HoistedScripts {
 	i := 0
 	end := 0
 
-	hoisted := make([][]byte, 1)
-	body := make([]byte, 0)
+	hoisted := make([][]byte, 0)
+	hoistedLocs := make([]loc.Loc, 0)
+	body := make([][]byte, 0)
+	bodyLocs := make([]loc.Loc, 0)
 	pairs := make(map[byte]int)
 
 	// Let's lex the script until we find what we need!
@@ -47,8 +56,15 @@ outer:
 
 		if token == js.ErrorToken {
 			if l.Err() != io.EOF {
+				body := make([][]byte, 0)
+				body = append(body, source)
+				bodyLocs := make([]loc.Loc, 0)
+				bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
 				return HoistedScripts{
-					Body: source,
+					Hoisted:     hoisted,
+					HoistedLocs: hoistedLocs,
+					Body:        body,
+					BodyLocs:    bodyLocs,
 				}
 			}
 			break
@@ -127,8 +143,10 @@ outer:
 
 				if foundIdent && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
 					hoisted = append(hoisted, source[start:i])
+					hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
 					if end < start {
-						body = append(body, source[end:start]...)
+						body = append(body, source[end:start])
+						bodyLocs = append(bodyLocs, loc.Loc{Start: end})
 					}
 					end = i
 					continue outer
@@ -136,8 +154,15 @@ outer:
 
 				if next == js.ErrorToken {
 					if l.Err() != io.EOF {
+						body := make([][]byte, 0)
+						body = append(body, source)
+						bodyLocs := make([]loc.Loc, 0)
+						bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
 						return HoistedScripts{
-							Body: source,
+							Hoisted:     hoisted,
+							HoistedLocs: hoistedLocs,
+							Body:        body,
+							BodyLocs:    bodyLocs,
 						}
 					}
 					break outer
@@ -164,11 +189,14 @@ outer:
 		i += len(value)
 	}
 
-	body = append(body, source[end:]...)
+	body = append(body, source[end:])
+	bodyLocs = append(bodyLocs, loc.Loc{Start: end})
 
 	return HoistedScripts{
-		Hoisted: hoisted,
-		Body:    body,
+		Hoisted:     hoisted,
+		HoistedLocs: hoistedLocs,
+		Body:        body,
+		BodyLocs:    bodyLocs,
 	}
 }
 
@@ -178,18 +206,25 @@ func isKeyword(value []byte) bool {
 
 func HoistImports(source []byte) HoistedScripts {
 	imports := make([][]byte, 0)
-	body := make([]byte, 0)
+	importLocs := make([]loc.Loc, 0)
+	body := make([][]byte, 0)
+	bodyLocs := make([]loc.Loc, 0)
 	prev := 0
-	for i, statement := NextImportStatement(source, 0); i > -1; i, statement = NextImportStatement(source, i) {
-		body = append(body, source[prev:statement.Span.Start]...)
+	for i, statement := NextImportStatement(source, 0); i > -1 && i < len(source)+1; i, statement = NextImportStatement(source, i) {
+		bodyLocs = append(bodyLocs, loc.Loc{Start: prev})
+		body = append(body, source[prev:statement.Span.Start])
 		imports = append(imports, statement.Value)
+		importLocs = append(importLocs, loc.Loc{Start: statement.Span.Start})
 		prev = i
 	}
 	if prev == 0 {
-		return HoistedScripts{Body: source}
+		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
+		body = append(body, source)
+		return HoistedScripts{Body: body, BodyLocs: bodyLocs}
 	}
-	body = append(body, source[prev:]...)
-	return HoistedScripts{Hoisted: imports, Body: body}
+	bodyLocs = append(bodyLocs, loc.Loc{Start: prev})
+	body = append(body, source[prev:])
+	return HoistedScripts{Hoisted: imports, HoistedLocs: importLocs, Body: body, BodyLocs: bodyLocs}
 }
 
 type Props struct {
@@ -467,7 +502,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 	for {
 		token, value := l.Next()
 
-		if token == js.DivToken || token == js.DivEqToken {
+		if len(source) > i && token == js.DivToken || token == js.DivEqToken {
 			lns := bytes.Split(source[i+1:], []byte{'\n'})
 			if bytes.Contains(lns[0], []byte{'/'}) {
 				token, value = l.RegExp()
@@ -494,7 +529,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 			pairs := make(map[byte]int)
 			for {
 				next, nextValue := l.Next()
-				if next == js.DivToken || next == js.DivEqToken {
+				if len(source) > i && (next == js.DivToken || next == js.DivEqToken) {
 					lns := bytes.Split(source[i+1:], []byte{'\n'})
 					if bytes.Contains(lns[0], []byte{'/'}) {
 						next, nextValue = l.RegExp()
@@ -524,8 +559,10 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 				}
 
 				if !foundSpecifier && next == js.StringToken {
-					specifier = string(nextValue[1 : len(nextValue)-1])
-					foundSpecifier = true
+					if len(nextValue) > 1 {
+						specifier = string(nextValue[1 : len(nextValue)-1])
+						foundSpecifier = true
+					}
 					continue
 				}
 

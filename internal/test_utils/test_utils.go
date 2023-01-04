@@ -8,6 +8,10 @@ import (
 	"github.com/lithammer/dedent"
 )
 
+func RemoveNewlines(input string) string {
+	return strings.ReplaceAll(input, "\n", "")
+}
+
 func Dedent(input string) string {
 	return dedent.Dedent( // removes any leading whitespace
 		strings.ReplaceAll( // compress linebreaks to 1 or 2 lines max

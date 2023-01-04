@@ -56,4 +56,32 @@ export const getStaticPaths = () =>
   assert.match(result.code, 'export const getStaticPaths = () =>\n{', 'Expected output to contain getStaticPaths output');
 });
 
+test('getStaticPaths with whitespace', async () => {
+  const FIXTURE = `---
+export const getStaticPaths = async () => {
+	const content = await Astro.glob('../content/*.mdx');
+
+	return content
+    .filter((page) => !page.frontmatter.draft) // skip drafts
+    .map(({ default: MdxContent, frontmatter, url, file }) => {
+        return {
+          params: { slug: frontmatter.slug || "index" },
+          props: {
+            MdxContent,
+						file,
+            frontmatter,
+						url
+          }
+        }
+     })
+}
+
+const { MdxContent, frontmatter, url, file } = Astro.props;
+---
+<div></div>
+`;
+  const result = await transform(FIXTURE);
+  assert.match(result.code, '\nconst $$stdin = ', 'Expected getStaticPaths hoisting to maintain newlines');
+});
+
 test.run();
