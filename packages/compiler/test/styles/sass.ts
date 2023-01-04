@@ -37,11 +37,11 @@ test.before(async () => {
 });
 
 test('transforms scss one', () => {
-  assert.match(result.code, 'color:red', 'Expected "color:red" to be present.');
+  assert.match(result.css[result.css.length - 1], 'color:red', 'Expected "color:red" to be present.');
 });
 
 test('transforms scss two', () => {
-  assert.match(result.code, 'color:green', 'Expected "color:green" to be present.');
+  assert.match(result.css[0], 'color:green', 'Expected "color:green" to be present.');
 });
 
 test.run();
