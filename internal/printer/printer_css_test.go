@@ -10,8 +10,14 @@ import (
 	"github.com/withastro/compiler/internal/transform"
 )
 
+type testcase_css struct {
+	name   string
+	source string
+	want   string
+}
+
 func TestPrinterCSS(t *testing.T) {
-	tests := []testcase{
+	tests := []testcase_css{
 		{
 			name: "styles (no frontmatter)",
 			source: `<style>
@@ -27,18 +33,8 @@ func TestPrinterCSS(t *testing.T) {
 
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
-			want: want{
-				styles: []string{".title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}"},
-			},
+			want: ".title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}",
 		},
-	}
-
-	for _, tt := range tests {
-		if tt.only {
-			tests = make([]testcase, 0)
-			tests = append(tests, tt)
-			break
-		}
 	}
 
 	for _, tt := range tests {
@@ -66,12 +62,7 @@ func TestPrinterCSS(t *testing.T) {
 				output += string(bytes)
 			}
 
-			toMatch := ""
-			if len(tt.want.styles) > 0 {
-				for _, style := range tt.want.styles {
-					toMatch += style + ""
-				}
-			}
+			toMatch := tt.want
 
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {

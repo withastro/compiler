@@ -39,10 +39,6 @@ var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
 export default $$Component;`
-var STYLE_PRELUDE = "const STYLES = [\n"
-var STYLE_SUFFIX = "];\nfor (const STYLE of STYLES) $$result.styles.add(STYLE);\n"
-var SCRIPT_PRELUDE = "const SCRIPTS = [\n"
-var SCRIPT_SUFFIX = "];\nfor (const SCRIPT of SCRIPTS) $$result.scripts.add(SCRIPT);\n"
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build', '.');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
@@ -59,8 +55,6 @@ export default $$Component;`, moduleId)
 type want struct {
 	frontmatter    []string
 	definedVars    []string
-	styles         []string
-	scripts        []string
 	getStaticPaths string
 	code           string
 	metadata
@@ -441,7 +435,6 @@ import type data from "test"
 				frontmatter: []string{
 					`import './styles.css';`,
 				},
-				styles: []string{},
 			},
 		},
 		{
@@ -508,7 +501,6 @@ import * as ns from '../components';
 </html>`,
 			want: want{
 				frontmatter: []string{`import * as ns from '../components';`},
-				styles:      []string{},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: '../components', assert: {} }`}},
 				code: `<html>
   <head>
@@ -781,7 +773,6 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 </div>`,
 			want: want{
 				frontmatter: []string{"", "const groups = [[0, 1, 2], [3, 4, 5]];"},
-				styles:      []string{},
 				code: fmt.Sprintf(`${$$maybeRenderHead($$result)}<div>
 	${groups.map(items => {
 		return %s<ul>${
@@ -971,7 +962,6 @@ const name = "world";
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				styles: []string{"{props:{\"data-astro-id\":\"DPOHFLYM\"},children:`.title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}`}"},
 				code: "\n\n\t\t" + `${$$maybeRenderHead($$result)}<h1 class="title astro-DPOHFLYM">Page Title</h1>
 		<p class="body astro-DPOHFLYM">I’m a page</p>`,
 			},
@@ -1095,7 +1085,6 @@ const someProps = {
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/`},
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"HMNNHVCQ"},children:%s:root{font-family:system-ui;padding:2em 0}.counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));place-items:center;font-size:2em;margin-top:2em}.children{display:grid;place-items:center;margin-bottom:2em}%s}`, BACKTICK, BACKTICK)},
 				metadata: metadata{
 					modules:             []string{`{ module: $$module1, specifier: '../components/Counter.jsx', assert: {} }`},
 					hydratedComponents:  []string{`Counter`},
@@ -1129,7 +1118,6 @@ import Widget2 from '../components/Widget2.astro';
 			want: want{
 				frontmatter: []string{`import Widget from '../components/Widget.astro';
 import Widget2 from '../components/Widget2.astro';`},
-				styles: []string{},
 				metadata: metadata{
 					modules: []string{
 						`{ module: $$module1, specifier: '../components/Widget.astro', assert: {} }`,
@@ -1148,8 +1136,6 @@ import Widget2 from '../components/Widget2.astro';`},
 <script type="module" hoist>console.log("Hello");</script>`,
 			want: want{
 				frontmatter: []string{""},
-				styles:      []string{},
-				scripts:     []string{fmt.Sprintf(`{props:{"type":"module","hoist":true},children:%sconsole.log("Hello");%s}`, BACKTICK, BACKTICK)},
 				metadata:    metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
 				code:        `${$$maybeRenderHead($$result)}`,
 			},
@@ -1161,8 +1147,6 @@ import Widget2 from '../components/Widget2.astro';`},
 								<script type="module" hoist>console.log("Hello");</script>
 							`,
 			want: want{
-				styles:   []string{},
-				scripts:  []string{"{props:{\"type\":\"module\",\"hoist\":true},children:`console.log(\"Hello\");`}"},
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
 				code: "${$$maybeRenderHead($$result)}<main>\n" +
 					"								${$$maybeRenderHead($$result)}\n" +
@@ -1194,7 +1178,6 @@ import Widget2 from '../components/Widget2.astro';`},
 			name:   "script before elements",
 			source: `<script>Here</script><div></div>`,
 			want: want{
-				scripts:  []string{"{props:{},children:`Here`}"},
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sHere%s }`, BACKTICK, BACKTICK)}},
 				code:     `${$$maybeRenderHead($$result)}<div></div>`,
 			},
@@ -1224,7 +1207,6 @@ const name = 'named';
 		</Component>`,
 			want: want{
 				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
-				styles:      []string{},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
 				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,})}`,
 			},
@@ -1251,7 +1233,6 @@ import 'test';
 <my-element></my-element>`,
 			want: want{
 				frontmatter: []string{`import 'test';`},
-				styles:      []string{},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
 				code:        `${$$renderComponent($$result,'my-element','my-element',{})}`,
 			},
@@ -1361,8 +1342,7 @@ const canonicalURL = new URL('http://example.com');
 			want: want{
 				frontmatter: []string{"", `const image = './penguin.png';
 const canonicalURL = new URL('http://example.com');`},
-				styles: []string{},
-				code:   "${image && ($$render`<meta property=\"og:image\"${$$addAttribute(new URL(image, canonicalURL), \"content\")}>`)}",
+				code: "${image && ($$render`<meta property=\"og:image\"${$$addAttribute(new URL(image, canonicalURL), \"content\")}>`)}",
 			},
 		},
 		{
@@ -1383,8 +1363,7 @@ let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');
 	author: string;
 }
 let allPosts = Astro.fetchContent<MarkdownFrontmatter>('./post/*.md');`},
-				styles: []string{},
-				code:   "${$$maybeRenderHead($$result)}<div>testing</div>",
+				code: "${$$maybeRenderHead($$result)}<div>testing</div>",
 			},
 		},
 		{
@@ -1397,8 +1376,7 @@ const article2 = await import('../markdown/article2.md')
 `, want: want{
 				frontmatter: []string{"", `const markdownDocs = await Astro.glob('../markdown/*.md')
 const article2 = await import('../markdown/article2.md')`},
-				styles: []string{},
-				code:   "${$$maybeRenderHead($$result)}<div></div>",
+				code: "${$$maybeRenderHead($$result)}<div></div>",
 			},
 		},
 		{
@@ -1475,8 +1453,7 @@ const title = 'icon';
 			name:   "Empty script",
 			source: `<script hoist></script>`,
 			want: want{
-				scripts: []string{`{props:{"hoist":true}}`},
-				code:    `${$$maybeRenderHead($$result)}`,
+				code: `${$$maybeRenderHead($$result)}`,
 			},
 		},
 		{
@@ -1484,7 +1461,6 @@ const title = 'icon';
 			source: `<style define:vars={{ color: "Gainsboro" }}></style>`,
 			want: want{
 				definedVars: []string{`{ color: "Gainsboro" }`},
-				styles:      []string{`{props:{"define:vars":({ color: "Gainsboro" }),"data-astro-id":"7HAAVZPE"}}`},
 				code:        ``,
 			},
 		},
@@ -1603,11 +1579,6 @@ import { Container, Col, Row } from 'react-bootstrap';
 </head>
 <div />`,
 			want: want{
-				styles: []string{
-					"{props:{\"data-astro-id\":\"LASNTLJA\"},children:`div:where(.astro-LASNTLJA){color:blue}`}",
-					"{props:{\"is:scoped\":true,\"data-astro-id\":\"LASNTLJA\"},children:`div:where(.astro-LASNTLJA){color:green}`}",
-					"{props:{\"is:global\":true},children:`div { color: red }`}",
-				},
 				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-LASNTLJA\"></div>",
 			},
 		},
@@ -1636,9 +1607,6 @@ import { Container, Col, Row } from 'react-bootstrap';
 			name:   "spread with style but no explicit class",
 			source: `<style>div { color: red; }</style><div {...Astro.props} />`,
 			want: want{
-				styles: []string{
-					"{props:{\"data-astro-id\":\"TN53UTDL\"},children:`div:where(.astro-TN53UTDL){color:red}`}",
-				},
 				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,"Astro.props",{"class":"astro-XXXX"})}></div>`,
 			},
 		},
@@ -2027,8 +1995,7 @@ const items = ["Dog", "Cat", "Platipus"];
 </style><div class="container">My Text</div>`,
 
 			want: want{
-				styles: []string{fmt.Sprintf(`{props:{"data-astro-id":"SJ3WYE6H"},children:%s.container:where(.astro-SJ3WYE6H){padding:2rem}%s}`, BACKTICK, BACKTICK)},
-				code:   `${$$maybeRenderHead($$result)}<div class="container astro-SJ3WYE6H">My Text</div>`,
+				code: `${$$maybeRenderHead($$result)}<div class="container astro-SJ3WYE6H">My Text</div>`,
 			},
 		},
 		{
@@ -2326,7 +2293,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			want: want{
 				code:     `${$$maybeRenderHead($$result)}`,
 				metadata: metadata{hoisted: []string{"{ type: 'inline', value: `console.log('hello world');` }"}},
-				scripts:  []string{"{props:{},children:`console.log('hello world');`}"},
 			},
 		},
 		{
@@ -2472,20 +2438,6 @@ const items = ["Dog", "Cat", "Platipus"];
 					toMatch += d
 				}
 				toMatch += "]);\n"
-			}
-			if len(tt.want.styles) > 0 {
-				toMatch = toMatch + STYLE_PRELUDE
-				for _, style := range tt.want.styles {
-					toMatch += style + ",\n"
-				}
-				toMatch += STYLE_SUFFIX
-			}
-			if len(tt.want.scripts) > 0 {
-				toMatch = toMatch + SCRIPT_PRELUDE
-				for _, script := range tt.want.scripts {
-					toMatch += script + ",\n"
-				}
-				toMatch += SCRIPT_SUFFIX
 			}
 			// code
 			toMatch += test_utils.Dedent(fmt.Sprintf("%s%s", RETURN, tt.want.code))
