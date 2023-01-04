@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 0.31.4
+
+### Patch Changes
+
+- 960b853: Rename `SerializeOtions` interface to `SerializeOptions`
+- fcab891: Fixes export hoisting edge case
+- 47de01a: Handle module IDs containing quotes
+
 ## 0.31.3
 
 ### Patch Changes
