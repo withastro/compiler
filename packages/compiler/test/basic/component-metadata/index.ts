@@ -31,7 +31,6 @@ let result: TransformResult;
 test.before(async () => {
   result = await transform(FIXTURE, {
     pathname: '/@fs/users/astro/apps/pacman/src/pages/index.astro',
-    experimentalStaticExtraction: true,
   });
 });
 

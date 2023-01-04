@@ -105,6 +105,8 @@ function serializeAttributes(node: TagLikeNode): string {
 export interface SerializeOptions {
   selfClose: boolean;
 }
+/** @deprecated Please use `SerializeOptions`  */
+export type SerializeOtions = SerializeOptions;
 
 export function serialize(root: Node, opts: SerializeOptions = { selfClose: true }): string {
   let output = '';

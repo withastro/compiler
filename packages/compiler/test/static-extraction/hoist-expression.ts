@@ -11,7 +11,7 @@ const url = 'foo';
 
 let result;
 test.before(async () => {
-  result = await transform(FIXTURE, { experimentalStaticExtraction: true });
+  result = await transform(FIXTURE);
 });
 
 test('logs warning with hoisted expression', () => {

@@ -75,12 +75,11 @@ type metadata struct {
 }
 
 type testcase struct {
-	name             string
-	source           string
-	only             bool
-	staticExtraction bool
-	moduleId         string
-	want             want
+	name     string
+	source   string
+	only     bool
+	moduleId string
+	want     want
 }
 
 type jsonTestcase struct {
@@ -1178,17 +1177,15 @@ import Widget2 from '../components/Widget2.astro';`},
 			},
 		},
 		{
-			name:             "script define:vars I",
-			staticExtraction: true,
-			source:           `<script define:vars={{ value: 0 }}>console.log(value);</script>`,
+			name:   "script define:vars I",
+			source: `<script define:vars={{ value: 0 }}>console.log(value);</script>`,
 			want: want{
 				code: `<script>(function(){${$$defineScriptVars({ value: 0 })}console.log(value);})();</script>`,
 			},
 		},
 		{
-			name:             "script define:vars II",
-			staticExtraction: true,
-			source:           `<script define:vars={{ "dash-case": true }}>console.log(dashCase);</script>`,
+			name:   "script define:vars II",
+			source: `<script define:vars={{ "dash-case": true }}>console.log(dashCase);</script>`,
 			want: want{
 				code: `<script>(function(){${$$defineScriptVars({ "dash-case": true })}console.log(dashCase);})();</script>`,
 			},
@@ -2258,18 +2255,16 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:             "define:vars on style with StaticExtraction turned on",
-			source:           "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
-			staticExtraction: true,
+			name:   "define:vars on style",
+			source: "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			want: want{
 				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
 		{
-			name:             "multiple define:vars on style",
-			source:           "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>",
-			staticExtraction: true,
+			name:   "multiple define:vars on style",
+			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>",
 			want: want{
 				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
 				definedVars: []string{"{color:'red'}", "{color:'green'}"},
@@ -2281,8 +2276,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			// 2. A hoisted script - wrong, shown up in scripts.add
 			// 3. A define:vars hoisted script
 			// 4. A define:vars inline script
-			source:           `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script define:vars={{foo:'bar'}}>var three = foo;</script><script is:inline define:vars={{foo:'bar'}}>var four = foo;</script>`,
-			staticExtraction: true,
+			source: `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script define:vars={{foo:'bar'}}>var three = foo;</script><script is:inline define:vars={{foo:'bar'}}>var four = foo;</script>`,
 			want: want{
 				code: `<script>var one = 'one';</script>${$$maybeRenderHead($$result)}<script>(function(){${$$defineScriptVars({foo:'bar'})}var three = foo;})();</script><script>(function(){${$$defineScriptVars({foo:'bar'})}var four = foo;})();</script>`,
 				metadata: metadata{
@@ -2293,8 +2287,7 @@ const items = ["Dog", "Cat", "Platipus"];
 		{
 			name: "define:vars on a module script with imports",
 			// Should not wrap with { } scope.
-			source:           `<script type="module" define:vars={{foo:'bar'}}>import 'foo';\nvar three = foo;</script>`,
-			staticExtraction: true,
+			source: `<script type="module" define:vars={{foo:'bar'}}>import 'foo';\nvar three = foo;</script>`,
 			want: want{
 				code: `<script type="module">${$$defineScriptVars({foo:'bar'})}import 'foo';\\nvar three = foo;</script>`,
 			},
@@ -2378,12 +2371,11 @@ const items = ["Dog", "Cat", "Platipus"];
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
-				Scope:            "XXXX",
-				Site:             "https://astro.build",
-				InternalURL:      "http://localhost:3000/",
-				ModuleId:         tt.moduleId,
-				ProjectRoot:      ".",
-				StaticExtraction: tt.staticExtraction,
+				Scope:       "XXXX",
+				Site:        "https://astro.build",
+				InternalURL: "http://localhost:3000/",
+				ModuleId:    tt.moduleId,
+				ProjectRoot: ".",
 			}, h)
 			output := string(result.Output)
 

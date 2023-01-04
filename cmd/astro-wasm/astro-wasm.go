@@ -104,11 +104,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		compact = true
 	}
 
-	staticExtraction := false
-	if jsBool(options.Get("experimentalStaticExtraction")) {
-		staticExtraction = true
-	}
-
 	var resolvePath any = options.Get("resolvePath")
 	var resolvePathFn func(string) string
 	if resolvePath.(js.Value).Type() == js.TypeFunction {
@@ -125,17 +120,16 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		Filename:         filename,
-		Pathname:         pathname,
-		ModuleId:         moduleId,
-		InternalURL:      internalURL,
-		SourceMap:        sourcemap,
-		Site:             site,
-		ProjectRoot:      projectRoot,
-		Compact:          compact,
-		ResolvePath:      resolvePathFn,
-		PreprocessStyle:  preprocessStyle,
-		StaticExtraction: staticExtraction,
+		Filename:        filename,
+		Pathname:        pathname,
+		ModuleId:        moduleId,
+		InternalURL:     internalURL,
+		SourceMap:       sourcemap,
+		Site:            site,
+		ProjectRoot:     projectRoot,
+		Compact:         compact,
+		ResolvePath:     resolvePathFn,
+		PreprocessStyle: preprocessStyle,
 	}
 }
 
@@ -318,88 +312,86 @@ func Transform() any {
 				scripts := []HoistedScript{}
 				hydratedComponents := []HydratedComponent{}
 				clientOnlyComponents := []HydratedComponent{}
-				// Only perform static CSS extraction if the flag is passed in.
-				if transformOptions.StaticExtraction {
-					css_result := printer.PrintCSS(source, doc, transformOptions)
-					for _, bytes := range css_result.Output {
-						css = append(css, string(bytes))
-					}
-
-					// Append hoisted scripts
-					for _, node := range doc.Scripts {
-						src := astro.GetAttribute(node, "src")
-						script := HoistedScript{
-							Src:  "",
-							Code: "",
-							Type: "",
-							Map:  "",
-						}
-
-						if src != nil {
-							script.Type = "external"
-							script.Src = src.Val
-						} else if node.FirstChild != nil {
-							script.Type = "inline"
-
-							if transformOptions.SourceMap != "" {
-								isLine := func(r rune) bool { return r == '\r' || r == '\n' }
-								isNotLine := func(r rune) bool { return !(r == '\r' || r == '\n') }
-								output := make([]byte, 0)
-								builder := sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(source, len(strings.Split(source, "\n"))))
-								sourcesContent, _ := json.Marshal(source)
-								if len(node.FirstChild.Loc) > 0 {
-									i := node.FirstChild.Loc[0].Start
-									nonWS := strings.IndexFunc(node.FirstChild.Data, isNotLine)
-									i += nonWS
-									for _, ln := range strings.Split(strings.TrimFunc(node.FirstChild.Data, isLine), "\n") {
-										content := []byte(ln)
-										content = append(content, '\n')
-										for j, b := range content {
-											if j == 0 || !unicode.IsSpace(rune(b)) {
-												builder.AddSourceMapping(loc.Loc{Start: i}, output)
-											}
-											output = append(output, b)
-											i += 1
-										}
-									}
-									output = append(output, '\n')
-								} else {
-									output = append(output, []byte(strings.TrimSpace(node.FirstChild.Data))...)
-								}
-								sourcemap := fmt.Sprintf(
-									`{ "version": 3, "sources": ["%s"], "sourcesContent": [%s], "mappings": "%s", "names": [] }`,
-									transformOptions.Filename,
-									string(sourcesContent),
-									string(builder.GenerateChunk(output).Buffer),
-								)
-								script.Map = sourcemap
-								script.Code = string(output)
-							} else {
-								script.Code = node.FirstChild.Data
-							}
-						}
-
-						// sourcemapString := createSourceMapString(source, result, transformOptions)
-						// inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
-						scripts = append(scripts, script)
-					}
-
-					for _, c := range doc.HydratedComponents {
-						hydratedComponents = append(hydratedComponents, HydratedComponent{
-							ExportName:   c.ExportName,
-							Specifier:    c.Specifier,
-							ResolvedPath: c.ResolvedPath,
-						})
-					}
-
-					for _, c := range doc.ClientOnlyComponents {
-						clientOnlyComponents = append(clientOnlyComponents, HydratedComponent{
-							ExportName:   c.ExportName,
-							Specifier:    c.Specifier,
-							ResolvedPath: c.ResolvedPath,
-						})
-					}
+				css_result := printer.PrintCSS(source, doc, transformOptions)
+				for _, bytes := range css_result.Output {
+					css = append(css, string(bytes))
 				}
+
+				// Append hoisted scripts
+				for _, node := range doc.Scripts {
+					src := astro.GetAttribute(node, "src")
+					script := HoistedScript{
+						Src:  "",
+						Code: "",
+						Type: "",
+						Map:  "",
+					}
+
+					if src != nil {
+						script.Type = "external"
+						script.Src = src.Val
+					} else if node.FirstChild != nil {
+						script.Type = "inline"
+
+						if transformOptions.SourceMap != "" {
+							isLine := func(r rune) bool { return r == '\r' || r == '\n' }
+							isNotLine := func(r rune) bool { return !(r == '\r' || r == '\n') }
+							output := make([]byte, 0)
+							builder := sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(source, len(strings.Split(source, "\n"))))
+							sourcesContent, _ := json.Marshal(source)
+							if len(node.FirstChild.Loc) > 0 {
+								i := node.FirstChild.Loc[0].Start
+								nonWS := strings.IndexFunc(node.FirstChild.Data, isNotLine)
+								i += nonWS
+								for _, ln := range strings.Split(strings.TrimFunc(node.FirstChild.Data, isLine), "\n") {
+									content := []byte(ln)
+									content = append(content, '\n')
+									for j, b := range content {
+										if j == 0 || !unicode.IsSpace(rune(b)) {
+											builder.AddSourceMapping(loc.Loc{Start: i}, output)
+										}
+										output = append(output, b)
+										i += 1
+									}
+								}
+								output = append(output, '\n')
+							} else {
+								output = append(output, []byte(strings.TrimSpace(node.FirstChild.Data))...)
+							}
+							sourcemap := fmt.Sprintf(
+								`{ "version": 3, "sources": ["%s"], "sourcesContent": [%s], "mappings": "%s", "names": [] }`,
+								transformOptions.Filename,
+								string(sourcesContent),
+								string(builder.GenerateChunk(output).Buffer),
+							)
+							script.Map = sourcemap
+							script.Code = string(output)
+						} else {
+							script.Code = node.FirstChild.Data
+						}
+					}
+
+					// sourcemapString := createSourceMapString(source, result, transformOptions)
+					// inlineSourcemap := `//# sourceMappingURL=data:application/json;charset=utf-8;base64,` + base64.StdEncoding.EncodeToString([]byte(sourcemapString))
+					scripts = append(scripts, script)
+				}
+
+				for _, c := range doc.HydratedComponents {
+					hydratedComponents = append(hydratedComponents, HydratedComponent{
+						ExportName:   c.ExportName,
+						Specifier:    c.Specifier,
+						ResolvedPath: c.ResolvedPath,
+					})
+				}
+
+				for _, c := range doc.ClientOnlyComponents {
+					clientOnlyComponents = append(clientOnlyComponents, HydratedComponent{
+						ExportName:   c.ExportName,
+						Specifier:    c.Specifier,
+						ResolvedPath: c.ResolvedPath,
+					})
+				}
+
 				var value vert.Value
 				result := printer.PrintToJS(source, doc, len(css), transformOptions, h)
 				switch transformOptions.SourceMap {

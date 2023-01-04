@@ -17,7 +17,6 @@ const FIXTURE = `
 
 test('it works', async () => {
   let result = await transform(FIXTURE, {
-    experimentalStaticExtraction: true,
     pathname: '/@fs/users/astro/apps/pacman/src/pages/index.astro',
     async preprocessStyle() {
       return {

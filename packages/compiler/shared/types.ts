@@ -57,7 +57,6 @@ export interface TransformOptions {
   projectRoot?: string;
   resolvePath?: (specifier: string) => Promise<string>;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
-  experimentalStaticExtraction?: boolean;
 }
 
 export type HoistedScript = { type: string } & (

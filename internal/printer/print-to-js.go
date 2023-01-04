@@ -102,7 +102,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL, &opts)
-		if opts.opts.StaticExtraction && n.FirstChild != nil && n.FirstChild.Type != FrontmatterNode {
+		if n.FirstChild != nil && n.FirstChild.Type != FrontmatterNode {
 			p.printCSSImports(opts.cssLen)
 		}
 
@@ -147,10 +147,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 				}
 
-				if opts.opts.StaticExtraction {
-					p.addNilSourceMapping()
-					p.printCSSImports(opts.cssLen)
-				}
+				p.addNilSourceMapping()
+				p.printCSSImports(opts.cssLen)
 
 				// 1. Component imports, if any exist.
 				p.addNilSourceMapping()
@@ -222,25 +220,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					if len(definedVars) > 0 {
 						p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
 					}
-					if !opts.opts.StaticExtraction {
-						p.println("const STYLES = [")
-						for _, style := range n.Parent.Styles {
-							p.printStyleOrScript(opts, style)
-						}
-						p.println("];")
-						p.addNilSourceMapping()
-						p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
-					}
-				}
-
-				if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
-					p.println("const SCRIPTS = [")
-					for _, script := range n.Parent.Scripts {
-						p.printStyleOrScript(opts, script)
-					}
-					p.println("];")
-					p.addNilSourceMapping()
-					p.println(fmt.Sprintf("for (const SCRIPT of SCRIPTS) %s.scripts.add(SCRIPT);", RESULT))
 				}
 
 				p.printReturnOpen()
@@ -274,24 +253,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			if len(definedVars) > 0 {
 				p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
 			}
-			if !opts.opts.StaticExtraction {
-				p.println("const STYLES = [")
-				for _, style := range n.Parent.Styles {
-					p.printStyleOrScript(opts, style)
-				}
-				p.println("];")
-				p.addNilSourceMapping()
-				p.println(fmt.Sprintf("for (const STYLE of STYLES) %s.styles.add(STYLE);", RESULT))
-			}
-		}
-		if !opts.opts.StaticExtraction && len(n.Parent.Scripts) > 0 {
-			p.println("const SCRIPTS = [")
-			for _, script := range n.Parent.Scripts {
-				p.printStyleOrScript(opts, script)
-			}
-			p.println("];")
-			p.addNilSourceMapping()
-			p.println(fmt.Sprintf("for (const SCRIPT of SCRIPTS) %s.scripts.add(SCRIPT);", RESULT))
 		}
 
 		p.printReturnOpen()
