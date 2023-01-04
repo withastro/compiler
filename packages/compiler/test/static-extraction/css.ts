@@ -14,9 +14,7 @@ const FIXTURE = `
 
 let result;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    experimentalStaticExtraction: true,
-  });
+  result = await transform(FIXTURE);
 });
 
 test('extracts styles', () => {

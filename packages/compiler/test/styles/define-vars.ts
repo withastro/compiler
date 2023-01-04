@@ -24,7 +24,6 @@ test.before(async () => {
   result = await transform(FIXTURE, {
     sourcemap: true,
     preprocessStyle,
-    experimentalStaticExtraction: true,
   });
 });
 

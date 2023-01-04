@@ -14,18 +14,17 @@ import (
 )
 
 type TransformOptions struct {
-	Scope            string
-	Filename         string
-	Pathname         string
-	ModuleId         string
-	InternalURL      string
-	SourceMap        string
-	Site             string
-	ProjectRoot      string
-	Compact          bool
-	ResolvePath      func(string) string
-	PreprocessStyle  interface{}
-	StaticExtraction bool
+	Scope           string
+	Filename        string
+	Pathname        string
+	ModuleId        string
+	InternalURL     string
+	SourceMap       string
+	Site            string
+	ProjectRoot     string
+	Compact         bool
+	ResolvePath     func(string) string
+	PreprocessStyle interface{}
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -301,15 +300,13 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 				}
 				if attr.Key == "src" {
 					if attr.Type == astro.ExpressionAttribute {
-						if opts.StaticExtraction {
-							shouldAdd = false
-							h.AppendWarning(&loc.ErrorWithRange{
-								Code:  loc.WARNING_UNSUPPORTED_EXPRESSION,
-								Text:  "<script> uses an expression for the src attribute and will be ignored.",
-								Hint:  fmt.Sprintf("Replace src={%s} with a string literal", attr.Val),
-								Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
-							})
-						}
+						shouldAdd = false
+						h.AppendWarning(&loc.ErrorWithRange{
+							Code:  loc.WARNING_UNSUPPORTED_EXPRESSION,
+							Text:  "<script> uses an expression for the src attribute and will be ignored.",
+							Hint:  fmt.Sprintf("Replace src={%s} with a string literal", attr.Val),
+							Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+						})
 						break
 					}
 				}

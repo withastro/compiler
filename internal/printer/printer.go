@@ -313,29 +313,6 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 	p.print("}")
 }
 
-func (p *printer) printStyleOrScript(opts RenderOptions, n *astro.Node) {
-	// If this is using the StaticExtraction option, only define:vars
-	// styles should be included in the STYLES array
-	transformOpts := opts.opts
-	if transformOpts.StaticExtraction {
-		return
-	}
-
-	p.addNilSourceMapping()
-	p.print("{props:")
-	p.printAttributesToObject(n)
-
-	if n.FirstChild != nil && strings.TrimSpace(n.FirstChild.Data) != "" {
-		p.print(",children:`")
-		p.addSourceMapping(n.Loc[0])
-		p.print(escapeText(strings.TrimSpace(n.FirstChild.Data)))
-		p.addNilSourceMapping()
-		p.print("`")
-	}
-
-	p.print("},\n")
-}
-
 func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
 		return
