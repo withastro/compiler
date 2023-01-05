@@ -246,6 +246,18 @@ func FuzzHoistImport(f *testing.F) {
 		if utf8.ValidString(source) && !utf8.ValidString(string(got)) {
 			t.Errorf("Import hoisting produced an invalid string: %q", got)
 		}
+		result2 := HoistImports([]byte(got))
+		got2 := []byte{}
+		for _, imp := range result2.Hoisted {
+			got2 = append(got2, bytes.TrimSpace(imp)...)
+			got2 = append(got2, '\n')
+		}
+		if utf8.ValidString(string(got)) && !utf8.ValidString(string(got2)) {
+			t.Errorf("Import hoisting produced an invalid string: %q", got2)
+		}
+		if string(got) != string(got2) {
+			t.Errorf("Hoisting imports twice should return the same result.\nsource:\n%s\nfirst pass:\n%s\nsecond pass:\n%s\n", source, got, got2)
+		}
 	})
 }
 
@@ -584,7 +596,7 @@ func FuzzHoistExport(f *testing.F) {
 			got = append(got, '\n')
 		}
 		if utf8.ValidString(source) && !utf8.ValidString(string(got)) {
-			t.Errorf("Import hoisting produced an invalid string: %q", got)
+			t.Errorf("Export hoisting produced an invalid string: %q", got)
 		}
 		result2 := HoistExports([]byte(got))
 		got2 := []byte{}
@@ -593,7 +605,7 @@ func FuzzHoistExport(f *testing.F) {
 			got2 = append(got2, '\n')
 		}
 		if utf8.ValidString(string(got)) && !utf8.ValidString(string(got2)) {
-			t.Errorf("Import hoisting produced an invalid string: %q", got2)
+			t.Errorf("Export hoisting produced an invalid string: %q", got2)
 		}
 		if string(got) != string(got2) {
 			t.Errorf("Hoisting exports twice should return the same result.\nsource:\n%s\nfirst pass:\n%s\nsecond pass:\n%s\n", source, got, got2)
