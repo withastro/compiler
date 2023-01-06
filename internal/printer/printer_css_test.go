@@ -53,9 +53,7 @@ func TestPrinterCSS(t *testing.T) {
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}, handler.NewHandler(code, "/test.astro")) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintCSS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",
-				Site:        "https://astro.build",
 				InternalURL: "http://localhost:3000/",
-				ProjectRoot: ".",
 			})
 			output := ""
 			for _, bytes := range result.Output {

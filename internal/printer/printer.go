@@ -418,7 +418,7 @@ func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
 		patharg = fmt.Sprintf("\"%s\"", patharg)
 	}
 
-	p.println(fmt.Sprintf("const $$Astro = %s(%s, '%s', '%s');\nconst Astro = $$Astro;", CREATE_ASTRO, patharg, p.opts.Site, p.opts.ProjectRoot))
+	p.println(fmt.Sprintf("const $$Astro = %s(%s);\nconst Astro = $$Astro;", CREATE_ASTRO, opts.InjectGlobals))
 }
 
 func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {

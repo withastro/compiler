@@ -89,15 +89,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		sourcemap = "both"
 	}
 
-	site := jsString(options.Get("site"))
-	if site == "" {
-		site = ""
-	}
-
-	projectRoot := jsString(options.Get("projectRoot"))
-	if projectRoot == "" {
-		projectRoot = "."
-	}
+	injectGlobals := jsString(options.Get("injectGlobals"))
 
 	compact := false
 	if jsBool(options.Get("compact")) {
@@ -125,8 +117,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		ModuleId:        moduleId,
 		InternalURL:     internalURL,
 		SourceMap:       sourcemap,
-		Site:            site,
-		ProjectRoot:     projectRoot,
+		InjectGlobals:   injectGlobals,
 		Compact:         compact,
 		ResolvePath:     resolvePathFn,
 		PreprocessStyle: preprocessStyle,
