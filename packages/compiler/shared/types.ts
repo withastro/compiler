@@ -48,7 +48,7 @@ export interface TransformOptions {
   pathname?: string;
   moduleId?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
-  injectGlobals?: string
+  injectGlobals?: string;
   compact?: boolean;
   /**
    * @deprecated "as" has been removed and no longer has any effect!

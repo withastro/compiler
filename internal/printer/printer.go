@@ -411,13 +411,6 @@ func (p *printer) addNilSourceMapping() {
 }
 
 func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
-	patharg := opts.Pathname
-	if patharg == "" {
-		patharg = "import.meta.url"
-	} else {
-		patharg = fmt.Sprintf("\"%s\"", patharg)
-	}
-
 	p.println(fmt.Sprintf("const $$Astro = %s(%s);\nconst Astro = $$Astro;", CREATE_ASTRO, opts.InjectGlobals))
 }
 
