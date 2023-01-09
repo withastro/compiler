@@ -411,7 +411,7 @@ func (p *printer) addNilSourceMapping() {
 }
 
 func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
-	p.println(fmt.Sprintf("const $$Astro = %s(%s);\nconst Astro = $$Astro;", CREATE_ASTRO, opts.InjectGlobals))
+	p.println(fmt.Sprintf("const $$Astro = %s(%s);\nconst Astro = $$Astro;", CREATE_ASTRO, opts.AstroGlobalArgs))
 }
 
 func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {

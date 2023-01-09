@@ -19,7 +19,7 @@ type TransformOptions struct {
 	ModuleId        string
 	InternalURL     string
 	SourceMap       string
-	InjectGlobals   string
+	AstroGlobalArgs string
 	Compact         bool
 	ResolvePath     func(string) string
 	PreprocessStyle interface{}

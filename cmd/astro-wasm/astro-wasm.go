@@ -84,7 +84,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		sourcemap = "both"
 	}
 
-	injectGlobals := jsString(options.Get("injectGlobals"))
+	astroGlobalArgs := jsString(options.Get("astroGlobalArgs"))
 
 	compact := false
 	if jsBool(options.Get("compact")) {
@@ -111,7 +111,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		ModuleId:        moduleId,
 		InternalURL:     internalURL,
 		SourceMap:       sourcemap,
-		InjectGlobals:   injectGlobals,
+		AstroGlobalArgs:   astroGlobalArgs,
 		Compact:         compact,
 		ResolvePath:     resolvePathFn,
 		PreprocessStyle: preprocessStyle,
