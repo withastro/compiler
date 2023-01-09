@@ -14,7 +14,7 @@ const FIXTURE = `<html>
 let result;
 test.before(async () => {
   result = await convertToTSX(FIXTURE, {
-    pathname: '/src/components/fragment.astro',
+    sourcefile: '/src/components/fragment.astro',
   });
 });
 

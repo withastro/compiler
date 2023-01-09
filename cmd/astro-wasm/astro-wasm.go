@@ -69,11 +69,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		filename = "<stdin>"
 	}
 
-	pathname := jsString(options.Get("pathname"))
-	if pathname == "" {
-		pathname = "<stdin>"
-	}
-
 	moduleId := jsString(options.Get("moduleId"))
 	if moduleId == "" {
 		moduleId = "<stdin>"
@@ -121,7 +116,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 
 	return transform.TransformOptions{
 		Filename:        filename,
-		Pathname:        pathname,
 		ModuleId:        moduleId,
 		InternalURL:     internalURL,
 		SourceMap:       sourcemap,

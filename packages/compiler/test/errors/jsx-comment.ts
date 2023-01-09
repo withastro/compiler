@@ -16,7 +16,7 @@ const FIXTURE = `<html>
 let result;
 test.before(async () => {
   result = await transform(FIXTURE, {
-    pathname: '/src/components/EOF.astro',
+    sourcefile: '/src/components/EOF.astro',
   });
 });
 

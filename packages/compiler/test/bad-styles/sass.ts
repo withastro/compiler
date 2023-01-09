@@ -17,7 +17,7 @@ const FIXTURE = `
 
 test('it works', async () => {
   let result = await transform(FIXTURE, {
-    pathname: '/@fs/users/astro/apps/pacman/src/pages/index.astro',
+    sourcefile: '/users/astro/apps/pacman/src/pages/index.astro',
     async preprocessStyle() {
       return {
         error: new Error('Unable to convert').message,
