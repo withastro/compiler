@@ -44,16 +44,15 @@ export interface DiagnosticLocation {
 
 export interface TransformOptions {
   internalURL?: string;
-  site?: string;
   sourcefile?: string;
   moduleId?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
+  astroGlobalArgs?: string;
   compact?: boolean;
   /**
    * @deprecated "as" has been removed and no longer has any effect!
    */
   as?: 'document' | 'fragment';
-  projectRoot?: string;
   resolvePath?: (specifier: string) => Promise<string>;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
 }

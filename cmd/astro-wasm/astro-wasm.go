@@ -84,15 +84,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		sourcemap = "both"
 	}
 
-	site := jsString(options.Get("site"))
-	if site == "" {
-		site = ""
-	}
-
-	projectRoot := jsString(options.Get("projectRoot"))
-	if projectRoot == "" {
-		projectRoot = "."
-	}
+	astroGlobalArgs := jsString(options.Get("astroGlobalArgs"))
 
 	compact := false
 	if jsBool(options.Get("compact")) {
@@ -119,8 +111,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		ModuleId:        moduleId,
 		InternalURL:     internalURL,
 		SourceMap:       sourcemap,
-		Site:            site,
-		ProjectRoot:     projectRoot,
+		AstroGlobalArgs:   astroGlobalArgs,
 		Compact:         compact,
 		ResolvePath:     resolvePathFn,
 		PreprocessStyle: preprocessStyle,

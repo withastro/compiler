@@ -39,7 +39,7 @@ var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 });
 export default $$Component;`
-var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro(import.meta.url, 'https://astro.build', '.');\nconst Astro = $$Astro;"
+var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
 // SPECIAL TEST FIXTURES
@@ -2337,11 +2337,10 @@ const items = ["Dog", "Cat", "Platipus"];
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
-				Scope:       "XXXX",
-				Site:        "https://astro.build",
-				InternalURL: "http://localhost:3000/",
-				ModuleId:    tt.moduleId,
-				ProjectRoot: ".",
+				Scope:           "XXXX",
+				InternalURL:     "http://localhost:3000/",
+				ModuleId:        tt.moduleId,
+				AstroGlobalArgs: "'https://astro.build'",
 			}, h)
 			output := string(result.Output)
 
