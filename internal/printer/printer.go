@@ -234,7 +234,7 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 	if p.hasFuncPrelude {
 		return
 	}
-	componentName := getComponentName(opts.Pathname)
+	componentName := getComponentName(opts.Filename)
 	p.addNilSourceMapping()
 	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
 	p.addNilSourceMapping()
@@ -245,7 +245,7 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 }
 
 func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
-	componentName := getComponentName(opts.Pathname)
+	componentName := getComponentName(opts.Filename)
 	p.addNilSourceMapping()
 	if len(opts.ModuleId) > 0 {
 		escapedModuleId := strings.ReplaceAll(opts.ModuleId, "'", "\\'")
@@ -411,7 +411,7 @@ func (p *printer) addNilSourceMapping() {
 }
 
 func (p *printer) printTopLevelAstro(opts transform.TransformOptions) {
-	patharg := opts.Pathname
+	patharg := opts.Filename
 	if patharg == "" {
 		patharg = "import.meta.url"
 	} else {
@@ -547,7 +547,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	}
 
 	// Call createMetadata
-	patharg := opts.Pathname
+	patharg := opts.Filename
 	if patharg == "" {
 		patharg = "import.meta.url"
 	} else {

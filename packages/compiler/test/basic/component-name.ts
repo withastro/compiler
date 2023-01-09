@@ -7,7 +7,7 @@ const FIXTURE = `<div>Hello world!</div>`;
 let result;
 test.before(async () => {
   result = await transform(FIXTURE, {
-    pathname: '/src/components/Cool.astro',
+    sourcefile: '/src/components/Cool.astro',
   });
 });
 

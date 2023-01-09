@@ -44,11 +44,11 @@ func getTSXComponentName(filename string) string {
 	}
 }
 
-func getComponentName(pathname string) string {
-	if len(pathname) == 0 {
+func getComponentName(filename string) string {
+	if len(filename) == 0 {
 		return "$$Component"
 	}
-	parts := strings.Split(pathname, "/")
+	parts := strings.Split(filename, "/")
 	part := parts[len(parts)-1]
 	if len(part) == 0 {
 		return "$$Component"

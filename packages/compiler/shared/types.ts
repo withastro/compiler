@@ -46,7 +46,6 @@ export interface TransformOptions {
   internalURL?: string;
   site?: string;
   sourcefile?: string;
-  pathname?: string;
   moduleId?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   compact?: boolean;
