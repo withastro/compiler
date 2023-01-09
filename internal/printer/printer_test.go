@@ -1099,7 +1099,7 @@ const someProps = {
   ` + RENDER_HEAD_RESULT + `</head>
   <body class="astro-HMNNHVCQ">
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter"),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter.jsx"),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
     </main>
   </body></html>
   `,
@@ -1725,7 +1725,7 @@ const { product } = Astro.props;
   ${$$renderComponent($$result,'Header',Header,{})}
   <div class="product-page">
     <article>
-      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-hydration":"visible","client:component-path":("../../components/ProductPageContent"),"client:component-export":("default")})}
+      ${$$renderComponent($$result,'ProductPageContent',ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-hydration":"visible","client:component-path":("../../components/ProductPageContent.jsx"),"client:component-export":("default")})}
     </article>
   </div>
   ${$$renderComponent($$result,'Footer',Footer,{})}

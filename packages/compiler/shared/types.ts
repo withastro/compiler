@@ -45,7 +45,6 @@ export interface DiagnosticLocation {
 export interface TransformOptions {
   internalURL?: string;
   sourcefile?: string;
-  pathname?: string;
   moduleId?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   injectGlobals?: string;

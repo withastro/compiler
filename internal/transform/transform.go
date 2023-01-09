@@ -2,7 +2,7 @@ package transform
 
 import (
 	"fmt"
-	"net/url"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -16,7 +16,6 @@ import (
 type TransformOptions struct {
 	Scope           string
 	Filename        string
-	Pathname        string
 	ModuleId        string
 	InternalURL     string
 	SourceMap       string
@@ -426,43 +425,15 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 	return match
 }
 
-func safeURL(pathname string) string {
-	// url.PathEscape also escapes `/` to `%2F`, but we don't want that!
-	escaped := strings.ReplaceAll(url.PathEscape(pathname), "%2F", "/")
-	return escaped
-}
-
-func trimExtension(pathname string) string {
-	// Runtime will be unable to resolve `.jsx` so we need to trim it off
-	if strings.HasSuffix(pathname, ".jsx") {
-		return pathname[0 : len(pathname)-4]
-	}
-	return pathname
-}
-
 func ResolveIdForMatch(id string, opts *TransformOptions) string {
 	// Try custom resolvePath if provided
 	if opts.ResolvePath != nil {
 		return opts.ResolvePath(id)
+	} else if opts.Filename != "<stdin>" && id[0] == '.' {
+		return filepath.Join(filepath.Dir(opts.Filename), id)
+	} else {
+		return id
 	}
-	// Else use default resolvePath
-	// NOTE: We want to remove this opinionated resolve in the future and simply
-	// return the `id` as is. The consumer would need to pass `resolvePath` option
-	// to customize it. The main Astro repo would have a custom `resolvePath` option
-	// by then so this won't be breaking it.
-	if strings.HasPrefix(id, ".") && len(opts.Pathname) > 0 {
-		pathname := safeURL(opts.Pathname)
-		u, err := url.Parse(pathname)
-		if err == nil {
-			spec := safeURL(id)
-			ref, _ := url.Parse(spec)
-			ou := u.ResolveReference(ref)
-			unescaped, _ := url.PathUnescape(ou.String())
-			return trimExtension(unescaped)
-		}
-	}
-	// If we can't manipulate the URLs, fallback to the exact specifier
-	return trimExtension(id)
 }
 
 func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatement) bool) {
