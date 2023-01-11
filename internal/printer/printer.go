@@ -544,7 +544,8 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	if patharg == "" {
 		patharg = "import.meta.url"
 	} else {
-		patharg = fmt.Sprintf("\"%s\"", patharg)
+		escapedPatharg := strings.ReplaceAll(patharg, "'", "\\'")
+		patharg = fmt.Sprintf("\"%s\"", escapedPatharg)
 	}
 	p.print(fmt.Sprintf("\nexport const $$metadata = %s(%s, { ", CREATE_METADATA, patharg))
 

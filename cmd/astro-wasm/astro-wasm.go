@@ -52,7 +52,7 @@ func makeParseOptions(options js.Value) t.ParseOptions {
 		position = pos.Bool()
 	}
 
-	filename := jsString(options.Get("sourcefile"))
+	filename := jsString(options.Get("filename"))
 	if filename == "" {
 		filename = "<stdin>"
 	}
@@ -64,7 +64,7 @@ func makeParseOptions(options js.Value) t.ParseOptions {
 }
 
 func makeTransformOptions(options js.Value) transform.TransformOptions {
-	filename := jsString(options.Get("sourcefile"))
+	filename := jsString(options.Get("filename"))
 	if filename == "" {
 		filename = "<stdin>"
 	}
@@ -109,7 +109,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	return transform.TransformOptions{
 		Filename:           filename,
 		NormalizedFilename: normalizedFilename,
-		Scope:              astro.HashString(normalizedFilename),
 		InternalURL:        internalURL,
 		SourceMap:          sourcemap,
 		AstroGlobalArgs:    astroGlobalArgs,
@@ -253,6 +252,11 @@ func Transform() any {
 		source := jsString(args[0])
 
 		transformOptions := makeTransformOptions(js.Value(args[1]))
+		scopeStr := transformOptions.NormalizedFilename
+		if scopeStr == "<stdin>" {
+			scopeStr = source
+		}
+		transformOptions.Scope = astro.HashString(scopeStr)
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		styleError := []string{}

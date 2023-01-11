@@ -2333,7 +2333,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				t.Error(err)
 			}
 
-			hash := astro.HashFromSource(code)
+			hash := astro.HashString(code)
 			transform.ExtractStyles(doc)
 			transform.Transform(doc, transform.TransformOptions{Scope: hash}, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
@@ -2418,7 +2418,12 @@ const items = ["Dog", "Cat", "Platipus"];
 			}
 			metadata += "] }"
 
-			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(import.meta.url, %s);\n\n", METADATA, CREATE_METADATA, metadata)
+			patharg := "import.meta.url"
+			if tt.filename != "" {
+				escapedFilename := strings.ReplaceAll(tt.filename, "'", "\\'")
+				patharg = fmt.Sprintf("\"%s\"", escapedFilename)
+			}
+			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(%s, %s);\n\n", METADATA, CREATE_METADATA, patharg, metadata)
 			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n"
 			if len(tt.want.getStaticPaths) > 0 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
@@ -2448,6 +2453,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			if len(tt.filename) > 0 {
 				escapedFilename := strings.ReplaceAll(tt.filename, "'", "\\'")
 				toMatch += suffixWithFilename(escapedFilename)
+				toMatch = strings.Replace(toMatch, "$$Component", getComponentName((tt.filename)), -1)
 			} else {
 				toMatch += SUFFIX
 			}
