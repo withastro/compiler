@@ -30,7 +30,7 @@ test('allows expressions in table', async () => {
 
   let error = 0;
   try {
-    const { code } = await transform(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
     parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
     assert.match(code, '<tr>${num}</tr>');
   } catch (e) {
@@ -81,7 +81,7 @@ test('allows many expressions in table', async () => {
 
   let error = 0;
   try {
-    const { code } = await transform(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
     parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
     assert.match(code, '<tr>${num}</tr>');
   } catch (e) {

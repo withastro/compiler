@@ -47,7 +47,7 @@ export async function testTSXSourcemap(input: string, snippet: string) {
   const snippetLoc = getPositionFor(input, snippet);
   if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
 
-  const { code, map } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
+  const { code, map } = await convertToTSX(input, { sourcemap: 'both', filename: 'index.astro' });
   const tracer = new TraceMap(map);
 
   const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });
@@ -65,7 +65,7 @@ export async function testJSSourcemap(input: string, snippet: string) {
   const snippetLoc = getPositionFor(input, snippet);
   if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
 
-  const { code, map } = await transform(input, { sourcemap: 'both', sourcefile: 'index.astro', experimentalStaticExtraction: true, resolvePath: (i: string) => i });
+  const { code, map } = await transform(input, { sourcemap: 'both', filename: 'index.astro', resolvePath: (i: string) => i });
   const tracer = new TraceMap(map);
 
   const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });

@@ -8,7 +8,7 @@ const input = `<div class=\`></div>
 test('does not panic on unfinished template literal attribute', async () => {
   let error = 0;
   try {
-    const output = await convertToTSX(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
     assert.match(output.code, `class={\`\`}`);
   } catch (e) {
     error = 1;

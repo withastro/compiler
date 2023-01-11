@@ -14,7 +14,7 @@ const FIXTURE = `<html>
 let result;
 test.before(async () => {
   result = await transform(FIXTURE, {
-    sourcefile: '/src/components/fragment.astro',
+    filename: '/src/components/fragment.astro',
   });
 });
 

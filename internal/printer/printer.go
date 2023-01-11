@@ -247,9 +247,9 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
 	componentName := getComponentName(opts.Filename)
 	p.addNilSourceMapping()
-	if len(opts.ModuleId) > 0 {
-		escapedModuleId := strings.ReplaceAll(opts.ModuleId, "'", "\\'")
-		p.println(fmt.Sprintf("}, '%s');", escapedModuleId))
+	if len(opts.Filename) > 0 {
+		escapedFilename := strings.ReplaceAll(opts.Filename, "'", "\\'")
+		p.println(fmt.Sprintf("}, '%s');", escapedFilename))
 	} else {
 		p.println("});")
 	}
@@ -544,7 +544,8 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	if patharg == "" {
 		patharg = "import.meta.url"
 	} else {
-		patharg = fmt.Sprintf("\"%s\"", patharg)
+		escapedPatharg := strings.ReplaceAll(patharg, "'", "\\'")
+		patharg = fmt.Sprintf("\"%s\"", escapedPatharg)
 	}
 	p.print(fmt.Sprintf("\nexport const $$metadata = %s(%s, { ", CREATE_METADATA, patharg))
 

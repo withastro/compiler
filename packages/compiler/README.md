@@ -23,7 +23,7 @@ The Astro compiler can convert `.astro` syntax to a TypeScript Module whose defa
 import { transform } from '@astrojs/compiler';
 
 const result = await transform(source, {
-  sourcefile: '/Users/astro/Code/project/src/pages/index.astro',
+  filename: '/Users/astro/Code/project/src/pages/index.astro',
   sourcemap: 'both',
   internalURL: 'astro/runtime/server/index.js',
 });

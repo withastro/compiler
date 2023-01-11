@@ -42,7 +42,7 @@ let value = 'world';
 
 </Fragment>
 export default function Test__AstroComponent_(_props: Record<string, any>): any {}`;
-  const { code } = await convertToTSX(input, { sourcefile: '/Users/nmoo/test.astro', sourcemap: 'external' });
+  const { code } = await convertToTSX(input, { filename: '/Users/nmoo/test.astro', sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 

@@ -28,7 +28,7 @@ import RemoteComponent from 'https://test.com/components/with-[wacky-brackets}()
 
 let result;
 test.before(async () => {
-  result = await transform(FIXTURE, { sourcefile: '/users/astro/apps/pacman/src/pages/index.astro' });
+  result = await transform(FIXTURE, { filename: '/users/astro/apps/pacman/src/pages/index.astro' });
 });
 
 test('does not panic', () => {

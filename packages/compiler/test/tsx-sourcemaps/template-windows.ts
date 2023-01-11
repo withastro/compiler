@@ -123,7 +123,7 @@ test('special attributes', async () => {
 
 test('whitespace', async () => {
   const input = `---\r\nimport A from "a";\r\n\timport B from "b";\r\n---\r\n`;
-  const { code } = await convertToTSX(input, { sourcemap: 'both', sourcefile: 'index.astro' });
+  const { code } = await convertToTSX(input, { sourcemap: 'both', filename: 'index.astro' });
   assert.match(code, '\t', 'output includes \\t');
 
   const B = await testTSXSourcemap(input, 'B');

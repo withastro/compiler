@@ -18,7 +18,7 @@ const { MyComponent } = components;
 let result;
 test.before(async () => {
   result = await transform(FIXTURE, {
-    sourcefile: '/src/components/Cool.astro',
+    filename: '/src/components/Cool.astro',
   });
 });
 

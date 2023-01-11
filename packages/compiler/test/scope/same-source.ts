@@ -27,13 +27,13 @@ function grabAstroScope(code: string) {
 
 test('Similar components have different scoped class names', async () => {
   let result = await transform(FIXTURE, {
-    moduleId: '/src/pages/index.astro',
+    normalizedFilename: '/src/pages/index.astro',
   });
   let scopeA = grabAstroScope(result.code);
   assert.ok(scopeA);
 
   result = await transform(FIXTURE, {
-    moduleId: '/src/pages/two.astro',
+    normalizedFilename: '/src/pages/two.astro',
   });
 
   let scopeB = grabAstroScope(result.code);

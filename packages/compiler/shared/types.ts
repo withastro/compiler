@@ -44,8 +44,8 @@ export interface DiagnosticLocation {
 
 export interface TransformOptions {
   internalURL?: string;
-  sourcefile?: string;
-  moduleId?: string;
+  filename?: string;
+  normalizedFilename?: string;
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   astroGlobalArgs?: string;
   compact?: boolean;
