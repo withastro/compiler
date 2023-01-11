@@ -14,15 +14,15 @@ import (
 )
 
 type TransformOptions struct {
-	Scope           string
-	Filename        string
-	ModuleId        string
-	InternalURL     string
-	SourceMap       string
-	AstroGlobalArgs string
-	Compact         bool
-	ResolvePath     func(string) string
-	PreprocessStyle interface{}
+	Scope              string
+	Filename           string
+	NormalizedFilename string
+	InternalURL        string
+	SourceMap          string
+	AstroGlobalArgs    string
+	Compact            bool
+	ResolvePath        func(string) string
+	PreprocessStyle    interface{}
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {

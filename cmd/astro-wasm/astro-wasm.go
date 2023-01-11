@@ -69,9 +69,9 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		filename = "<stdin>"
 	}
 
-	moduleId := jsString(options.Get("moduleId"))
-	if moduleId == "" {
-		moduleId = "<stdin>"
+	normalizedFilename := jsString(options.Get("normalizedFilename"))
+	if normalizedFilename == "" {
+		normalizedFilename = filename
 	}
 
 	internalURL := jsString(options.Get("internalURL"))
@@ -107,14 +107,15 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		Filename:        filename,
-		ModuleId:        moduleId,
-		InternalURL:     internalURL,
-		SourceMap:       sourcemap,
-		AstroGlobalArgs:   astroGlobalArgs,
-		Compact:         compact,
-		ResolvePath:     resolvePathFn,
-		PreprocessStyle: preprocessStyle,
+		Filename:           filename,
+		NormalizedFilename: normalizedFilename,
+		Scope:              astro.HashString(normalizedFilename),
+		InternalURL:        internalURL,
+		SourceMap:          sourcemap,
+		AstroGlobalArgs:    astroGlobalArgs,
+		Compact:            compact,
+		ResolvePath:        resolvePathFn,
+		PreprocessStyle:    preprocessStyle,
 	}
 }
 
@@ -252,7 +253,6 @@ func Transform() any {
 		source := jsString(args[0])
 
 		transformOptions := makeTransformOptions(js.Value(args[1]))
-		transformOptions.Scope = astro.HashFromSourceAndModuleId(source, transformOptions.ModuleId)
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		styleError := []string{}
@@ -269,11 +269,6 @@ func Transform() any {
 
 				// Hoist styles and scripts to the top-level
 				transform.ExtractStyles(doc)
-
-				if len(doc.Styles) > 0 {
-					newHash := astro.HashFromDoc(doc, transformOptions.ModuleId)
-					transformOptions.Scope = newHash
-				}
 
 				// Pre-process styles
 				// Important! These goroutines need to be spawned from this file or they don't work

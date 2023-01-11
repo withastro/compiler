@@ -45,11 +45,11 @@ var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
 
-func suffixWithModuleId(moduleId string) string {
+func suffixWithFilename(filename string) string {
 
 	return fmt.Sprintf("%s;", BACKTICK) + fmt.Sprintf(`
 }, '%s');
-export default $$Component;`, moduleId)
+export default $$Component;`, filename)
 }
 
 type want struct {
@@ -72,7 +72,7 @@ type testcase struct {
 	name     string
 	source   string
 	only     bool
-	moduleId string
+	filename string
 	want     want
 }
 
@@ -2296,17 +2296,17 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:     "passes moduleId into createComponent if passed into the compiler options",
+			name:     "passes filename into createComponent if passed into the compiler options",
 			source:   `<div>test</div>`,
-			moduleId: "/projects/app/src/pages/page.astro",
+			filename: "/projects/app/src/pages/page.astro",
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<div>test</div>`,
 			},
 		},
 		{
-			name:     "passes escaped moduleId into createComponent if it contains single quotes",
+			name:	    "passes escaped filename into createComponent if it contains single quotes",
 			source:   `<div>test</div>`,
-			moduleId: "/projects/app/src/pages/page-with-'-quotes.astro",
+			filename: "/projects/app/src/pages/page-with-'-quotes.astro",
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<div>test</div>`,
 			},
@@ -2339,7 +2339,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
 				Scope:           "XXXX",
 				InternalURL:     "http://localhost:3000/",
-				ModuleId:        tt.moduleId,
+				Filename:        tt.filename,
 				AstroGlobalArgs: "'https://astro.build'",
 			}, h)
 			output := string(result.Output)
@@ -2445,9 +2445,9 @@ const items = ["Dog", "Cat", "Platipus"];
 				toMatch = strings.TrimRight(toMatch, ".")
 			}
 
-			if len(tt.moduleId) > 0 {
-				escapedModuleId := strings.ReplaceAll(tt.moduleId, "'", "\\'")
-				toMatch += suffixWithModuleId(escapedModuleId)
+			if len(tt.filename) > 0 {
+				escapedFilename := strings.ReplaceAll(tt.filename, "'", "\\'")
+				toMatch += suffixWithFilename(escapedFilename)
 			} else {
 				toMatch += SUFFIX
 			}
