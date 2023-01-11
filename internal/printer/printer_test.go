@@ -2453,7 +2453,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			if len(tt.filename) > 0 {
 				escapedFilename := strings.ReplaceAll(tt.filename, "'", "\\'")
 				toMatch += suffixWithFilename(escapedFilename)
-				toMatch = strings.Replace(toMatch, "$$Component", getComponentName((tt.filename)), -1)
+				toMatch = strings.Replace(toMatch, "$$Component", getComponentName(tt.filename), -1)
 			} else {
 				toMatch += SUFFIX
 			}
