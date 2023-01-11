@@ -35,7 +35,7 @@ const { article } = Astro.props;
 test('does not panic on complex generics', async () => {
   let error = 0;
   try {
-    await convertToTSX(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
   } catch (e) {
     error = 1;
   }

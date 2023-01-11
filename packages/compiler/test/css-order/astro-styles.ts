@@ -11,7 +11,7 @@ const FIXTURE = `
 let result;
 test.before(async () => {
   result = await transform(FIXTURE, {
-    sourcefile: 'test.astro',
+    filename: 'test.astro',
   });
 });
 

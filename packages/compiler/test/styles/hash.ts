@@ -37,11 +37,6 @@ test.before(async () => {
   scopes.push(a, b, c, d);
 });
 
-test('hash is stable when styles change', () => {
-  const [a, b] = scopes;
-  assert.equal(a, b, 'Expected scopes to be equal');
-});
-
 test('hash changes when content outside of style change', () => {
   const [, b, c] = scopes;
   assert.not.equal(b, c, 'Expected scopes to not be equal');

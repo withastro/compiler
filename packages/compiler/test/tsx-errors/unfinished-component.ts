@@ -7,7 +7,7 @@ const FIXTURE = `<div class={`;
 let result;
 test.before(async () => {
   result = await convertToTSX(FIXTURE, {
-    sourcefile: '/src/components/unfinished.astro',
+    filename: '/src/components/unfinished.astro',
   });
 });
 

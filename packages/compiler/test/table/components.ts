@@ -21,7 +21,7 @@ const  MyTableRow = "tr";
 
   let error = 0;
   try {
-    const { code } = await transform(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
     parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
   } catch (e) {
     error = 1;

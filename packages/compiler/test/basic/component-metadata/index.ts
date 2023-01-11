@@ -30,7 +30,7 @@ import * as eight from '../components/eight.jsx';
 let result: TransformResult;
 test.before(async () => {
   result = await transform(FIXTURE, {
-    sourcefile: '/users/astro/apps/pacman/src/pages/index.astro',
+    filename: '/users/astro/apps/pacman/src/pages/index.astro',
   });
 });
 

@@ -128,7 +128,7 @@ type Props = {}
 
 </Fragment>
 export default function Test__AstroComponent_(_props: Props): any {}`;
-  const { code } = await convertToTSX(input, { sourcefile: '/Users/nmoo/test.astro', sourcemap: 'external' });
+  const { code } = await convertToTSX(input, { filename: '/Users/nmoo/test.astro', sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 

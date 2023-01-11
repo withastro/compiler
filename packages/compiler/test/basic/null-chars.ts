@@ -11,7 +11,7 @@ const FIXTURE = `
 let result;
 test.before(async () => {
   result = await transform(FIXTURE, {
-    sourcefile: '/Users/matthew/dev/astro/packages/astro/test/fixtures/astro-attrs/src/pages/namespaced.astro',
+    filename: '/Users/matthew/dev/astro/packages/astro/test/fixtures/astro-attrs/src/pages/namespaced.astro',
     sourcemap: 'both',
   });
 });

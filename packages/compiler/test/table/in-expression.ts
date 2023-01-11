@@ -33,7 +33,7 @@ test('does not panic on table in expression', async () => {
 
   let error = 0;
   try {
-    const { code } = await transform(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
     parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
   } catch (e) {
     error = 1;
@@ -59,7 +59,7 @@ test('does not generate invalid markup on table in expression', async () => {
 
   let error = 0;
   try {
-    const { code } = await transform(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
     parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
   } catch (e) {
     error = 1;
@@ -85,7 +85,7 @@ test('does not generate invalid markup on multiple tables', async () => {
 
   let error = 0;
   try {
-    const { code } = await transform(input, { sourcefile: 'index.astro', sourcemap: 'inline' });
+    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
     parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
   } catch (e) {
     error = 1;
