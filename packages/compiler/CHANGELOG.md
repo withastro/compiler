@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 0.32.0
+
+### Minor Changes
+
+- 2404848: Remove `pathname` option in favour of `sourcefile` option
+- 2ca86f6: Remove `site` and `projectRoot` options in favour of the `astroGlobalArgs` option
+- edd3e0e: Merge `sourcefile` and `moduleId` options as a single `filename` option. Add a new `normalizedFilename` option to generate stable hashes instead.
+- 08843bd: Remove `experimentalStaticExtraction` option. It is now the default.
+
 ## 0.31.4
 
 ### Patch Changes
