@@ -82,6 +82,7 @@ outer:
 			flags := make(map[string]bool)
 			foundIdent := false
 			foundSemicolonOrLineTerminator := false
+			isEOF := false
 			start := i
 			i += len(value)
 			for {
@@ -95,22 +96,31 @@ outer:
 				i += len(nextValue)
 				flags[string(nextValue)] = true
 
+				if next == js.ErrorToken && l.Err() == io.EOF {
+					isEOF = true
+				}
+
 				if js.IsIdentifier(next) {
-					if isKeyword(nextValue) && next != js.FromToken {
+					if string(nextValue) == "type" {
+						flags["type"] = true
 						continue
 					}
-					if string(nextValue) == "type" {
+					if isKeyword(nextValue) && next != js.FromToken {
 						continue
 					}
 					if !foundIdent {
 						foundIdent = true
 					}
-				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
+				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || isEOF {
 					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
-						continue
+						if !isEOF {
+							continue
+						}
 					}
 					if flags["&"] || flags["="] {
-						continue
+						if !isEOF {
+							continue
+						}
 					}
 					foundSemicolonOrLineTerminator = true
 				} else if js.IsPunctuator(next) {
