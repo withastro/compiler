@@ -249,7 +249,7 @@ func ConvertToTSX() any {
 
 func Transform() any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
-		source := jsString(args[0])
+		source := strings.TrimRightFunc(jsString(args[0]), unicode.IsSpace)
 
 		transformOptions := makeTransformOptions(js.Value(args[1]))
 		scopeStr := transformOptions.NormalizedFilename
