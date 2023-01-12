@@ -31,4 +31,3 @@ test('does not add trailing newline to rendered output', () => {
 });
 
 test.run();
-
