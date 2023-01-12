@@ -100,11 +100,10 @@ outer:
 				}
 
 				if js.IsIdentifier(next) {
-					if string(nextValue) == "type" {
-						flags["type"] = true
+					if isKeyword(nextValue) && next != js.FromToken {
 						continue
 					}
-					if isKeyword(nextValue) && next != js.FromToken {
+					if string(nextValue) == "type" {
 						continue
 					}
 					if !foundIdent {
