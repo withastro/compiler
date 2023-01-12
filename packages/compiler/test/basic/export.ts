@@ -29,5 +29,4 @@ export type FuncType = (x: number) => number;
   assert.match(result.code, 'export type NumberType = number;\nexport type FuncType = (x: number) => number', 'Expected output to contain full Props export');
 });
 
-
 test.run();
