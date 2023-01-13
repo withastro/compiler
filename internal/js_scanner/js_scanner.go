@@ -95,6 +95,10 @@ outer:
 				i += len(nextValue)
 				flags[string(nextValue)] = true
 
+				if next == js.ErrorToken && l.Err() == io.EOF {
+					foundSemicolonOrLineTerminator = true
+				}
+
 				if js.IsIdentifier(next) {
 					if isKeyword(nextValue) && next != js.FromToken {
 						continue
@@ -105,7 +109,7 @@ outer:
 					if !foundIdent {
 						foundIdent = true
 					}
-				} else if next == js.LineTerminatorToken || next == js.SemicolonToken || (next == js.ErrorToken && l.Err() == io.EOF) {
+				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
 					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
 						continue
 					}
