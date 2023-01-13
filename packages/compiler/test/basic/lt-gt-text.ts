@@ -40,7 +40,7 @@ test.before(async () => {
 
 test('< and > as raw text', () => {
   assert.ok(result.code, 'Expected to compile');
-  assert.ok(result.diagnostics.length, 0, 'Expected no diagnostics');
+  assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
   assert.match(result.code, '< header >', 'Expected output to contain < header >');
 });
 
