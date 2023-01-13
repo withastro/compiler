@@ -11,7 +11,6 @@ type Props = LocalImageProps;
   assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
 });
 
-
 test('handles aliases with nested generics', async () => {
   const input = `---
 interface LocalImageProps {
