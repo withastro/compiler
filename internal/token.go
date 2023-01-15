@@ -2114,6 +2114,7 @@ func (z *Tokenizer) TagAttr() (key []byte, keyLoc loc.Loc, val []byte, valLoc lo
 			x := z.attr[z.nAttrReturned]
 			attrType := z.attrTypes[z.nAttrReturned]
 			z.nAttrReturned++
+			fmt.Printf("x: %v\nz: %+v", x, z)
 			key = z.buf[x[0].Start:x[0].End]
 			val = z.buf[x[1].Start:x[1].End]
 			keyLoc := loc.Loc{Start: x[0].Start}
