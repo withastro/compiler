@@ -159,7 +159,7 @@ func FuzzScopeHTML(f *testing.F) {
 			t.Errorf("HTML scoping produced invalid html string: %q", got)
 		}
 		if !strings.Contains(got, "astro-XXXXXX") {
-			t.Errorf("HTML scoping failed to include the astro scope\n source: %q\n got: %q\n `nodes[0].Data: %q", source, got, nodes[0].Data)
+			t.Errorf("HTML scoping failed to include the astro scope\n source: %q\n got: %q\n `nodes[0]: %+v", source, got, nodes[0])
 		}
 	})
 }
