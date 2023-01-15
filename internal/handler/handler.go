@@ -2,8 +2,13 @@ package handler
 
 import (
 	"errors"
+	"fmt"
+	"regexp"
+	"runtime/debug"
 	"strings"
+	"syscall/js"
 
+	"github.com/norunners/vert"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
 )
@@ -16,6 +21,15 @@ type Handler struct {
 	warnings   []error
 	infos      []error
 	hints      []error
+}
+
+type JSError struct {
+	Message string `js:"message"`
+	Stack   string `js:"stack"`
+}
+
+func (err *JSError) Value() js.Value {
+	return vert.ValueOf(err).Value
 }
 
 func NewHandler(sourcetext string, filename string) *Handler {
@@ -111,4 +125,38 @@ func ErrorToMessage(h *Handler, severity loc.DiagnosticSeverity, err error) loc.
 	default:
 		return loc.DiagnosticMessage{Text: err.Error()}
 	}
+}
+
+var FN_NAME_RE = regexp.MustCompile(`(\w+)\([^)]+\)$`)
+
+func ErrorToJSError(h *Handler, err error) js.Value {
+	stack := string(debug.Stack())
+	message := strings.TrimSpace(err.Error())
+	if strings.Contains(message, ":") {
+		message = strings.TrimSpace(strings.Split(message, ":")[1])
+	}
+	hasFnName := false
+	message = fmt.Sprintf("UnknownCompilerError: %s", message)
+	cleanStack := message
+	for _, v := range strings.Split(stack, "\n") {
+		matches := FN_NAME_RE.FindAllString(v, -1)
+		if len(matches) > 0 {
+			name := strings.Split(matches[0], "(")[0]
+			if name == "panic" {
+				cleanStack = message
+				continue
+			}
+			cleanStack += fmt.Sprintf("\n    at %s", strings.Split(matches[0], "(")[0])
+			hasFnName = true
+		} else if hasFnName {
+			url := strings.Split(strings.Split(strings.TrimSpace(v), " ")[0], "/compiler/")[1]
+			cleanStack += fmt.Sprintf(" (@astrojs/compiler/%s)", url)
+			hasFnName = false
+		}
+	}
+	jsError := JSError{
+		Message: message,
+		Stack:   cleanStack,
+	}
+	return jsError.Value()
 }
