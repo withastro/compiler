@@ -268,14 +268,14 @@ func Transform() any {
 				var doc *astro.Node
 				defer func() {
 					if err := recover(); err != nil {
-						reject.Invoke(handler.ErrorToJSError(h, err.(error)))
+						reject.Invoke(wasm_utils.ErrorToJSError(h, err.(error)))
 						return
 					}
 				}()
 
 				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h))
 				if err != nil {
-					reject.Invoke(handler.ErrorToJSError(h, err))
+					reject.Invoke(wasm_utils.ErrorToJSError(h, err))
 					return
 				}
 
