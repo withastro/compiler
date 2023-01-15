@@ -267,8 +267,8 @@ func Transform() any {
 			go func() {
 				var doc *astro.Node
 				defer func() {
-					if err := recover().(error); err != nil {
-						reject.Invoke(handler.ErrorToJSError(h, err))
+					if err := recover(); err != nil {
+						reject.Invoke(handler.ErrorToJSError(h, err.(error)))
 						return
 					}
 				}()
