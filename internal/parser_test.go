@@ -134,11 +134,13 @@ func fixturesParseFragmentWithOptions() []struct {
 	name   string
 	source string
 	want   []*Node
+	panic  string
 } {
 	return []struct {
 		name   string
 		source string
 		want   []*Node
+		panic  string
 	}{
 		{
 			name:   "none",
@@ -153,7 +155,7 @@ func fixturesParseFragmentWithOptions() []struct {
 		{
 			name:   "weird control characters",
 			source: "\x00</F></a>",
-			want:   nil,
+			panic:  "unable to close <a>",
 		},
 	}
 }
@@ -163,6 +165,12 @@ func TestParseFragmentWithOptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := handler.NewHandler(tt.source, "TestParseFragmentWithOptions.astro")
+			if len(tt.panic) > 0 {
+				assert.PanicsWithError(t, tt.panic, func() {
+					ParseFragmentWithOptions(strings.NewReader(tt.source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
+				})
+				return
+			}
 			nodes, err := ParseFragmentWithOptions(strings.NewReader(tt.source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
