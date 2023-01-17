@@ -344,7 +344,12 @@ outer:
 					pairs['<']--
 					if pairs['<'] == 0 {
 						end = i
-						break outer
+						// Important: only break out if we've already found `Props`!
+						if ident != defaultPropType {
+							break outer
+						} else {
+							continue
+						}
 					}
 				}
 			}
@@ -382,6 +387,7 @@ outer:
 		generics = fmt.Sprintf("<%s>", strings.Join(genericsIdents, ", "))
 		statement = strings.TrimSpace(string(source[start:end]))
 	}
+
 	return Props{
 		Ident:     ident,
 		Statement: statement,
