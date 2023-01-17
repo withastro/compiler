@@ -1,5 +1,17 @@
 # @astrojs/compiler
 
+## 0.33.0
+
+### Minor Changes
+
+- 1adac72: Improve error recovery when using the `transform` function. The compiler will now properly reject the promise with a useful message and stacktrace rather than print internal errors to stdout.
+
+### Patch Changes
+
+- 68d3c0c: Fix edge case where `export type` could hang the compiler
+- ec1ddf0: Handle edge case with TypeScript generics handling and our TSX output
+- 23d1fc0: Ignore trailing whitespace in components
+
 ## 0.32.0
 
 ### Minor Changes
