@@ -1,7 +1,6 @@
 package wasm_utils
 
 import (
-	"regexp"
 	"runtime/debug"
 	"strings"
 	"syscall/js"
