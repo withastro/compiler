@@ -172,22 +172,15 @@ func TestParseFragmentWithOptions(t *testing.T) {
 				return
 			}
 			nodes, err := ParseFragmentWithOptions(strings.NewReader(tt.source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
-			if err != nil {
-				t.Error(err)
-			}
+			assert.Nil(t, err)
 			assert.Equal(t, nodes, tt.want)
-			if tt.want == nil {
-				return
-			}
 			var b strings.Builder
 			PrintToSource(&b, nodes[0])
 			got := b.String()
 			b.Reset()
 			// check whether another pass doesn't error
 			nodes, err = ParseFragmentWithOptions(strings.NewReader(got), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
-			if err != nil {
-				t.Error(err)
-			}
+			assert.Nil(t, err)
 			PrintToSource(&b, nodes[0])
 			got2 := b.String()
 			assert.Equal(t, got, got2, "Expected reparse and second print to be the same")
@@ -214,10 +207,8 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 		}()
 		h := handler.NewHandler(source, "TestParseFragmentWithOptions.astro")
 		nodes, err := ParseFragmentWithOptions(strings.NewReader(source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
-		if err != nil {
-			t.Error(err)
-		}
 		isFirstParse = false
+		assert.Nil(t, err)
 		if len(nodes) == 0 {
 			t.Skip("no nodes returned")
 		}
@@ -228,9 +219,7 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 
 		// check whether another pass doesn't error
 		nodes, err = ParseFragmentWithOptions(strings.NewReader(got), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
-		if err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t, err)
 		PrintToSource(&b, nodes[0])
 		got2 := b.String()
 		assert.Equal(t, got, got2, "Expected reparse and second print to be the same")
