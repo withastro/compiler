@@ -260,15 +260,23 @@ func Transform() any {
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		styleError := []string{}
-		handler := js.FuncOf(func(this js.Value, args []js.Value) any {
+		promiseHandle := js.FuncOf(func(this js.Value, args []js.Value) any {
 			resolve := args[0]
+			reject := args[1]
 
 			go func() {
 				var doc *astro.Node
+				defer func() {
+					if err := recover(); err != nil {
+						reject.Invoke(wasm_utils.ErrorToJSError(h, err.(error)))
+						return
+					}
+				}()
 
 				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h))
 				if err != nil {
-					fmt.Println(err)
+					reject.Invoke(wasm_utils.ErrorToJSError(h, err))
+					return
 				}
 
 				// Hoist styles and scripts to the top-level
@@ -403,11 +411,11 @@ func Transform() any {
 
 			return nil
 		})
-		defer handler.Release()
+		defer promiseHandle.Release()
 
 		// Create and return the Promise object
 		promiseConstructor := js.Global().Get("Promise")
-		return promiseConstructor.New(handler)
+		return promiseConstructor.New(promiseHandle)
 	})
 }
 

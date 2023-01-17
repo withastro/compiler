@@ -1,9 +1,13 @@
 package wasm_utils
 
 import (
+	"runtime/debug"
+	"strings"
 	"syscall/js"
 
+	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
+	"github.com/withastro/compiler/internal/handler"
 )
 
 // See https://stackoverflow.com/questions/68426700/how-to-wait-a-js-async-function-from-golang-wasm
@@ -49,4 +53,23 @@ func GetAttrs(n *astro.Node) js.Value {
 		}
 	}
 	return attrs
+}
+
+type JSError struct {
+	Message string `js:"message"`
+	Stack   string `js:"stack"`
+}
+
+func (err *JSError) Value() js.Value {
+	return vert.ValueOf(err).Value
+}
+
+func ErrorToJSError(h *handler.Handler, err error) js.Value {
+	stack := string(debug.Stack())
+	message := strings.TrimSpace(err.Error())
+	jsError := JSError{
+		Message: message,
+		Stack:   stack,
+	}
+	return jsError.Value()
 }
