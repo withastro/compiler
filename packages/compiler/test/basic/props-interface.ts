@@ -18,7 +18,7 @@ test.before(async () => {
   result = await transform(FIXTURE);
 });
 
-test('< and > as raw text', () => {
+test('retains newlines around comment', () => {
   assert.ok(result.code, 'Expected to compile');
   assert.match(result.code, /\/\/ eslint-disable-next-line no-undef\n/g);
   assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
