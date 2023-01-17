@@ -167,7 +167,8 @@ func TestParseFragmentWithOptions(t *testing.T) {
 			h := handler.NewHandler(tt.source, "TestParseFragmentWithOptions.astro")
 			if len(tt.panic) > 0 {
 				assert.PanicsWithError(t, tt.panic, func() {
-					ParseFragmentWithOptions(strings.NewReader(tt.source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
+					// we expect this to panic, we don't care about the err result
+					ParseFragmentWithOptions(strings.NewReader(tt.source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h)) //nolint:errcheck
 				})
 				return
 			}
