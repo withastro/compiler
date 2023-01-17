@@ -65,8 +65,6 @@ func (err *JSError) Value() js.Value {
 	return vert.ValueOf(err).Value
 }
 
-var FN_NAME_RE = regexp.MustCompile(`(\w+)\([^)]+\)$`)
-
 func ErrorToJSError(h *handler.Handler, err error) js.Value {
 	stack := string(debug.Stack())
 	message := strings.TrimSpace(err.Error())
