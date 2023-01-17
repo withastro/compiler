@@ -182,7 +182,7 @@ func TestParseFragmentWithOptions(t *testing.T) {
 			}
 			PrintToSource(&b, nodes[0])
 			got2 := b.String()
-			assert.Equal(t, got, got2)
+			assert.Equal(t, got, got2, "Expected reparse and second print to be the same")
 		})
 	}
 
@@ -200,7 +200,7 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 			t.Error(err)
 		}
 		if len(nodes) == 0 {
-			return
+			t.Skip("no nodes returned")
 		}
 		var b strings.Builder
 		PrintToSource(&b, nodes[0])
@@ -214,6 +214,6 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 		}
 		PrintToSource(&b, nodes[0])
 		got2 := b.String()
-		assert.Equal(t, got, got2)
+		assert.Equal(t, got, got2, "Expected reparse and second print to be the same")
 	})
 }
