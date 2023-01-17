@@ -1554,8 +1554,7 @@ func (p *parser) inBodyEndTagFormatting(tagAtom a.Atom, tagName string) {
 
 	// Steps 1-2
 	if current := p.oe.top(); current == nil {
-		p.handler.AppendError(fmt.Errorf("unable to close <%s>", tagName))
-		return
+		panic(fmt.Errorf("unable to close <%s>", tagName))
 	}
 
 	if current := p.oe.top(); current.Data == tagName && p.afe.index(current) == -1 {
