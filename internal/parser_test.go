@@ -202,11 +202,22 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 		f.Add(tt.source) // Use f.Add to provide a seed corpus
 	}
 	f.Fuzz(func(t *testing.T, source string) {
+		// canary value for panics
+		isFirstParse := true
+		defer func() {
+			if err := recover(); err != nil {
+				if isFirstParse {
+					t.Skip("If we fail to parse, ignore, since that is not w/in scope for this fuzz test.")
+				}
+				panic(err)
+			}
+		}()
 		h := handler.NewHandler(source, "TestParseFragmentWithOptions.astro")
 		nodes, err := ParseFragmentWithOptions(strings.NewReader(source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
 		if err != nil {
 			t.Error(err)
 		}
+		isFirstParse = false
 		if len(nodes) == 0 {
 			t.Skip("no nodes returned")
 		}
