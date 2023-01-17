@@ -1726,9 +1726,8 @@ loop:
 			tokenType = CommentToken
 		default:
 			raw := z.Raw()
-			trimmed := []byte(strings.TrimLeftFunc(string(raw), unicode.IsSpace))
 			// Error: encountered an attempted use of <> syntax with attributes, like `< slot="named">Hello world!</>`
-			if len(raw) > 1 && bytes.HasPrefix(trimmed, []byte{'<'}) {
+			if len(raw) > 1 && unicode.IsSpace(rune(raw[0])) {
 				element := bytes.Split(z.Buffered(), []byte{'>'})
 				incorrect := fmt.Sprintf("< %s>", element[0])
 				correct := fmt.Sprintf("<Fragment %s>", element[0])
