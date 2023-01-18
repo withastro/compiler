@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.0.0
+
+### Major Changes
+
+- 8e86bc6: The Astro compiler is officially stable! This release is entirely ceremonial, the code is the same as [`@astrojs/compiler@0.33.0`](https://github.com/withastro/compiler/releases/tag/%40astrojs%2Fcompiler%400.33.0)
+
 ## 0.33.0
 
 ### Minor Changes
