@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.0.1
+
+### Patch Changes
+
+- 94b2c02: Prevent insertion of maybeRenderHead on hoisted scripts
+
 ## 1.0.0
 
 ### Major Changes
