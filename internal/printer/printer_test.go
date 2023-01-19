@@ -1137,7 +1137,7 @@ import Widget2 from '../components/Widget2.astro';`},
 			want: want{
 				frontmatter: []string{""},
 				metadata:    metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
-				code:        `${$$maybeRenderHead($$result)}`,
+				code:        ``,
 			},
 		},
 		{
@@ -1149,7 +1149,6 @@ import Widget2 from '../components/Widget2.astro';`},
 			want: want{
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
 				code: "${$$maybeRenderHead($$result)}<main>\n" +
-					"								${$$maybeRenderHead($$result)}\n" +
 					"</main>",
 			},
 		},
@@ -1453,7 +1452,7 @@ const title = 'icon';
 			name:   "Empty script",
 			source: `<script hoist></script>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}`,
+				code: ``,
 			},
 		},
 		{
@@ -2245,7 +2244,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			// 4. A define:vars inline script
 			source: `<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script define:vars={{foo:'bar'}}>var three = foo;</script><script is:inline define:vars={{foo:'bar'}}>var four = foo;</script>`,
 			want: want{
-				code: `<script>var one = 'one';</script>${$$maybeRenderHead($$result)}<script>(function(){${$$defineScriptVars({foo:'bar'})}var three = foo;})();</script><script>(function(){${$$defineScriptVars({foo:'bar'})}var four = foo;})();</script>`,
+				code: `<script>var one = 'one';</script><script>(function(){${$$defineScriptVars({foo:'bar'})}var three = foo;})();</script><script>(function(){${$$defineScriptVars({foo:'bar'})}var four = foo;})();</script>`,
 				metadata: metadata{
 					hoisted: []string{"{ type: 'inline', value: `var two = 'two';` }"},
 				},
@@ -2291,7 +2290,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "component with only a script",
 			source: "<script>console.log('hello world');</script>",
 			want: want{
-				code:     `${$$maybeRenderHead($$result)}`,
+				code:     ``,
 				metadata: metadata{hoisted: []string{"{ type: 'inline', value: `console.log('hello world');` }"}},
 			},
 		},
@@ -2304,11 +2303,19 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:	    "passes escaped filename into createComponent if it contains single quotes",
+			name:     "passes escaped filename into createComponent if it contains single quotes",
 			source:   `<div>test</div>`,
 			filename: "/projects/app/src/pages/page-with-'-quotes.astro",
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<div>test</div>`,
+			},
+		},
+		{
+			name:     "maybeRenderHead not printed for hoisted scripts",
+			source:   `<script></script><Layout></Layout>`,
+			filename: "/projects/app/src/pages/page.astro",
+			want: want{
+				code: `${$$renderComponent($$result,'Layout',Layout,{})}`,
 			},
 		},
 	}
