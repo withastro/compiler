@@ -59,16 +59,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	NormalizeSetDirectives(doc, h)
 
 	// Important! Remove scripts from original location *after* walking the doc
-	addedHeadRenderingInsertion := false
 	for _, script := range doc.Scripts {
-		if !addedHeadRenderingInsertion {
-			renderHeadNode := &astro.Node{
-				Type: astro.RenderHeadNode,
-			}
-			script.Parent.InsertBefore(renderHeadNode, script)
-			addedHeadRenderingInsertion = true
-		}
-
 		script.Parent.RemoveChild(script)
 	}
 
