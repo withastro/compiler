@@ -221,6 +221,7 @@ func FuzzParseFragmentWithOptions(f *testing.F) {
 		// check whether another pass doesn't error
 		nodes, err = ParseFragmentWithOptions(strings.NewReader(got), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
 		assert.Nil(t, err)
+		assert.GreaterOrEqual(t, len(nodes), 1, "if we got nodes on the first pass, we should have nodes now")
 		PrintToSource(&b, nodes[0])
 		got2 := b.String()
 		assert.Equal(t, got, got2, "Expected reparse and second print to be the same")
