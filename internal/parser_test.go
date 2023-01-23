@@ -157,6 +157,19 @@ func fixturesParseFragmentWithOptions() []struct {
 			source: "\x00</F></a>",
 			panic:  "unable to close <a>",
 		},
+		{
+			name: "components in head should stay in head",
+			source: `<html lang="en">
+<head>
+	<BaseHead />
+</head>
+</html>
+
+<style>
+	@use "../styles/global.scss";
+</style>`,
+			want: []*Node{},
+		},
 	}
 }
 
