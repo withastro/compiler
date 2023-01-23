@@ -174,7 +174,7 @@ func TestParseFragmentWithOptions(t *testing.T) {
 			}
 			nodes, err := ParseFragmentWithOptions(strings.NewReader(tt.source), &Node{Type: ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, ParseOptionWithHandler(h))
 			assert.Nil(t, err)
-			assert.Equal(t, nodes, tt.want)
+			assert.Equal(t, tt.want, nodes)
 			var b strings.Builder
 			PrintToSource(&b, nodes[0])
 			got := b.String()
