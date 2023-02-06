@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.0.2
+
+### Patch Changes
+
+- 0c27f3f: Collapse multiple trailing text nodes if present
+
 ## 1.0.1
 
 ### Patch Changes
