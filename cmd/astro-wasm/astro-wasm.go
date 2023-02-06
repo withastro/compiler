@@ -91,6 +91,11 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		compact = true
 	}
 
+	scopedSlot := false
+	if jsBool(options.Get("resultScopedSlot")) {
+		scopedSlot = true
+	}
+
 	var resolvePath any = options.Get("resolvePath")
 	var resolvePathFn func(string) string
 	if resolvePath.(js.Value).Type() == js.TypeFunction {
@@ -115,6 +120,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		Compact:            compact,
 		ResolvePath:        resolvePathFn,
 		PreprocessStyle:    preprocessStyle,
+		ResultScopedSlot:   scopedSlot,
 	}
 }
 

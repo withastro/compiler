@@ -21,6 +21,7 @@ type TransformOptions struct {
 	SourceMap          string
 	AstroGlobalArgs    string
 	Compact            bool
+	ResultScopedSlot   bool
 	ResolvePath        func(string) string
 	PreprocessStyle    interface{}
 }

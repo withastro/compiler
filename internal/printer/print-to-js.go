@@ -604,7 +604,14 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				if len(slottedKeys) > 0 {
 					for _, slotProp := range slottedKeys {
 						children := slottedChildren[slotProp]
-						p.print(fmt.Sprintf(`%s: ($$result) => `, slotProp))
+
+						// If selected, pass through result object on the Astro side
+						if opts.opts.ResultScopedSlot {
+							p.print(fmt.Sprintf(`%s: ($$result) => `, slotProp))
+						} else {
+							p.print(fmt.Sprintf(`%s: () => `, slotProp))
+						}
+
 						p.printTemplateLiteralOpen()
 						for _, child := range children {
 							render1(p, child, RenderOptions{

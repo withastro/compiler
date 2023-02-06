@@ -49,6 +49,7 @@ export interface TransformOptions {
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   astroGlobalArgs?: string;
   compact?: boolean;
+  resultScopedSlot?: boolean;
   /**
    * @deprecated "as" has been removed and no longer has any effect!
    */
