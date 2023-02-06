@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.1.0
+
+### Minor Changes
+
+- a75824d: Allow passing through result to slot call
+
 ## 1.0.2
 
 ### Patch Changes
