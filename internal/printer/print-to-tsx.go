@@ -3,6 +3,7 @@ package printer
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
@@ -40,11 +41,40 @@ var ScriptMimeTypes map[string]bool = map[string]bool{
 	"application/node":       true,
 }
 
-func isInvalidTSXAttribute(a Attribute) bool {
+// This is not perfect (as in, you wouldn't use this to make a spec compliant parser), but it's good enough
+// for the real world. Thankfully, JSX is also a bit more lax than JavaScript, so we can spare some work.
+func isValidTSXAttribute(a Attribute) bool {
 	if a.Type == SpreadAttribute {
-		return false
+		return true
 	}
-	return strings.HasPrefix(a.Key, "@") || strings.Contains(a.Key, ".")
+
+	for i, ch := range a.Key {
+		if i == 0 && !isValidFirstRune(ch) {
+			return false
+		}
+		// See https://mathiasbynens.be/notes/javascript-identifiers
+		if i != 0 && !(isValidFirstRune(ch) ||
+			unicode.In(ch, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)) &&
+			// : is allowed inside TSX attributes, for namespaces purpose
+			// See https://facebook.github.io/jsx/#prod-JSXNamespacedName
+			ch != ':' {
+			return false
+		}
+	}
+
+	return true
+}
+
+// See https://mathiasbynens.be/notes/javascript-identifiers
+func isValidFirstRune(r rune) bool {
+	return r == '$' || r == '_' || unicode.In(r,
+		unicode.Lu,
+		unicode.Ll,
+		unicode.Lt,
+		unicode.Lm,
+		unicode.Lo,
+		unicode.Nl,
+	)
 }
 
 type TextType uint32
@@ -238,7 +268,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	invalidTSXAttributes := make([]Attribute, 0)
 	endLoc := n.Loc[0].Start + len(n.Data)
 	for _, a := range n.Attr {
-		if isInvalidTSXAttribute(a) {
+		if !isValidTSXAttribute(a) {
 			invalidTSXAttributes = append(invalidTSXAttributes, a)
 			continue
 		}
