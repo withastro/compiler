@@ -1,6 +1,6 @@
+import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
 
 test('basic', async () => {
   const input = `
@@ -100,6 +100,26 @@ test('moves attributes with dots in them to spread', async () => {
   const input = `<div x-on:keyup.shift.enter="alert('Astro')" name="value"></div>`;
   const output = `<Fragment>
 <div name="value" {...{"x-on:keyup.shift.enter":"alert('Astro')"}}></div>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+test('moves attributes that starts with : to spread', async () => {
+  const input = `<div :class="hey" name="value"></div>`;
+  const output = `<Fragment>
+<div name="value" {...{":class":"hey"}}></div>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+test("Don't move attributes to spread unnecessarily", async () => {
+  const input = `<div 丽dfds_fsfdsfs name="value"></div>`;
+  const output = `<Fragment>
+<div 丽dfds_fsfdsfs name="value"></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
