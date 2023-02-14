@@ -1570,14 +1570,28 @@ import { Container, Col, Row } from 'react-bootstrap';
 			},
 		},
 		{
-			name: "Head bubbling",
-			only: true,
+			name: "Head bubbling for top-level head tags",
 			source: `<head>
 				<meta property="og:title" content="Some title" />
 				<meta property="og:description" content="Some content" /></head>
 				<div>
 					<h1>Testing</h1>
 				</div>
+			`,
+			want: want{
+				code: "<head></head>\n<div class=\"astro-LASNTLJA\"></div>",
+			},
+		},
+		{
+			name: "No head bubbling if head nested inside of HTML",
+			only: true,
+			source: `<html><head>
+				<meta property="og:title" content="Some title" />
+				<meta property="og:description" content="Some content" /></head>
+				<div>
+					<h1>Testing</h1>
+				</div>
+				</html>
 			`,
 			want: want{
 				code: "<head></head>\n<div class=\"astro-LASNTLJA\"></div>",

@@ -256,7 +256,6 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			}
 		}
 
-		fmt.Printf("DOWN HERE %v\n", n.Parent)
 		p.printReturnOpen(n.Parent)
 		renderHeadBubbling(p, n.Parent, opts)
 	}
