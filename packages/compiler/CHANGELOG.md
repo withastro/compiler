@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.1.1
+
+### Patch Changes
+
+- 6765f01: Fix attributes starting with : not being properly transformed in the TSX output
+
 ## 1.1.0
 
 ### Minor Changes
