@@ -96,6 +96,11 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		scopedSlot = true
 	}
 
+	implicitHeadInjection := true
+	if !options.Get("implicitHeadInjection").IsUndefined() {
+		implicitHeadInjection = jsBool(options.Get("implicitHeadInjection"))
+	}
+
 	var resolvePath any = options.Get("resolvePath")
 	var resolvePathFn func(string) string
 	if resolvePath.(js.Value).Type() == js.TypeFunction {
@@ -112,15 +117,16 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	preprocessStyle := options.Get("preprocessStyle")
 
 	return transform.TransformOptions{
-		Filename:           filename,
-		NormalizedFilename: normalizedFilename,
-		InternalURL:        internalURL,
-		SourceMap:          sourcemap,
-		AstroGlobalArgs:    astroGlobalArgs,
-		Compact:            compact,
-		ResolvePath:        resolvePathFn,
-		PreprocessStyle:    preprocessStyle,
-		ResultScopedSlot:   scopedSlot,
+		Filename:              filename,
+		NormalizedFilename:    normalizedFilename,
+		InternalURL:           internalURL,
+		SourceMap:             sourcemap,
+		AstroGlobalArgs:       astroGlobalArgs,
+		Compact:               compact,
+		ResolvePath:           resolvePathFn,
+		PreprocessStyle:       preprocessStyle,
+		ResultScopedSlot:      scopedSlot,
+		ImplicitHeadInjection: implicitHeadInjection,
 	}
 }
 

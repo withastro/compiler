@@ -47,6 +47,7 @@ var CREATE_METADATA = "$$createMetadata"
 var METADATA = "$$metadata"
 var RESULT = "$$result"
 var SLOTS = "$$slots"
+var HEAD_AND_CONTENT = "$$createHeadAndContent"
 var FRAGMENT = "Fragment"
 var BACKTICK = "`"
 var styleModuleSpecExp = regexp.MustCompile(`(\.css|\.pcss|\.postcss|\.sass|\.scss|\.styl|\.stylus|\.less)$`)
@@ -110,6 +111,8 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	p.print("defineStyleVars as " + DEFINE_STYLE_VARS + ",\n  ")
 	p.addNilSourceMapping()
 	p.print("defineScriptVars as " + DEFINE_SCRIPT_VARS + ",\n  ")
+	p.addNilSourceMapping()
+	p.print("createHeadAndContent as " + HEAD_AND_CONTENT + ",\n ")
 
 	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
 	if opts.opts.ResolvePath == nil {
@@ -145,19 +148,31 @@ func (p *printer) printRenderHead() {
 }
 
 func (p *printer) printMaybeRenderHead() {
-	p.addNilSourceMapping()
-	p.print(fmt.Sprintf("${%s(%s)}", MAYBE_RENDER_HEAD, RESULT))
+	if p.opts.ImplicitHeadInjection {
+		p.addNilSourceMapping()
+		p.print(fmt.Sprintf("${%s(%s)}", MAYBE_RENDER_HEAD, RESULT))
+	}
 }
 
-func (p *printer) printReturnOpen() {
+func (p *printer) printReturnOpen(n *astro.Node) {
 	p.addNilSourceMapping()
 	p.print("return ")
-	p.printTemplateLiteralOpen()
+
+	if containsHeadBubbling(n) {
+		p.print(fmt.Sprintf("%s(", HEAD_AND_CONTENT))
+	} else {
+		p.printTemplateLiteralOpen()
+	}
 }
 
-func (p *printer) printReturnClose() {
+func (p *printer) printReturnClose(n *astro.Node) {
 	p.addNilSourceMapping()
 	p.printTemplateLiteralClose()
+
+	if containsHeadBubbling(n) {
+		p.print(")")
+	}
+
 	p.println(";")
 }
 
@@ -177,6 +192,14 @@ func isTypeModuleScript(n *astro.Node) bool {
 		return true
 	}
 	return false
+}
+
+func containsHeadBubbling(n *astro.Node) bool {
+	if n != nil && n.HeadNode != nil {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (p *printer) printDefineVarsOpen(n *astro.Node) {
@@ -235,8 +258,9 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 		return
 	}
 	componentName := getComponentName(opts.Filename)
+	escapedFilename := strings.ReplaceAll(opts.Filename, "'", "\\'")
 	p.addNilSourceMapping()
-	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
+	p.println(fmt.Sprintf("const %s = %s({\n\tmoduleId: '%s',\n\tasync factory(%s, $$props, %s) {", componentName, CREATE_COMPONENT, escapedFilename, RESULT, SLOTS))
 	p.addNilSourceMapping()
 	p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
 	p.addNilSourceMapping()
@@ -244,15 +268,14 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 	p.hasFuncPrelude = true
 }
 
-func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
+func (p *printer) printFuncSuffix(opts transform.TransformOptions, n *astro.Node) {
 	componentName := getComponentName(opts.Filename)
 	p.addNilSourceMapping()
-	if len(opts.Filename) > 0 {
-		escapedFilename := strings.ReplaceAll(opts.Filename, "'", "\\'")
-		p.println(fmt.Sprintf("}, '%s');", escapedFilename))
-	} else {
-		p.println("});")
+	propagation := "none"
+	if containsHeadBubbling(n) {
+		propagation = "self"
 	}
+	p.println(fmt.Sprintf("\t},\n\tpropagation: '%s'\n});", propagation))
 	p.println(fmt.Sprintf("export default %s;", componentName))
 }
 

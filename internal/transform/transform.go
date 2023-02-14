@@ -14,16 +14,17 @@ import (
 )
 
 type TransformOptions struct {
-	Scope              string
-	Filename           string
-	NormalizedFilename string
-	InternalURL        string
-	SourceMap          string
-	AstroGlobalArgs    string
-	Compact            bool
-	ResultScopedSlot   bool
-	ResolvePath        func(string) string
-	PreprocessStyle    interface{}
+	Scope                 string
+	Filename              string
+	NormalizedFilename    string
+	InternalURL           string
+	SourceMap             string
+	AstroGlobalArgs       string
+	Compact               bool
+	ResultScopedSlot      bool
+	ImplicitHeadInjection bool
+	ResolvePath           func(string) string
+	PreprocessStyle       interface{}
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -31,6 +32,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	definedVars := GetDefineVars(doc.Styles)
 	didAddDefinedVars := false
 	walk(doc, func(n *astro.Node) {
+		if ExtractHead(doc, n, &opts, h) {
+			return
+		}
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
@@ -320,6 +324,17 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			}
 		}
 	}
+}
+
+func ExtractHead(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *handler.Handler) bool {
+	if n.Type == astro.ElementNode && n.DataAtom == a.Head {
+		if n.Parent != nil || (n.Parent.Type != astro.ElementNode || n.Parent.DataAtom != a.Html) {
+			doc.HeadNode = n
+			n.Parent.RemoveChild(n)
+			return true
+		}
+	}
+	return false
 }
 
 func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {

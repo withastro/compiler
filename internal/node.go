@@ -93,6 +93,7 @@ type Node struct {
 	ClientOnlyComponentNodes []*Node
 	ClientOnlyComponents     []*HydratedComponentMetadata
 	HydrationDirectives      map[string]bool
+	HeadNode                 *Node
 
 	Type      NodeType
 	DataAtom  atom.Atom

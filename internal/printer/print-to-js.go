@@ -117,8 +117,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			})
 		}
 
-		p.printReturnClose()
-		p.printFuncSuffix(opts.opts)
+		p.printReturnClose(n)
+		p.printFuncSuffix(opts.opts, n)
 		return
 	}
 
@@ -222,7 +222,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 				}
 
-				p.printReturnOpen()
+				p.printReturnOpen(n)
+				renderHeadBubbling(p, c, opts)
 			} else {
 				render1(p, c, RenderOptions{
 					isRoot:           false,
@@ -255,7 +256,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			}
 		}
 
-		p.printReturnOpen()
+		fmt.Printf("DOWN HERE %v\n", n.Parent)
+		p.printReturnOpen(n.Parent)
+		renderHeadBubbling(p, n.Parent, opts)
 	}
 	switch n.Type {
 	case TextNode:
@@ -711,6 +714,31 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(`>`)
 	}
+}
+
+func renderHeadBubbling(p *printer, n *Node, opts RenderOptions) {
+	if !containsHeadBubbling(n) {
+		return
+	}
+
+	depth := opts.depth
+	headNode := n.HeadNode
+
+	// Head argument
+	p.printTemplateLiteralOpen()
+	render1(p, headNode, RenderOptions{
+		isRoot:           false,
+		isExpression:     true,
+		depth:            depth + 1,
+		opts:             opts.opts,
+		cssLen:           opts.cssLen,
+		printedMaybeHead: opts.printedMaybeHead,
+	})
+	p.printTemplateLiteralClose()
+	p.print(",")
+
+	// Content argument
+	p.printTemplateLiteralOpen()
 }
 
 // Section 12.1.2, "Elements", gives this list of void elements. Void elements

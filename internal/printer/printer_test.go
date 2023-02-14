@@ -1570,6 +1570,20 @@ import { Container, Col, Row } from 'react-bootstrap';
 			},
 		},
 		{
+			name: "Head bubbling",
+			only: true,
+			source: `<head>
+				<meta property="og:title" content="Some title" />
+				<meta property="og:description" content="Some content" /></head>
+				<div>
+					<h1>Testing</h1>
+				</div>
+			`,
+			want: want{
+				code: "<head></head>\n<div class=\"astro-LASNTLJA\"></div>",
+			},
+		},
+		{
 			name: "Mixed style siblings",
 			source: `<head>
 	<style is:global>div { color: red }</style>
@@ -2464,6 +2478,8 @@ const items = ["Dog", "Cat", "Platipus"];
 			} else {
 				toMatch += SUFFIX
 			}
+
+			fmt.Println(output)
 
 			// compare to expected string, show diff if mismatch
 			if diff := test_utils.ANSIDiff(test_utils.RemoveNewlines(test_utils.Dedent(toMatch)), test_utils.RemoveNewlines(test_utils.Dedent(output))); diff != "" {
