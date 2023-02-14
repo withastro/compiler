@@ -58,6 +58,8 @@ export interface TransformOptions {
   preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
 }
 
+export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename'>;
+
 export type HoistedScript = { type: string } & (
   | {
       type: 'external';
@@ -119,7 +121,7 @@ export declare function transform(input: string, options?: TransformOptions): Pr
 
 export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
 
-export declare function convertToTSX(input: string, options?: { sourcefile?: string }): Promise<TSXResult>;
+export declare function convertToTSX(input: string, options?: ConvertToTSXOptions): Promise<TSXResult>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before
