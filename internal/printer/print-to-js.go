@@ -726,14 +726,18 @@ func renderHeadBubbling(p *printer, n *Node, opts RenderOptions) {
 
 	// Head argument
 	p.printTemplateLiteralOpen()
-	render1(p, headNode, RenderOptions{
-		isRoot:           false,
-		isExpression:     true,
-		depth:            depth + 1,
-		opts:             opts.opts,
-		cssLen:           opts.cssLen,
-		printedMaybeHead: opts.printedMaybeHead,
-	})
+
+	// Loop over children, don't print actual `<head>` element here.
+	for c := headNode.FirstChild; c != nil; c = c.NextSibling {
+		render1(p, c, RenderOptions{
+			isRoot:           false,
+			isExpression:     true,
+			depth:            depth + 1,
+			opts:             opts.opts,
+			cssLen:           opts.cssLen,
+			printedMaybeHead: opts.printedMaybeHead,
+		})
+	}
 	p.printTemplateLiteralClose()
 	p.print(",")
 
