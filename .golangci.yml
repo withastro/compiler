@@ -24,4 +24,4 @@ issues:
       text: "by package vert"
     - linters:
         - typecheck
-      text: "vert.ValueOf"
+      text: "vert."
