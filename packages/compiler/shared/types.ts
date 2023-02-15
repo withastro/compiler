@@ -50,6 +50,7 @@ export interface TransformOptions {
   astroGlobalArgs?: string;
   compact?: boolean;
   resultScopedSlot?: boolean;
+  implicitHeadInjection?: boolean;
   /**
    * @deprecated "as" has been removed and no longer has any effect!
    */
