@@ -222,8 +222,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 				}
 
-				p.printReturnOpen(n)
-				renderHeadBubbling(p, c, opts)
+				p.printReturnOpen(n.Parent)
+				renderHeadBubbling(p, n.Parent, opts)
 			} else {
 				render1(p, c, RenderOptions{
 					isRoot:           false,

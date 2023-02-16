@@ -326,9 +326,19 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 	}
 }
 
+func isHTMLNode(n *astro.Node) bool {
+	if n == nil {
+		return false
+	}
+	if n.Type == astro.ElementNode && n.DataAtom == a.Html {
+		return !IsImplicitNode(n)
+	}
+	return false
+}
+
 func ExtractHead(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *handler.Handler) bool {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Head {
-		if n.Parent == nil || (n.Parent.Type != astro.ElementNode || n.Parent.DataAtom != a.Html) {
+		if n.Parent == nil || !isHTMLNode(n.Parent) {
 			doc.HeadNode = n
 			n.Parent.RemoveChild(n)
 			return true
