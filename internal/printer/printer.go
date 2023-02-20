@@ -353,7 +353,14 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
 		p.addNilSourceMapping()
-		p.print(`")}`)
+		p.print(`"`)
+		// add a "true" argument when the attribute is a namespaced attribute
+		if attr.Namespace != "" {
+			p.addNilSourceMapping()
+			p.print(", true")
+		}
+		p.addNilSourceMapping()
+		p.print(`)}`)
 	case astro.SpreadAttribute:
 		injectClass := false
 		for p := n.Parent; p != nil; p = p.Parent {
