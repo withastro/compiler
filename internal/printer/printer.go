@@ -357,7 +357,7 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 		// add a "true" argument when the attribute is a namespaced attribute
 		if attr.Namespace != "" {
 			p.addNilSourceMapping()
-			p.print(", false")
+			p.print(", undefined, false")
 		}
 		p.addNilSourceMapping()
 		p.print(`)}`)
