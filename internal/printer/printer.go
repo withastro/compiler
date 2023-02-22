@@ -355,9 +355,7 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 		p.addSourceMapping(attr.KeyLoc)
 		p.print(attr.Key)
 		p.addNilSourceMapping()
-		p.print(`"`)
-		p.addNilSourceMapping()
-		p.print(`)}`)
+		p.print(`")}`)
 	case astro.SpreadAttribute:
 		injectClass := false
 		for p := n.Parent; p != nil; p = p.Parent {
