@@ -1666,6 +1666,20 @@ import { Container, Col, Row } from 'react-bootstrap';
 			},
 		},
 		{
+			name:   "Preserve namespaces in expressions",
+			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href={` + BACKTICK + `#${iconId}` + BACKTICK + `}></svg>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect ${$$addAttribute(` + BACKTICK + `#${iconId}` + BACKTICK + `, "xlink:href")}></rect></svg>`,
+			},
+		},
+		{
+			name:   "Preserve namespaces for components",
+			source: `<Component some:thing="foobar">`,
+			want: want{
+				code: `${$$renderComponent($$result,'Component',Component,{"some:thing":"foobar"})}`,
+			},
+		},
+		{
 			name: "import.meta.env",
 			source: fmt.Sprintf(`---
 import Header from '../../components/Header.jsx'
