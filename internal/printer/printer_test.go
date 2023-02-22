@@ -1669,7 +1669,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			name:   "Preserve namespaces in expressions",
 			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href={` + BACKTICK + `#${iconId}` + BACKTICK + `}></svg>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect ${$$addAttribute(` + BACKTICK + `#${iconId}` + BACKTICK + `, "xlink:href", undefined, false)}></rect></svg>`,
+				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect ${$$addAttribute(` + BACKTICK + `#${iconId}` + BACKTICK + `, "xlink:href")}></rect></svg>`,
 			},
 		},
 		{
