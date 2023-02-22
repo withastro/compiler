@@ -2125,21 +2125,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html with quoted attribute",
 			source: `<article set:html="content" />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML("content")}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
 			},
 		},
 		{
 			name:   "set:html with template literal attribute without variable",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `content` + BACKTICK + `}</article>`,
 			},
 		},
 		{
 			name:   "set:html with template literal attribute with variable",
 			source: `<article set:html=` + BACKTICK + `${content}` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `${content}` + BACKTICK + `}</article>`,
 			},
 		},
 		{
@@ -2180,7 +2180,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on Component with quoted attribute",
 			source: `<Component set:html="content" />`,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML("content")}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${"content"}` + BACKTICK + `,})}`,
 			},
 		},
 		// on component with template literal attribute
@@ -2188,14 +2188,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on Component with template literal attribute without variable",
 			source: `<Component set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${` + BACKTICK + `content` + BACKTICK + `}` + BACKTICK + `,})}`,
 			},
 		},
 		{
 			name:   "set:html on Component with template literal attribute with variable",
 			source: `<Component set:html=` + BACKTICK + `${content}` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${` + BACKTICK + `${content}` + BACKTICK + `}` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -2238,7 +2238,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on custom-element with quoted attribute",
 			source: `<custom-element set:html="content" />`,
 			want: want{
-				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML("content")}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + BACKTICK + `${"content"}` + BACKTICK + `,})}`,
 			},
 		},
 		// on custom element with template literal attribute
@@ -2246,14 +2246,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on custom-element with template literal attribute without variable",
 			source: `<custom-element set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + BACKTICK + `${` + BACKTICK + `content` + BACKTICK + `}` + BACKTICK + `,})}`,
 			},
 		},
 		{
 			name:   "set:html on custom-element with template literal attribute with variable",
 			source: `<custom-element set:html=` + BACKTICK + `${content}` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + BACKTICK + `${` + BACKTICK + `${content}` + BACKTICK + `}` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -2295,7 +2295,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on self-closing tag with quoted attribute",
 			source: `<article set:html="content" />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML("content")}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
 			},
 		},
 		// on self-closing tag with template literal attribute
@@ -2303,14 +2303,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on self-closing tag with template literal attribute without variable",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `content` + BACKTICK + `}</article>`,
 			},
 		},
 		{
 			name:   "set:html on self-closing tag with template literal attribute with variable",
 			source: `<article set:html=` + BACKTICK + `${content}` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `${content}` + BACKTICK + `}</article>`,
 			},
 		},
 		{
@@ -2325,7 +2325,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html with quoted attribute and other attributes",
 			source: `<article set:html="content" cool="true" />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article cool="true">${$$unescapeHTML("content")}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article cool="true">${"content"}</article>`,
 			},
 		},
 		// with other attributes and template literal attribute
@@ -2333,14 +2333,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html with template literal attribute without variable and other attributes",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + ` cool="true" />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article cool="true">${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article cool="true">${` + BACKTICK + `content` + BACKTICK + `}</article>`,
 			},
 		},
 		{
 			name:   "set:html with template literal attribute with variable and other attributes",
 			source: `<article set:html=` + BACKTICK + `${content}` + BACKTICK + ` cool="true" />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article cool="true">${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article cool="true">${` + BACKTICK + `${content}` + BACKTICK + `}</article>`,
 			},
 		},
 		{
@@ -2355,7 +2355,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on empty tag with quoted attribute",
 			source: `<article set:html="content"></article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML("content")}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
 			},
 		},
 		// on empty tag with template literal attribute
@@ -2363,14 +2363,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on empty tag with template literal attribute without variable",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + `></article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `content` + BACKTICK + `}</article>`,
 			},
 		},
 		{
 			name:   "set:html on empty tag with template literal attribute with variable",
 			source: `<article set:html=` + BACKTICK + `${content}` + BACKTICK + `></article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `${content}` + BACKTICK + `}</article>`,
 			},
 		},
 		{
@@ -2394,21 +2394,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on tag with children and quoted attribute",
 			source: `<article set:html="content">!!!</article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML("content")}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with children and template literal attribute without variable",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + `>!!!</article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `content` + BACKTICK + `}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with children and template literal attribute with variable",
 			source: `<article set:html=` + BACKTICK + `${content}` + BACKTICK + `>!!!</article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `${content}` + BACKTICK + `}</article>`,
 			},
 		},
 		{
@@ -2422,21 +2422,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on tag with empty whitespace and quoted attribute",
 			source: `<article set:html="content">   </article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML("content")}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with empty whitespace and template literal attribute without variable",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + `>   </article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `content` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `content` + BACKTICK + `}</article>`,
 			},
 		},
 		{
 			name:   "set:html on tag with empty whitespace and template literal attribute with variable",
 			source: `<article set:html=` + BACKTICK + `${content}` + BACKTICK + `>   </article>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>${` + BACKTICK + `${content}` + BACKTICK + `}</article>`,
 			},
 		},
 		{
@@ -2450,21 +2450,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on script with quoted attribute",
 			source: `<script set:html="alert(1)" />`,
 			want: want{
-				code: `<script>${$$unescapeHTML("alert(1)")}</script>`,
+				code: `<script>${"alert(1)"}</script>`,
 			},
 		},
 		{
 			name:   "set:html on script with template literal attribute without variable",
 			source: `<script set:html=` + BACKTICK + `alert(1)` + BACKTICK + ` />`,
 			want: want{
-				code: `<script>${$$unescapeHTML(` + BACKTICK + `alert(1)` + BACKTICK + `)}</script>`,
+				code: `<script>${` + BACKTICK + `alert(1)` + BACKTICK + `}</script>`,
 			},
 		},
 		{
 			name:   "set:html on script with template literal attribute with variable",
 			source: `<script set:html=` + BACKTICK + `${content}` + BACKTICK + ` />`,
 			want: want{
-				code: `<script>${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</script>`,
+				code: `<script>${` + BACKTICK + `${content}` + BACKTICK + `}</script>`,
 			},
 		},
 		{
@@ -2478,21 +2478,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on style with quoted attribute",
 			source: `<style set:html="h1{color:green;}" />`,
 			want: want{
-				code: `<style>${$$unescapeHTML("h1{color:green;}")}</style>`,
+				code: `<style>${"h1{color:green;}"}</style>`,
 			},
 		},
 		{
 			name:   "set:html on style with template literal attribute without variable",
 			source: `<style set:html=` + BACKTICK + `h1{color:green;}` + BACKTICK + ` />`,
 			want: want{
-				code: `<style>${$$unescapeHTML(` + BACKTICK + `h1{color:green;}` + BACKTICK + `)}</style>`,
+				code: `<style>${` + BACKTICK + `h1{color:green;}` + BACKTICK + `}</style>`,
 			},
 		},
 		{
 			name:   "set:html on style with template literal attribute with variable",
 			source: `<style set:html=` + BACKTICK + `${content}` + BACKTICK + ` />`,
 			want: want{
-				code: `<style>${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}</style>`,
+				code: `<style>${` + BACKTICK + `${content}` + BACKTICK + `}</style>`,
 			},
 		},
 		{
@@ -2506,21 +2506,21 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html on Fragment with quoted attribute",
 			source: "<Fragment set:html=\"<p>&#x3C;i>This should NOT be italic&#x3C;/i></p>\" />",
 			want: want{
-				code: "${$$renderComponent($$result,'Fragment',Fragment,{},{\"default\": () => $$render`${$$unescapeHTML(\"<p><i>This should NOT be italic</i></p>\")}`,})}",
+				code: "${$$renderComponent($$result,'Fragment',Fragment,{},{\"default\": () => $$render`${\"<p><i>This should NOT be italic</i></p>\"}`,})}",
 			},
 		},
 		{
 			name:   "set:html on Fragment with template literal attribute without variable",
 			source: "<Fragment set:html=`<p>&#x3C;i>This should NOT be italic&#x3C;/i></p>` />",
 			want: want{
-				code: "${$$renderComponent($$result,'Fragment',Fragment,{},{\"default\": () => $$render`${$$unescapeHTML(`<p><i>This should NOT be italic</i></p>`)}`,})}",
+				code: "${$$renderComponent($$result,'Fragment',Fragment,{},{\"default\": () => $$render`${`<p><i>This should NOT be italic</i></p>`}`,})}",
 			},
 		},
 		{
 			name:   "set:html on Fragment with template literal attribute with variable",
 			source: `<Fragment set:html=` + BACKTICK + `${content}` + BACKTICK + ` />`,
 			want: want{
-				code: `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `${content}` + BACKTICK + `)}` + BACKTICK + `,})}`,
+				code: `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${` + BACKTICK + `${content}` + BACKTICK + `}` + BACKTICK + `,})}`,
 			},
 		},
 		{
