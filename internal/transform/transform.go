@@ -125,18 +125,14 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 		for i, n := range nodes {
 			directive := directives[i]
 			n.RemoveAttribute(directive.Key)
-			var expr *astro.Node
-			var textNode *astro.Node
+
+			var nodeToAppend *astro.Node
 			var isExpression bool
 			var isLiteral bool
+
 			switch directive.Type {
 			case astro.ExpressionAttribute:
 				isExpression = true
-				expr = &astro.Node{
-					Type:       astro.ElementNode,
-					Data:       "astro:expression",
-					Expression: true,
-				}
 			case astro.QuotedAttribute, astro.TemplateLiteralAttribute:
 				isLiteral = true
 			}
@@ -144,25 +140,27 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 			l := make([]loc.Loc, 1)
 			l = append(l, directive.ValLoc)
 			data := directive.Val
-			if directive.Key == "set:html" && isExpression {
-				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
-			}
 
-			var addedNode *astro.Node
 			if isExpression {
-				expr.AppendChild(&astro.Node{
+				if directive.Key == "set:html" {
+					data = fmt.Sprintf("$$unescapeHTML(%s)", data)
+				}
+				nodeToAppend = &astro.Node{
+					Type:       astro.ElementNode,
+					Data:       "astro:expression",
+					Expression: true,
+				}
+				nodeToAppend.AppendChild(&astro.Node{
 					Type: astro.TextNode,
 					Data: data,
 					Loc:  l,
 				})
-				addedNode = expr
 			} else if isLiteral {
-				textNode = &astro.Node{
+				nodeToAppend = &astro.Node{
 					Type: astro.TextNode,
 					Data: directive.Val,
 					Loc:  l,
 				}
-				addedNode = textNode
 			}
 
 			shouldWarn := false
@@ -181,7 +179,7 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 					Hint:  "Remove the child nodes to suppress this warning.",
 				})
 			}
-			n.AppendChild(addedNode)
+			n.AppendChild(nodeToAppend)
 		}
 	}
 }
