@@ -2125,7 +2125,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:html with quoted value",
 			source: `<article set:html="content" />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML("content")}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>content</article>`,
 			},
 		},
 		{
@@ -2139,7 +2139,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "set:text with quoted value",
 			source: `<article set:text="content" />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
+				code: `${$$maybeRenderHead($$result)}<article>content</article>`,
 			},
 		},
 		{
