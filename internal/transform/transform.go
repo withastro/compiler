@@ -129,12 +129,15 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 			var nodeToAppend *astro.Node
 			var isTemplateLiteral bool
 			var isQuoted bool
+			var isExpression bool
 
 			switch directive.Type {
 			case astro.QuotedAttribute:
 				isQuoted = true
 			case astro.TemplateLiteralAttribute:
 				isTemplateLiteral = true
+			case astro.ExpressionAttribute:
+				isExpression = true
 			}
 
 			// should be wrapped in quotes
@@ -149,9 +152,9 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 			}
 
 			// should be expression
-			var shouldBeExpression bool
-			if directive.Key == "set:html" || (directive.Key == "set:text" && isTemplateLiteral) || directive.Type == astro.ExpressionAttribute {
-				shouldBeExpression = true
+			var shouldAddExpression bool
+			if directive.Key == "set:html" || (directive.Key == "set:text" && isTemplateLiteral) || isExpression {
+				shouldAddExpression = true
 			}
 
 			l := make([]loc.Loc, 1)
@@ -166,10 +169,10 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 				data = fmt.Sprintf("`%s`", data)
 			}
 
-			if directive.Key == "set:html" {
+			if directive.Key == "set:html" && isExpression {
 				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
 			}
-			if shouldBeExpression {
+			if shouldAddExpression {
 				nodeToAppend = &astro.Node{
 					Type:       astro.ElementNode,
 					Data:       "astro:expression",
