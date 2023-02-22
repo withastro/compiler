@@ -270,18 +270,30 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 		switch a.Type {
 		case astro.QuotedAttribute:
 			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + a.Key + `"`)
+			if a.Namespace != "" {
+				p.printf(`"%s:%s"`, a.Namespace, a.Key)
+			} else {
+				p.printf(`"%s"`, a.Key)
+			}
 			p.print(":")
 			p.addSourceMapping(a.ValLoc)
 			p.print(`"` + escapeDoubleQuote(a.Val) + `"`)
 		case astro.EmptyAttribute:
 			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + a.Key + `"`)
+			if a.Namespace != "" {
+				p.printf(`"%s:%s"`, a.Namespace, a.Key)
+			} else {
+				p.printf(`"%s"`, a.Key)
+			}
 			p.print(":")
 			p.print("true")
 		case astro.ExpressionAttribute:
 			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + a.Key + `"`)
+			if a.Namespace != "" {
+				p.printf(`"%s:%s"`, a.Namespace, a.Key)
+			} else {
+				p.printf(`"%s"`, a.Key)
+			}
 			p.print(":")
 			p.addSourceMapping(a.ValLoc)
 			if a.Val == "" {
@@ -305,7 +317,11 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.print(`(` + strings.TrimSpace(a.Key) + `)`)
 		case astro.TemplateLiteralAttribute:
 			p.addSourceMapping(a.KeyLoc)
-			p.print(`"` + strings.TrimSpace(a.Key) + `"`)
+			if a.Namespace != "" {
+				p.printf(`"%s:%s"`, a.Namespace, strings.TrimSpace(a.Key))
+			} else {
+				p.printf(`"%s"`, strings.TrimSpace(a.Key))
+			}
 			p.print(":")
 			p.print("`" + strings.TrimSpace(a.Key) + "`")
 		}
@@ -323,8 +339,7 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 	}
 
 	if attr.Namespace != "" {
-		p.print(attr.Namespace)
-		p.print(":")
+		attr.Key = fmt.Sprintf("%s:%s", attr.Namespace, attr.Key)
 	}
 
 	switch attr.Type {
