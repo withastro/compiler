@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 1.1.2
+
+### Patch Changes
+
+- 2de6128: Preserve namespaced attributes when using expressions
+- af13f2d: Fix incorrect `convertToTSX` types. The function accepts `filename`, not `sourcefile`.
+- 5eb4fff: Compile `set:html` and `set:text` quoted and template literal attributes as strings
+
 ## 1.1.1
 
 ### Patch Changes
