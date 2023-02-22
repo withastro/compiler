@@ -2122,8 +2122,15 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:   "set:html with quoted value",
+			name:   "set:html with quoted attribute",
 			source: `<article set:html="content" />`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<article>content</article>`,
+			},
+		},
+		{
+			name:   "set:html with template literal attribute",
+			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<article>content</article>`,
 			},
@@ -2136,8 +2143,15 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:   "set:text with quoted value",
+			name:   "set:text with quoted attribute",
 			source: `<article set:text="content" />`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<article>content</article>`,
+			},
+		},
+		{
+			name:   "set:text with template literal attribute ",
+			source: `<article set:text=` + BACKTICK + `content` + BACKTICK + ` />`,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<article>content</article>`,
 			},
