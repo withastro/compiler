@@ -127,24 +127,49 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 			n.RemoveAttribute(directive.Key)
 
 			var nodeToAppend *astro.Node
-			var isExpression bool
-			var isLiteral bool
+			var isTemplateLiteral bool
+			var isQuoted bool
 
 			switch directive.Type {
-			case astro.ExpressionAttribute:
-				isExpression = true
-			case astro.QuotedAttribute, astro.TemplateLiteralAttribute:
-				isLiteral = true
+			case astro.QuotedAttribute:
+				isQuoted = true
+			case astro.TemplateLiteralAttribute:
+				isTemplateLiteral = true
+			}
+
+			// should be wrapped in quotes
+			var shouldWrapInQuotes bool
+			if directive.Key == "set:html" && isQuoted {
+				shouldWrapInQuotes = true
+			}
+			// should be wrapped in template literal
+			var shouldWrapInTemplateLiteral bool
+			if (directive.Key == "set:html" || directive.Key == "set:text") && isTemplateLiteral {
+				shouldWrapInTemplateLiteral = true
+			}
+
+			// should be expression
+			var shouldBeExpression bool
+			if directive.Key == "set:html" || (directive.Key == "set:text" && isTemplateLiteral) || directive.Type == astro.ExpressionAttribute {
+				shouldBeExpression = true
 			}
 
 			l := make([]loc.Loc, 1)
 			l = append(l, directive.ValLoc)
 			data := directive.Val
 
-			if isExpression {
-				if directive.Key == "set:html" {
-					data = fmt.Sprintf("$$unescapeHTML(%s)", data)
-				}
+			if shouldWrapInQuotes {
+				data = fmt.Sprintf("\"%s\"", data)
+			}
+
+			if shouldWrapInTemplateLiteral {
+				data = fmt.Sprintf("`%s`", data)
+			}
+
+			if directive.Key == "set:html" {
+				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
+			}
+			if shouldBeExpression {
 				nodeToAppend = &astro.Node{
 					Type:       astro.ElementNode,
 					Data:       "astro:expression",
@@ -155,10 +180,10 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 					Data: data,
 					Loc:  l,
 				})
-			} else if isLiteral {
+			} else {
 				nodeToAppend = &astro.Node{
 					Type: astro.TextNode,
-					Data: directive.Val,
+					Data: data,
 					Loc:  l,
 				}
 			}
