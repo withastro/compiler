@@ -125,22 +125,67 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 		for i, n := range nodes {
 			directive := directives[i]
 			n.RemoveAttribute(directive.Key)
-			expr := &astro.Node{
-				Type:       astro.ElementNode,
-				Data:       "astro:expression",
-				Expression: true,
+
+			var nodeToAppend *astro.Node
+			var shouldWrapInQuotes,
+				isTemplateLiteralAttribute,
+				isQuotedAttribute,
+				isExpressionAttribute,
+				shouldWrapInTemplateLiteral,
+				shouldAddExpression bool
+
+			switch directive.Type {
+			case astro.QuotedAttribute:
+				isQuotedAttribute = true
+			case astro.TemplateLiteralAttribute:
+				isTemplateLiteralAttribute = true
+			case astro.ExpressionAttribute:
+				isExpressionAttribute = true
 			}
+
+			if directive.Key == "set:html" && isQuotedAttribute {
+				shouldWrapInQuotes = true
+			}
+			if isTemplateLiteralAttribute {
+				shouldWrapInTemplateLiteral = true
+			}
+			if directive.Key == "set:html" || (directive.Key == "set:text" && isTemplateLiteralAttribute) || isExpressionAttribute {
+				shouldAddExpression = true
+			}
+
 			l := make([]loc.Loc, 1)
 			l = append(l, directive.ValLoc)
 			data := directive.Val
-			if directive.Key == "set:html" {
+
+			if shouldWrapInQuotes {
+				data = fmt.Sprintf("\"%s\"", data)
+			}
+
+			if shouldWrapInTemplateLiteral {
+				data = fmt.Sprintf("`%s`", data)
+			}
+
+			if directive.Key == "set:html" && isExpressionAttribute {
 				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
 			}
-			expr.AppendChild(&astro.Node{
-				Type: astro.TextNode,
-				Data: data,
-				Loc:  l,
-			})
+			if shouldAddExpression {
+				nodeToAppend = &astro.Node{
+					Type:       astro.ElementNode,
+					Data:       "astro:expression",
+					Expression: true,
+				}
+				nodeToAppend.AppendChild(&astro.Node{
+					Type: astro.TextNode,
+					Data: data,
+					Loc:  l,
+				})
+			} else {
+				nodeToAppend = &astro.Node{
+					Type: astro.TextNode,
+					Data: data,
+					Loc:  l,
+				}
+			}
 
 			shouldWarn := false
 			// Remove all existing children
@@ -158,7 +203,7 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 					Hint:  "Remove the child nodes to suppress this warning.",
 				})
 			}
-			n.AppendChild(expr)
+			n.AppendChild(nodeToAppend)
 		}
 	}
 }
