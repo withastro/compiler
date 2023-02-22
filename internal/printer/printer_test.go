@@ -2183,7 +2183,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${"content"}` + BACKTICK + `,})}`,
 			},
 		},
-		// on component with template literal attribute
 		{
 			name:   "set:html on Component with template literal attribute without variable",
 			source: `<Component set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
@@ -2212,7 +2211,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `content` + BACKTICK + `,})}`,
 			},
 		},
-		// on component with template literal attribute
 		{
 			name:   "set:text on Component with template literal attribute without variable",
 			source: `<Component set:text=` + BACKTICK + `content` + BACKTICK + ` />`,
@@ -2241,7 +2239,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render` + BACKTICK + `${"content"}` + BACKTICK + `,})}`,
 			},
 		},
-		// on custom element with template literal attribute
 		{
 			name:   "set:html on custom-element with template literal attribute without variable",
 			source: `<custom-element set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
@@ -2298,7 +2295,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
 			},
 		},
-		// on self-closing tag with template literal attribute
 		{
 			name:   "set:html on self-closing tag with template literal attribute without variable",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + ` />`,
@@ -2320,7 +2316,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<article cool="true">${$$unescapeHTML(content)}</article>`,
 			},
 		},
-		// with other attributes and quoted attribute
 		{
 			name:   "set:html with quoted attribute and other attributes",
 			source: `<article set:html="content" cool="true" />`,
@@ -2328,7 +2323,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<article cool="true">${"content"}</article>`,
 			},
 		},
-		// with other attributes and template literal attribute
 		{
 			name:   "set:html with template literal attribute without variable and other attributes",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + ` cool="true" />`,
@@ -2350,7 +2344,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
-		// on empty tag with quoted attribute
 		{
 			name:   "set:html on empty tag with quoted attribute",
 			source: `<article set:html="content"></article>`,
@@ -2358,7 +2351,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<article>${"content"}</article>`,
 			},
 		},
-		// on empty tag with template literal attribute
 		{
 			name:   "set:html on empty tag with template literal attribute without variable",
 			source: `<article set:html=` + BACKTICK + `content` + BACKTICK + `></article>`,
@@ -2389,7 +2381,6 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<article>${$$unescapeHTML(content)}</article>`,
 			},
 		},
-		// on tag with children and quoted attribute
 		{
 			name:   "set:html on tag with children and quoted attribute",
 			source: `<article set:html="content">!!!</article>`,
