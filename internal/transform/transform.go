@@ -127,33 +127,29 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 			n.RemoveAttribute(directive.Key)
 
 			var nodeToAppend *astro.Node
-			var isTemplateLiteral bool
-			var isQuoted bool
-			var isExpression bool
+			var shouldWrapInQuotes,
+				isTemplateLiteralAttribute,
+				isQuotedAttribute,
+				isExpressionAttribute,
+				shouldWrapInTemplateLiteral,
+				shouldAddExpression bool
 
 			switch directive.Type {
 			case astro.QuotedAttribute:
-				isQuoted = true
+				isQuotedAttribute = true
 			case astro.TemplateLiteralAttribute:
-				isTemplateLiteral = true
+				isTemplateLiteralAttribute = true
 			case astro.ExpressionAttribute:
-				isExpression = true
+				isExpressionAttribute = true
 			}
 
-			// should be wrapped in quotes
-			var shouldWrapInQuotes bool
-			if directive.Key == "set:html" && isQuoted {
+			if directive.Key == "set:html" && isQuotedAttribute {
 				shouldWrapInQuotes = true
 			}
-			// should be wrapped in template literal
-			var shouldWrapInTemplateLiteral bool
-			if (directive.Key == "set:html" || directive.Key == "set:text") && isTemplateLiteral {
+			if isTemplateLiteralAttribute {
 				shouldWrapInTemplateLiteral = true
 			}
-
-			// should be expression
-			var shouldAddExpression bool
-			if directive.Key == "set:html" || (directive.Key == "set:text" && isTemplateLiteral) || isExpression {
+			if directive.Key == "set:html" || (directive.Key == "set:text" && isTemplateLiteralAttribute) || isExpressionAttribute {
 				shouldAddExpression = true
 			}
 
@@ -169,7 +165,7 @@ func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
 				data = fmt.Sprintf("`%s`", data)
 			}
 
-			if directive.Key == "set:html" && isExpression {
+			if directive.Key == "set:html" && isExpressionAttribute {
 				data = fmt.Sprintf("$$unescapeHTML(%s)", data)
 			}
 			if shouldAddExpression {
