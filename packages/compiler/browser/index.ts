@@ -17,6 +17,12 @@ interface Service {
 let initializePromise: Promise<Service> | undefined;
 let longLivedService: Service | undefined;
 
+export const teardown: typeof types.teardown = () => {
+  initializePromise = undefined;
+  longLivedService = undefined;
+  (globalThis as any)['@astrojs/compiler'] = undefined;
+};
+
 export const initialize: typeof types.initialize = async (options) => {
   let wasmURL = options.wasmURL;
   if (!wasmURL) throw new Error('Must provide the "wasmURL" option');

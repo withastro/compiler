@@ -131,6 +131,9 @@ export declare function convertToTSX(input: string, options?: ConvertToTSXOption
 // Works in browser: yes ("options" is required)
 export declare function initialize(options: InitializeOptions): Promise<void>;
 
+// Clears internal cache to release memory usage
+export declare function teardown(): void;
+
 export interface InitializeOptions {
   // The URL of the "astro.wasm" file. This must be provided when running
   // astro in the browser.

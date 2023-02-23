@@ -29,6 +29,11 @@ interface Service {
 
 let longLivedService: Promise<Service> | undefined;
 
+export const teardown: typeof types.teardown = () => {
+  longLivedService = undefined;
+  (globalThis as any)['@astrojs/compiler'] = undefined;
+};
+
 let getService = (): Promise<Service> => {
   if (!longLivedService) {
     longLivedService = startRunningService().catch((err) => {
