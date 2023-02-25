@@ -359,7 +359,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		// Before the first non-head element, inject $$maybeRender($$result)
 		// This is for pages that do not contain an explicit head element
 		switch n.DataAtom {
-		case atom.Html, atom.Head, atom.Base, atom.Basefont, atom.Bgsound, atom.Link, atom.Meta, atom.Noframes, atom.Script, atom.Style, atom.Template, atom.Title:
+		case atom.Html, atom.Head, atom.Base, atom.Basefont, atom.Bgsound, atom.Link, atom.Meta, atom.Noframes, atom.Noscript, atom.Script, atom.Style, atom.Template, atom.Title:
 			break
 		default:
 			if !*opts.printedMaybeHead {
