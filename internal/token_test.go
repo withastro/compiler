@@ -217,6 +217,18 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"expression with multiple elements and self closing tag",
+			`<div>{()=>{
+				if (true) {
+					return <hr />;
+				};
+				if (true) {
+					return <img />;
+				}
+			}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"expression with < operators",
 			`<div>{() => {
 				if (value < 0.25) {

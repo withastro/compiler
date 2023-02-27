@@ -826,6 +826,20 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "nested expressions VI",
+			source: `<div>{()=>{ if (true) { return <hr />;} if (true) { return <img />;}}}</div>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<div>${()=>{ if (true) { return $$render`<hr>`;} if (true) { return $$render`<img>`;}}}</div>",
+			},
+		},
+		{
+			name:   "nested expressions VII",
+			source: `<div>{()=>{ if (true) { return <hr />;} if (true) { return <img />;}}}</div>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<div>${()=>{ if (true) { return $$render`<hr>`;} if (true) { return $$render`<img>`;}}}</div>",
+			},
+		},
+		{
 			name: "expressions with JS comments",
 			source: `---
 const items = ['red', 'yellow', 'blue'];
