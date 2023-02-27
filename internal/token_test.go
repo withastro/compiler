@@ -217,7 +217,7 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
-			"expression with multiple elements and self closing tag",
+			"expression with multiple elements returning self closing tags",
 			`<div>{()=>{
 				if (true) {
 					return <hr />;
@@ -227,6 +227,20 @@ func TestBasic(t *testing.T) {
 				}
 			}}</div>`,
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
+			"expression returning a mix of self-closing tags and elements",
+			`<div>{() => {
+				if (value > 0.25) {
+					return <br />
+				} else if (value > 0.5) {
+					return <hr />
+				} else if (value > 0.75) {
+					return <div />
+				}
+				return <div>Yaaay</div>
+			}}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
 			"expression with < operators",
