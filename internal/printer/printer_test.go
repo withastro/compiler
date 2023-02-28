@@ -2537,6 +2537,38 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "define:vars on style tag with style shorthand attribute on element",
+			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 {style}>testing</h1>",
+			want: want{
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(style + $$definedVars, "style")} class="astro-YIEFZSDV">testing</h1>`,
+				definedVars: []string{"{color:'green'}"},
+			},
+		},
+		{
+			name:   "define:vars on style tag with style empty attribute on element",
+			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style>testing</h1>",
+			want: want{
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute($$definedVars, "style")} class="astro-YVZW3G7H">testing</h1>`,
+				definedVars: []string{"{color:'green'}"},
+			},
+		},
+		{
+			name:   "define:vars on style tag with style quoted attribute on element",
+			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style='color: yellow;'>testing</h1>",
+			want: want{
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${"color: yellow;"} ${$$definedVars}` + BACKTICK + `, "style")} class="astro-RRT5RQ2H">testing</h1>`,
+				definedVars: []string{"{color:'green'}"},
+			},
+		},
+		{
+			name:   "define:vars on style tag with style template literal attribute on element",
+			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style=`color: ${color};`>testing</h1>",
+			want: want{
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${` + BACKTICK + `color: ${color};` + BACKTICK + `} ${$$definedVars}` + BACKTICK + `, "style")} class="astro-33XVGAES">testing</h1>`,
+				definedVars: []string{"{color:'green'}"},
+			},
+		},
+		{
 			name:   "multiple define:vars on style",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>",
 			want: want{
