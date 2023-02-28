@@ -2545,7 +2545,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:   "define:vars on style tag with style shorthand attribute on element",
+			name:   "define:vars on style tag with style expression attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style={myStyles}>testing</h1>",
 			want: want{
 				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${myStyles} ${$$definedVars}` + BACKTICK + `, "style")} class="astro-ZWHEDDU6">testing</h1>`,
