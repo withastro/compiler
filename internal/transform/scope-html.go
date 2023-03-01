@@ -54,7 +54,7 @@ func injectDefineVars(n *astro.Node, values []string) {
 			switch attr.Type {
 			case astro.ShorthandAttribute:
 				attr.Type = astro.ExpressionAttribute
-				attr.Val = fmt.Sprintf(`%s + %s`, attr.Key, definedVars)
+				attr.Val = fmt.Sprintf("`${%s}; ${%s}`", attr.Key, definedVars)
 				n.Attr[i] = attr
 				return
 			case astro.EmptyAttribute:
