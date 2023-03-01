@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.2.0
+
+### Minor Changes
+
+- b2cfd00: Add teardown API to remove WASM instance after using the compiler
+
 ## 1.1.2
 
 ### Patch Changes
