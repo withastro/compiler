@@ -2548,7 +2548,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style expression attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style={myStyles}>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${myStyles} ${$$definedVars}` + BACKTICK + `, "style")} class="astro-ZWHEDDU6">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${myStyles}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-ZWHEDDU6">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2564,7 +2564,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style quoted attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style='color: yellow;'>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${"color: yellow;"} ${$$definedVars}` + BACKTICK + `, "style")} class="astro-RRT5RQ2H">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${"color: yellow;"}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-RRT5RQ2H">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2572,7 +2572,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style template literal attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style=`color: ${color};`>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${` + BACKTICK + `color: ${color};` + BACKTICK + `} ${$$definedVars}` + BACKTICK + `, "style")} class="astro-33XVGAES">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${` + BACKTICK + `color: ${color};` + BACKTICK + `}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-33XVGAES">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
