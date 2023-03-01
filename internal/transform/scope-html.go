@@ -64,17 +64,17 @@ func injectDefineVars(n *astro.Node, values []string) {
 				return
 			case astro.QuotedAttribute:
 				attr.Type = astro.ExpressionAttribute
-				attr.Val = fmt.Sprintf("`${\"%s\"} ${%s}`", attr.Val, definedVars)
+				attr.Val = fmt.Sprintf("`${\"%s\"}; ${%s}`", attr.Val, definedVars)
 				n.Attr[i] = attr
 				return
 			case astro.TemplateLiteralAttribute:
 				attr.Type = astro.ExpressionAttribute
-				attr.Val = fmt.Sprintf("`${`%s`} ${%s}`", attr.Val, definedVars)
+				attr.Val = fmt.Sprintf("`${`%s`}; ${%s}`", attr.Val, definedVars)
 				n.Attr[i] = attr
 				return
 			case astro.ExpressionAttribute:
 				attr.Type = astro.ExpressionAttribute
-				attr.Val = fmt.Sprintf("`${%s} ${%s}`", attr.Val, definedVars)
+				attr.Val = fmt.Sprintf("`${%s}; ${%s}`", attr.Val, definedVars)
 				n.Attr[i] = attr
 				return
 			}
