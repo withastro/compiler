@@ -131,6 +131,18 @@ export declare function convertToTSX(input: string, options?: ConvertToTSXOption
 // Works in browser: yes ("options" is required)
 export declare function initialize(options: InitializeOptions): Promise<void>;
 
+/**
+ * When calling the core compiler APIs, e.g. `transform`, `parse`, etc, they
+ * would automatically instantiate a WASM instance to process the input. When
+ * done, you can call this to manually teardown the WASM instance.
+ *
+ * If the APIs are called again, they will automatically instantiate a new WASM
+ * instance. In browsers, you have to call `initialize()` again before using the APIs.
+ *
+ * Note: Calling teardown is optional and exists mostly as an optimization only.
+ */
+export declare function teardown(): void;
+
 export interface InitializeOptions {
   // The URL of the "astro.wasm" file. This must be provided when running
   // astro in the browser.
