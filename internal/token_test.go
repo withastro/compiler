@@ -142,6 +142,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartTagToken, TextToken, EndTagToken, StartTagToken, EndTagToken, StartTagToken, EndTagToken, EndTagToken},
 		},
 		{
+			"Successive form elements with expressions inside theme",
+			`<form>{data.formLabelA}</form><form><button></button></form>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, StartTagToken, StartTagToken, EndTagToken, EndTagToken},
+		},
+		{
 			"text",
 			"test",
 			[]TokenType{TextToken},
