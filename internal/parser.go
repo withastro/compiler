@@ -1751,6 +1751,9 @@ func textIM(p *parser) bool {
 	case EndTagToken:
 		p.addLoc()
 		p.oe.pop()
+		if p.tok.DataAtom == a.Form {
+			p.form = nil
+		}
 		return true
 	case EndExpressionToken:
 		p.addLoc()
