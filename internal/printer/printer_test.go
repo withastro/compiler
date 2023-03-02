@@ -1987,6 +1987,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "Expression in form followed by another sibling form",
+			source: "<form>{data.formLabelA}</form><form><button></button></form>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<form>${data.formLabelA}</form><form><button></button></form>",
+			},
+		},
+		{
 			name:   "slot inside of Base",
 			source: `<Base title="Home"><div>Hello</div></Base>`,
 			want: want{
