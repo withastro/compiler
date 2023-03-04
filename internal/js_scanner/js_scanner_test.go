@@ -439,7 +439,14 @@ export type Props =
 
 export interface Foo {
 	bar: string;
-}`,
+}
+
+export type FooAndBar1 = 'Foo' &
+'Bar';
+export type FooAndBar2 = 'Foo'
+& 'Bar';
+export type FooOrBar = 'Foo'
+| 'Bar';`,
 			want: `export type Theme = 'light' | 'dark';
 export type Props =
 {
@@ -447,7 +454,13 @@ export type Props =
 }
 export interface Foo {
 	bar: string;
-}`,
+}
+export type FooAndBar1 = 'Foo' &
+'Bar';
+export type FooAndBar2 = 'Foo'
+& 'Bar';
+export type FooOrBar = 'Foo'
+| 'Bar';`,
 		},
 		{
 			name: "Picture",
