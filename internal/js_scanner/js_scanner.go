@@ -110,6 +110,9 @@ outer:
 						foundIdent = true
 					}
 				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
+					if next == js.LineTerminatorToken && i < len(source) && (source[i] == '&' || source[i] == '|') {
+						continue
+					}
 					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
 						continue
 					}
