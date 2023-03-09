@@ -1596,6 +1596,20 @@ import { Container, Col, Row } from 'react-bootstrap';
 			},
 		},
 		{
+			name:   "class list",
+			source: `<div class:list={['one', 'variable']} />`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute(['one', 'variable'], "class:list")}></div>`,
+			},
+		},
+		{
+			name:   "class and class list",
+			source: `<div class="two" class:list={['one', 'variable']} />`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div class="two"${$$addAttribute(['two', ['one', 'variable']], "class:list")}></div>`,
+			},
+		},
+		{
 			name:   "spread without style or class",
 			source: `<div {...Astro.props} />`,
 			want: want{

@@ -42,6 +42,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 				didAddDefinedVars = didAdd
 			}
 		}
+		mergeClassList(doc, n, &opts)
 	})
 	if len(definedVars) > 0 && !didAddDefinedVars {
 		for _, style := range doc.Styles {
@@ -452,4 +453,23 @@ func walk(doc *astro.Node, cb func(*astro.Node)) {
 		}
 	}
 	f(doc)
+}
+
+// This function merges the values of `class=""` and `class:list=""` in `class:list`
+func mergeClassList(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
+	var classListAttrValue string
+	var classListAttrIndex int
+	var classAttrValue string
+	for i, a := range n.Attr {
+		if a.Key == "class:list" {
+			classListAttrValue = a.Val
+			classListAttrIndex = i
+		}
+		if a.Key == "class" {
+			classAttrValue = a.Val
+		}
+	}
+	if classListAttrIndex > 0 {
+		n.Attr[classListAttrIndex].Val = fmt.Sprintf("['%s', %s]", classAttrValue, classListAttrValue)
+	}
 }
