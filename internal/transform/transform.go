@@ -458,8 +458,9 @@ func walk(doc *astro.Node, cb func(*astro.Node)) {
 // This function merges the values of `class=""` and `class:list=""` in `class:list`
 func mergeClassList(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	var classListAttrValue string
-	var classListAttrIndex int
+	var classListAttrIndex int = -1
 	var classAttrValue string
+	var classAttrIndex int = -1
 	for i, a := range n.Attr {
 		if a.Key == "class:list" {
 			classListAttrValue = a.Val
@@ -467,9 +468,18 @@ func mergeClassList(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 		}
 		if a.Key == "class" {
 			classAttrValue = a.Val
+			classAttrIndex = i
 		}
 	}
-	if classListAttrIndex > 0 {
+	if classListAttrIndex >= 0 && classAttrIndex >= 0 {
+		// we append the prepend the value of class to class:list
 		n.Attr[classListAttrIndex].Val = fmt.Sprintf("['%s', %s]", classAttrValue, classListAttrValue)
+		// Now that the value of `class` is carried by `class:list`, we can remove the `class` node from the AST.
+		// Doing so will allow us to generate valid HTML at runtime
+		n.Attr = remove(n.Attr, classAttrIndex)
 	}
+}
+
+func remove(slice []astro.Attribute, s int) []astro.Attribute {
+	return append(slice[:s], slice[s+1:]...)
 }
