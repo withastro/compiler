@@ -2001,6 +2001,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "Expression in form followed by other sibling forms",
+			source: "<form><p>No expression here. So the next form will render.</p></form><form><h3>{data.formLabelA}</h3></form><form><h3>{data.formLabelB}</h3></form><form><p>No expression here, but the last form before me had an expression, so my form didn't render.</p></form><form><h3>{data.formLabelC}</h3></form><div><p>Here is some in-between content</p></div><form><h3>{data.formLabelD}</h3></form>",
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<form><p>No expression here. So the next form will render.</p></form><form><h3>${data.formLabelA}</h3></form><form><h3>${data.formLabelB}</h3></form><form><p>No expression here, but the last form before me had an expression, so my form didn't render.</p></form><form><h3>${data.formLabelC}</h3></form><div><p>Here is some in-between content</p></div><form><h3>${data.formLabelD}</h3></form>",
+			},
+		},
+		{
 			name:   "slot inside of Base",
 			source: `<Base title="Home"><div>Hello</div></Base>`,
 			want: want{
