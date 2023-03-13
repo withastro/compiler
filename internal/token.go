@@ -1623,6 +1623,8 @@ func (z *Tokenizer) trackExpressionElementStack() {
 				}
 			}
 		}
+	} else if z.tt == SelfClosingTagToken {
+		z.openBraceIsExpressionStart = false
 	}
 }
 
