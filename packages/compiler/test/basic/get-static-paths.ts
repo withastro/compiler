@@ -84,4 +84,27 @@ const { MdxContent, frontmatter, url, file } = Astro.props;
   assert.match(result.code, '\nconst $$stdin = ', 'Expected getStaticPaths hoisting to maintain newlines');
 });
 
+test('getStaticPaths with types', async () => {
+  const FIXTURE = `---
+export async function getStaticPaths({
+  paginate,
+}: {
+  paginate: PaginateFunction;
+}) {
+  const allPages = (
+    await getCollection(
+      "blog"
+    )
+  );
+  return paginate(allPages, { pageSize: 10 });
+}
+---
+
+<div></div>
+`;
+  const result = await transform(FIXTURE);
+  assert.match(result.code, `{\n  paginate: PaginateFunction;\n}) {`, 'Expected output to contain getStaticPaths output');
+});
+
+
 test.run();
