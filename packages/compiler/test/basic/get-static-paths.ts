@@ -106,5 +106,4 @@ export async function getStaticPaths({
   assert.match(result.code, `{\n  paginate: PaginateFunction;\n}) {`, 'Expected output to contain getStaticPaths output');
 });
 
-
 test.run();
