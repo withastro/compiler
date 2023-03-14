@@ -840,6 +840,13 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "nested expressions VIII",
+			source: `<div>{ items.map(({ type, ...data }) => { switch (type) { case 'card': { return ( <Card {...data} /> ); } case 'paragraph': { return ( <p>{data.body}</p>);}}})}</div>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<div>${ items.map(({ type, ...data }) => { switch (type) { case 'card': { return ( $$render`${$$renderComponent($$result,'Card',Card,{...(data)})}` ); } case 'paragraph': { return ( $$render`<p>${data.body}</p>`);}}})}</div>",
+			},
+		},
+		{
 			name: "expressions with JS comments",
 			source: `---
 const items = ['red', 'yellow', 'blue'];

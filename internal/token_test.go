@@ -248,6 +248,11 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, StartTagToken, TextToken, EndTagToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
 		},
 		{
+			"expression with switch returning a mix of self-closing tags and elements",
+			`<div>{items.map(({ type, ...data }) => { switch (type) { case 'card': { return (<Card {...data} />);}case 'paragraph': { return (<p>{data.body}</p>);}}})}</div>`,
+			[]TokenType{StartTagToken, StartExpressionToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, TextToken, SelfClosingTagToken, TextToken, TextToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, TextToken, TextToken, EndExpressionToken, EndTagToken},
+		},
+		{
 			"expression with < operators",
 			`<div>{() => {
 				if (value < 0.25) {
