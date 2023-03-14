@@ -119,6 +119,10 @@ outer:
 					if flags["&"] || flags["="] {
 						continue
 					}
+					if pairs['('] > 0 {
+						continue
+					}
+
 					foundSemicolonOrLineTerminator = true
 				} else if js.IsPunctuator(next) {
 					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {

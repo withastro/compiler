@@ -330,6 +330,26 @@ const { a } = Astro.props;`,
 }`,
 		},
 		{
+			name: "getStaticPaths with TypeScript type",
+			source: `import { fn } from "package";
+
+export async function getStaticPaths({
+	paginate
+}: {
+	paginate: any
+}) {
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export async function getStaticPaths({
+	paginate
+}: {
+	paginate: any
+}) {
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
 			name: "export interface",
 			source: `import { a } from "a";
 export interface Props {
