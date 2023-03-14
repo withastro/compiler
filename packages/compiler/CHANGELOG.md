@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 1.2.1
+
+### Patch Changes
+
+- 348840b: Fix getStaticPaths export when used with a TypeScript type ([#4929](https://github.com/withastro/astro/issues/4929))
+- 8ed067e: Fix parse error for multiline `export type` using Unions or Intersections
+- 6354e50: Improve handling of self-closing tags returned from expression
+- 5a5f91d: Fix `define:vars` when used with a `style` attribute
+- b637e9a: Fix ignored `form` elements after a `form` element that contains an expression
+- 2658ed4: Correctly apply style when `class` and `class:list` are both used
+
 ## 1.2.0
 
 ### Minor Changes
