@@ -961,6 +961,34 @@ const name = "world";
 			},
 		},
 		{
+			name: "head expression and conditional renderin of fragment",
+			source: `---
+const testBool = true;
+---
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>{testBool ? "Hey" : "Bye"}</title>
+		{testBool && (<><meta name="description" content="test" /></>)}
+	</head>
+	<body>
+	  <div></div>
+	</body>
+</html>`,
+			want: want{
+				frontmatter: []string{``, `const testBool = true;`},
+				code: `<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>${testBool ? "Hey" : "Bye"}</title>
+		${testBool && ($$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `<meta name="description" content="test">` + BACKTICK + `,})}` + BACKTICK + `)}
+	` + RENDER_HEAD_RESULT + `</head>
+	<body>
+	  <div></div>
+	</body></html>`,
+			},
+		},
+		{
 			name: "styles (no frontmatter)",
 			source: `<style>
 		  .title {
