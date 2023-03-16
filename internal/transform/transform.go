@@ -43,6 +43,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 			}
 		}
 		mergeClassList(doc, n, &opts)
+		if n.DataAtom == a.Head {
+			doc.ContainsHead = true
+		}
 	})
 	if len(definedVars) > 0 && !didAddDefinedVars {
 		for _, style := range doc.Styles {
