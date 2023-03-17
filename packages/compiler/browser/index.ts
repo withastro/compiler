@@ -9,9 +9,14 @@ export const parse: typeof types.parse = (input, options) => {
   return ensureServiceIsRunning().parse(input, options);
 };
 
+export const convertToTSX: typeof types.convertToTSX = (input, options) => {
+  return ensureServiceIsRunning().convertToTSX(input, options);
+};
+
 interface Service {
   transform: typeof types.transform;
   parse: typeof types.parse;
+  convertToTSX: typeof types.convertToTSX;
 }
 
 let initializePromise: Promise<Service> | undefined;
@@ -69,6 +74,11 @@ const startRunningService = async (wasmURL: string): Promise<Service> => {
 
   return {
     transform: (input, options) => new Promise((resolve) => resolve(service.transform(input, options || {}))),
+    convertToTSX: (input, options) =>
+      new Promise((resolve) => resolve(service.convertToTSX(input, options || {}))).then((result: any) => ({
+        ...result,
+        map: JSON.parse(result.map),
+      })),
     parse: (input, options) => new Promise((resolve) => resolve(service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
   };
 };
