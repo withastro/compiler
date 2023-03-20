@@ -2750,6 +2750,14 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$renderComponent($$result,'Layout',Layout,{})}`,
 			},
 		},
+		{
+			name:     "complex recursive component",
+			source:   `{(<Fragment><Fragment set:html={` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `} />{Node.children.map((child) => (<Astro.self node={child} />))}<Fragment set:html={` + BACKTICK + `</${Node.tag}>` + BACKTICK + `} /></Fragment>)}`,
+			filename: "/projects/app/src/components/RenderNode.astro",
+			want: want{
+				code: `${($$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `)}` + BACKTICK + `,})}${Node.children.map((child) => ($$render` + BACKTICK + `${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}` + BACKTICK + `))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `</${Node.tag}>` + BACKTICK + `)}` + BACKTICK + `,})}` + BACKTICK + `,})})` + BACKTICK + `}`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
