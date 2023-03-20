@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.2.2
+
+### Patch Changes
+
+- a8a845f: Fix regression related to self-closing tags
+
 ## 1.2.1
 
 ### Patch Changes
