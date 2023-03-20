@@ -1626,6 +1626,7 @@ func (z *Tokenizer) trackExpressionElementStack() {
 	} else if z.tt == SelfClosingTagToken {
 		stack := z.expressionElementStack[i]
 		if len(stack) == 0 {
+			// Only switch out of this mode if we're not in an active stack
 			z.openBraceIsExpressionStart = false
 		}
 	}
