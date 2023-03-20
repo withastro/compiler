@@ -727,6 +727,13 @@ func TestExpressions(t *testing.T) {
 			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken},
 		},
 		{
+			"nested one level with self-closing tag before expression",
+			`{() => {
+				return <div><div />{value}</div>
+			}}`,
+			[]TokenType{StartExpressionToken, TextToken, TextToken, TextToken, StartTagToken, SelfClosingTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, TextToken, EndExpressionToken},
+		},
+		{
 			"nested two levels",
 			`{() => {
 				return <div>{() => {
