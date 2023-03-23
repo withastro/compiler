@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 1.3.0
+
+### Minor Changes
+
+- 95a6610: Expose the `convertToTSX` function in the compiler browser bundle
+- 6d168dd: Add ContainsHead flag for metadata
+
 ## 1.2.2
 
 ### Patch Changes
