@@ -88,6 +88,7 @@ export interface TransformResult {
   scripts: HoistedScript[];
   hydratedComponents: HydratedComponent[];
   clientOnlyComponents: HydratedComponent[];
+  containsHead: boolean;
 }
 
 export interface SourceMap {
