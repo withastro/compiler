@@ -37,6 +37,7 @@ type Options struct {
 	AddSourceMappings bool
 	LegalComments     config.LegalComments
 	Scope             string
+	ScopeStrategy     int
 }
 
 type PrintResult struct {

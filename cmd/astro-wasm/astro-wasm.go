@@ -111,16 +111,22 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 
 	preprocessStyle := options.Get("preprocessStyle")
 
+	scopedStyleStrategy := jsString(options.Get("scopedStyleStrategy"))
+	if scopedStyleStrategy == "" {
+		scopedStyleStrategy = "where"
+	}
+
 	return transform.TransformOptions{
-		Filename:           filename,
-		NormalizedFilename: normalizedFilename,
-		InternalURL:        internalURL,
-		SourceMap:          sourcemap,
-		AstroGlobalArgs:    astroGlobalArgs,
-		Compact:            compact,
-		ResolvePath:        resolvePathFn,
-		PreprocessStyle:    preprocessStyle,
-		ResultScopedSlot:   scopedSlot,
+		Filename:            filename,
+		NormalizedFilename:  normalizedFilename,
+		InternalURL:         internalURL,
+		SourceMap:           sourcemap,
+		AstroGlobalArgs:     astroGlobalArgs,
+		Compact:             compact,
+		ResolvePath:         resolvePathFn,
+		PreprocessStyle:     preprocessStyle,
+		ResultScopedSlot:    scopedSlot,
+		ScopedStyleStrategy: scopedStyleStrategy,
 	}
 }
 
