@@ -96,6 +96,17 @@ func expressionOnlyHasCommentBlock(n *Node) bool {
 		len(clean) == 0
 }
 
+func emptyTextNodeWithoutSiblings(n *Node) bool {
+	if strings.TrimSpace(n.Data) != "" {
+		return false
+	}
+	if n.PrevSibling == nil {
+		return n.NextSibling == nil || n.NextSibling.Expression
+	} else {
+		return n.PrevSibling.Expression
+	}
+}
+
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
@@ -587,7 +598,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 					// Only slot ElementNodes or non-empty TextNodes!
 					// CommentNode and others should not be slotted
-					if c.Type == ElementNode || (c.Type == TextNode && strings.TrimSpace(c.Data) != "") {
+					if c.Type == ElementNode || (c.Type == TextNode && !emptyTextNodeWithoutSiblings(c)) {
 						slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 					}
 				}
