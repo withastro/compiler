@@ -1270,7 +1270,18 @@ const name = 'named';
 			want: want{
 				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `		` + BACKTICK + `,[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,})}`,
+			},
+		},
+		{
+			name: "slots (named only)",
+			source: `<Slotted>
+      <span slot="a">A</span>
+      <span slot="b">B</span>
+      <span slot="c">C</span>
+    </Slotted>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Slotted',Slotted,{},{"a": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<span>A</span>` + BACKTICK + `,"b": () => $$render` + BACKTICK + `<span>B</span>` + BACKTICK + `,"c": () => $$render` + BACKTICK + `<span>C</span>` + BACKTICK + `,})}`,
 			},
 		},
 		{

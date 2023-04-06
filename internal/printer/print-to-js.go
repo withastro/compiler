@@ -612,9 +612,25 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(`$$mergeSlots(`)
 				}
 				p.print(`{`)
-				if len(slottedKeys) > 0 {
+				numberOfSlots := len(slottedKeys)
+				if numberOfSlots > 0 {
+				childrenLoop:
 					for _, slotProp := range slottedKeys {
 						children := slottedChildren[slotProp]
+
+						// If there are named slots, the default slot cannot be only whitespace
+						if numberOfSlots > 1 && slotProp == "\"default\"" {
+							// Loop over the children and verify that at least one non-whitespace node exists.
+							foundNonWhitespace := false
+							for _, child := range children {
+								if child.Type != TextNode || strings.TrimSpace(child.Data) != "" {
+									foundNonWhitespace = true
+								}
+							}
+							if !foundNonWhitespace {
+								continue childrenLoop
+							}
+						}
 
 						// If selected, pass through result object on the Astro side
 						if opts.opts.ResultScopedSlot {
