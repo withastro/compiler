@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.3.1
+
+### Patch Changes
+
+- e0baa85: Preserve whitespace in slots
+
 ## 1.3.0
 
 ### Minor Changes
