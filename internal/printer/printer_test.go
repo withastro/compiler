@@ -223,6 +223,18 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name: "Preserve slot whitespace",
+			source: `<Component>
+  <p>Paragraph 1</p>
+  <p>Paragraph 2</p>
+</Component>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `
+  ${$$maybeRenderHead($$result)}<p>Paragraph 1</p>
+  <p>Paragraph 2</p>` + BACKTICK + `,})}`,
+			},
+		},
+		{
 			name:   "text only",
 			source: "Hello!",
 			want: want{
@@ -913,7 +925,7 @@ import Component from "test";
 			want: want{
 				frontmatter: []string{`import Component from "test";`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -929,7 +941,7 @@ import Component from 'test';
 			want: want{
 				frontmatter: []string{`import Component from 'test';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -1148,7 +1160,9 @@ const someProps = {
   ` + RENDER_HEAD_RESULT + `</head>
   <body class="astro-HMNNHVCQ">
     <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter.jsx"),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `<h1 class="astro-HMNNHVCQ">Hello React!</h1>` + "`" + `,})}
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter.jsx"),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `
+        <h1 class="astro-HMNNHVCQ">Hello React!</h1>
+      ` + "`" + `,})}
     </main>
   </body></html>
   `,
@@ -1257,6 +1271,17 @@ const name = 'named';
 				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
 				code:        `${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,})}`,
+			},
+		},
+		{
+			name: "slots (named only)",
+			source: `<Slotted>
+      <span slot="a">A</span>
+      <span slot="b">B</span>
+      <span slot="c">C</span>
+    </Slotted>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Slotted',Slotted,{},{"a": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<span>A</span>` + BACKTICK + `,"b": () => $$render` + BACKTICK + `<span>B</span>` + BACKTICK + `,"c": () => $$render` + BACKTICK + `<span>C</span>` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -1615,7 +1640,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			want: want{
 				frontmatter: []string{`import { Container, Col, Row } from 'react-bootstrap';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'react-bootstrap', assert: {} }`}},
-				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`${$$maybeRenderHead($$result)}<h1>Hi!</h1>`,})}`,})}`,})}",
+				code:        "${$$renderComponent($$result,'Container',Container,{},{\"default\": () => $$render`\n    ${$$renderComponent($$result,'Row',Row,{},{\"default\": () => $$render`\n        ${$$renderComponent($$result,'Col',Col,{},{\"default\": () => $$render`\n            ${$$maybeRenderHead($$result)}<h1>Hi!</h1>\n        `,})}\n    `,})}`,})}",
 			},
 		},
 		{

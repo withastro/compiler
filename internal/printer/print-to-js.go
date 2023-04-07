@@ -96,6 +96,17 @@ func expressionOnlyHasCommentBlock(n *Node) bool {
 		len(clean) == 0
 }
 
+func emptyTextNodeWithoutSiblings(n *Node) bool {
+	if strings.TrimSpace(n.Data) != "" {
+		return false
+	}
+	if n.PrevSibling == nil {
+		return n.NextSibling == nil || n.NextSibling.Expression
+	} else {
+		return n.PrevSibling.Expression
+	}
+}
+
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
@@ -587,7 +598,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 					// Only slot ElementNodes or non-empty TextNodes!
 					// CommentNode and others should not be slotted
-					if c.Type == ElementNode || (c.Type == TextNode && strings.TrimSpace(c.Data) != "") {
+					if c.Type == ElementNode || (c.Type == TextNode && !emptyTextNodeWithoutSiblings(c)) {
 						slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 					}
 				}
@@ -601,9 +612,25 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(`$$mergeSlots(`)
 				}
 				p.print(`{`)
-				if len(slottedKeys) > 0 {
+				numberOfSlots := len(slottedKeys)
+				if numberOfSlots > 0 {
+				childrenLoop:
 					for _, slotProp := range slottedKeys {
 						children := slottedChildren[slotProp]
+
+						// If there are named slots, the default slot cannot be only whitespace
+						if numberOfSlots > 1 && slotProp == "\"default\"" {
+							// Loop over the children and verify that at least one non-whitespace node exists.
+							foundNonWhitespace := false
+							for _, child := range children {
+								if child.Type != TextNode || strings.TrimSpace(child.Data) != "" {
+									foundNonWhitespace = true
+								}
+							}
+							if !foundNonWhitespace {
+								continue childrenLoop
+							}
+						}
 
 						// If selected, pass through result object on the Astro side
 						if opts.opts.ResultScopedSlot {
