@@ -1,8 +1,8 @@
-export type { PreprocessorResult, ParseOptions, TransformOptions, HoistedScript, TransformResult, ParseResult } from '../shared/types';
-import type * as types from '../shared/types';
+export type { HoistedScript, ParseOptions, ParseResult, PreprocessorResult, TransformOptions, TransformResult } from '../shared/types';
 import { promises as fs } from 'fs';
-import Go from './wasm_exec.js';
 import { fileURLToPath } from 'url';
+import type * as types from '../shared/types';
+import Go from './wasm_exec.js';
 
 export const transform: typeof types.transform = async (input, options) => {
   return getService().then((service) => service.transform(input, options));
