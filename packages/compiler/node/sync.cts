@@ -1,6 +1,7 @@
-import { promises as fs } from 'fs';
+import { readFileSync } from 'node:fs';
 import type * as types from '../shared/types';
 import Go from './wasm_exec';
+import { join } from 'node:path';
 
 type UnwrappedPromise<T> = T extends (...params: any) => Promise<infer Return> ? (...params: Parameters<T>) => Return : T;
 
@@ -12,7 +13,7 @@ interface Service {
 
 function getService(): Service {
   if (!longLivedService) {
-    throw new Error("Service hasn't been started. Start it with startRunningService.");
+    longLivedService = startRunningService();
   }
   return longLivedService;
 }
@@ -29,12 +30,12 @@ export const convertToTSX = ((input, options) => {
   return getService().convertToTSX(input, options);
 }) satisfies Service['convertToTSX'];
 
-export async function startRunningService(wasmPath: string) {
+export function startRunningService(): Service {
   const go = new Go();
-  const wasm = await instantiateWASM(wasmPath, go.importObject);
-  go.run(wasm.instance);
+  const wasm = instantiateWASM(join(__dirname, '../astro.wasm'), go.importObject);
+  go.run(wasm);
   const _service: any = (globalThis as any)['@astrojs/compiler'];
-  longLivedService = {
+  return {
     transform: (input, options) => {
       try {
         return _service.transform(input, options || {});
@@ -53,18 +54,9 @@ export async function startRunningService(wasmPath: string) {
       return { ...result, map: JSON.parse(result.map) };
     },
   };
-
-  return 'hey';
 }
 
-async function instantiateWASM(wasmURL: string, importObject: Record<string, any>): Promise<WebAssembly.WebAssemblyInstantiatedSource> {
-  let response = undefined;
-
-  const fetchAndInstantiateTask = async () => {
-    const wasmArrayBuffer = await fs.readFile(wasmURL).then((res) => res.buffer);
-    return WebAssembly.instantiate(new Uint8Array(wasmArrayBuffer), importObject);
-  };
-  response = await fetchAndInstantiateTask();
-
-  return response;
+function instantiateWASM(wasmURL: string, importObject: Record<string, any>): WebAssembly.Instance {
+  const wasmArrayBuffer = readFileSync(wasmURL);
+  return new WebAssembly.Instance(new WebAssembly.Module(wasmArrayBuffer), importObject);
 }

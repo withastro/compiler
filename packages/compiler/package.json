@@ -22,8 +22,8 @@
       "default": "./browser/index.js"
     },
     "./sync": {
-      "import": "./node/sync.js",
-      "default": "./node/sync.js"
+      "import": "./node/sync.cjs",
+      "default": "./node/sync.cjs"
     },
     "./utils": {
       "browser": "./browser/utils.js",
