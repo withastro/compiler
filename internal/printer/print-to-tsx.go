@@ -143,6 +143,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 		}
 		componentName := getTSXComponentName(p.opts.Filename)
 
+		p.addSourceMapping(loc.Loc{Start: 0})
 		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}", componentName, props.Statement, props.Ident, props.Generics))
 		return
 	}
