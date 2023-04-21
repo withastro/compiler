@@ -63,4 +63,4 @@ A `devcontainer` configuration is available for use with VSCode's [Remote Develo
 
 ## Contributing
 
-[CONTRIBUTING.md](./CONTRIBUTING.md)
+[CONTRIBUTING.md](/CONTRIBUTING.md)
