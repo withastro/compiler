@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 1.3.2
+
+### Patch Changes
+
+- 19c0176: Fix TSX sourcemapping for components using Windows-style line returns
+- b0e0cfd: Add a sync entrypoint
+
 ## 1.3.1
 
 ### Patch Changes
