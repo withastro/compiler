@@ -41,9 +41,9 @@ func ScopeStyle(styles []*astro.Node, opts TransformOptions) bool {
 		if n.FirstChild == nil || strings.TrimSpace(n.FirstChild.Data) == "" {
 			continue
 		}
-		scopeStrategy := 1
+		scopeStrategy := css_printer.ScopeStrategyWhere
 		if opts.ScopedStyleStrategy == "class" {
-			scopeStrategy = 2
+			scopeStrategy = css_printer.ScopeStrategyClass
 		}
 
 		// Use vendored version of esbuild internals to parse AST
