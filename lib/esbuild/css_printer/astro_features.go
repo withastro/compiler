@@ -8,7 +8,13 @@ import (
 )
 
 func (p *printer) printScopedSelector() bool {
-	p.print(fmt.Sprintf(":where(.astro-%s)", p.options.Scope))
+	var str string
+	if p.options.ScopeStrategy == ScopeStrategyWhere {
+		str = fmt.Sprintf(":where(.astro-%s)", p.options.Scope)
+	} else {
+		str = fmt.Sprintf(".astro-%s", p.options.Scope)
+	}
+	p.print(str)
 	return true
 }
 

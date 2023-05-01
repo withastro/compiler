@@ -11,9 +11,10 @@ import (
 )
 
 type testcase_css struct {
-	name   string
-	source string
-	want   string
+	name                string
+	source              string
+	want                string
+	scopedStyleStrategy string
 }
 
 func TestPrinterCSS(t *testing.T) {
@@ -35,6 +36,24 @@ func TestPrinterCSS(t *testing.T) {
 		<p class="body">I’m a page</p>`,
 			want: ".title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}",
 		},
+		{
+			name: "scopedStyleStrategy: 'class'",
+			source: `<style>
+		  .title {
+		    font-family: fantasy;
+		    font-size: 28px;
+		  }
+
+		  .body {
+		    font-size: 1em;
+		  }
+		</style>
+
+		<h1 class="title">Page Title</h1>
+		<p class="body">I’m a page</p>`,
+			scopedStyleStrategy: "class",
+			want:                ".title.astro-DPOHFLYM{font-family:fantasy;font-size:28px}.body.astro-DPOHFLYM{font-size:1em}",
+		},
 	}
 
 	for _, tt := range tests {
@@ -48,9 +67,14 @@ func TestPrinterCSS(t *testing.T) {
 				t.Error(err)
 			}
 
+			scopedStyleStrategy := "where"
+			if tt.scopedStyleStrategy == "class" {
+				scopedStyleStrategy = tt.scopedStyleStrategy
+			}
+
 			hash := astro.HashString(code)
 			transform.ExtractStyles(doc)
-			transform.Transform(doc, transform.TransformOptions{Scope: hash}, handler.NewHandler(code, "/test.astro")) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+			transform.Transform(doc, transform.TransformOptions{Scope: hash, ScopedStyleStrategy: scopedStyleStrategy}, handler.NewHandler(code, "/test.astro")) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintCSS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",
 				InternalURL: "http://localhost:3000/",

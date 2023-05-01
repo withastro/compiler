@@ -41,10 +41,15 @@ func ScopeStyle(styles []*astro.Node, opts TransformOptions) bool {
 		if n.FirstChild == nil || strings.TrimSpace(n.FirstChild.Data) == "" {
 			continue
 		}
+		scopeStrategy := css_printer.ScopeStrategyWhere
+		if opts.ScopedStyleStrategy == "class" {
+			scopeStrategy = css_printer.ScopeStrategyClass
+		}
+
 		// Use vendored version of esbuild internals to parse AST
 		tree := css_parser.Parse(logger.Log{AddMsg: func(msg logger.Msg) {}}, logger.Source{Contents: n.FirstChild.Data}, css_parser.Options{MinifySyntax: false, MinifyWhitespace: true})
 		// esbuild's internal `css_printer` has been modified to emit Astro scoped styles
-		result := css_printer.Print(tree, css_printer.Options{MinifyWhitespace: true, Scope: opts.Scope})
+		result := css_printer.Print(tree, css_printer.Options{MinifyWhitespace: true, Scope: opts.Scope, ScopeStrategy: scopeStrategy})
 		n.FirstChild.Data = string(result.CSS)
 	}
 
