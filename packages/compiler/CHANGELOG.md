@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.4.0
+
+### Minor Changes
+
+- fc0f470: Implements the scopedStyleStrategy option
+
 ## 1.3.2
 
 ### Patch Changes
