@@ -204,4 +204,14 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('fragment with no name', async () => {
+  const input = '<>+0123456789</>';
+  const output = `<Fragment>
+<>+0123456789</>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test.run();
