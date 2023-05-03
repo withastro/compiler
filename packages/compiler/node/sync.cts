@@ -46,12 +46,22 @@ export function startRunningService(): Service {
       }
     },
     parse: (input, options) => {
-      const result = _service.parse(input, options || {});
-      return { ...result, ast: JSON.parse(result.ast) };
+      try {
+        const result = _service.parse(input, options || {});
+        return { ...result, ast: JSON.parse(result.ast) };
+      } catch (err) {
+        longLivedService = void 0;
+        throw err;
+      }
     },
     convertToTSX: (input, options) => {
-      const result = _service.convertToTSX(input, options || {});
-      return { ...result, map: JSON.parse(result.map) };
+      try {
+        const result = _service.convertToTSX(input, options || {});
+        return { ...result, map: JSON.parse(result.map) };
+      } catch (err) {
+        longLivedService = void 0;
+        throw err;
+      }
     },
   };
 }
