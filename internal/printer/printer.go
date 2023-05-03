@@ -66,7 +66,10 @@ func (p *printer) println(text string) {
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
 	lastPos := -1
-	for pos, c := range text {
+	// return is not a valid syntax inside tagged templates:
+	// `some string ${ return something; }`
+	newString := strings.Replace(text, "return", "", -1)
+	for pos, c := range newString {
 		diff := pos - lastPos
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))

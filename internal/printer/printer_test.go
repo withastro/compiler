@@ -1952,6 +1952,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "return expression",
+			source: `function foo() { return "bar" }`,
+			want: want{
+				code: `function foo() ${  "bar"}`,
+			},
+		},
+		{
 			name:   "escaped entity",
 			source: `<img alt="A person saying &#x22;hello&#x22;">`,
 			want: want{
