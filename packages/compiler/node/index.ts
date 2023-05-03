@@ -74,11 +74,22 @@ const startRunningService = async (): Promise<Service> => {
           throw err;
         }
       }),
-    parse: (input, options) => new Promise((resolve) => resolve(_service.parse(input, options || {}))).then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
+    parse: (input, options) =>
+      new Promise((resolve) => resolve(_service.parse(input, options || {})))
+        .catch((error) => {
+          longLivedService = void 0;
+          throw error;
+        })
+        .then((result: any) => ({ ...result, ast: JSON.parse(result.ast) })),
     convertToTSX: (input, options) => {
-      return new Promise((resolve) => resolve(_service.convertToTSX(input, options || {}))).then((result: any) => {
-        return { ...result, map: JSON.parse(result.map) };
-      });
+      return new Promise((resolve) => resolve(_service.convertToTSX(input, options || {})))
+        .catch((error) => {
+          longLivedService = void 0;
+          throw error;
+        })
+        .then((result: any) => {
+          return { ...result, map: JSON.parse(result.map) };
+        });
     },
   };
 };
