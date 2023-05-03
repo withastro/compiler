@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.4.1
+
+### Patch Changes
+
+- 0803e86: Handle crashes when using `parse` and `convertToTSX` by restarting the service
+
 ## 1.4.0
 
 ### Minor Changes
