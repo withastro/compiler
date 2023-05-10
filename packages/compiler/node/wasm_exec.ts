@@ -24,11 +24,13 @@ if (!globalThis.process) {
 
 if (!globalThis.crypto) {
   Object.defineProperty(globalThis, 'crypto', {
-    value: {
-      getRandomValues(b) {
-        return crypto.randomFillSync(b);
-      },
-    },
+    value: crypto.webcrypto
+      ? crypto.webcrypto
+      : {
+          getRandomValues(b) {
+            return crypto.randomFillSync(b);
+          },
+        },
   });
 }
 
