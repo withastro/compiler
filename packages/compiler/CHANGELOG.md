@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 1.4.2
+
+### Patch Changes
+
+- e104c1c: Polyfill the entire crypto object if node >= v16.17.0
+- 6f7b2f6: Fix crash when transforming files with Windows line endings
+
 ## 1.4.1
 
 ### Patch Changes
