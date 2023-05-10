@@ -69,7 +69,7 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	for pos, c := range text {
 		diff := pos - lastPos
 		// Handle Windows-specific "\r\n" newlines
-		if c == '\r' && len(text[pos:]) > 0 && text[pos + 1] == '\n' {
+		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
 			start += diff
 			lastPos = pos
 			continue
