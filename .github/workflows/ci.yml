@@ -46,7 +46,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 16
           cache: 'pnpm'
 
       - name: Build WASM
@@ -81,7 +81,7 @@ jobs:
       - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 16
           cache: 'pnpm'
       - run: pnpm install
       - run: pnpm run lint
