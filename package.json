@@ -19,7 +19,7 @@
     "test:stress": "tsx packages/compiler/test/stress/index.ts",
     "test:ci": "pnpm run test && pnpm run test:stress"
   },
-  "packageManager": "pnpm@7.13.4",
+  "packageManager": "pnpm@8.5.0",
   "workspaces": [
     "packages/*"
   ],
