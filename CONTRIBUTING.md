@@ -12,7 +12,7 @@ If you use VS Code as your primary editor, installing the [Go extension][go-vsco
 
 ### Node
 
-You will also need [Node.js][node] installed, as well as PNPM 7.x (`npm i -g pnpm`). More often than not, you won’t need to touch JS in this repo, but in case you do, be sure to run `pnpm install` first.
+You will also need [Node.js][node] installed, as well as PNPM 8.x (`npm i -g pnpm`). More often than not, you won’t need to touch JS in this repo, but in case you do, be sure to run `pnpm install` first.
 
 ## Code Structure
 
