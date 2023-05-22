@@ -17,7 +17,7 @@ func ScopeElement(n *astro.Node, opts TransformOptions) {
 func AddDefineVars(n *astro.Node, values []string) bool {
 	if n.Type == astro.ElementNode && !n.Component {
 		if _, noScope := NeverScopedElements[n.Data]; !noScope {
-			if IsTopLevel(n) {
+			if !IsImplicitNode(n) {
 				injectDefineVars(n, values)
 				return true
 			}

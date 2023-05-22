@@ -2694,6 +2694,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "define:vars on non-root elements",
+			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style>{true ? <h1>foo</h1> : <h1>bar</h1>}",
+			want: want{
+				code:        `${true ? $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<h1 class="astro-34AO5S3B"${$$addAttribute($$definedVars, "style")}>foo</h1>` + BACKTICK + ` : $$render` + BACKTICK + `<h1 class="astro-34AO5S3B"${$$addAttribute($$definedVars, "style")}>bar</h1>` + BACKTICK + `}`,
+				definedVars: []string{"{color:'green'}"},
+			},
+		},
+		{
 			name: "define:vars on script with StaticExpression turned on",
 			// 1. An inline script with is:inline - right
 			// 2. A hoisted script - wrong, shown up in scripts.add
