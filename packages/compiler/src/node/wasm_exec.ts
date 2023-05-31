@@ -6,9 +6,9 @@
 //
 // This file has been modified for use by Astro.
 
-import fs from 'fs';
-import crypto from 'crypto';
-import { TextEncoder, TextDecoder } from 'util';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { TextDecoder, TextEncoder } from 'node:util';
 
 if (!globalThis.fs) {
   Object.defineProperty(globalThis, 'fs', {

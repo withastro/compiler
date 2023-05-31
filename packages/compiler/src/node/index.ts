@@ -1,6 +1,6 @@
 export type { HoistedScript, ParseOptions, ParseResult, PreprocessorResult, TransformOptions, TransformResult } from '../shared/types';
-import { promises as fs } from 'fs';
-import { fileURLToPath } from 'url';
+import { promises as fs } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import type * as types from '../shared/types';
 import Go from './wasm_exec.js';
 

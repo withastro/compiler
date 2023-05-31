@@ -5,10 +5,10 @@ GO_FLAGS += -trimpath
 
 
 wasm: internal/*/*.go go.mod
-	CGO_ENABLED=0 GOOS=js GOARCH=wasm go build $(GO_FLAGS) -o ./packages/compiler/astro.wasm ./cmd/astro-wasm/astro-wasm.go
+	CGO_ENABLED=0 GOOS=js GOARCH=wasm go build $(GO_FLAGS) -o ./packages/compiler/wasm/astro.wasm ./cmd/astro-wasm/astro-wasm.go
 
 
-publish-node: 
+publish-node:
 	make wasm
 	cd packages/compiler && pnpm run build
 

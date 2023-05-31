@@ -1,1 +1,1 @@
-export * from './node/sync.cjs';
+export * from './dist/node/sync.js';
