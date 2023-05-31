@@ -43,7 +43,7 @@
       "default": "./dist/browser/utils.js"
     },
     "./astro.wasm": "./dist/astro.wasm",
-    "./types": "./dist/shared/types.d.ts"
+    "./package.json": "./package.json"
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.16",
