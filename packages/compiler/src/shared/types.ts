@@ -15,6 +15,7 @@ export interface ParseOptions {
   position?: boolean;
 }
 
+// eslint-disable-next-line no-shadow
 export enum DiagnosticSeverity {
   Error = 1,
   Warning = 2,
