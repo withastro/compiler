@@ -7,8 +7,8 @@
     "declaration": true,
     "noImplicitOverride": true,
     "noUnusedLocals": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true
   },
-  "include": ["browser", "node", "shared"],
   "exclude": ["node_modules"]
 }

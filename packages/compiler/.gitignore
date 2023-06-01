@@ -1,8 +1,2 @@
-browser/**/*.js
-browser/**/*.d.ts
-node/**/*.js
-node/**/*.d.ts
-node/**/*.cjs
-node/**/*.d.cts
-shared/**/*.js
-shared/**/*.d.ts
+dist
+wasm

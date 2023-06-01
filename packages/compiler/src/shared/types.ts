@@ -1,7 +1,6 @@
-import { RootNode } from './ast';
-import { DiagnosticCode } from './diagnostics';
-export * from './ast';
-export * from './diagnostics';
+import type { RootNode } from './ast';
+import type { DiagnosticCode } from './diagnostics';
+export type * from './ast';
 
 export interface PreprocessorResult {
   code: string;
@@ -12,7 +11,6 @@ export interface PreprocessorError {
   error: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ParseOptions {
   position?: boolean;
 }

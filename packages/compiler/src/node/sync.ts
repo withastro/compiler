@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type * as types from '../shared/types';
 import Go from './wasm_exec.js';
 
@@ -32,7 +32,7 @@ export const convertToTSX = ((input, options) => {
 
 export function startRunningService(): Service {
   const go = new Go();
-  const wasm = instantiateWASM(join(__dirname, '../astro.wasm'), go.importObject);
+  const wasm = instantiateWASM(fileURLToPath(new URL('../astro.wasm', import.meta.url)), go.importObject);
   go.run(wasm);
   const _service: any = (globalThis as any)['@astrojs/compiler'];
   return {

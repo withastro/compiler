@@ -1,18 +1,18 @@
-import {
+import type {
+  CommentNode,
+  ComponentNode,
+  CustomElementNode,
+  DoctypeNode,
+  ElementNode,
+  ExpressionNode,
+  FragmentNode,
+  FrontmatterNode,
+  LiteralNode,
   Node,
   ParentNode,
   RootNode,
-  ElementNode,
-  CustomElementNode,
-  ComponentNode,
-  FragmentNode,
-  LiteralNode,
   TagLikeNode,
-  ExpressionNode,
   TextNode,
-  CommentNode,
-  DoctypeNode,
-  FrontmatterNode,
 } from '../shared/ast';
 
 export interface Visitor {
@@ -94,7 +94,7 @@ function serializeAttributes(node: TagLikeNode): string {
         break;
       }
       case 'spread': {
-        output += `{...${attr.name}}`;
+        output += `{...${attr.value}}`;
         break;
       }
     }
