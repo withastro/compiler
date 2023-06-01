@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 1.5.0
+
+### Minor Changes
+
+- 4255b03: Export package as dual CJS / ESM
+
+### Patch Changes
+
+- ae67f1b: Apply `define:vars` to non-root elements
+
 ## 1.4.2
 
 ### Patch Changes
