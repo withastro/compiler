@@ -1,6 +1,6 @@
+import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
 
 const PREFIX = `/**
  * Astro global available in all contexts in .astro files
@@ -19,7 +19,6 @@ export function getStaticProps() {
 
 <div></div>`;
   const output =
-    PREFIX +
     '\n' +
     `type Props = Record<string, never>;
 export function getStaticProps() {
@@ -29,7 +28,8 @@ export function getStaticProps() {
 "";<Fragment>
 <div></div>
 </Fragment>
-export default function __AstroComponent_(_props: Props): any {}`;
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });

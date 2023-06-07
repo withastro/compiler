@@ -19,7 +19,7 @@ let value = 'world';
 <div></div>
 
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -41,7 +41,7 @@ let value = 'world';
 <div></div>
 
 </Fragment>
-export default function Test__AstroComponent_(_props: Record<string, any>): any {}`;
+export default function Test__AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { filename: '/Users/nmoo/test.astro', sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -51,7 +51,7 @@ test('moves @attributes to spread', async () => {
   const output = `<Fragment>
 <div name="value" {...{"@click":(() => {})}}></div>
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -71,7 +71,7 @@ console.log("hello")
 {hello}
 
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -91,7 +91,7 @@ const { hello } = Astro.props
 <div class={hello}></div>
 
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -101,7 +101,7 @@ test('moves attributes with dots in them to spread', async () => {
   const output = `<Fragment>
 <div name="value" {...{"x-on:keyup.shift.enter":"alert('Astro')"}}></div>
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -111,7 +111,7 @@ test('moves attributes that starts with : to spread', async () => {
   const output = `<Fragment>
 <div name="value" {...{":class":"hey"}}></div>
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -121,7 +121,7 @@ test("Don't move attributes to spread unnecessarily", async () => {
   const output = `<Fragment>
 <div 丽dfds_fsfdsfs name="value"></div>
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -131,7 +131,7 @@ test('preserves unclosed tags', async () => {
   const output = `<Fragment>
 <components.
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -141,7 +141,7 @@ test('template literal attribute', async () => {
   const output = `<Fragment>
 <div class={\`\${hello}\`}></div>
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -158,7 +158,7 @@ const myMarkdown = await import('../content/post.md');
 <Fragment>
 <myMarkdown.
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -177,7 +177,7 @@ const myMarkdown = await import('../content/post.md');
 <myMarkdown.
 
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -187,7 +187,7 @@ test('spread object', async () => {
   const output = `<Fragment>
 <DocSearch {...{ lang, labels: { modal, placeholder } }} client:only="preact" />
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -199,7 +199,7 @@ test('spread object II', async () => {
 <MainLayout {...Astro.props}>
 </MainLayout>
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
