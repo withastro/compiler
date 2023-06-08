@@ -1,6 +1,6 @@
+import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
 
 // https://mathiasbynens.be/notes/javascript-identifiers
 const value = `
@@ -62,7 +62,7 @@ ${value}
 <div></div>
 
 </Fragment>
-export default function __AstroComponent_(_props: Record<string, any>): any {}`;
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
