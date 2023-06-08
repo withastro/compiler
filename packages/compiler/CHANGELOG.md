@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.5.1
+
+### Patch Changes
+
+- a51227d: Move `declare const` for Props type at the bottom of the file to make mapping easier downstream
+
 ## 1.5.0
 
 ### Minor Changes
