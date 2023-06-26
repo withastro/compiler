@@ -148,81 +148,12 @@ test('space normalization around text', async () => {
       assert.match(await minify(input), output);
     })
   );
-  // await Promise.all([
-  //   ' a <? b ?> c ',
-  //   '<!-- d --> a <? b ?> c ',
-  //   ' <!-- d -->a <? b ?> c ',
-  //   ' a<!-- d --> <? b ?> c ',
-  //   ' a <!-- d --><? b ?> c ',
-  //   ' a <? b ?><!-- d --> c ',
-  //   ' a <? b ?> <!-- d -->c ',
-  //   ' a <? b ?> c<!-- d --> ',
-  //   ' a <? b ?> c <!-- d -->'
-  // ].map(async (input) => {
-  //   expect(await minify(input, {
-  //     collapseWhitespace: true,
-  //     conservativeCollapse: true
-  //   })).toBe(input, input);
-  //   expect(await minify(input, {
-  //     collapseWhitespace: true,
-  //     removeComments: true
-  //   })).toBe('a <? b ?> c', input);
-  //   expect(await minify(input, {
-  //     collapseWhitespace: true,
-  //     conservativeCollapse: true,
-  //     removeComments: true
-  //   })).toBe(' a <? b ?> c ', input);
-  //   input = '<p>' + input + '</p>';
-  //   expect(await minify(input, {
-  //     collapseWhitespace: true,
-  //     conservativeCollapse: true
-  //   })).toBe(input, input);
-  //   expect(await minify(input, {
-  //     collapseWhitespace: true,
-  //     removeComments: true
-  //   })).toBe('<p>a <? b ?> c</p>', input);
-  //   expect(await minify(input, {
-  //     collapseWhitespace: true,
-  //     conservativeCollapse: true,
-  //     removeComments: true
-  //   })).toBe('<p> a <? b ?> c </p>', input);
-  // }));
-  // input = '<li><i></i> <b></b> foo</li>';
-  // output = '<li><i></i> <b></b> foo</li>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<li><i> </i> <b></b> foo</li>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<li> <i></i> <b></b> foo</li>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<li><i></i> <b> </b> foo</li>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<li> <i> </i> <b> </b> foo</li>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<div> <a href="#"> <span> <b> foo </b> <i> bar </i> </span> </a> </div>';
-  // output = '<div><a href="#"><span><b>foo </b><i>bar</i></span></a></div>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<head> <!-- a --> <!-- b --><link> </head>';
-  // output = '<head><!-- a --><!-- b --><link></head>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<head> <!-- a --> <!-- b --> <!-- c --><link> </head>';
-  // output = '<head><!-- a --><!-- b --><!-- c --><link></head>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<p> foo\u00A0bar\nbaz  \u00A0\nmoo\t</p>';
-  // output = '<p>foo\u00A0bar baz \u00A0 moo</p>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<label> foo </label>\n' +
-  //   '<input>\n' +
-  //   '<object> bar </object>\n' +
-  //   '<select> baz </select>\n' +
-  //   '<textarea> moo </textarea>\n';
-  // output = '<label>foo</label> <input> <object>bar</object> <select>baz</select> <textarea> moo </textarea>';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
-  // input = '<pre>\n' +
-  //   'foo\n' +
-  //   '<br>\n' +
-  //   'bar\n' +
-  //   '</pre>\n' +
-  //   'baz\n';
-  // output = '<pre>\nfoo\n<br>\nbar\n</pre>baz';
-  // expect(await minify(input, { collapseWhitespace: true })).toBe(output);
+});
+
+test('surrounded by newlines #7401', async () => {
+  const input = '<span>foo</span>\n\t\tbar\n\t\t<span>baz</span>';
+  const output = '<span>foo</span>bar<span>baz</span>';
+  const result = await minify(input);
+
+  assert.match(result, output);
 });

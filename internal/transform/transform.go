@@ -284,34 +284,37 @@ func collapseWhitespace(doc *astro.Node) {
 				return
 			}
 			originalLen := len(n.Data)
-			hasNewline := false
+			hasLeftNewline := false
 			n.Data = strings.TrimLeftFunc(n.Data, func(r rune) bool {
 				if r == '\n' {
-					hasNewline = true
+					hasLeftNewline = true
 				}
 				return unicode.IsSpace(r)
 			})
 			if originalLen != len(n.Data) {
-				if hasNewline {
+				if hasLeftNewline {
 					n.Data = "\n" + n.Data
 				} else {
 					n.Data = " " + n.Data
 				}
 			}
-			hasNewline = false
+			hasRightNewline := false
 			originalLen = len(n.Data)
 			n.Data = strings.TrimRightFunc(n.Data, func(r rune) bool {
 				if r == '\n' {
-					hasNewline = true
+					hasRightNewline = true
 				}
 				return unicode.IsSpace(r)
 			})
 			if originalLen != len(n.Data) {
-				if hasNewline {
+				if hasRightNewline {
 					n.Data = n.Data + "\n"
 				} else {
 					n.Data = n.Data + " "
 				}
+			}
+			if hasLeftNewline && hasRightNewline {
+				n.Data = strings.TrimSpace(n.Data)
 			}
 		}
 	})
