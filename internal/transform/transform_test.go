@@ -355,7 +355,7 @@ func TestCompactTransform(t *testing.T) {
 		{
 			name:   "collapse surrounding newlines",
 			source: "<div>\n\n\tC O O L\n\n\t</div>",
-			want:   "<div>\nC O O L\n</div>",
+			want:   "<div>C O O L</div>",
 		},
 		{
 			name:   "expression trim first",
