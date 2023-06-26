@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.5.2
+
+### Patch Changes
+
+- 73a98c2: Fix `compressHTML` edge case when both leading and trailing whitespace is present
+
 ## 1.5.1
 
 ### Patch Changes
