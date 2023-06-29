@@ -258,15 +258,19 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 	p.hasFuncPrelude = true
 }
 
-func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
+func (p *printer) printFuncSuffix(opts transform.TransformOptions, n *astro.Node) {
 	componentName := getComponentName(opts.Filename)
 	p.addNilSourceMapping()
+	filenameArg := "undefined"
+	propagationArg := "undefined"
 	if len(opts.Filename) > 0 {
 		escapedFilename := strings.ReplaceAll(opts.Filename, "'", "\\'")
-		p.println(fmt.Sprintf("}, '%s');", escapedFilename))
-	} else {
-		p.println("});")
+		filenameArg = fmt.Sprintf("'%s'", escapedFilename)
 	}
+	if n.Transition {
+		propagationArg = "'self'"
+	}
+	p.println(fmt.Sprintf("}, %s, %s);", filenameArg, propagationArg))
 	p.println(fmt.Sprintf("export default %s;", componentName))
 }
 
