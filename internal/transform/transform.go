@@ -13,6 +13,8 @@ import (
 	a "golang.org/x/net/html/atom"
 )
 
+const ANIMATE_TRANSITION = "transition:animate"
+
 type TransformOptions struct {
 	Scope               string
 	Filename            string
@@ -31,11 +33,22 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	definedVars := GetDefineVars(doc.Styles)
 	didAddDefinedVars := false
+	i := 0
 	walk(doc, func(n *astro.Node) {
+		i++
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
 			ScopeElement(n, opts)
+		}
+		if HasAttr(n, ANIMATE_TRANSITION) {
+			doc.Transition = true
+			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
+			n.Attr = append(n.Attr, astro.Attribute{
+				Key:  "data-astro-transition-scope",
+				Val:  n.TransitionScope,
+				Type: astro.QuotedAttribute,
+			})
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)

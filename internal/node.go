@@ -79,10 +79,12 @@ type HydratedComponentMetadata struct {
 // Similarly, "math" is short for "http://www.w3.org/1998/Math/MathML", and
 // "svg" is short for "http://www.w3.org/2000/svg".
 type Node struct {
-	Fragment      bool
-	CustomElement bool
-	Component     bool
-	Expression    bool
+	Fragment        bool
+	CustomElement   bool
+	Component       bool
+	Expression      bool
+	Transition      bool
+	TransitionScope string
 
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
 

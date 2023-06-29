@@ -110,6 +110,10 @@ func emptyTextNodeWithoutSiblings(n *Node) bool {
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
+	if n.Transition {
+		p.needsTransitionCSS = true
+	}
+
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL, &opts)
@@ -692,6 +696,16 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				}
 				p.printTemplateLiteralClose()
 			default:
+				if transform.HasAttr(n, "transition:animate") {
+					transitionName := ""
+					if transform.HasAttr(n, "transition:name") {
+						transitionName = transform.GetAttr(n, "transition:name").Val
+					}
+
+					val := transform.GetAttr(n, "transition:animate").Val
+					p.print(fmt.Sprintf(`${%s(%s, "%s", "%s", "%s")}`, RENDER_TRANSITION, RESULT, n.TransitionScope, val, transitionName))
+				}
+
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					render1(p, c, RenderOptions{
 						isRoot:           false,
