@@ -133,7 +133,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 
 		p.printReturnClose()
-		p.printFuncSuffix(opts.opts)
+		p.printFuncSuffix(opts.opts, n)
 		return
 	}
 
