@@ -13,7 +13,8 @@ import (
 	a "golang.org/x/net/html/atom"
 )
 
-const ANIMATE_TRANSITION = "transition:animate"
+const TRANSITION_ANIMATE = "transition:animate"
+const TRANSITION_NAME = "transition:name"
 
 type TransformOptions struct {
 	Scope               string
@@ -41,14 +42,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if HasAttr(n, ANIMATE_TRANSITION) {
+		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) {
 			doc.Transition = true
 			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
-			n.Attr = append(n.Attr, astro.Attribute{
-				Key:  "data-astro-transition-scope",
-				Val:  n.TransitionScope,
-				Type: astro.QuotedAttribute,
-			})
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
