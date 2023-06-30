@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.5.3
+
+### Patch Changes
+
+- 5a2ce3e: Update compiler output for `style` objects when used with `define:vars`
+
 ## 1.5.2
 
 ### Patch Changes
