@@ -446,7 +446,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 			n.Attr = append(n.Attr, astro.Attribute{
 				Key:  "data-astro-transition-scope",
-				Val:  fmt.Sprintf(`${%s(%s, "%s", "%s", "%s")}`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationName, transitionName),
+				Val:  fmt.Sprintf(`%s(%s, "%s", "%s", "%s")`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationName, transitionName),
 				Type: astro.ExpressionAttribute,
 			})
 		}
