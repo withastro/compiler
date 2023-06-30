@@ -2,6 +2,7 @@ package transform
 
 import (
 	"fmt"
+	"strings"
 
 	astro "github.com/withastro/compiler/internal"
 )
@@ -74,7 +75,12 @@ func injectDefineVars(n *astro.Node, values []string) {
 				return
 			case astro.ExpressionAttribute:
 				attr.Type = astro.ExpressionAttribute
-				attr.Val = fmt.Sprintf("`${%s}; ${%s}`", attr.Val, definedVars)
+				trimmed := strings.TrimSpace(attr.Val)
+				if trimmed[0] == '{' {
+					attr.Val = fmt.Sprintf("[%s,%s]", trimmed, definedVars)
+				} else {
+					attr.Val = fmt.Sprintf("`${%s}; ${%s}`", attr.Val, definedVars)
+				}
 				n.Attr[i] = attr
 				return
 			}

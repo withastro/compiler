@@ -3,7 +3,8 @@ import * as assert from 'uvu/assert';
 import { transform } from '@astrojs/compiler';
 import { preprocessStyle } from '../utils';
 
-const FIXTURE = `
+test('does not include define:vars in generated markup', async () => {
+  const input = `
 ---
 let color = 'red';
 ---
@@ -18,18 +19,25 @@ let color = 'red';
 
 <div>Ahhh</div>
 `;
-
-let result;
-test.before(async () => {
-  result = await transform(FIXTURE, {
-    sourcemap: true,
+  const result = await transform(input, {
     preprocessStyle,
   });
-});
-
-test('does not include define:vars in generated markup', () => {
   assert.ok(!result.code.includes('STYLES'));
   assert.equal(result.css.length, 1);
+});
+
+test('handles style object and define:vars', async () => {
+  const input = `
+---
+let color = 'red';
+---
+
+<div style={{ color: 'var(--color)' }}>Hello world!</div>
+
+<style define:vars={{ color }}></style>
+`;
+  const result = await transform(input);
+  assert.match(result.code, `$$addAttribute([{ color: 'var(--color)' },$$definedVars], "style")`);
 });
 
 test.run();
