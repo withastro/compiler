@@ -14,14 +14,14 @@ test('basic', async () => {
 
 test('preservation', async () => {
   assert.match(await minify(`<pre>  !  </pre>`), '$$render`<pre>  !  </pre>`');
-  assert.ok(await minify(`<div is:raw>  !  </div>`), '$$render`<div>  !  </div>`');
-  assert.ok(await minify(`<Markdown>  !  </Markdown>`), '$$render`  !  `');
+  assert.match(await minify(`<div is:raw>  !  </div>`), '$$render`<div>  !  </div>`');
+  assert.match(await minify(`<Markdown is:raw>  !  </Markdown>`), '$$render`  !  `');
 });
 
 test('collapsing', async () => {
-  assert.ok(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
-  assert.ok(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span> inline ${ expression } </span>`');
-  assert.ok(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${ expression }</span>`');
+  assert.match(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
+  assert.match(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span> inline ${expression}</span>`');
+  assert.match(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${expression}</span>`');
 });
 
 test('space normalization between attributes', async () => {
