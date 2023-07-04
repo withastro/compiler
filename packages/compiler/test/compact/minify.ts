@@ -20,7 +20,7 @@ test('preservation', async () => {
 
 test('collapsing', async () => {
   assert.match(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
-  assert.match(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span> inline ${expression}</span>`');
+  assert.match(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span>\ninline ${expression}</span>`');
   assert.match(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${expression}</span>`');
 });
 
@@ -150,9 +150,17 @@ test('space normalization around text', async () => {
   );
 });
 
-test('surrounded by newlines #7401', async () => {
+test('surrounded by newlines (astro#7401)', async () => {
   const input = '<span>foo</span>\n\t\tbar\n\t\t<span>baz</span>';
-  const output = '<span>foo</span>bar<span>baz</span>';
+  const output = '<span>foo</span>\nbar\n<span>baz</span>';
+  const result = await minify(input);
+
+  assert.match(result, output);
+});
+
+test('separated by newlines (#815)', async () => {
+  const input = '<p>\n\ta\n\t<span>b</span>\n\tc\n</p>';
+  const output = '<p>\na\n<span>b</span>\nc\n</p>';
   const result = await minify(input);
 
   assert.match(result, output);
