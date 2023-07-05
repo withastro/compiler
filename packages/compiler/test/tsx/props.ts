@@ -266,4 +266,23 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('unrelated sibling prop', async () => {
+  const input = `---
+import type { Props as ComponentBProps } from './ComponentB.astro'
+---
+
+<div />
+`;
+  const output = `
+import type { Props as ComponentBProps } from './ComponentB.astro'
+
+"";<Fragment>
+<div />
+
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test.run();

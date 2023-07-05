@@ -310,6 +310,12 @@ outer:
 
 		if js.IsIdentifier(token) {
 			if isKeyword(value) {
+				// fix(#814): fix Props detection when using `{ Props as SomethingElse }`
+				if ident == "Props" && string(value) == "as" {
+					start = 0
+					ident = defaultPropType
+					idents = make([]string, 0)
+				}
 				i += len(value)
 				continue
 			}
