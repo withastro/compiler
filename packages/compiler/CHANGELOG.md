@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 1.5.4
+
+### Patch Changes
+
+- a35468a: Do not remove surrounding whitespace from text surrounded by newlines when `compressHTML` is enabled
+- 4aba173: Fix props detection when importing `Props` from another file (see [#814](https://github.com/withastro/compiler/issues/814))
+
 ## 1.5.3
 
 ### Patch Changes
