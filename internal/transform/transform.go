@@ -263,58 +263,62 @@ func isRawElement(n *astro.Node) bool {
 func collapseWhitespace(doc *astro.Node) {
 	walk(doc, func(n *astro.Node) {
 		if n.Type == astro.TextNode {
+			// Don't trim any whitespace if the node or any of its ancestors is raw
 			if n.Closest(isRawElement) != nil {
 				return
 			}
-			// Top-level expression children
+
+			// Trim the whitespace on each end of top-level expressions
 			if n.Parent != nil && n.Parent.Expression {
-				// Trim left for first child
+				// Trim left whitespace in the first child
 				if n.PrevSibling == nil {
 					n.Data = strings.TrimLeftFunc(n.Data, unicode.IsSpace)
 				}
-				// Trim right for last child
+				// Trim right whitespace in the last child
 				if n.NextSibling == nil {
 					n.Data = strings.TrimRightFunc(n.Data, unicode.IsSpace)
 				}
-				// Otherwise don't trim this!
+				// Don't trim any more!
 				return
 			}
+
+			// If the node is only whitespace, clear it
 			if len(strings.TrimFunc(n.Data, unicode.IsSpace)) == 0 {
 				n.Data = ""
 				return
 			}
+
+			// Collapse left whitespace into a single space
 			originalLen := len(n.Data)
-			hasLeftNewline := false
+			hasNewline := false
 			n.Data = strings.TrimLeftFunc(n.Data, func(r rune) bool {
 				if r == '\n' {
-					hasLeftNewline = true
+					hasNewline = true
 				}
 				return unicode.IsSpace(r)
 			})
 			if originalLen != len(n.Data) {
-				if hasLeftNewline {
+				if hasNewline {
 					n.Data = "\n" + n.Data
 				} else {
 					n.Data = " " + n.Data
 				}
 			}
-			hasRightNewline := false
+			// Collapse right whitespace into a single space
 			originalLen = len(n.Data)
+			hasNewline = false
 			n.Data = strings.TrimRightFunc(n.Data, func(r rune) bool {
 				if r == '\n' {
-					hasRightNewline = true
+					hasNewline = true
 				}
 				return unicode.IsSpace(r)
 			})
 			if originalLen != len(n.Data) {
-				if hasRightNewline {
+				if hasNewline {
 					n.Data = n.Data + "\n"
 				} else {
 					n.Data = n.Data + " "
 				}
-			}
-			if hasLeftNewline && hasRightNewline {
-				n.Data = strings.TrimSpace(n.Data)
 			}
 		}
 	})

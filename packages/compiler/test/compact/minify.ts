@@ -14,14 +14,14 @@ test('basic', async () => {
 
 test('preservation', async () => {
   assert.match(await minify(`<pre>  !  </pre>`), '$$render`<pre>  !  </pre>`');
-  assert.ok(await minify(`<div is:raw>  !  </div>`), '$$render`<div>  !  </div>`');
-  assert.ok(await minify(`<Markdown>  !  </Markdown>`), '$$render`  !  `');
+  assert.match(await minify(`<div is:raw>  !  </div>`), '$$render`<div>  !  </div>`');
+  assert.match(await minify(`<Markdown is:raw>  !  </Markdown>`), '$$render`  !  `');
 });
 
 test('collapsing', async () => {
-  assert.ok(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
-  assert.ok(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span> inline ${ expression } </span>`');
-  assert.ok(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${ expression }</span>`');
+  assert.match(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
+  assert.match(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span>\ninline ${expression}</span>`');
+  assert.match(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${expression}</span>`');
 });
 
 test('space normalization between attributes', async () => {
@@ -150,9 +150,17 @@ test('space normalization around text', async () => {
   );
 });
 
-test('surrounded by newlines #7401', async () => {
+test('surrounded by newlines (astro#7401)', async () => {
   const input = '<span>foo</span>\n\t\tbar\n\t\t<span>baz</span>';
-  const output = '<span>foo</span>bar<span>baz</span>';
+  const output = '<span>foo</span>\nbar\n<span>baz</span>';
+  const result = await minify(input);
+
+  assert.match(result, output);
+});
+
+test('separated by newlines (#815)', async () => {
+  const input = '<p>\n\ta\n\t<span>b</span>\n\tc\n</p>';
+  const output = '<p>\na\n<span>b</span>\nc\n</p>';
   const result = await minify(input);
 
   assert.match(result, output);
