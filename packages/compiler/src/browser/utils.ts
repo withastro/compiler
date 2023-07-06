@@ -82,7 +82,7 @@ function serializeAttributes(node: TagLikeNode): string {
         break;
       }
       case 'quoted': {
-        output += `${attr.name}="${attr.value}"`;
+        output += `${attr.name}=${attr.raw}`;
         break;
       }
       case 'template-literal': {

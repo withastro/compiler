@@ -50,4 +50,11 @@ test('self-close elements', async () => {
   assert.equal(selfClosedOutput, input, `Expected serialized output to equal ${input}`);
 });
 
+test('raw attributes', async () => {
+  const input = `<div name="value" single='quote' un=quote />`;
+  const { ast } = await parse(input);
+  const output = serialize(ast);
+  assert.equal(output, input, `Expected serialized output to equal ${input}`);
+});
+
 test.run();
