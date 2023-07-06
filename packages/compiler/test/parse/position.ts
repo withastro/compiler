@@ -86,4 +86,18 @@ test('include correct start and end position for normal closing tag', async () =
   assert.equal(li.position.end, { line: 3, column: 10, offset: 35 }, `Expected serialized output to contain an end position`);
 });
 
+test('include start and end position if frontmatter is only thing in file (#802)', async () => {
+  const input = `---
+---`;
+  const { ast } = await parse(input);
+
+  const frontmatter = ast.children[0];
+  assert.is(frontmatter.type, 'frontmatter');
+  assert.ok(frontmatter.position.start, `Expected serialized output to contain a start position`);
+  assert.ok(frontmatter.position.end, `Expected serialized output to contain an end position`);
+
+  assert.equal(frontmatter.position.start, { line: 1, column: 1, offset: 0 }, `Expected serialized output to contain a start position`);
+  assert.equal(frontmatter.position.end, { line: 2, column: 4, offset: 7 }, `Expected serialized output to contain an end position`);
+});
+
 test.run();

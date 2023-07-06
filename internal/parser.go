@@ -2683,6 +2683,8 @@ func frontmatterIM(p *parser) bool {
 		p.oe.pop()
 		return true
 	default:
+		// Might be EOF, make sure to capture last location
+		p.addLoc()
 		p.im = p.originalIM
 		p.originalIM = nil
 		return false
