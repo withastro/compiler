@@ -214,4 +214,24 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('preserves spaces in tag', async () => {
+  const input = '<Button ></Button>';
+  const output = `<Fragment>
+<Button ></Button>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+test('preserves spaces after attributes in tag', async () => {
+  const input = '<Button a="b" ></Button>';
+  const output = `<Fragment>
+<Button a="b" ></Button>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test.run();
