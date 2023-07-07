@@ -34,6 +34,7 @@ type ASTNode struct {
 
 	// Attributes only
 	Kind string `json:"kind,omitempty"`
+	Raw  string `json:"raw,omitempty"`
 }
 
 func escapeForJSON(value string) string {
@@ -64,6 +65,9 @@ func (n ASTNode) String() string {
 	}
 	if n.Value != "" || n.Type == "attribute" {
 		str += fmt.Sprintf(`,"value":"%s"`, escapeForJSON(n.Value))
+	}
+	if n.Raw != "" || n.Type == "attribute" {
+		str += fmt.Sprintf(`,"raw":"%s"`, escapeForJSON(n.Raw))
 	}
 	if len(n.Attributes) > 0 {
 		str += `,"attributes":[`
@@ -103,7 +107,8 @@ func (n ASTNode) String() string {
 
 func PrintToJSON(sourcetext string, n *Node, opts t.ParseOptions) PrintResult {
 	p := &printer{
-		builder: sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+		sourcetext: sourcetext,
 	}
 	root := ASTNode{}
 	renderNode(p, &root, n, opts)
@@ -223,12 +228,27 @@ func renderNode(p *printer, parent *ASTNode, n *Node, opts t.ParseOptions) {
 				if attr.Namespace != "" {
 					name = fmt.Sprintf("%s:%s", attr.Namespace, attr.Key)
 				}
+				position := attrPositionAt(p, &attr, opts)
+				raw := ""
+				if attr.Type == QuotedAttribute {
+					start := attr.ValLoc.Start - 1
+					end := attr.ValLoc.Start + len(attr.Val)
+
+					char := p.sourcetext[start]
+					if char == '=' {
+						start += 1
+					} else {
+						end += 1
+					}
+					raw = strings.TrimSpace(p.sourcetext[start:end])
+				}
 				attrNode := ASTNode{
 					Type:     "attribute",
 					Kind:     attr.Type.String(),
-					Position: attrPositionAt(p, &attr, opts),
+					Position: position,
 					Name:     name,
 					Value:    attr.Val,
+					Raw:      raw,
 				}
 				node.Attributes = append(node.Attributes, attrNode)
 			}

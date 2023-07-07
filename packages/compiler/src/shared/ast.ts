@@ -38,6 +38,7 @@ export interface AttributeNode extends BaseNode {
   kind: 'quoted' | 'empty' | 'expression' | 'spread' | 'shorthand' | 'template-literal';
   name: string;
   value: string;
+  raw?: string;
 }
 
 export interface TextNode extends ValueNode {
