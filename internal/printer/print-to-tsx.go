@@ -421,12 +421,15 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	if len(n.Attr) == 0 {
 		endLoc = n.Loc[0].Start + len(n.Data) - 1
 	}
+	if endLoc == -1 {
+		endLoc = 0
+	}
 	isSelfClosing := false
 	tmpLoc := endLoc
 	if len(p.sourcetext) > tmpLoc {
 		for i := 0; i < len(p.sourcetext[tmpLoc:]); i++ {
 			c := p.sourcetext[endLoc : endLoc+1][0]
-			if c == '/' && p.sourcetext[endLoc+1:][0] == '>' {
+			if c == '/' && len(p.sourcetext) > endLoc+1 && p.sourcetext[endLoc+1:][0] == '>' {
 				isSelfClosing = true
 				break
 			} else if c == '>' {
