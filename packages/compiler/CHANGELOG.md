@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 1.5.5
+
+### Patch Changes
+
+- 101c18e: [AST] Include end position for frontmatter node when it is the only item in the file
+- 35ccd5e: [AST] add raw attribute values to AST
+- 325d3c3: [TSX] fix compiler crash when file only contains an unamed fragment
+
 ## 1.5.4
 
 ### Patch Changes
