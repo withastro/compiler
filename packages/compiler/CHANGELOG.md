@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.5.6
+
+### Patch Changes
+
+- 3d69f4e: [TSX] maintain trailing whitespace before an element is closed, fixing TypeScript completion in some cases
+
 ## 1.5.5
 
 ### Patch Changes
