@@ -264,6 +264,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	p.print("<")
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start})
 	p.print(n.Data)
+	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 
 	invalidTSXAttributes := make([]Attribute, 0)
 	endLoc := n.Loc[0].Start + len(n.Data)
@@ -422,6 +423,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	isSelfClosing := false
 	hasLeadingSpace := false
 	tmpLoc := endLoc
+	leadingSpaceLoc := endLoc
 	if len(p.sourcetext) > tmpLoc {
 		for i := 0; i < len(p.sourcetext[tmpLoc:]); i++ {
 			c := p.sourcetext[endLoc : endLoc+1][0]
@@ -434,6 +436,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 				break
 			} else if unicode.IsSpace(rune(c)) {
 				hasLeadingSpace = true
+				leadingSpaceLoc = endLoc
 				endLoc++
 			} else {
 				endLoc++
@@ -444,8 +447,9 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	}
 
 	if hasLeadingSpace {
-		p.addSourceMapping(loc.Loc{Start: endLoc - 1})
+		p.addSourceMapping(loc.Loc{Start: leadingSpaceLoc})
 		p.print(" ")
+		p.addSourceMapping(loc.Loc{Start: leadingSpaceLoc + 1})
 	}
 
 	if voidElements[n.Data] && n.FirstChild == nil {
