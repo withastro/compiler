@@ -54,3 +54,5 @@ export type Props = LocalImageProps | RemoteImageProps;
   const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
   assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
 });
+
+test.run();
