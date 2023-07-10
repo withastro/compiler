@@ -41,3 +41,5 @@ test('does not panic on complex generics', async () => {
   }
   assert.equal(error, 0, `compiler should not have panicked`);
 });
+
+test.run();
