@@ -264,6 +264,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 	p.print("<")
 	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start})
 	p.print(n.Data)
+	p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 
 	invalidTSXAttributes := make([]Attribute, 0)
 	endLoc := n.Loc[0].Start + len(n.Data)
@@ -375,7 +376,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print(`:`)
 			p.addSourceMapping(loc.Loc{Start: eqStart + 1})
 			p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
-			endLoc = eqStart + 1 + len(a.Val) + 2
 		case astro.EmptyAttribute:
 			p.print(a.Key)
 			p.print(`"`)
@@ -383,7 +383,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print(`:`)
 			p.addSourceMapping(a.KeyLoc)
 			p.print(`true`)
-			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.ExpressionAttribute:
 			p.print(a.Key)
 			p.print(`"`)
@@ -394,7 +393,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.printTextWithSourcemap(a.Val, loc.Loc{Start: eqStart + 2})
 			p.addSourceMapping(loc.Loc{Start: eqStart + 2 + len(a.Val)})
 			p.print(`)`)
-			endLoc = eqStart + len(a.Val) + 2
 		case astro.SpreadAttribute:
 			// noop
 		case astro.ShorthandAttribute:
@@ -404,14 +402,12 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			}
 			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
-			endLoc = a.KeyLoc.Start + len(a.Key)
 		case astro.TemplateLiteralAttribute:
 			p.addSourceMapping(a.KeyLoc)
 			p.print(a.Key)
 			p.print(`":`)
 			p.addSourceMapping(a.ValLoc)
 			p.print(fmt.Sprintf("`%s`", a.Val))
-			endLoc = a.ValLoc.Start + len(a.Val) + 2
 		}
 		if i == len(invalidTSXAttributes)-1 {
 			p.addNilSourceMapping()
@@ -425,7 +421,9 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 		endLoc = 0
 	}
 	isSelfClosing := false
+	hasLeadingSpace := false
 	tmpLoc := endLoc
+	leadingSpaceLoc := endLoc
 	if len(p.sourcetext) > tmpLoc {
 		for i := 0; i < len(p.sourcetext[tmpLoc:]); i++ {
 			c := p.sourcetext[endLoc : endLoc+1][0]
@@ -436,6 +434,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 				p.addSourceMapping(loc.Loc{Start: endLoc})
 				endLoc++
 				break
+			} else if unicode.IsSpace(rune(c)) {
+				hasLeadingSpace = true
+				leadingSpaceLoc = endLoc
+				endLoc++
 			} else {
 				endLoc++
 			}
@@ -444,13 +446,17 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 		endLoc++
 	}
 
+	if hasLeadingSpace {
+		p.addSourceMapping(loc.Loc{Start: leadingSpaceLoc})
+		p.print(" ")
+		p.addSourceMapping(loc.Loc{Start: leadingSpaceLoc + 1})
+	}
+
 	if voidElements[n.Data] && n.FirstChild == nil {
 		p.print("/>")
 		return
 	}
 	if isSelfClosing && n.FirstChild == nil {
-		p.addSourceMapping(loc.Loc{Start: endLoc - 1})
-		p.print(" ")
 		p.addSourceMapping(loc.Loc{Start: endLoc})
 		p.print("/>")
 		return
