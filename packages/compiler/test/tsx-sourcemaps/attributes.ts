@@ -40,4 +40,18 @@ test('template literal attribute', async () => {
   });
 });
 
+test('multiline quoted attribute', async () => {
+  const input = `<path d="M 0
+C100 0
+Z" />`;
+
+  const output = await testTSXSourcemap(input, 'Z');
+  assert.equal(output, {
+    source: 'index.astro',
+    line: 3,
+    column: 1,
+    name: null,
+  });
+});
+
 test.run();

@@ -293,7 +293,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print("=")
 			if len(a.Val) > 0 {
 				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start - 1})
-				p.print(`"` + encodeDoubleQuote(a.Val) + `"`)
+				p.print(`"`)
+				p.printTextWithSourcemap(encodeDoubleQuote(a.Val), loc.Loc{Start: a.ValLoc.Start})
+				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start + len(a.Val)})
+				p.print(`"`)
 				endLoc = a.ValLoc.Start + len(a.Val) + 1
 			} else {
 				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start - 1})
