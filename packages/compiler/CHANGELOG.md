@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 1.5.7
+
+### Patch Changes
+
+- 34fcf01: [TSX] escape additional invalid characters
+- 5fe952d: [TSX] fix sourcemaps for quoted attributes that span multiple lines
+
 ## 1.5.6
 
 ### Patch Changes

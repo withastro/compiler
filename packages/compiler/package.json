@@ -5,7 +5,7 @@
   "type": "module",
   "bugs": "https://github.com/withastro/compiler/issues",
   "homepage": "https://astro.build",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "scripts": {
     "build": "tsup"
   },
