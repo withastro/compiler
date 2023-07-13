@@ -178,7 +178,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
 			p.print("}}\n")
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 			return
-		} else if strings.ContainsAny(n.Data, "{}") {
+		} else if strings.ContainsAny(n.Data, "{}<>'\"") && n.Data[0] != '<' {
 			p.addNilSourceMapping()
 			p.print("{`")
 			p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
