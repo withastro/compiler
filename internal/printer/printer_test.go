@@ -30,6 +30,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+	"renderTransition as " + RENDER_TRANSITION,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
@@ -37,7 +38,7 @@ const Astro = $$result.createAstro($$Astro, $$props, %s);
 Astro.self = $$Component;%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n\n")
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
-});
+}, undefined, undefined);
 export default $$Component;`
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
@@ -48,7 +49,7 @@ var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS
 func suffixWithFilename(filename string) string {
 
 	return fmt.Sprintf("%s;", BACKTICK) + fmt.Sprintf(`
-}, '%s');
+}, '%s', undefined);
 export default $$Component;`, filename)
 }
 
