@@ -27,7 +27,7 @@ test.before(async () => {
 });
 
 test('does not add trailing newline to rendered output', () => {
-  assert.match(result.code, `}\`;\n}, '<stdin>');`, 'Does not include a trailing newline in the render function');
+  assert.match(result.code, `}\`;\n}, '<stdin>', undefined);`, 'Does not include a trailing newline in the render function');
 });
 
 test.run();
