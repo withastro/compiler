@@ -118,8 +118,10 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	p.print("defineStyleVars as " + DEFINE_STYLE_VARS + ",\n  ")
 	p.addNilSourceMapping()
 	p.print("defineScriptVars as " + DEFINE_SCRIPT_VARS + ",\n  ")
-	p.addNilSourceMapping()
-	p.print("renderTransition as " + RENDER_TRANSITION + ",\n  ")
+	if opts.opts.ExperimentalTransitions {
+		p.addNilSourceMapping()
+		p.print("renderTransition as " + RENDER_TRANSITION + ",\n  ")
+	}
 
 	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
 	if opts.opts.ResolvePath == nil {

@@ -53,6 +53,7 @@ export interface TransformOptions {
    * @deprecated "as" has been removed and no longer has any effect!
    */
   as?: 'document' | 'fragment';
+  experimentalTransitions?: boolean;
   resolvePath?: (specifier: string) => Promise<string>;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
 }

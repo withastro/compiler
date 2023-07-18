@@ -17,17 +17,18 @@ const TRANSITION_ANIMATE = "transition:animate"
 const TRANSITION_NAME = "transition:name"
 
 type TransformOptions struct {
-	Scope               string
-	Filename            string
-	NormalizedFilename  string
-	InternalURL         string
-	SourceMap           string
-	AstroGlobalArgs     string
-	ScopedStyleStrategy string
-	Compact             bool
-	ResultScopedSlot    bool
-	ResolvePath         func(string) string
-	PreprocessStyle     interface{}
+	Scope                   string
+	Filename                string
+	NormalizedFilename      string
+	InternalURL             string
+	SourceMap               string
+	AstroGlobalArgs         string
+	ScopedStyleStrategy     string
+	Compact                 bool
+	ResultScopedSlot        bool
+	ExperimentalTransitions bool
+	ResolvePath             func(string) string
+	PreprocessStyle         interface{}
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -42,7 +43,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) {
+		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME)) {
 			doc.Transition = true
 			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
 		}

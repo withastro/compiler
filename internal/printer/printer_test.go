@@ -30,7 +30,6 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
-	"renderTransition as " + RENDER_TRANSITION,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
