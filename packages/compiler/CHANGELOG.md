@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 1.6.0
+
+### Minor Changes
+
+- 2906df2: Support for view transition directives
+
+  This adds support for `transition:animate` and `transition:name` which get passed into the new `renderTransition` runtime function.
+
 ## 1.5.7
 
 ### Patch Changes
