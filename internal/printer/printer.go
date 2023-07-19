@@ -28,6 +28,7 @@ type printer struct {
 	hasFuncPrelude     bool
 	hasInternalImports bool
 	hasCSSImports      bool
+	needsTransitionCSS bool
 }
 
 var TEMPLATE_TAG = "$$render"
@@ -40,6 +41,7 @@ var UNESCAPE_HTML = "$$unescapeHTML"
 var RENDER_SLOT = "$$renderSlot"
 var MERGE_SLOTS = "$$mergeSlots"
 var ADD_ATTRIBUTE = "$$addAttribute"
+var RENDER_TRANSITION = "$$renderTransition"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
@@ -116,6 +118,10 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	p.print("defineStyleVars as " + DEFINE_STYLE_VARS + ",\n  ")
 	p.addNilSourceMapping()
 	p.print("defineScriptVars as " + DEFINE_SCRIPT_VARS + ",\n  ")
+	if opts.opts.ExperimentalTransitions {
+		p.addNilSourceMapping()
+		p.print("renderTransition as " + RENDER_TRANSITION + ",\n  ")
+	}
 
 	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
 	if opts.opts.ResolvePath == nil {
@@ -140,6 +146,10 @@ func (p *printer) printCSSImports(cssLen int) {
 		// import '/src/pages/index.astro?astro&type=style&index=0&lang.css';
 		p.print(fmt.Sprintf("import \"%s?astro&type=style&index=%v&lang.css\";", p.opts.Filename, i))
 		i++
+	}
+	if p.needsTransitionCSS {
+		p.addNilSourceMapping()
+		p.print(fmt.Sprintf(`import "%s";`, p.opts.TransitionsAnimationURL))
 	}
 	p.print("\n")
 	p.hasCSSImports = true
@@ -250,15 +260,19 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
 	p.hasFuncPrelude = true
 }
 
-func (p *printer) printFuncSuffix(opts transform.TransformOptions) {
+func (p *printer) printFuncSuffix(opts transform.TransformOptions, n *astro.Node) {
 	componentName := getComponentName(opts.Filename)
 	p.addNilSourceMapping()
+	filenameArg := "undefined"
+	propagationArg := "undefined"
 	if len(opts.Filename) > 0 {
 		escapedFilename := strings.ReplaceAll(opts.Filename, "'", "\\'")
-		p.println(fmt.Sprintf("}, '%s');", escapedFilename))
-	} else {
-		p.println("});")
+		filenameArg = fmt.Sprintf("'%s'", escapedFilename)
 	}
+	if n.Transition {
+		propagationArg = "'self'"
+	}
+	p.println(fmt.Sprintf("}, %s, %s);", filenameArg, propagationArg))
 	p.println(fmt.Sprintf("export default %s;", componentName))
 }
 
@@ -323,7 +337,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
-	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" {
+	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" || attr.Key == "transition:animate" || attr.Key == "transition:name" {
 		return
 	}
 

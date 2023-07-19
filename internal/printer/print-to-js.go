@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	. "github.com/withastro/compiler/internal"
+	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
@@ -110,6 +111,10 @@ func emptyTextNodeWithoutSiblings(n *Node) bool {
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
+	if opts.opts.ExperimentalTransitions && n.Transition {
+		p.needsTransitionCSS = true
+	}
+
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
 		p.printInternalImports(p.opts.InternalURL, &opts)
@@ -129,7 +134,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 
 		p.printReturnClose()
-		p.printFuncSuffix(opts.opts)
+		p.printFuncSuffix(opts.opts, n)
 		return
 	}
 
@@ -429,10 +434,28 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		p.print(`]`)
 	} else {
+		if transform.HasAttr(n, transform.TRANSITION_ANIMATE) || transform.HasAttr(n, transform.TRANSITION_NAME) {
+			animationName := ""
+			if transform.HasAttr(n, transform.TRANSITION_ANIMATE) {
+				animationName = transform.GetAttr(n, transform.TRANSITION_ANIMATE).Val
+			}
+			transitionName := ""
+			if transform.HasAttr(n, transform.TRANSITION_NAME) {
+				transitionName = transform.GetAttr(n, transform.TRANSITION_NAME).Val
+			}
+
+			n.Attr = append(n.Attr, astro.Attribute{
+				Key:  "data-astro-transition-scope",
+				Val:  fmt.Sprintf(`%s(%s, "%s", "%s", "%s")`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationName, transitionName),
+				Type: astro.ExpressionAttribute,
+			})
+		}
+
 		for _, a := range n.Attr {
 			if transform.IsImplicitNodeMarker(a) || a.Key == "is:inline" {
 				continue
 			}
+
 			if a.Key == "slot" {
 				if n.Parent.Component || n.Parent.Expression {
 					continue

@@ -13,29 +13,40 @@ import (
 	a "golang.org/x/net/html/atom"
 )
 
+const TRANSITION_ANIMATE = "transition:animate"
+const TRANSITION_NAME = "transition:name"
+
 type TransformOptions struct {
-	Scope               string
-	Filename            string
-	NormalizedFilename  string
-	InternalURL         string
-	SourceMap           string
-	AstroGlobalArgs     string
-	ScopedStyleStrategy string
-	Compact             bool
-	ResultScopedSlot    bool
-	ResolvePath         func(string) string
-	PreprocessStyle     interface{}
+	Scope                   string
+	Filename                string
+	NormalizedFilename      string
+	InternalURL             string
+	SourceMap               string
+	AstroGlobalArgs         string
+	ScopedStyleStrategy     string
+	Compact                 bool
+	ResultScopedSlot        bool
+	ExperimentalTransitions bool
+	TransitionsAnimationURL string
+	ResolvePath             func(string) string
+	PreprocessStyle         interface{}
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	definedVars := GetDefineVars(doc.Styles)
 	didAddDefinedVars := false
+	i := 0
 	walk(doc, func(n *astro.Node) {
+		i++
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
 			ScopeElement(n, opts)
+		}
+		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME)) {
+			doc.Transition = true
+			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)

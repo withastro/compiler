@@ -95,6 +95,14 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	if jsBool(options.Get("resultScopedSlot")) {
 		scopedSlot = true
 	}
+	experimentalTransitions := false
+	if jsBool(options.Get("experimentalTransitions")) {
+		experimentalTransitions = true
+	}
+	transitionsAnimationURL := jsString(options.Get("transitionsAnimationURL"))
+	if transitionsAnimationURL == "" {
+		transitionsAnimationURL = "astro/components/viewtransitions.css"
+	}
 
 	var resolvePath any = options.Get("resolvePath")
 	var resolvePathFn func(string) string
@@ -117,16 +125,18 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	}
 
 	return transform.TransformOptions{
-		Filename:            filename,
-		NormalizedFilename:  normalizedFilename,
-		InternalURL:         internalURL,
-		SourceMap:           sourcemap,
-		AstroGlobalArgs:     astroGlobalArgs,
-		Compact:             compact,
-		ResolvePath:         resolvePathFn,
-		PreprocessStyle:     preprocessStyle,
-		ResultScopedSlot:    scopedSlot,
-		ScopedStyleStrategy: scopedStyleStrategy,
+		Filename:                filename,
+		NormalizedFilename:      normalizedFilename,
+		InternalURL:             internalURL,
+		SourceMap:               sourcemap,
+		AstroGlobalArgs:         astroGlobalArgs,
+		Compact:                 compact,
+		ResolvePath:             resolvePathFn,
+		PreprocessStyle:         preprocessStyle,
+		ResultScopedSlot:        scopedSlot,
+		ScopedStyleStrategy:     scopedStyleStrategy,
+		ExperimentalTransitions: experimentalTransitions,
+		TransitionsAnimationURL: transitionsAnimationURL,
 	}
 }
 
