@@ -27,6 +27,7 @@ type TransformOptions struct {
 	Compact                 bool
 	ResultScopedSlot        bool
 	ExperimentalTransitions bool
+	TransitionsAnimationURL string
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
 }

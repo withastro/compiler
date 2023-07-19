@@ -149,7 +149,7 @@ func (p *printer) printCSSImports(cssLen int) {
 	}
 	if p.needsTransitionCSS {
 		p.addNilSourceMapping()
-		p.print(`import "astro/components/viewtransitions.css";`)
+		p.print(fmt.Sprintf(`import "%s";`, p.opts.TransitionsAnimationURL))
 	}
 	p.print("\n")
 	p.hasCSSImports = true
