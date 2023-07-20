@@ -2791,6 +2791,22 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${($$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `)}` + BACKTICK + `,})}${Node.children.map((child) => ($$render` + BACKTICK + `${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}` + BACKTICK + `))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `</${Node.tag}>` + BACKTICK + `)}` + BACKTICK + `,})}` + BACKTICK + `,})})` + BACKTICK + `}`,
 			},
 		},
+		{
+			name:     "transition:name with an expression",
+			source:   `<div transition:name={one + '-' + 'two'}></div>`,
+			filename: "/projects/app/src/pages/page.astro",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
+			},
+		},
+		{
+			name:     "transition:name with an template literal",
+			source:   "<div transition:name=`${one}-two`></div>",
+			filename: "/projects/app/src/pages/page.astro",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

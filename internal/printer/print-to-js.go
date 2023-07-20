@@ -439,14 +439,22 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			if transform.HasAttr(n, transform.TRANSITION_ANIMATE) {
 				animationName = transform.GetAttr(n, transform.TRANSITION_ANIMATE).Val
 			}
-			transitionName := ""
+			transitionExpr := ""
 			if transform.HasAttr(n, transform.TRANSITION_NAME) {
-				transitionName = transform.GetAttr(n, transform.TRANSITION_NAME).Val
+				attr := transform.GetAttr(n, transform.TRANSITION_NAME)
+				switch attr.Type {
+				case astro.QuotedAttribute:
+					transitionExpr = fmt.Sprintf(`"%s"`, attr.Val)
+				case astro.ExpressionAttribute:
+					transitionExpr = fmt.Sprintf(`(%s)`, attr.Val)
+				case astro.TemplateLiteralAttribute:
+					transitionExpr = fmt.Sprintf("`%s`", attr.Val)
+				}
 			}
 
 			n.Attr = append(n.Attr, astro.Attribute{
 				Key:  "data-astro-transition-scope",
-				Val:  fmt.Sprintf(`%s(%s, "%s", "%s", "%s")`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationName, transitionName),
+				Val:  fmt.Sprintf(`%s(%s, "%s", "%s", %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationName, transitionExpr),
 				Type: astro.ExpressionAttribute,
 			})
 		}
