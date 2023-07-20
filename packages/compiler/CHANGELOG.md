@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.6.1
+
+### Patch Changes
+
+- 486614b: Fixes use of expression in transition:name
+
 ## 1.6.0
 
 ### Minor Changes
