@@ -2799,6 +2799,14 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
 			},
 		},
+		{
+			name:     "transition:name with an template literal",
+			source:   "<div transition:name=`${one}-two`></div>",
+			filename: "/projects/app/src/pages/page.astro",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

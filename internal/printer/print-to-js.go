@@ -447,6 +447,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					transitionExpr = fmt.Sprintf(`"%s"`, attr.Val)
 				case astro.ExpressionAttribute:
 					transitionExpr = fmt.Sprintf(`(%s)`, attr.Val)
+				case astro.TemplateLiteralAttribute:
+					transitionExpr = fmt.Sprintf("`%s`", attr.Val)
 				}
 			}
 
