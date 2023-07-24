@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
+	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/js_scanner"
+	"github.com/withastro/compiler/internal/transform"
 )
 
 func escapeText(src string) string {
@@ -117,4 +119,20 @@ func removeComments(input string) (string, error) {
 	}
 
 	return strings.TrimSpace(sb.String()), nil
+}
+
+func convertAttributeValue(n *astro.Node, attrName string) string {
+	expr := `""`
+	if transform.HasAttr(n, attrName) {
+		attr := transform.GetAttr(n, attrName)
+		switch attr.Type {
+		case astro.QuotedAttribute:
+			expr = fmt.Sprintf(`"%s"`, attr.Val)
+		case astro.ExpressionAttribute:
+			expr = fmt.Sprintf(`(%s)`, attr.Val)
+		case astro.TemplateLiteralAttribute:
+			expr = fmt.Sprintf("`%s`", attr.Val)
+		}
+	}
+	return expr
 }
