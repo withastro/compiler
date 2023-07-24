@@ -435,26 +435,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(`]`)
 	} else {
 		if transform.HasAttr(n, transform.TRANSITION_ANIMATE) || transform.HasAttr(n, transform.TRANSITION_NAME) {
-			animationName := ""
-			if transform.HasAttr(n, transform.TRANSITION_ANIMATE) {
-				animationName = transform.GetAttr(n, transform.TRANSITION_ANIMATE).Val
-			}
-			transitionExpr := ""
-			if transform.HasAttr(n, transform.TRANSITION_NAME) {
-				attr := transform.GetAttr(n, transform.TRANSITION_NAME)
-				switch attr.Type {
-				case astro.QuotedAttribute:
-					transitionExpr = fmt.Sprintf(`"%s"`, attr.Val)
-				case astro.ExpressionAttribute:
-					transitionExpr = fmt.Sprintf(`(%s)`, attr.Val)
-				case astro.TemplateLiteralAttribute:
-					transitionExpr = fmt.Sprintf("`%s`", attr.Val)
-				}
-			}
+			animationExpr := convertAttributeValue(n, transform.TRANSITION_ANIMATE)
+			transitionExpr := convertAttributeValue(n, transform.TRANSITION_NAME)
 
 			n.Attr = append(n.Attr, astro.Attribute{
 				Key:  "data-astro-transition-scope",
-				Val:  fmt.Sprintf(`%s(%s, "%s", "%s", %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationName, transitionExpr),
+				Val:  fmt.Sprintf(`%s(%s, "%s", %s, %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationExpr, transitionExpr),
 				Type: astro.ExpressionAttribute,
 			})
 		}

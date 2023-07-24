@@ -2807,6 +2807,14 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
 			},
 		},
+		{
+			name:     "transition:animate with an expression",
+			source:   "<div transition:animate={slide({duration:15})}></div>",
+			filename: "/projects/app/src/pages/page.astro",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
