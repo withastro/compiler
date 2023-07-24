@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.6.2
+
+### Patch Changes
+
+- ce5cf31: Pass transition:animate expressions
+
 ## 1.6.1
 
 ### Patch Changes
