@@ -2815,6 +2815,15 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
 			},
 		},
+		{
+			name:     "transition:animate on Component",
+			only:     true,
+			source:   `<Component class="bar" transition:animate="morph"></Component>`,
+			filename: "/projects/app/src/pages/page.astro",
+			want: want{
+				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "", "morph", ""))})}`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

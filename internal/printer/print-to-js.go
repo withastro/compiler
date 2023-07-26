@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	. "github.com/withastro/compiler/internal"
-	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
@@ -404,6 +403,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if isImplicit {
 		// do nothing
 	} else if isComponent {
+		maybeConvertTransition(n)
 		p.print(",")
 		p.printAttributesToObject(n)
 	} else if isSlot {
@@ -434,16 +434,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		p.print(`]`)
 	} else {
-		if transform.HasAttr(n, transform.TRANSITION_ANIMATE) || transform.HasAttr(n, transform.TRANSITION_NAME) {
-			animationExpr := convertAttributeValue(n, transform.TRANSITION_ANIMATE)
-			transitionExpr := convertAttributeValue(n, transform.TRANSITION_NAME)
-
-			n.Attr = append(n.Attr, astro.Attribute{
-				Key:  "data-astro-transition-scope",
-				Val:  fmt.Sprintf(`%s(%s, "%s", %s, %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationExpr, transitionExpr),
-				Type: astro.ExpressionAttribute,
-			})
-		}
+		maybeConvertTransition(n)
 
 		for _, a := range n.Attr {
 			if transform.IsImplicitNodeMarker(a) || a.Key == "is:inline" {
