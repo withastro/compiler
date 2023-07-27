@@ -65,7 +65,7 @@ func transformScopingFixtures() []struct {
 			name: "empty (space)",
 			source: `
 				<style>
-				
+
 				</style>
 				<div />
 			`,
@@ -241,6 +241,11 @@ func TestFullTransform(t *testing.T) {
 <Component></Component>
 <span></span>`,
 		},
+		{
+			name:   "transition:persist converted to a data attribute",
+			source: `<div transition:persist></div>`,
+			want:   `<div data-astro-transition-persist=""></div>`,
+		},
 	}
 	var b strings.Builder
 	for _, tt := range tests {
@@ -253,7 +258,9 @@ func TestFullTransform(t *testing.T) {
 			ExtractStyles(doc)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
+			Transform(doc, TransformOptions{
+				ExperimentalTransitions: true,
+			}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {

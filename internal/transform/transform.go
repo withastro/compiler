@@ -15,6 +15,7 @@ import (
 
 const TRANSITION_ANIMATE = "transition:animate"
 const TRANSITION_NAME = "transition:name"
+const TRANSITION_PERSIST = "transition:persist"
 
 type TransformOptions struct {
 	Scope                   string
@@ -47,6 +48,17 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME)) {
 			doc.Transition = true
 			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
+		}
+
+		if opts.ExperimentalTransitions {
+			transitionPersistIndex := AttrIndex(n, TRANSITION_PERSIST)
+			if transitionPersistIndex != -1 {
+				n.Attr = remove(n.Attr, transitionPersistIndex)
+				n.Attr = append(n.Attr, astro.Attribute{
+					Key: "data-astro-transition-persist",
+					Val: "",
+				})
+			}
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
