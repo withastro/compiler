@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.6.3
+
+### Patch Changes
+
+- 6b4873d: Pass transition directives onto components
+
 ## 1.6.2
 
 ### Patch Changes
