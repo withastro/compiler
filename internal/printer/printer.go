@@ -283,7 +283,8 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 		if i != 0 && !lastAttributeSkipped {
 			p.print(",")
 		}
-		if a.Key == "set:text" || a.Key == "set:html" || a.Key == "is:raw" {
+		if a.Key == "set:text" || a.Key == "set:html" || a.Key == "is:raw" || a.Key == "transition:animate" || a.Key == "transition:name" {
+			lastAttributeSkipped = true
 			continue
 		}
 		if a.Namespace != "" {
@@ -444,6 +445,19 @@ func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {
 		}
 	}
 	return append(slice[:s], slice[s+1:]...)
+}
+
+func maybeConvertTransition(n *astro.Node) {
+	if transform.HasAttr(n, transform.TRANSITION_ANIMATE) || transform.HasAttr(n, transform.TRANSITION_NAME) {
+		animationExpr := convertAttributeValue(n, transform.TRANSITION_ANIMATE)
+		transitionExpr := convertAttributeValue(n, transform.TRANSITION_NAME)
+
+		n.Attr = append(n.Attr, astro.Attribute{
+			Key:  "data-astro-transition-scope",
+			Val:  fmt.Sprintf(`%s(%s, "%s", %s, %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationExpr, transitionExpr),
+			Type: astro.ExpressionAttribute,
+		})
+	}
 }
 
 func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
