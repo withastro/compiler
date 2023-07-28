@@ -244,7 +244,12 @@ func TestFullTransform(t *testing.T) {
 		{
 			name:   "transition:persist converted to a data attribute",
 			source: `<div transition:persist></div>`,
-			want:   `<div data-astro-transition-persist=""></div>`,
+			want:   `<div data-astro-transition-persist="E5FEF2YV"></div>`,
+		},
+		{
+			name:   "transition:persist uses transition:name if defined",
+			source: `<div transition:persist transition:name="foo"></div>`,
+			want:   `<div data-astro-transition-persist="foo" transition:name="foo"></div>`,
 		},
 	}
 	var b strings.Builder

@@ -47,12 +47,24 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		}
 		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME)) {
 			doc.Transition = true
-			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
+			getOrCreateTransitionScope(n, &opts, i)
 		}
-
-		if opts.ExperimentalTransitions && HasAttr(n, TRANSITION_PERSIST) {
-			attr := GetAttr(n, TRANSITION_PERSIST)
-			attr.Key = "data-astro-transition-persist"
+		if opts.ExperimentalTransitions {
+			transitionPersistIndex := AttrIndex(n, TRANSITION_PERSIST)
+			if transitionPersistIndex != -1 {
+				n.Attr[transitionPersistIndex].Key = "data-astro-transition-persist"
+				// If there is no value, assign the transition scope
+				if n.Attr[transitionPersistIndex].Val == "" {
+					if HasAttr(n, TRANSITION_NAME) {
+						attr := GetAttr(n, TRANSITION_NAME)
+						n.Attr[transitionPersistIndex].Val = attr.Val
+						n.Attr[transitionPersistIndex].Type = attr.Type
+					} else {
+						n.Attr[transitionPersistIndex].Val = getOrCreateTransitionScope(n, &opts, i)
+					}
+					n.Attr[transitionPersistIndex].Type = astro.QuotedAttribute
+				}
+			}
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
@@ -555,4 +567,12 @@ func mergeClassList(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 
 func remove(slice []astro.Attribute, s int) []astro.Attribute {
 	return append(slice[:s], slice[s+1:]...)
+}
+
+func getOrCreateTransitionScope(n *astro.Node, opts *TransformOptions, i int) string {
+	if n.TransitionScope != "" {
+		return n.TransitionScope
+	}
+	n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
+	return n.TransitionScope
 }
