@@ -50,15 +50,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
 		}
 
-		if opts.ExperimentalTransitions {
-			transitionPersistIndex := AttrIndex(n, TRANSITION_PERSIST)
-			if transitionPersistIndex != -1 {
-				n.Attr = remove(n.Attr, transitionPersistIndex)
-				n.Attr = append(n.Attr, astro.Attribute{
-					Key: "data-astro-transition-persist",
-					Val: "",
-				})
-			}
+		if opts.ExperimentalTransitions && HasAttr(n, TRANSITION_PERSIST) {
+			attr := GetAttr(n, TRANSITION_PERSIST)
+			attr.Key = "data-astro-transition-persist"
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
