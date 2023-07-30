@@ -2817,7 +2817,6 @@ const items = ["Dog", "Cat", "Platipus"];
 		},
 		{
 			name:     "transition:animate on Component",
-			only:     true,
 			source:   `<Component class="bar" transition:animate="morph"></Component>`,
 			filename: "/projects/app/src/pages/page.astro",
 			want: want{
