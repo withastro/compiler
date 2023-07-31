@@ -48,7 +48,7 @@ export interface TransformOptions {
   astroGlobalArgs?: string;
   compact?: boolean;
   resultScopedSlot?: boolean;
-  scopedStyleStrategy?: 'where' | 'class';
+  scopedStyleStrategy?: 'where' | 'class' | 'attribute';
   /**
    * @deprecated "as" has been removed and no longer has any effect!
    */

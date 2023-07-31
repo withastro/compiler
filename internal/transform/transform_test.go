@@ -11,14 +11,16 @@ import (
 )
 
 func transformScopingFixtures() []struct {
-	name   string
-	source string
-	want   string
+	name       string
+	source     string
+	want       string
+	scopeStyle string // "attribute" | "class" | "where"
 } {
 	return []struct {
-		name   string
-		source string
-		want   string
+		name       string
+		source     string
+		want       string
+		scopeStyle string
 	}{
 		{
 			name: "basic",
@@ -65,7 +67,7 @@ func transformScopingFixtures() []struct {
 			name: "empty (space)",
 			source: `
 				<style>
-				
+
 				</style>
 				<div />
 			`,
@@ -131,6 +133,42 @@ func transformScopingFixtures() []struct {
 			`,
 			want: `<div></div>`,
 		},
+		{
+			name: "attribute -> creates a new data attribute",
+			source: `
+				<style>.class{}</style>
+				<div />
+			`,
+			want:       `<div data-astro-hash-XXXXXX></div>`,
+			scopeStyle: "attribute",
+		},
+		{
+			name: "attribute -> creates data attribute when there's a class",
+			source: `
+				<style>.font{}</style>
+				<div />
+			`,
+			want:       `<div data-astro-hash-XXXXXX></div>`,
+			scopeStyle: "attribute",
+		},
+		{
+			name: "attribute -> creates data attribute when there's a CSS class",
+			source: `
+				<style>.font{}</style>
+				<div />
+			`,
+			want:       `<div data-astro-hash-XXXXXX></div>`,
+			scopeStyle: "attribute",
+		},
+		{
+			name: "attribute -> creates data attribute when there's already a class attribute",
+			source: `
+				<style>.font{}</style>
+				<div class="foo" />
+			`,
+			want:       `<div class="foo" data-astro-hash-XXXXXX></div>`,
+			scopeStyle: "attribute",
+		},
 	}
 }
 
@@ -145,7 +183,15 @@ func TestTransformScoping(t *testing.T) {
 				t.Error(err)
 			}
 			ExtractStyles(doc)
-			Transform(doc, TransformOptions{Scope: "XXXXXX"}, handler.NewHandler(tt.source, "/test.astro"))
+			var scopeStyle string
+			if tt.scopeStyle == "attribute" {
+				scopeStyle = "attribute"
+			} else if tt.scopeStyle == "class" {
+				scopeStyle = "class"
+			} else {
+				scopeStyle = "where"
+			}
+			Transform(doc, TransformOptions{Scope: "XXXXXX", ScopedStyleStrategy: scopeStyle}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()
 			if tt.want != got {

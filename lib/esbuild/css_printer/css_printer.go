@@ -28,6 +28,7 @@ type ScopeStrategy uint8
 const (
 	ScopeStrategyWhere ScopeStrategy = iota
 	ScopeStrategyClass
+	ScopeStrategyAttribute ScopeStrategy = iota
 )
 
 type Options struct {

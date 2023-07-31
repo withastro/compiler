@@ -54,6 +54,24 @@ func TestPrinterCSS(t *testing.T) {
 			scopedStyleStrategy: "class",
 			want:                ".title.astro-DPOHFLYM{font-family:fantasy;font-size:28px}.body.astro-DPOHFLYM{font-size:1em}",
 		},
+		{
+			name: "scopedStyleStrategy: 'attribute'",
+			source: `<style>
+		  .title {
+		    font-family: fantasy;
+		    font-size: 28px;
+		  }
+
+		  .body {
+		    font-size: 1em;
+		  }
+		</style>
+
+		<h1 class="title">Page Title</h1>
+		<p class="body">I’m a page</p>`,
+			scopedStyleStrategy: "attribute",
+			want:                ".title[data-astro-hash-DPOHFLYM]{font-family:fantasy;font-size:28px}.body[data-astro-hash-DPOHFLYM]{font-size:1em}",
+		},
 	}
 
 	for _, tt := range tests {
@@ -68,7 +86,7 @@ func TestPrinterCSS(t *testing.T) {
 			}
 
 			scopedStyleStrategy := "where"
-			if tt.scopedStyleStrategy == "class" {
+			if tt.scopedStyleStrategy == "class" || tt.scopedStyleStrategy == "attribute" {
 				scopedStyleStrategy = tt.scopedStyleStrategy
 			}
 
