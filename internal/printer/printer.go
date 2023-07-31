@@ -277,7 +277,6 @@ func (p *printer) printFuncSuffix(opts transform.TransformOptions, n *astro.Node
 	if n.Transition {
 		propagationArg = "'self'"
 	}
-	fmt.Printf("PROPAGATION ARG %v\n", propagationArg)
 	p.println(fmt.Sprintf("}, %s, %s);", filenameArg, propagationArg))
 	p.println(fmt.Sprintf("export default %s;", componentName))
 }
@@ -496,7 +495,6 @@ func maybeConvertTransition(n *astro.Node) {
 			n.Attr[transitionPersistIndex].Val = transitionNameAttr.Val
 			n.Attr[transitionPersistIndex].Type = transitionNameAttr.Type
 		} else {
-			fmt.Printf("NO VALUE - %v\n", n.TransitionScope)
 			n.Attr = append(n.Attr, astro.Attribute{
 				Key:  "data-astro-transition-persist",
 				Val:  fmt.Sprintf(`%s(%s, "%s")`, CREATE_TRANSITION_SCOPE, RESULT, n.TransitionScope),
