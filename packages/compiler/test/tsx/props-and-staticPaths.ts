@@ -2,12 +2,12 @@ import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
-const PREFIX = `/**
+const PREFIX = (component: string = '__AstroComponent_') => `/**
  * Astro global available in all contexts in .astro files
  *
  * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
 */
-declare const Astro: Readonly<import('astro').AstroGlobal<Props>>`;
+declare const Astro: Readonly<import('astro').AstroGlobal<Props, typeof ${component}>>`;
 
 test('no props', async () => {
   const input = `---
@@ -29,7 +29,7 @@ export function getStaticProps() {
 <div></div>
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });

@@ -142,7 +142,7 @@ func renderTsx(p *printer, n *Node) {
  *
  * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
 */
-declare const Astro: Readonly<import('astro').AstroGlobal<%s>>`, props.Ident)
+declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s>>`, props.Ident, componentName)
 		}
 		return
 	}
