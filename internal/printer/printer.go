@@ -42,6 +42,7 @@ var RENDER_SLOT = "$$renderSlot"
 var MERGE_SLOTS = "$$mergeSlots"
 var ADD_ATTRIBUTE = "$$addAttribute"
 var RENDER_TRANSITION = "$$renderTransition"
+var CREATE_TRANSITION_SCOPE = "$$createTransitionScope"
 var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
@@ -121,6 +122,10 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	if opts.opts.ExperimentalTransitions {
 		p.addNilSourceMapping()
 		p.print("renderTransition as " + RENDER_TRANSITION + ",\n  ")
+	}
+	if opts.opts.ExperimentalPersistence {
+		p.addNilSourceMapping()
+		p.print("createTransitionScope as " + CREATE_TRANSITION_SCOPE + ",\n  ")
 	}
 
 	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
@@ -272,8 +277,28 @@ func (p *printer) printFuncSuffix(opts transform.TransformOptions, n *astro.Node
 	if n.Transition {
 		propagationArg = "'self'"
 	}
+	fmt.Printf("PROPAGATION ARG %v\n", propagationArg)
 	p.println(fmt.Sprintf("}, %s, %s);", filenameArg, propagationArg))
 	p.println(fmt.Sprintf("export default %s;", componentName))
+}
+
+var skippedAttributes = map[string]bool{
+	"define:vars":        true,
+	"set:text":           true,
+	"set:html":           true,
+	"is:raw":             true,
+	"transition:animate": true,
+	"transition:name":    true,
+	"transition:persist": true,
+}
+
+var skippedAttributesToObject = map[string]bool{
+	"set:text":           true,
+	"set:html":           true,
+	"is:raw":             true,
+	"transition:animate": true,
+	"transition:name":    true,
+	"transition:persist": true,
 }
 
 func (p *printer) printAttributesToObject(n *astro.Node) {
@@ -283,7 +308,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 		if i != 0 && !lastAttributeSkipped {
 			p.print(",")
 		}
-		if a.Key == "set:text" || a.Key == "set:html" || a.Key == "is:raw" || a.Key == "transition:animate" || a.Key == "transition:name" {
+		if _, ok := skippedAttributesToObject[a.Key]; ok {
 			lastAttributeSkipped = true
 			continue
 		}
@@ -338,7 +363,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 }
 
 func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
-	if attr.Key == "define:vars" || attr.Key == "set:text" || attr.Key == "set:html" || attr.Key == "is:raw" || attr.Key == "transition:animate" || attr.Key == "transition:name" {
+	if _, ok := skippedAttributes[attr.Key]; ok {
 		return
 	}
 
@@ -457,6 +482,27 @@ func maybeConvertTransition(n *astro.Node) {
 			Val:  fmt.Sprintf(`%s(%s, "%s", %s, %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationExpr, transitionExpr),
 			Type: astro.ExpressionAttribute,
 		})
+	}
+	if transform.HasAttr(n, transform.TRANSITION_PERSIST) {
+		transitionPersistIndex := transform.AttrIndex(n, transform.TRANSITION_PERSIST)
+		// If there no value, create a transition scope for this element
+		if n.Attr[transitionPersistIndex].Val != "" {
+			// Just rename the attribute
+			n.Attr[transitionPersistIndex].Key = "data-astro-transition-persist"
+
+		} else if transform.HasAttr(n, transform.TRANSITION_NAME) {
+			transitionNameAttr := transform.GetAttr(n, transform.TRANSITION_NAME)
+			n.Attr[transitionPersistIndex].Key = "data-astro-transition-persist"
+			n.Attr[transitionPersistIndex].Val = transitionNameAttr.Val
+			n.Attr[transitionPersistIndex].Type = transitionNameAttr.Type
+		} else {
+			fmt.Printf("NO VALUE - %v\n", n.TransitionScope)
+			n.Attr = append(n.Attr, astro.Attribute{
+				Key:  "data-astro-transition-persist",
+				Val:  fmt.Sprintf(`%s(%s, "%s")`, CREATE_TRANSITION_SCOPE, RESULT, n.TransitionScope),
+				Type: astro.ExpressionAttribute,
+			})
+		}
 	}
 }
 

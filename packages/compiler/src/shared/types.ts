@@ -54,6 +54,7 @@ export interface TransformOptions {
    */
   as?: 'document' | 'fragment';
   experimentalTransitions?: boolean;
+  experimentalPersistence?: boolean;
   transitionsAnimationURL?: string;
   resolvePath?: (specifier: string) => Promise<string>;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;

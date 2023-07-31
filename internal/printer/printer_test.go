@@ -39,17 +39,23 @@ var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 }, undefined, undefined);
 export default $$Component;`
+var SUFFIX_EXP_TRANSITIONS = fmt.Sprintf("%s;", BACKTICK) + `
+}, undefined, 'self');
+export default $$Component;`
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
 // SPECIAL TEST FIXTURES
 var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
 
-func suffixWithFilename(filename string) string {
-
+func suffixWithFilename(filename string, transitions bool) string {
+	propagationArg := "undefined"
+	if transitions {
+		propagationArg = `'self'`
+	}
 	return fmt.Sprintf("%s;", BACKTICK) + fmt.Sprintf(`
-}, '%s', undefined);
-export default $$Component;`, filename)
+}, '%s', %s);
+export default $$Component;`, filename, propagationArg)
 }
 
 type want struct {
@@ -69,11 +75,12 @@ type metadata struct {
 }
 
 type testcase struct {
-	name     string
-	source   string
-	only     bool
-	filename string
-	want     want
+	name        string
+	source      string
+	only        bool
+	transitions bool
+	filename    string
+	want        want
 }
 
 type jsonTestcase struct {
@@ -2792,36 +2799,55 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:     "transition:name with an expression",
-			source:   `<div transition:name={one + '-' + 'two'}></div>`,
-			filename: "/projects/app/src/pages/page.astro",
+			name:        "transition:name with an expression",
+			source:      `<div transition:name={one + '-' + 'two'}></div>`,
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "Y64PBINH", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
-			name:     "transition:name with an template literal",
-			source:   "<div transition:name=`${one}-two`></div>",
-			filename: "/projects/app/src/pages/page.astro",
+			name:        "transition:name with an template literal",
+			source:      "<div transition:name=`${one}-two`></div>",
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "SSXG7JT5", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
-			name:     "transition:animate with an expression",
-			source:   "<div transition:animate={slide({duration:15})}></div>",
-			filename: "/projects/app/src/pages/page.astro",
+			name:        "transition:animate with an expression",
+			source:      "<div transition:animate={slide({duration:15})}></div>",
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "RIBY4XVZ", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
-			name:     "transition:animate on Component",
-			only:     true,
-			source:   `<Component class="bar" transition:animate="morph"></Component>`,
-			filename: "/projects/app/src/pages/page.astro",
+			name:        "transition:animate on Component",
+			source:      `<Component class="bar" transition:animate="morph"></Component>`,
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "", "morph", ""))})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "X2GW3NPO", "morph", ""))})}`,
+			},
+		},
+		{
+			name:        "transition:persist converted to a data attribute",
+			source:      `<div transition:persist></div>`,
+			transitions: true,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "U5SZQYAD"), "data-astro-transition-persist")}></div>`,
+			},
+		},
+		{
+			name:        "transition:persist uses transition:name if defined",
+			source:      `<div transition:persist transition:name="foo"></div>`,
+			transitions: true,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "56KLXPQC", "", "foo"), "data-astro-transition-scope")}></div>`,
 			},
 		},
 	}
@@ -2848,7 +2874,12 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			hash := astro.HashString(code)
 			transform.ExtractStyles(doc)
-			transform.Transform(doc, transform.TransformOptions{Scope: hash}, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+			transformOptions := transform.TransformOptions{
+				Scope:                   hash,
+				ExperimentalTransitions: true,
+				ExperimentalPersistence: true,
+			}
+			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
 				Scope:           "XXXX",
 				InternalURL:     "http://localhost:3000/",
@@ -2965,8 +2996,10 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			if len(tt.filename) > 0 {
 				escapedFilename := strings.ReplaceAll(tt.filename, "'", "\\'")
-				toMatch += suffixWithFilename(escapedFilename)
+				toMatch += suffixWithFilename(escapedFilename, tt.transitions)
 				toMatch = strings.Replace(toMatch, "$$Component", getComponentName(tt.filename), -1)
+			} else if tt.transitions {
+				toMatch += SUFFIX_EXP_TRANSITIONS
 			} else {
 				toMatch += SUFFIX
 			}

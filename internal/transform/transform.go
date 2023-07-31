@@ -28,6 +28,7 @@ type TransformOptions struct {
 	Compact                 bool
 	ResultScopedSlot        bool
 	ExperimentalTransitions bool
+	ExperimentalPersistence bool
 	TransitionsAnimationURL string
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
@@ -45,26 +46,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME)) {
+		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST)) {
 			doc.Transition = true
 			getOrCreateTransitionScope(n, &opts, i)
-		}
-		if opts.ExperimentalTransitions {
-			transitionPersistIndex := AttrIndex(n, TRANSITION_PERSIST)
-			if transitionPersistIndex != -1 {
-				n.Attr[transitionPersistIndex].Key = "data-astro-transition-persist"
-				// If there is no value, assign the transition scope
-				if n.Attr[transitionPersistIndex].Val == "" {
-					if HasAttr(n, TRANSITION_NAME) {
-						attr := GetAttr(n, TRANSITION_NAME)
-						n.Attr[transitionPersistIndex].Val = attr.Val
-						n.Attr[transitionPersistIndex].Type = attr.Type
-					} else {
-						n.Attr[transitionPersistIndex].Val = getOrCreateTransitionScope(n, &opts, i)
-					}
-					n.Attr[transitionPersistIndex].Type = astro.QuotedAttribute
-				}
-			}
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
