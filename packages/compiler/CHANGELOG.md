@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.7.0
+
+### Minor Changes
+
+- 5c19809: Add a `scopedStyleStrategy` called `"attribute"`. The strategy will print styles using data attributes.
+
 ## 1.6.3
 
 ### Patch Changes
