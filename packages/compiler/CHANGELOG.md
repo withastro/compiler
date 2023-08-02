@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.8.0
+
+### Minor Changes
+
+- 365710c: Support the transition:persist directive
+
 ## 1.7.0
 
 ### Minor Changes
