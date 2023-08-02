@@ -299,7 +299,9 @@ func TestFullTransform(t *testing.T) {
 			ExtractStyles(doc)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
+			Transform(doc, TransformOptions{
+				ExperimentalTransitions: true,
+			}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {

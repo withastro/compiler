@@ -15,6 +15,7 @@ import (
 
 const TRANSITION_ANIMATE = "transition:animate"
 const TRANSITION_NAME = "transition:name"
+const TRANSITION_PERSIST = "transition:persist"
 
 type TransformOptions struct {
 	Scope                   string
@@ -27,6 +28,7 @@ type TransformOptions struct {
 	Compact                 bool
 	ResultScopedSlot        bool
 	ExperimentalTransitions bool
+	ExperimentalPersistence bool
 	TransitionsAnimationURL string
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
@@ -44,9 +46,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME)) {
+		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST)) {
 			doc.Transition = true
-			n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
+			getOrCreateTransitionScope(n, &opts, i)
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
@@ -549,4 +551,12 @@ func mergeClassList(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 
 func remove(slice []astro.Attribute, s int) []astro.Attribute {
 	return append(slice[:s], slice[s+1:]...)
+}
+
+func getOrCreateTransitionScope(n *astro.Node, opts *TransformOptions, i int) string {
+	if n.TransitionScope != "" {
+		return n.TransitionScope
+	}
+	n.TransitionScope = astro.HashString(fmt.Sprintf("%s-%v", opts.Scope, i))
+	return n.TransitionScope
 }

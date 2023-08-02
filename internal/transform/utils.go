@@ -25,13 +25,17 @@ func HasInlineDirective(n *astro.Node) bool {
 	return HasAttr(n, "is:inline")
 }
 
-func HasAttr(n *astro.Node, key string) bool {
-	for _, attr := range n.Attr {
+func AttrIndex(n *astro.Node, key string) int {
+	for i, attr := range n.Attr {
 		if attr.Key == key {
-			return true
+			return i
 		}
 	}
-	return false
+	return -1
+}
+
+func HasAttr(n *astro.Node, key string) bool {
+	return AttrIndex(n, key) != -1
 }
 
 func GetAttr(n *astro.Node, key string) *astro.Attribute {
