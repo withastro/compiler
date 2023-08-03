@@ -139,7 +139,7 @@ func transformScopingFixtures() []struct {
 				<style>.class{}</style>
 				<div />
 			`,
-			want:       `<div data-astro-hash-XXXXXX></div>`,
+			want:       `<div data-astro-cid-XXXXXX></div>`,
 			scopeStyle: "attribute",
 		},
 		{
@@ -148,7 +148,7 @@ func transformScopingFixtures() []struct {
 				<style>.font{}</style>
 				<div />
 			`,
-			want:       `<div data-astro-hash-XXXXXX></div>`,
+			want:       `<div data-astro-cid-XXXXXX></div>`,
 			scopeStyle: "attribute",
 		},
 		{
@@ -157,7 +157,7 @@ func transformScopingFixtures() []struct {
 				<style>.font{}</style>
 				<div />
 			`,
-			want:       `<div data-astro-hash-XXXXXX></div>`,
+			want:       `<div data-astro-cid-XXXXXX></div>`,
 			scopeStyle: "attribute",
 		},
 		{
@@ -166,7 +166,7 @@ func transformScopingFixtures() []struct {
 				<style>.font{}</style>
 				<div class="foo" />
 			`,
-			want:       `<div class="foo" data-astro-hash-XXXXXX></div>`,
+			want:       `<div class="foo" data-astro-cid-XXXXXX></div>`,
 			scopeStyle: "attribute",
 		},
 	}
