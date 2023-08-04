@@ -70,7 +70,7 @@ func TestPrinterCSS(t *testing.T) {
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			scopedStyleStrategy: "attribute",
-			want:                ".title[data-astro-hash-DPOHFLYM]{font-family:fantasy;font-size:28px}.body[data-astro-hash-DPOHFLYM]{font-size:1em}",
+			want:                ".title[data-astro-cid-DPOHFLYM]{font-family:fantasy;font-size:28px}.body[data-astro-cid-DPOHFLYM]{font-size:1em}",
 		},
 	}
 

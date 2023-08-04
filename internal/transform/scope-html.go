@@ -168,7 +168,7 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 		})
 	} else {
 		n.Attr = append(n.Attr, astro.Attribute{
-			Key:  fmt.Sprintf(`data-astro-hash-%s`, opts.Scope),
+			Key:  fmt.Sprintf(`data-astro-cid-%s`, opts.Scope),
 			Type: astro.EmptyAttribute,
 		})
 	}

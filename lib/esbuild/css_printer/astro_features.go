@@ -12,7 +12,7 @@ func (p *printer) printScopedSelector() bool {
 	if p.options.ScopeStrategy == ScopeStrategyWhere {
 		str = fmt.Sprintf(":where(.astro-%s)", p.options.Scope)
 	} else if p.options.ScopeStrategy == ScopeStrategyAttribute {
-		str = fmt.Sprintf("[data-astro-hash-%s]", p.options.Scope)
+		str = fmt.Sprintf("[data-astro-cid-%s]", p.options.Scope)
 	} else {
 		str = fmt.Sprintf(".astro-%s", p.options.Scope)
 	}
