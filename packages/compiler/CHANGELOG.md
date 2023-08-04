@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.8.1
+
+### Patch Changes
+
+- 52fe144: Change the value of the generated attribute
+
 ## 1.8.0
 
 ### Minor Changes
