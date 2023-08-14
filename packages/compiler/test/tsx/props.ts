@@ -2,12 +2,12 @@ import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
-const PREFIX = `/**
+const PREFIX = (component: string = '__AstroComponent_') => `/**
  * Astro global available in all contexts in .astro files
  *
  * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
 */
-declare const Astro: Readonly<import('astro').AstroGlobal<Props>>`;
+declare const Astro: Readonly<import('astro').AstroGlobal<Props, typeof ${component}>>`;
 
 test('no props', async () => {
   const input = `<div></div>`;
@@ -48,7 +48,7 @@ interface Props {}
 
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -69,7 +69,7 @@ import { Props } from './somewhere';
 
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -90,7 +90,7 @@ import { MyComponent as Props } from './somewhere';
 
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -111,7 +111,7 @@ import type { Props } from './somewhere';
 
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -132,7 +132,7 @@ type Props = {}
 
 </Fragment>
 export default function Test__AstroComponent_(_props: Props): any {}
-${PREFIX}`;
+${PREFIX('Test__AstroComponent_')}`;
   const { code } = await convertToTSX(input, { filename: '/Users/nmoo/test.astro', sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -153,7 +153,7 @@ interface Props<T> {}
 
 </Fragment>
 export default function __AstroComponent_<T>(_props: Props<T>): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -174,7 +174,7 @@ interface Props<T extends Other<{ [key: string]: any }>> {}
 
 </Fragment>
 export default function __AstroComponent_<T extends Other<{ [key: string]: any }>>(_props: Props<T>): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -195,7 +195,7 @@ interface Props<T extends { [key: string]: any }, P extends string ? { [key: str
 
 </Fragment>
 export default function __AstroComponent_<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -216,7 +216,7 @@ interface Props<T extends Something<false> ? A : B, P extends string ? { [key: s
 
 </Fragment>
 export default function __AstroComponent_<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
@@ -241,7 +241,7 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
 
 </Fragment>
 export default function __AstroComponent_<Tag extends keyof JSX.IntrinsicElements>(_props: Props<Tag>): any {}
-${PREFIX}`;
+${PREFIX()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
