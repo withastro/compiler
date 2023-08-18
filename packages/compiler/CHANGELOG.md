@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 1.8.2
+
+### Patch Changes
+
+- 80b7e42: Pass the type of the current component as a type argument to the AstroGlobal in order to type Astro.self
+
 ## 1.8.1
 
 ### Patch Changes
