@@ -223,7 +223,7 @@ func Parse() any {
 		source := jsString(args[0])
 		parseOptions := makeParseOptions(js.Value(args[1]))
 		transformOptions := makeTransformOptions(js.Value(args[1]))
-		transformOptions.Scope = "XXXXXX"
+		transformOptions.Scope = "xxxxxx"
 		h := handler.NewHandler(source, parseOptions.Filename)
 
 		var doc *astro.Node
@@ -247,7 +247,7 @@ func ConvertToTSX() any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 		transformOptions := makeTransformOptions(js.Value(args[1]))
-		transformOptions.Scope = "XXXXXX"
+		transformOptions.Scope = "xxxxxx"
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		var doc *astro.Node

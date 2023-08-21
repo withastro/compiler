@@ -1030,8 +1030,8 @@ const testBool = true;
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			want: want{
-				code: "\n\n\t\t" + `${$$maybeRenderHead($$result)}<h1 class="title astro-DPOHFLYM">Page Title</h1>
-		<p class="body astro-DPOHFLYM">I’m a page</p>`,
+				code: "\n\n\t\t" + `${$$maybeRenderHead($$result)}<h1 class="title astro-dpohflym">Page Title</h1>
+		<p class="body astro-dpohflym">I’m a page</p>`,
 			},
 		},
 		{
@@ -1158,17 +1158,17 @@ const someProps = {
 					hydratedComponents:  []string{`Counter`},
 					hydrationDirectives: []string{"visible"},
 				},
-				code: `<html lang="en" class="astro-HMNNHVCQ">
+				code: `<html lang="en" class="astro-hmnnhvcq">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
   ` + RENDER_HEAD_RESULT + `</head>
-  <body class="astro-HMNNHVCQ">
-    <main class="astro-HMNNHVCQ">
-      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter.jsx"),"client:component-export":("default"),"class":"astro-HMNNHVCQ"},{"default": () => $$render` + "`" + `
-        <h1 class="astro-HMNNHVCQ">Hello React!</h1>
+  <body class="astro-hmnnhvcq">
+    <main class="astro-hmnnhvcq">
+      ${$$renderComponent($$result,'Counter',Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter.jsx"),"client:component-export":("default"),"class":"astro-hmnnhvcq"},{"default": () => $$render` + "`" + `
+        <h1 class="astro-hmnnhvcq">Hello React!</h1>
       ` + "`" + `,})}
     </main>
   </body></html>
@@ -1659,7 +1659,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 </head>
 <div />`,
 			want: want{
-				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-LASNTLJA\"></div>",
+				code: "<head>\n\n\n\n\n\n\n" + RENDER_HEAD_RESULT + "</head>\n<div class=\"astro-lasntlja\"></div>",
 			},
 		},
 		{
@@ -2124,7 +2124,7 @@ const items = ["Dog", "Cat", "Platipus"];
 </style><div class="container">My Text</div>`,
 
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div class="container astro-SJ3WYE6H">My Text</div>`,
+				code: `${$$maybeRenderHead($$result)}<div class="container astro-sj3wye6h">My Text</div>`,
 			},
 		},
 		{
@@ -2648,7 +2648,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style",
 			source: "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-VFS5OEMV"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-vfs5oemv"${$$addAttribute($$definedVars, "style")}>testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2656,7 +2656,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style shorthand attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 {style}>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${style}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-YIEFZSDV">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${style}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-yiefzsdv">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2664,7 +2664,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style expression attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style={myStyles}>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${myStyles}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-ZWHEDDU6">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${myStyles}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-zwheddu6">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2672,7 +2672,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style empty attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute($$definedVars, "style")} class="astro-YVZW3G7H">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute($$definedVars, "style")} class="astro-yvzw3g7h">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2680,7 +2680,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style quoted attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style='color: yellow;'>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${"color: yellow;"}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-RRT5RQ2H">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${"color: yellow;"}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-rrt5rq2h">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2688,7 +2688,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on style tag with style template literal attribute on element",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style=`color: ${color};`>testing</h1>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${` + BACKTICK + `color: ${color};` + BACKTICK + `}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-33XVGAES">testing</h1>`,
+				code:        `${$$maybeRenderHead($$result)}<h1${$$addAttribute(` + BACKTICK + `${` + BACKTICK + `color: ${color};` + BACKTICK + `}; ${$$definedVars}` + BACKTICK + `, "style")} class="astro-33xvgaes">testing</h1>`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2696,7 +2696,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "multiple define:vars on style",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>",
 			want: want{
-				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6OXBQCST"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
+				code:        `${$$maybeRenderHead($$result)}<h1 class="astro-6oxbqcst"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6oxbqcst"${$$addAttribute($$definedVars, "style")}>bar</h2>`,
 				definedVars: []string{"{color:'red'}", "{color:'green'}"},
 			},
 		},
@@ -2704,7 +2704,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			name:   "define:vars on non-root elements",
 			source: "<style define:vars={{color:'green'}}>h1{color:var(--color)}</style>{true ? <h1>foo</h1> : <h1>bar</h1>}",
 			want: want{
-				code:        `${true ? $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<h1 class="astro-34AO5S3B"${$$addAttribute($$definedVars, "style")}>foo</h1>` + BACKTICK + ` : $$render` + BACKTICK + `<h1 class="astro-34AO5S3B"${$$addAttribute($$definedVars, "style")}>bar</h1>` + BACKTICK + `}`,
+				code:        `${true ? $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<h1 class="astro-34ao5s3b"${$$addAttribute($$definedVars, "style")}>foo</h1>` + BACKTICK + ` : $$render` + BACKTICK + `<h1 class="astro-34ao5s3b"${$$addAttribute($$definedVars, "style")}>bar</h1>` + BACKTICK + `}`,
 				definedVars: []string{"{color:'green'}"},
 			},
 		},
@@ -2804,7 +2804,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "Y64PBINH", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "daiq24ry", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -2813,7 +2813,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "SSXG7JT5", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "vvov4lyr", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -2822,7 +2822,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "RIBY4XVZ", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "ih7yuffh", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -2831,7 +2831,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "X2GW3NPO", "morph", ""))})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "wkm5vset", "morph", ""))})}`,
 			},
 		},
 		{
@@ -2839,7 +2839,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<div transition:persist></div>`,
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "U5SZQYAD"), "data-astro-transition-persist")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "pflz5ime"), "data-astro-transition-persist")}></div>`,
 			},
 		},
 		{
@@ -2847,7 +2847,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<div transition:persist transition:name="foo"></div>`,
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "56KLXPQC", "", "foo"), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "peuy4xf7", "", "foo"), "data-astro-transition-scope")}></div>`,
 			},
 		},
 	}

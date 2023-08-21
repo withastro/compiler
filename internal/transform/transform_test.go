@@ -28,7 +28,7 @@ func transformScopingFixtures() []struct {
 				<style>div { color: red }</style>
 				<div />
 			`,
-			want: `<div class="astro-XXXXXX"></div>`,
+			want: `<div class="astro-xxxxxx"></div>`,
 		},
 
 		{
@@ -87,7 +87,7 @@ func transformScopingFixtures() []struct {
 				<style define:vars={{ a }}></style>
 				<div />
 			`,
-			want: `<div class="astro-XXXXXX" style={$$definedVars}></div>`,
+			want: `<div class="astro-xxxxxx" style={$$definedVars}></div>`,
 		},
 		{
 			name: "scoped multiple",
@@ -96,7 +96,7 @@ func transformScopingFixtures() []struct {
 				<style>div { color: green }</style>
 				<div />
 			`,
-			want: `<div class="astro-XXXXXX"></div>`,
+			want: `<div class="astro-xxxxxx"></div>`,
 		},
 		{
 			name: "global multiple",
@@ -114,7 +114,7 @@ func transformScopingFixtures() []struct {
 				<style is:global>div { color: green }</style>
 				<div />
 			`,
-			want: `<div class="astro-XXXXXX"></div>`,
+			want: `<div class="astro-xxxxxx"></div>`,
 		},
 		{
 			name: "multiple scoped :global",
@@ -123,7 +123,7 @@ func transformScopingFixtures() []struct {
 				<style>:global(test-1) {}</style>
 				<div />
 			`,
-			want: `<div class="astro-XXXXXX"></div>`,
+			want: `<div class="astro-xxxxxx"></div>`,
 		},
 		{
 			name: "inline does not scope",
@@ -139,7 +139,7 @@ func transformScopingFixtures() []struct {
 				<style>.class{}</style>
 				<div />
 			`,
-			want:       `<div data-astro-cid-XXXXXX></div>`,
+			want:       `<div data-astro-cid-xxxxxx></div>`,
 			scopeStyle: "attribute",
 		},
 		{
@@ -148,7 +148,7 @@ func transformScopingFixtures() []struct {
 				<style>.font{}</style>
 				<div />
 			`,
-			want:       `<div data-astro-cid-XXXXXX></div>`,
+			want:       `<div data-astro-cid-xxxxxx></div>`,
 			scopeStyle: "attribute",
 		},
 		{
@@ -157,7 +157,7 @@ func transformScopingFixtures() []struct {
 				<style>.font{}</style>
 				<div />
 			`,
-			want:       `<div data-astro-cid-XXXXXX></div>`,
+			want:       `<div data-astro-cid-xxxxxx></div>`,
 			scopeStyle: "attribute",
 		},
 		{
@@ -166,7 +166,7 @@ func transformScopingFixtures() []struct {
 				<style>.font{}</style>
 				<div class="foo" />
 			`,
-			want:       `<div class="foo" data-astro-cid-XXXXXX></div>`,
+			want:       `<div class="foo" data-astro-cid-xxxxxx></div>`,
 			scopeStyle: "attribute",
 		},
 	}
@@ -191,7 +191,7 @@ func TestTransformScoping(t *testing.T) {
 			} else {
 				scopeStyle = "where"
 			}
-			Transform(doc, TransformOptions{Scope: "XXXXXX", ScopedStyleStrategy: scopeStyle}, handler.NewHandler(tt.source, "/test.astro"))
+			Transform(doc, TransformOptions{Scope: "xxxxxx", ScopedStyleStrategy: scopeStyle}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()
 			if tt.want != got {
@@ -212,13 +212,13 @@ func FuzzTransformScoping(f *testing.F) {
 			t.Skip("Invalid parse, skipping rest of fuzz test")
 		}
 		ExtractStyles(doc)
-		Transform(doc, TransformOptions{Scope: "XXXXXX"}, handler.NewHandler(source, "/test.astro"))
+		Transform(doc, TransformOptions{Scope: "xxxxxx"}, handler.NewHandler(source, "/test.astro"))
 		var b strings.Builder
 		astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 		got := b.String()
 		// hacky - we only expect scoping for non global styles / non inline styles
 		testRegex := regexp.MustCompile(`is:global|:global\(|is:inline|<style>\s*</style>`)
-		if !testRegex.MatchString(source) && !strings.Contains(got, "astro-XXXXXX") {
+		if !testRegex.MatchString(source) && !strings.Contains(got, "astro-xxxxxx") {
 			t.Errorf("HTML scoping failed to include the astro scope\n source: %q\n got: %q", source, got)
 		}
 		if utf8.ValidString(source) && !utf8.ValidString(got) {
