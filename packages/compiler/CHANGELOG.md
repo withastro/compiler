@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 2.0.0
+
+### Major Changes
+
+- cd93272: The scope hash created by the compiler is now **lowercase**.
+
+  This aligns with the HTML spec of the attribute names, where they are lowercase by spec.
+
+  This change is needed because the compiler now creates data attributes that contain the hash in their name.
+
 ## 1.8.2
 
 ### Patch Changes
