@@ -34,7 +34,7 @@ func TestPrinterCSS(t *testing.T) {
 
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
-			want: ".title:where(.astro-DPOHFLYM){font-family:fantasy;font-size:28px}.body:where(.astro-DPOHFLYM){font-size:1em}",
+			want: ".title:where(.astro-dpohflym){font-family:fantasy;font-size:28px}.body:where(.astro-dpohflym){font-size:1em}",
 		},
 		{
 			name: "scopedStyleStrategy: 'class'",
@@ -52,7 +52,7 @@ func TestPrinterCSS(t *testing.T) {
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			scopedStyleStrategy: "class",
-			want:                ".title.astro-DPOHFLYM{font-family:fantasy;font-size:28px}.body.astro-DPOHFLYM{font-size:1em}",
+			want:                ".title.astro-dpohflym{font-family:fantasy;font-size:28px}.body.astro-dpohflym{font-size:1em}",
 		},
 		{
 			name: "scopedStyleStrategy: 'attribute'",
@@ -70,7 +70,7 @@ func TestPrinterCSS(t *testing.T) {
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			scopedStyleStrategy: "attribute",
-			want:                ".title[data-astro-cid-DPOHFLYM]{font-family:fantasy;font-size:28px}.body[data-astro-cid-DPOHFLYM]{font-size:1em}",
+			want:                ".title[data-astro-cid-dpohflym]{font-family:fantasy;font-size:28px}.body[data-astro-cid-dpohflym]{font-size:1em}",
 		},
 	}
 

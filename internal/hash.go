@@ -2,6 +2,7 @@ package astro
 
 import (
 	"encoding/base32"
+	"strings"
 
 	"github.com/withastro/compiler/internal/xxhash"
 )
@@ -11,5 +12,5 @@ func HashString(str string) string {
 	//nolint
 	h.Write([]byte(str))
 	hashBytes := h.Sum(nil)
-	return base32.StdEncoding.EncodeToString(hashBytes)[:8]
+	return strings.ToLower(base32.StdEncoding.EncodeToString(hashBytes)[:8])
 }

@@ -26,7 +26,7 @@ test('trailing space', () => {
   assert.ok(result.code, 'Expected to compiler');
   assert.match(
     result.code,
-    `<span class="spoiler astro-BQATI2K5">
+    `<span class="spoiler astro-bqati2k5">
     \${$$renderSlot($$result,$$slots["default"])}
 </span>\``
   );
