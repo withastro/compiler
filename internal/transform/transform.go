@@ -27,8 +27,6 @@ type TransformOptions struct {
 	ScopedStyleStrategy     string
 	Compact                 bool
 	ResultScopedSlot        bool
-	ExperimentalTransitions bool
-	ExperimentalPersistence bool
 	TransitionsAnimationURL string
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
@@ -46,7 +44,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if opts.ExperimentalTransitions && (HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST)) {
+		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) {
 			doc.Transition = true
 			getOrCreateTransitionScope(n, &opts, i)
 		}

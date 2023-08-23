@@ -30,6 +30,8 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"spreadAttributes as " + SPREAD_ATTRIBUTES,
 	"defineStyleVars as " + DEFINE_STYLE_VARS,
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
+	"renderTransition as " + RENDER_TRANSITION,
+	"createTransitionScope as " + CREATE_TRANSITION_SCOPE,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
@@ -2875,20 +2877,22 @@ const items = ["Dog", "Cat", "Platipus"];
 			hash := astro.HashString(code)
 			transform.ExtractStyles(doc)
 			transformOptions := transform.TransformOptions{
-				Scope:                   hash,
-				ExperimentalTransitions: true,
-				ExperimentalPersistence: true,
+				Scope: hash,
 			}
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
-				Scope:           "XXXX",
-				InternalURL:     "http://localhost:3000/",
-				Filename:        tt.filename,
-				AstroGlobalArgs: "'https://astro.build'",
+				Scope:                   "XXXX",
+				InternalURL:             "http://localhost:3000/",
+				Filename:                tt.filename,
+				AstroGlobalArgs:         "'https://astro.build'",
+				TransitionsAnimationURL: "transitions.css",
 			}, h)
 			output := string(result.Output)
 
 			toMatch := INTERNAL_IMPORTS
+			if strings.Count(tt.source, "transition:") > 0 {
+				toMatch += `import "transitions.css";`
+			}
 			if len(tt.want.frontmatter) > 0 {
 				toMatch += test_utils.Dedent(tt.want.frontmatter[0])
 			}

@@ -110,7 +110,7 @@ func emptyTextNodeWithoutSiblings(n *Node) bool {
 func render1(p *printer, n *Node, opts RenderOptions) {
 	depth := opts.depth
 
-	if opts.opts.ExperimentalTransitions && n.Transition {
+	if n.Transition {
 		p.needsTransitionCSS = true
 	}
 
