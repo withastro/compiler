@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.0.1
+
+### Patch Changes
+
+- 4e1e907: Remove experimental flags from `transition:` directives. They are now enabled by default.
+
 ## 2.0.0
 
 ### Major Changes
