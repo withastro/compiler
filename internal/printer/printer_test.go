@@ -2875,9 +2875,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			hash := astro.HashString(code)
 			transform.ExtractStyles(doc)
 			transformOptions := transform.TransformOptions{
-				Scope:                   hash,
-				ExperimentalTransitions: true,
-				ExperimentalPersistence: true,
+				Scope:                   hash
 			}
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{

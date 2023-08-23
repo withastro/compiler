@@ -95,14 +95,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	if jsBool(options.Get("resultScopedSlot")) {
 		scopedSlot = true
 	}
-	experimentalTransitions := false
-	if jsBool(options.Get("experimentalTransitions")) {
-		experimentalTransitions = true
-	}
-	experimentalPersistence := false
-	if jsBool(options.Get("experimentalPersistence")) {
-		experimentalPersistence = true
-	}
 	transitionsAnimationURL := jsString(options.Get("transitionsAnimationURL"))
 	if transitionsAnimationURL == "" {
 		transitionsAnimationURL = "astro/components/viewtransitions.css"
@@ -139,8 +131,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		PreprocessStyle:         preprocessStyle,
 		ResultScopedSlot:        scopedSlot,
 		ScopedStyleStrategy:     scopedStyleStrategy,
-		ExperimentalTransitions: experimentalTransitions,
-		ExperimentalPersistence: experimentalPersistence,
 		TransitionsAnimationURL: transitionsAnimationURL,
 	}
 }
