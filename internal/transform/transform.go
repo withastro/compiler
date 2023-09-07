@@ -46,6 +46,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		}
 		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) {
 			doc.Transition = true
+			doc.HeadPropagation = true
 			getOrCreateTransitionScope(n, &opts, i)
 		}
 		if len(definedVars) > 0 {

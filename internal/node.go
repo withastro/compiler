@@ -96,6 +96,7 @@ type Node struct {
 	ClientOnlyComponents     []*HydratedComponentMetadata
 	HydrationDirectives      map[string]bool
 	ContainsHead             bool
+	HeadPropagation          bool
 
 	Type      NodeType
 	DataAtom  atom.Atom
