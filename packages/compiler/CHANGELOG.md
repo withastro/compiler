@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.1.0
+
+### Minor Changes
+
+- 2584348: Add propagation metadata to the TransformResult
+
 ## 2.0.1
 
 ### Patch Changes
