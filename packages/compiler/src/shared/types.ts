@@ -89,6 +89,7 @@ export interface TransformResult {
   hydratedComponents: HydratedComponent[];
   clientOnlyComponents: HydratedComponent[];
   containsHead: boolean;
+  propagation: boolean;
 }
 
 export interface SourceMap {

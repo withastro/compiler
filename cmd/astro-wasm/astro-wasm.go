@@ -179,6 +179,7 @@ type TransformResult struct {
 	ClientOnlyComponents []HydratedComponent     `js:"clientOnlyComponents"`
 	ContainsHead         bool                    `js:"containsHead"`
 	StyleError           []string                `js:"styleError"`
+	Propagation          bool                    `js:"propagation"`
 }
 
 // This is spawned as a goroutine to preprocess style nodes using an async function passed from JS
@@ -412,6 +413,7 @@ func Transform() any {
 					ClientOnlyComponents: clientOnlyComponents,
 					ContainsHead:         doc.ContainsHead,
 					StyleError:           styleError,
+					Propagation:          doc.HeadPropagation,
 				}
 				switch transformOptions.SourceMap {
 				case "external":
