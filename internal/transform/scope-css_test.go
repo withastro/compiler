@@ -269,6 +269,11 @@ func TestScopeStyle(t *testing.T) {
 			source: "@layer theme, layout, utilities; @layer special { .item { color: rebeccapurple; }}",
 			want:   "@layer theme,layout,utilities;@layer special{.item:where(.astro-xxxxxx){color:rebeccapurple}}",
 		},
+		{
+			name:   "@starting-style",
+			source: "@starting-style{.class{}}",
+			want:   "@starting-style{.class:where(.astro-xxxxxx){}}",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
