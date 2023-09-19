@@ -356,6 +356,13 @@ func TestAtPage(t *testing.T) {
 	expectPrintedMinify(t, "@page :first { margin: 1cm }", "@page :first{margin:1cm}")
 }
 
+func TestAtStartingStyle(t *testing.T) {
+	expectPrinted(t, "@starting-style { div { color: red } }", "@starting-style {\n  div {\n    color: red;\n  }\n}\n")
+	expectPrinted(t, "@starting-style{div{color:red}}", "@starting-style {\n  div {\n    color: red;\n  }\n}\n")
+	expectPrintedMinify(t, "@starting-style { div { color: red } }", "@starting-style{div{color:red}}")
+	expectPrintedMinify(t, "@starting-style{div{color:red}}", "@starting-style{div{color:red}}")
+}
+
 func TestMsGridColumnsWhitespace(t *testing.T) {
 	// Must not insert a space between the "]" and the "("
 	expectPrinted(t, "div { -ms-grid-columns: (1fr)[3] }", "div {\n  -ms-grid-columns: (1fr)[3];\n}\n")

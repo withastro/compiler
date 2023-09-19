@@ -682,6 +682,9 @@ var specialAtRules = map[string]atRuleKind{
 	// Reference: https://github.com/w3c/csswg-drafts/issues?q=is%3Aissue+label%3Acss-contain-3+
 	"container": atRuleInheritContext,
 
+	// Reference: https://drafts.csswg.org/css-transitions-2/#defining-before-change-style-the-starting-style-rule
+	"starting-style": atRuleInheritContext,
+
 	// Reference: https://drafts.csswg.org/css-nesting-1/
 	"nest": atRuleDeclarations,
 }

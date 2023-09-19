@@ -868,6 +868,36 @@ func TestAtCharset(t *testing.T) {
 	expectParseError(t, "@charset url(\"UTF-8\");", "<stdin>: WARNING: Expected string token but found \"url(\"\n")
 	expectParseError(t, "@charset \"UTF-8\" ", "<stdin>: WARNING: Expected \";\" but found whitespace\n")
 	expectParseError(t, "@charset \"UTF-8\"{}", "<stdin>: WARNING: Expected \";\" but found \"{\"\n")
+
+	// https://drafts.csswg.org/css-transitions-2/#defining-before-change-style-the-starting-style-rule
+	expectPrinted(t, `
+	@starting-style {
+		h1 {
+			background-color: transparent;
+		}
+		@layer foo {
+			div {
+				height: 100px;
+			}
+		}
+	}
+	`, `@starting-style {
+  h1 {
+    background-color: transparent;
+  }
+  @layer foo {
+    div {
+      height: 100px;
+    }
+  }
+}
+`)
+
+	expectPrintedMinify(t, `@starting-style {
+	h1 {
+		background-color: transparent;
+	}
+}`, "@starting-style{h1{background-color:transparent}}")
 }
 
 func TestAtImport(t *testing.T) {
