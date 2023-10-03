@@ -238,6 +238,21 @@ func HoistImports(source []byte) HoistedScripts {
 	return HoistedScripts{Hoisted: imports, HoistedLocs: importLocs, Body: body, BodyLocs: bodyLocs}
 }
 
+func HasGetStaticPaths(source []byte) bool {
+	ident := []byte("getStaticPaths")
+	if !bytes.Contains(source, ident) {
+		return false
+	}
+
+	exports := HoistExports(source)
+	for _, statement := range exports.Hoisted {
+		if bytes.Contains(statement, ident) {
+			return true
+		}
+	}
+	return false
+}
+
 type Props struct {
 	Ident     string
 	Statement string
