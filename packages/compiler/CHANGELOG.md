@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.2.0
+
+### Minor Changes
+
+- 7579d7c: Support CSS `@starting-style` rule (From: https://github.com/evanw/esbuild/pull/3249)
+- 09abfe4: Adds ability for TSX output to automatically infer `Astro.props` and `Astro.params` when `getStaticPaths` is used
+
 ## 2.1.0
 
 ### Minor Changes
