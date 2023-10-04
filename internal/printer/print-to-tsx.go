@@ -139,18 +139,18 @@ func renderTsx(p *printer, n *Node) {
 		propsIdent := props.Ident
 		paramsIdent := ""
 		if hasGetStaticPaths {
-			paramsIdent = "Get<InferredGetStaticPath, 'params'>"
+			paramsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>"
 			if propsIdent == "Record<string, any>" {
-				propsIdent = "Get<InferredGetStaticPath, 'props'>"
+				propsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>"
 			}
 		}
 
 		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics))
 		if hasGetStaticPaths {
-			p.printf(`type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
-type Flattened<T> = T extends Array<infer U> ? Flattened<U> : T;
-type InferredGetStaticPath = Flattened<ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
-type Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;%s`, "\n")
+			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+type ASTRO__Flattened<T> = T extends Array<infer U> ? ASTRO__Flattened<U> : T;
+type ASTRO__InferredGetStaticPath = ASTRO__Flattened<ASTRO__ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
+type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;%s`, "\n")
 		}
 
 		if propsIdent != "Record<string, any>" {

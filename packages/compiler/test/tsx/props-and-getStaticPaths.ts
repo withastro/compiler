@@ -3,9 +3,9 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 function getPrefix({
-  props = `Get<InferredGetStaticPath, 'props'>`,
+  props = `ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>`,
   component = '__AstroComponent_',
-  params = `Get<InferredGetStaticPath, 'params'>`,
+  params = `ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>`,
 }: {
   props?: string;
   component?: string;
@@ -16,14 +16,14 @@ function getPrefix({
  *
  * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
 */
-declare const Astro: Readonly<import('astro').AstroGlobal<${props}, typeof ${component}${params ? `, ${params}` : ''}>>`
+declare const Astro: Readonly<import('astro').AstroGlobal<${props}, typeof ${component}${params ? `, ${params}` : ''}>>`;
 }
 
 function getSuffix() {
-  return `type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
-type Flattened<T> = T extends Array<infer U> ? Flattened<U> : T;
-type InferredGetStaticPath = Flattened<ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
-type Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;`;
+  return `type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+type ASTRO__Flattened<T> = T extends Array<infer U> ? ASTRO__Flattened<U> : T;
+type ASTRO__InferredGetStaticPath = ASTRO__Flattened<ASTRO__ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
+type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;`;
 }
 
 test('explicit props definition', async () => {
@@ -69,7 +69,7 @@ export function getStaticPaths() {
 "";<Fragment>
 <div></div>
 </Fragment>
-export default function __AstroComponent_(_props: Get<InferredGetStaticPath, 'props'>): any {}
+export default function __AstroComponent_(_props: ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>): any {}
 ${getSuffix()}
 ${getPrefix()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
