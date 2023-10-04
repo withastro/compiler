@@ -97,7 +97,9 @@ func getTextType(n *astro.Node) TextType {
 func renderTsx(p *printer, n *Node) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
-		props := js_scanner.GetPropsType([]byte(p.sourcetext))
+		source := []byte(p.sourcetext)
+		props := js_scanner.GetPropsType(source)
+		hasGetStaticPaths := js_scanner.HasGetStaticPaths(source)
 		hasChildren := false
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
@@ -134,15 +136,34 @@ func renderTsx(p *printer, n *Node) {
 			p.print("</Fragment>\n")
 		}
 		componentName := getTSXComponentName(p.opts.Filename)
+		propsIdent := props.Ident
+		paramsIdent := ""
+		if hasGetStaticPaths {
+			paramsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>"
+			if propsIdent == "Record<string, any>" {
+				propsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>"
+			}
+		}
 
-		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, props.Ident, props.Generics))
-		if props.Ident != "Record<string, any>" {
+		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics))
+		if hasGetStaticPaths {
+			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+type ASTRO__Flattened<T> = T extends Array<infer U> ? ASTRO__Flattened<U> : T;
+type ASTRO__InferredGetStaticPath = ASTRO__Flattened<ASTRO__ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
+type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;%s`, "\n")
+		}
+
+		if propsIdent != "Record<string, any>" {
 			p.printf(`/**
  * Astro global available in all contexts in .astro files
  *
  * [Astro documentation](https://docs.astro.build/reference/api-reference/#astro-global)
 */
-declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s>>`, props.Ident, componentName)
+declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsIdent, componentName)
+			if paramsIdent != "" {
+				p.printf(", %s", paramsIdent)
+			}
+			p.print(">>")
 		}
 		return
 	}
