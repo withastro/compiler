@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.2.1
+
+### Patch Changes
+
+- a52c181: Fixed an issue where spread attributes could not include double quotation marks.
+
 ## 2.2.0
 
 ### Minor Changes
