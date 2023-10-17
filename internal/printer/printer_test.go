@@ -1665,17 +1665,24 @@ import { Container, Col, Row } from 'react-bootstrap';
 			},
 		},
 		{
+			name:   "spread with double quotation marks",
+			source: `<div {...propsFn("string")}/>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(propsFn("string"))}></div>`,
+			},
+		},
+		{
 			name:   "class with spread",
 			source: `<div class="something" {...Astro.props} />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div class="something"${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div class="something"${$$spreadAttributes(Astro.props)}></div>`,
 			},
 		},
 		{
 			name:   "class:list with spread",
 			source: `<div class:list="something" {...Astro.props} />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div class:list="something"${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div class:list="something"${$$spreadAttributes(Astro.props)}></div>`,
 			},
 		},
 		{
@@ -1710,14 +1717,14 @@ import { Container, Col, Row } from 'react-bootstrap';
 			name:   "spread without style or class",
 			source: `<div {...Astro.props} />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,"Astro.props")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props)}></div>`,
 			},
 		},
 		{
 			name:   "spread with style but no explicit class",
 			source: `<style>div { color: red; }</style><div {...Astro.props} />`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,"Astro.props",{"class":"astro-XXXX"})}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,undefined,{"class":"astro-XXXX"})}></div>`,
 			},
 		},
 		{
