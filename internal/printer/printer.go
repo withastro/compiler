@@ -417,9 +417,9 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 		p.addSourceMapping(loc.Loc{Start: attr.KeyLoc.Start - 3})
 		p.print(strings.TrimSpace(attr.Key))
 		if !injectClass {
-			p.printf(`,"%s")}`, strings.TrimSpace(attr.Key))
+			p.print(`)}`)
 		} else {
-			p.printf(`,"%s",{"class":"astro-%s"})}`, strings.TrimSpace(attr.Key), p.opts.Scope)
+			p.printf(`,undefined,{"class":"astro-%s"})}`, p.opts.Scope)
 		}
 	case astro.ShorthandAttribute:
 		withoutComments, _ := removeComments(attr.Key)
