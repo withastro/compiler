@@ -141,7 +141,7 @@ func renderTsx(p *printer, n *Node) {
 		if hasGetStaticPaths {
 			paramsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>"
 			if propsIdent == "Record<string, any>" {
-				propsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>"
+				propsIdent = "ASTRO__MergeUnion<ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>>"
 			}
 		}
 
@@ -150,6 +150,7 @@ func renderTsx(p *printer, n *Node) {
 			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 type ASTRO__Flattened<T> = T extends Array<infer U> ? ASTRO__Flattened<U> : T;
 type ASTRO__InferredGetStaticPath = ASTRO__Flattened<ASTRO__ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
+type ASTRO__MergeUnion<T, K extends PropertyKey = T extends unknown ? keyof T : never> = T extends unknown ? T & { [P in Exclude<K, keyof T>]?: never } extends infer O ? { [P in keyof O]: O[P] } : never : never;
 type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;%s`, "\n")
 		}
 
