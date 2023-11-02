@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.2.2
+
+### Patch Changes
+
+- bf76663: [TSX] Add `ASTRO__MergeUnion` util to allow destructuring from automatically inferred union Prop types
+
 ## 2.2.1
 
 ### Patch Changes
