@@ -95,8 +95,8 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	if jsBool(options.Get("resultScopedSlot")) {
 		scopedSlot = true
 	}
-	transitionsAnimationURL := jsString(options.Get("transitionsAnimationURL"))
 
+	transitionsAnimationURL := jsString(options.Get("transitionsAnimationURL"))
 	if transitionsAnimationURL == "" {
 		transitionsAnimationURL = "astro/components/viewtransitions.css"
 	}
