@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"testing"
@@ -467,6 +468,51 @@ func TestCompactTransform(t *testing.T) {
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestAnnotation(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "basic",
+			source: `<div>Hello world!</div>`,
+			want:   `<div data-astro-source-file="/src/pages/index.astro">Hello world!</div>`,
+		},
+		{
+			name:   "no components",
+			source: `<Component>Hello world!</Component>`,
+			want:   `<Component>Hello world!</Component>`,
+		},
+		{
+			name:   "injects root",
+			source: `<html></html>`,
+			want:   `<html></html>`,
+		},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			h := handler.NewHandler(tt.source, "/src/pages/index.astro")
+			Transform(doc, TransformOptions{
+				AnnotateSourceFile: true,
+				Filename:           "/src/pages/index.astro",
+				NormalizedFilename: "/src/pages/index.astro",
+			}, h)
+			astro.PrintToSource(&b, doc)
+			got := strings.TrimSpace(b.String())
+			if tt.want != got {
+				t.Error(fmt.Sprintf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got))
 			}
 		})
 	}

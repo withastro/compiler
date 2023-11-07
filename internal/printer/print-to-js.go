@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode"
 
 	. "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
@@ -448,6 +449,25 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				// Note: if we encounter "slot" NOT inside a component, that's fine
 				// These should be preserved in the output
 				p.printAttribute(a, n)
+			} else if a.Key == "data-astro-source-file" {
+				p.printAttribute(a, n)
+				var l []int
+				if n.FirstChild != nil && len(n.FirstChild.Loc) > 0 {
+					start := n.FirstChild.Loc[0].Start
+					if n.FirstChild.Type == TextNode {
+						start += len(n.Data) - len(strings.TrimLeftFunc(n.Data, unicode.IsSpace))
+					}
+					l = p.builder.GetLineAndColumnForLocation(loc.Loc{Start: start})
+				} else if len(n.Loc) > 0 {
+					l = p.builder.GetLineAndColumnForLocation(n.Loc[0])
+				}
+				if len(l) > 0 {
+					p.printAttribute(Attribute{
+						Key:  "data-astro-source-loc",
+						Type: QuotedAttribute,
+						Val:  fmt.Sprintf("%d:%d", l[0], l[1]),
+					}, n)
+				}
 				p.addSourceMapping(n.Loc[0])
 			} else {
 				p.printAttribute(a, n)

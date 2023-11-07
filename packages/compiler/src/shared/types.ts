@@ -56,6 +56,7 @@ export interface TransformOptions {
   transitionsAnimationURL?: string;
   resolvePath?: (specifier: string) => Promise<string>;
   preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
+  annotateSourceFile?: boolean;
 }
 
 export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename'>;
