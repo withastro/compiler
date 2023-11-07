@@ -2,7 +2,7 @@
 '@astrojs/compiler': minor
 ---
 
-Add a new `annotateSourceFile` option. This options makes it so the compiler will annotate every element with their source file location. This is notably useful for dev tools to be able to provide features like a "Open in editor" button. This option is disabled by default.
+Add a new `annotateSourceFile` option. This option makes it so the compiler will annotate every element with its source file location. This is notably useful for dev tools to be able to provide features like a "Open in editor" button. This option is disabled by default.
 
 ```html
 <div>
