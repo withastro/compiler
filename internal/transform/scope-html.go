@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	astro "github.com/withastro/compiler/internal"
+	"golang.org/x/net/html/atom"
 )
 
 func ScopeElement(n *astro.Node, opts TransformOptions) {
@@ -27,6 +28,14 @@ func AddDefineVars(n *astro.Node, values []string) bool {
 	return false
 }
 
+func AnnotateElement(n *astro.Node, opts TransformOptions) {
+	if n.Type == astro.ElementNode && !n.Component && !n.Fragment {
+		if _, noScope := NeverScopedElements[n.Data]; !noScope {
+			annotateElement(n, opts)
+		}
+	}
+}
+
 var NeverScopedElements map[string]bool = map[string]bool{
 	"Fragment": true,
 	"base":     true,
@@ -46,6 +55,17 @@ var NeverScopedElements map[string]bool = map[string]bool{
 
 var NeverScopedSelectors map[string]bool = map[string]bool{
 	":root": true,
+}
+
+func annotateElement(n *astro.Node, opts TransformOptions) {
+	if n.DataAtom == atom.Html {
+		return
+	}
+	n.Attr = append(n.Attr, astro.Attribute{
+		Key:  "data-astro-source-file",
+		Type: astro.QuotedAttribute,
+		Val:  opts.Filename,
+	})
 }
 
 func injectDefineVars(n *astro.Node, values []string) {

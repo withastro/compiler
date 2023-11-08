@@ -30,6 +30,7 @@ type TransformOptions struct {
 	TransitionsAnimationURL string
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
+	AnnotateSourceFile      bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -58,6 +59,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		mergeClassList(doc, n, &opts)
 		if n.DataAtom == a.Head && !IsImplicitNode(n) {
 			doc.ContainsHead = true
+		}
+		if opts.AnnotateSourceFile {
+			AnnotateElement(n, opts)
 		}
 	})
 	if len(definedVars) > 0 && !didAddDefinedVars {

@@ -95,9 +95,15 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	if jsBool(options.Get("resultScopedSlot")) {
 		scopedSlot = true
 	}
+
 	transitionsAnimationURL := jsString(options.Get("transitionsAnimationURL"))
 	if transitionsAnimationURL == "" {
 		transitionsAnimationURL = "astro/components/viewtransitions.css"
+	}
+
+	annotateSourceFile := false
+	if jsBool(options.Get("annotateSourceFile")) {
+		annotateSourceFile = true
 	}
 
 	var resolvePath any = options.Get("resolvePath")
@@ -132,6 +138,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		ResultScopedSlot:        scopedSlot,
 		ScopedStyleStrategy:     scopedStyleStrategy,
 		TransitionsAnimationURL: transitionsAnimationURL,
+		AnnotateSourceFile:      annotateSourceFile,
 	}
 }
 
