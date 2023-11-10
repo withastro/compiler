@@ -262,15 +262,25 @@ func isRawElement(n *astro.Node) bool {
 	if n.Type == astro.FrontmatterNode {
 		return true
 	}
+	for _, attr := range n.Attr {
+		if attr.Key == "is:raw" {
+			return true
+		}
+	}
 	rawTags := []string{"pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
 	for _, tag := range rawTags {
 		if n.Data == tag {
 			return true
 		}
-		for _, attr := range n.Attr {
-			if attr.Key == "is:raw" {
-				return true
-			}
+	}
+	return false
+}
+
+func isWhitespaceInsensitiveElement(n *astro.Node) bool {
+	rawTags := []string{"head"}
+	for _, tag := range rawTags {
+		if n.Data == tag {
+			return true
 		}
 	}
 	return false
@@ -300,7 +310,12 @@ func collapseWhitespace(doc *astro.Node) {
 
 			// If the node is only whitespace, clear it
 			if len(strings.TrimFunc(n.Data, unicode.IsSpace)) == 0 {
-				n.Data = ""
+				// If it's a lone text node, or if it's within a whitespace-insensitive element, clear completely
+				if (n.PrevSibling == nil && n.NextSibling == nil) || n.Closest(isWhitespaceInsensitiveElement) != nil {
+					n.Data = ""
+				} else {
+					n.Data = " "
+				}
 				return
 			}
 

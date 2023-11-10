@@ -404,6 +404,11 @@ func TestCompactTransform(t *testing.T) {
 			want:   "<div>\nC O O L\n</div>",
 		},
 		{
+			name:   "collapse in-between inline elements",
+			source: "<div>Click   <a>here</a> <span>space</span></div>",
+			want:   "<div>Click <a>here</a> <span>space</span></div>",
+		},
+		{
 			name:   "expression trim first",
 			source: "<div>{\n() => {\n\t\treturn <span />}}</div>",
 			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
