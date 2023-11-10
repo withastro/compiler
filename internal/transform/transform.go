@@ -277,11 +277,8 @@ func isRawElement(n *astro.Node) bool {
 }
 
 func isWhitespaceInsensitiveElement(n *astro.Node) bool {
-	rawTags := []string{"head"}
-	for _, tag := range rawTags {
-		if n.Data == tag {
-			return true
-		}
+	if n.Data == "head" {
+		return true
 	}
 	return false
 }
