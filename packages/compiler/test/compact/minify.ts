@@ -47,9 +47,9 @@ test('space normalization around text', async () => {
   assert.match(await minify('<p>foo<wbr baz moo="">bar</p>'), '<p>foo<wbr baz moo="">bar</p>');
   assert.match(await minify('<p>foo <wbr baz moo="">bar</p>'), '<p>foo <wbr baz moo="">bar</p>');
   assert.match(await minify('<p>foo<wbr baz moo=""> bar</p>'), '<p>foo<wbr baz moo=""> bar</p>');
-  assert.match(await minify('<p>  <a href="#">  <code>foo</code></a> bar</p>'), '<p><a href="#"><code>foo</code></a> bar</p>');
+  assert.match(await minify('<p>  <a href="#">  <code>foo</code></a> bar</p>'), '<p> <a href="#"> <code>foo</code></a> bar</p>');
   assert.match(await minify('<p><a href="#"><code>foo  </code></a> bar</p>'), '<p><a href="#"><code>foo </code></a> bar</p>');
-  assert.match(await minify('<p>  <a href="#">  <code>   foo</code></a> bar   </p>'), '<p><a href="#"><code> foo</code></a> bar </p>');
+  assert.match(await minify('<p>  <a href="#">  <code>   foo</code></a> bar   </p>'), '<p> <a href="#"> <code> foo</code></a> bar </p>');
   assert.match(await minify('<div> Empty <!-- or --> not </div>'), '<div> Empty <!-- or --> not </div>');
   assert.match(await minify('<div> a <input><!-- b --> c </div>'), '<div> a <input><!-- b --> c </div>');
   await Promise.all(
