@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.3.2
+
+### Patch Changes
+
+- 2bdb4bb: Revert table related parsing change as it resulted in a regression
+
 ## 2.3.1
 
 ### Patch Changes
