@@ -2176,10 +2176,9 @@ func inRowIM(p *parser) bool {
 func inCellIM(p *parser) bool {
 	switch p.tok.Type {
 	case StartExpressionToken:
-		p.exitLiteralIM = getExitLiteralFunc(p)
 		p.addExpression()
 		p.afe = append(p.afe, &scopeMarker)
-		p.originalIM = inCellIM
+		p.originalIM = inBodyIM
 		p.im = inExpressionIM
 		return true
 	case EndExpressionToken:
