@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.3.1
+
+### Patch Changes
+
+- e241f2d: Fix generated code for expressions within `td` elements
+- 5ce5cc6: Fix compact collapse for empty text nodes between elements
+
 ## 2.3.0
 
 ### Minor Changes
