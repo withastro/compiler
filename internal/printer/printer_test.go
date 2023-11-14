@@ -1960,6 +1960,50 @@ const value = 'test';
 			},
 		},
 		{
+			name: "table simple case",
+			source: `---
+const content = "lol";
+---
+
+<html>
+  <body>
+    <table>
+      <tr>
+        <td>{content}</td>
+      </tr>
+      {
+        (
+          <tr>
+            <td>1</td>
+          </tr>
+        )
+      }
+    </table>Hello
+  </body>
+</html>
+`,
+			want: want{
+				frontmatter: []string{"", `const content = "lol";`},
+				// TODO: This output is INCORRECT, but we're testing a regression
+				// The trailing text (`Hello`) shouldn't be consumed by the <table> element!
+				code: `<html>
+  ${$$maybeRenderHead($$result)}<body>
+    <table>
+      <tr>
+        <td>${content}</td>
+      </tr>
+      ${
+        (
+          $$render` + BACKTICK + `<tr>
+            <td>1</td>
+          </tr>` + BACKTICK + `
+        )
+      }    Hello
+  </table></body>
+</html>`,
+			},
+		},
+		{
 			name: "table expressions (no implicit tbody)",
 			source: `---
 const items = ["Dog", "Cat", "Platipus"];
