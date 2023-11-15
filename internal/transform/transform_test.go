@@ -252,6 +252,11 @@ func TestFullTransform(t *testing.T) {
 			want: `<Component><h1>Hello world</h1></Component>`,
 		},
 		{
+			name:   "Component before html",
+			source: `<Navigation /><html><body><h1>Astro</h1></body></html>`,
+			want:   `<Navigation></Navigation><h1>Astro</h1>`,
+		},
+		{
 			name:   "respects explicitly authored elements",
 			source: `<html><Component /></html>`,
 			want:   `<html><Component></Component></html>`,
