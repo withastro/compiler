@@ -1154,7 +1154,9 @@ func inBodyIM(p *parser) bool {
 			if p.oe.contains(a.Template) {
 				return true
 			}
-			copyAttributes(p.oe[0], p.tok)
+			if len(p.oe) > 0 {
+				copyAttributes(p.oe[0], p.tok)
+			}
 		case a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta, a.Noframes, a.Script, a.Style, a.Template, a.Title:
 			return inHeadIM(p)
 		case a.Body:
