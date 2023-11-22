@@ -8,6 +8,7 @@ import (
 	. "github.com/withastro/compiler/internal"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/helpers"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -229,7 +230,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		p.addSourceMapping(n.Loc[0])
 		if n.FirstChild == nil {
 			p.print("{(void 0)")
-		} else if expressionOnlyHasCommentBlock(n) {
+		} else if expressionOnlyHasComment(n) {
 			// we do not print expressions that only contain comment blocks
 			return
 		} else {
@@ -350,7 +351,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 			p.print("}")
 			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.ShorthandAttribute:
-			withoutComments, _ := removeComments(a.Key)
+			withoutComments, _ := helpers.RemoveComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}
@@ -421,7 +422,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		case astro.SpreadAttribute:
 			// noop
 		case astro.ShorthandAttribute:
-			withoutComments, _ := removeComments(a.Key)
+			withoutComments, _ := helpers.RemoveComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}

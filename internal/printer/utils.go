@@ -1,7 +1,6 @@
 package printer
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -93,32 +92,6 @@ func escapeDoubleQuote(str string) string {
 
 func encodeDoubleQuote(str string) string {
 	return strings.Replace(str, `"`, "&quot;", -1)
-}
-
-// Remove comment blocks from string (e.g. "/* a comment */aProp" => "aProp")
-func removeComments(input string) (string, error) {
-	var (
-		sb        = strings.Builder{}
-		inComment = false
-	)
-	for cur := 0; cur < len(input); cur++ {
-		peekIs := func(assert byte) bool { return cur+1 < len(input) && input[cur+1] == assert }
-		if input[cur] == '/' && !inComment && peekIs('*') {
-			inComment = true
-			cur++
-		} else if input[cur] == '*' && inComment && peekIs('/') {
-			inComment = false
-			cur++
-		} else if !inComment {
-			sb.WriteByte(input[cur])
-		}
-	}
-
-	if inComment {
-		return "", errors.New("unterminated comment")
-	}
-
-	return strings.TrimSpace(sb.String()), nil
 }
 
 func convertAttributeValue(n *astro.Node, attrName string) string {
