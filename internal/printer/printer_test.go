@@ -812,14 +812,14 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
-			name:   "HTML omment in component inside expression I",
+			name:   "HTML comment in component inside expression I",
 			source: "{(() => <Component><!--Hi--></Component>)}",
 			want: want{
 				code: "${(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
 			},
 		},
 		{
-			name:   "HTM comment in component inside expression II",
+			name:   "HTML comment in component inside expression II",
 			source: "{list.map(() => <Component><!--Hi--></Component>)}",
 			want: want{
 				code: "${list.map(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
