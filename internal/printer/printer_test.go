@@ -812,6 +812,20 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "Comment in component inside expression I",
+			source: "{(() => <Component><!--Hi--></Component>)}",
+			want: want{
+				code: "${(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
+			},
+		},
+		{
+			name:   "Comment in component inside expression II",
+			source: "{list.map(() => <Component><!--Hi--></Component>)}",
+			want: want{
+				code: "${list.map(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
+			},
+		},
+		{
 			name:   "nested expressions",
 			source: `<article>{(previous || next) && <aside>{previous && <div>Previous Article: <a rel="prev" href={new URL(previous.link, Astro.site).pathname}>{previous.text}</a></div>}{next && <div>Next Article: <a rel="next" href={new URL(next.link, Astro.site).pathname}>{next.text}</a></div>}</aside>}</article>`,
 			want: want{
