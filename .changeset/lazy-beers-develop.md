@@ -1,0 +1,5 @@
+---
+'@astrojs/compiler': patch
+---
+
+k
