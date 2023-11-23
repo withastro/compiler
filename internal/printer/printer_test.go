@@ -2785,17 +2785,17 @@ const items = ["Dog", "Cat", "Platipus"];
 			name: "comment only expressions are removed II",
 			source: `{
     list.map((i) => (
-        <C>
+        <Component>
             {
                 // hello
             }
-        </C>
+        </Component>
     ))
 }`,
 			want: want{
 				code: `${
     list.map((i) => (
-        $$render` + BACKTICK + `${$$renderComponent($$result,'C',C,{},{})}` + BACKTICK + `
+        $$render` + BACKTICK + `${$$renderComponent($$result,'Component',Component,{},{})}` + BACKTICK + `
     ))
 }`,
 			},
@@ -2804,17 +2804,17 @@ const items = ["Dog", "Cat", "Platipus"];
 			name: "comment only expressions are removed III",
 			source: `{
     list.map((i) => (
-        <C>
+        <Component>
             {
                 /* hello */
             }
-        </C>
+        </Component>
     ))
 }`,
 			want: want{
 				code: `${
     list.map((i) => (
-        $$render` + BACKTICK + `${$$renderComponent($$result,'C',C,{},{})}` + BACKTICK + `
+        $$render` + BACKTICK + `${$$renderComponent($$result,'Component',Component,{},{})}` + BACKTICK + `
     ))
 }`,
 			},
@@ -2912,18 +2912,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 	}
-	// var idx int
-	// testsToRun := []string{"comment only expressions are removed I", "HTML comment in component inside expression I"}
-	// for i, test := range tests {
-	// 	if test.name == testsToRun[0] {
-	// 		idx = i
-	// 		// fmt.Printf("The index is: %d", i)
-	// 		break
-	// 	}
-	// }
-
-	// // create a new object with only the 63th test
-	// tests = []testcase{tests[idx+1], tests[idx+2]}
 
 	for _, tt := range tests {
 		if tt.only {
