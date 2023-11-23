@@ -2783,11 +2783,7 @@ func inExpressionIM(p *parser) bool {
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
-		nextOpenElement := p.oe.top()
-		// only switch the insertion mode when we're no longer inside an expression
-		if !nextOpenElement.Parent.Expression {
-			p.im = textIM
-		}
+		p.im = textIM
 		return true
 	case CommentToken:
 		p.addChild(&Node{
