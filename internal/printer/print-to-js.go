@@ -612,12 +612,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 					// Only slot ElementNodes (except expressions containing only comments) or non-empty TextNodes!
 					// CommentNode, JSX comments and others should not be slotted
-					// Remove inline and block comments
-
 					if expressionOnlyHasComment(c) {
 						continue
 					}
-
 					if c.Type == ElementNode || c.Type == TextNode && !emptyTextNodeWithoutSiblings(c) {
 						slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 					}
