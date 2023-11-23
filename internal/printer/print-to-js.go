@@ -13,6 +13,7 @@ import (
 
 	. "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/helpers"
 	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -88,13 +89,18 @@ func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions)
 const whitespace = " \t\r\n\f"
 
 // Returns true if the expression only contains a comment block (e.g. {/* a comment */})
-func expressionOnlyHasCommentBlock(n *Node) bool {
-	clean, _ := removeComments(n.FirstChild.Data)
-	return n.FirstChild.NextSibling == nil &&
+func expressionOnlyHasComment(n *Node) bool {
+	if n.FirstChild == nil {
+		return false
+	}
+	clean, _ := helpers.RemoveComments(n.FirstChild.Data)
+	trimmedData := strings.TrimLeft(n.FirstChild.Data, whitespace)
+	result := n.FirstChild.NextSibling == nil &&
 		n.FirstChild.Type == TextNode &&
-		// removeComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* before iterating
-		strings.HasPrefix(strings.TrimLeft(n.FirstChild.Data, whitespace), "/*") &&
+		// RemoveComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* or // before iterating
+		(strings.HasPrefix(trimmedData, "/*") || strings.HasPrefix(trimmedData, "//")) &&
 		len(clean) == 0
+	return result
 }
 
 func emptyTextNodeWithoutSiblings(n *Node) bool {
@@ -312,7 +318,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if n.Expression {
 		if n.FirstChild == nil {
 			p.print("${(void 0)")
-		} else if expressionOnlyHasCommentBlock(n) {
+		} else if expressionOnlyHasComment(n) {
 			// we do not print expressions that only contain comment blocks
 			return
 		} else {
@@ -624,9 +630,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						}
 					}
 
-					// Only slot ElementNodes or non-empty TextNodes!
-					// CommentNode and others should not be slotted
-					if c.Type == ElementNode || (c.Type == TextNode && !emptyTextNodeWithoutSiblings(c)) {
+					// Only slot ElementNodes (except expressions containing only comments) or non-empty TextNodes!
+					// CommentNode, JSX comments and others should not be slotted
+					if expressionOnlyHasComment(c) {
+						continue
+					}
+					if c.Type == ElementNode || c.Type == TextNode && !emptyTextNodeWithoutSiblings(c) {
 						slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 					}
 				}

@@ -2791,6 +2791,13 @@ func inExpressionIM(p *parser) bool {
 			p.im = textIM
 		}
 		return true
+	case CommentToken:
+		p.addChild(&Node{
+			Type: CommentNode,
+			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
+		})
+		return true
 	}
 	p.im = p.originalIM
 	p.originalIM = nil
