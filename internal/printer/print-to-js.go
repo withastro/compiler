@@ -93,10 +93,11 @@ func expressionOnlyHasComment(n *Node) bool {
 		return false
 	}
 	clean, _ := helpers.RemoveComments(n.FirstChild.Data)
+	trimmedData := strings.TrimLeft(n.FirstChild.Data, whitespace)
 	result := n.FirstChild.NextSibling == nil &&
 		n.FirstChild.Type == TextNode &&
-		// removeComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* before iterating
-		(strings.HasPrefix(strings.TrimLeft(n.FirstChild.Data, whitespace), "/*") || strings.HasPrefix(strings.TrimLeft(n.FirstChild.Data, whitespace), "//")) &&
+		// RemoveComments iterates over text and most of the time we won't be parsing comments so lets check if text starts with /* or // before iterating
+		(strings.HasPrefix(trimmedData, "/*") || strings.HasPrefix(trimmedData, "//")) &&
 		len(clean) == 0
 	return result
 }
