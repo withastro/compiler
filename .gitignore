@@ -4,4 +4,5 @@ node_modules
 *.wasm
 /astro
 debug.test
+__debug_bin
 packages/compiler/sourcemap.mjs
