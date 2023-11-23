@@ -473,6 +473,13 @@ import type data from "test"
 			},
 		},
 		{
+			name:   "nested template literal expression",
+			source: "{list.map(() => (<Component>{name}<link rel=\"stylesheet\" /></Component>))}",
+			want: want{
+				code: "${list.map(() => ($$render`${$$renderComponent($$result,'Component',Component,{},{\"default\": () => $$render`${name}<link rel=\"stylesheet\">`,})}`))}",
+			},
+		},
+		{
 			name:   "complex nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
 			want: want{
