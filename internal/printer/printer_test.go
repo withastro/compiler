@@ -812,6 +812,27 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "comment only expressions are removed IV",
+			source: `{list.map(() => (<Component>{Name}<link rel="stylesheet" /></Component>))}`,
+			want: want{
+				code: "${list.map(() => ($$render`${$$renderComponent($$result,'Component',Component,{},{\"default\": () => $$render`${Name}<link rel=\"stylesheet\">`,})}`))}",
+			},
+		},
+		{
+			name:   "HTML comment in component inside expression I",
+			source: "{(() => <Component><!--Hi--></Component>)}",
+			want: want{
+				code: "${(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
+			},
+		},
+		{
+			name:   "HTML comment in component inside expression II",
+			source: "{list.map(() => <Component><!--Hi--></Component>)}",
+			want: want{
+				code: "${list.map(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
+			},
+		},
+		{
 			name:   "nested expressions",
 			source: `<article>{(previous || next) && <aside>{previous && <div>Previous Article: <a rel="prev" href={new URL(previous.link, Astro.site).pathname}>{previous.text}</a></div>}{next && <div>Next Article: <a rel="next" href={new URL(next.link, Astro.site).pathname}>{next.text}</a></div>}</aside>}</article>`,
 			want: want{
@@ -2848,7 +2869,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:   `{(<Fragment><Fragment set:html={` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `} />{Node.children.map((child) => (<Astro.self node={child} />))}<Fragment set:html={` + BACKTICK + `</${Node.tag}>` + BACKTICK + `} /></Fragment>)}`,
 			filename: "/projects/app/src/components/RenderNode.astro",
 			want: want{
-				code: `${($$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `)}` + BACKTICK + `,})}${Node.children.map((child) => ($$render` + BACKTICK + `${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}` + BACKTICK + `))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `</${Node.tag}>` + BACKTICK + `)}` + BACKTICK + `,})}` + BACKTICK + `,})})` + BACKTICK + `}`,
+				code: `${($$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `)}` + BACKTICK + `,})}${Node.children.map((child) => ($$render` + BACKTICK + `${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}` + BACKTICK + `))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `</${Node.tag}>` + BACKTICK + `)}` + BACKTICK + `,})}` + BACKTICK + `,})}` + BACKTICK + `)}`,
 			},
 		},
 		{
