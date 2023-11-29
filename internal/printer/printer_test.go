@@ -106,10 +106,17 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
-			name:   "unusual line terminator",
+			name:   "unusual line terminator I",
 			source: `Pre-set & Time-limited \u2028holiday campaigns`,
 			want: want{
 				code: `Pre-set & Time-limited \\u2028holiday campaigns`,
+			},
+		},
+		{
+			name:   "unusual line terminator II",
+			source: `Pre-set & Time-limited  holiday campaigns`,
+			want: want{
+				code: `Pre-set & Time-limited  holiday campaigns`,
 			},
 		},
 		{
