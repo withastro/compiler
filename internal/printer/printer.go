@@ -70,17 +70,17 @@ func (p *printer) println(text string) {
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
 	for pos, c := range text {
-		// nextChar will eventually be `RuneError` when we reach the last iteration
-		// but it's ok, as we'll exit the loop anyway
-		nextChar, nextPos := utf8.DecodeRuneInString(text[pos:])
 		// Handle Windows-specific "\r\n" newlines
-		if c == '\r' && len(text[pos:]) > 1 && nextChar == '\n' {
-			start += nextPos
+		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
+			// tiny optimization: avoid calling `utf8.DecodeRuneInString`
+			// if we know the next char is `\n`
+			start++
 			continue
 		}
+		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
-		start += nextPos
+		start += nextCharByteSize
 	}
 }
 
