@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
@@ -68,19 +69,18 @@ func (p *printer) println(text string) {
 
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
-	lastPos := -1
 	for pos, c := range text {
-		diff := pos - lastPos
+		// nextChar will eventually be `RuneError` when we reach the last iteration
+		// but it's ok, as we'll exit the loop anyway
+		nextChar, nextPos := utf8.DecodeRuneInString(text[pos:])
 		// Handle Windows-specific "\r\n" newlines
-		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
-			start += diff
-			lastPos = pos
+		if c == '\r' && len(text[pos:]) > 1 && nextChar == '\n' {
+			start += nextPos
 			continue
 		}
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
-		start += diff
-		lastPos = pos
+		start += nextPos
 	}
 }
 
