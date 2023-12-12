@@ -473,6 +473,13 @@ import type data from "test"
 			},
 		},
 		{
+			name:   "nested template literal expression",
+			source: "{list.map(() => (<Component>{name}<link rel=\"stylesheet\" /></Component>))}",
+			want: want{
+				code: "${list.map(() => ($$render`${$$renderComponent($$result,'Component',Component,{},{\"default\": () => $$render`${name}<link rel=\"stylesheet\">`,})}`))}",
+			},
+		},
+		{
 			name:   "complex nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
 			want: want{
@@ -2848,7 +2855,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:   `{(<Fragment><Fragment set:html={` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `} />{Node.children.map((child) => (<Astro.self node={child} />))}<Fragment set:html={` + BACKTICK + `</${Node.tag}>` + BACKTICK + `} /></Fragment>)}`,
 			filename: "/projects/app/src/components/RenderNode.astro",
 			want: want{
-				code: `${($$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `)}` + BACKTICK + `,})}${Node.children.map((child) => ($$render` + BACKTICK + `${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}` + BACKTICK + `))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `</${Node.tag}>` + BACKTICK + `)}` + BACKTICK + `,})}` + BACKTICK + `,})})` + BACKTICK + `}`,
+				code: `${($$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `<${Node.tag} ${stringifyAttributes(Node.attributes)}>` + BACKTICK + `)}` + BACKTICK + `,})}${Node.children.map((child) => ($$render` + BACKTICK + `${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}` + BACKTICK + `))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${$$unescapeHTML(` + BACKTICK + `</${Node.tag}>` + BACKTICK + `)}` + BACKTICK + `,})}` + BACKTICK + `,})}` + BACKTICK + `)}`,
 			},
 		},
 		{
