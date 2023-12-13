@@ -1,0 +1,10 @@
+name: Lint Changeset
+
+on:
+  pull_request:
+    paths: '.changeset/*.md'
+
+jobs:
+  reply_labelled:
+    if: github.repository_owner == 'withastro'
+    uses: withastro/automation/.github/workflows/lint-changeset.yml@feat/lint-changeset
