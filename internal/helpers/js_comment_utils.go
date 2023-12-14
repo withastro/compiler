@@ -6,26 +6,27 @@ import (
 )
 
 // RemoveComments removes both block and inline comments from a string
+func peekIs(input string, cur int, assert byte) bool {
+	return cur+1 < len(input) && input[cur+1] == assert
+}
 func RemoveComments(input string) (string, error) {
 	var (
 		sb        = strings.Builder{}
 		inComment = false
 	)
 	for cur := 0; cur < len(input); cur++ {
-		peekIs := func(assert byte) bool { return cur+1 < len(input) && input[cur+1] == assert }
-
 		if input[cur] == '/' && !inComment {
-			if peekIs('*') {
+			if peekIs(input, cur, '*') {
 				inComment = true
 				cur++
-			} else if peekIs('/') {
+			} else if peekIs(input, cur, '/') {
 				// Skip until the end of line for inline comments
 				for cur < len(input) && input[cur] != '\n' {
 					cur++
 				}
 				continue
 			}
-		} else if input[cur] == '*' && inComment && peekIs('/') {
+		} else if input[cur] == '*' && inComment && peekIs(input, cur, '/') {
 			inComment = false
 			cur++
 			continue
