@@ -1,5 +1,14 @@
 # @astrojs/compiler
 
+## 2.3.3
+
+### Patch Changes
+
+- 5b450df: Fixed an `index out of range` error when multibyte characters were rendered as markup
+- 852fc1b: Fix `index out of range [0]` error when there is a component before the `<html>` tag
+- 05ecaff: Fixes an issue where when there are nested expressions, subsequent content was incorrectly treated as plain text in some cases.
+- 8c0cffb: Fixes an issue causing `index out of range` errors when handling some multibyte characters like `\u2028`.
+
 ## 2.3.2
 
 ### Patch Changes
