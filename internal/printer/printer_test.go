@@ -2950,6 +2950,13 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "peuy4xf7", "", "foo"), "data-astro-transition-scope")}></div>`,
 			},
 		},
+		{
+			name:   "trailing expression",
+			source: `<Component />{}`,
+			want: want{
+				code: `${$$renderComponent($$result,'Component',Component,{})}${(void 0)}`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
