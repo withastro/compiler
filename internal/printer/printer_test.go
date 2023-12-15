@@ -2873,6 +2873,32 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "multibyte character + style",
+			source: `<style>a { font-size: 16px; }</style><a class="test">ツ</a>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<a class="test astro-7vm74pjk">ツ</a>`,
+			},
+		},
+		{
+			name: "multibyte characters",
+			source: `---
+---
+<h1>こんにちは</h1>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<h1>こんにちは</h1>`,
+			},
+		},
+
+		{
+			name:   "multibyte character + script",
+			source: `<script>console.log('foo')</script><a class="test">ツ</a>`,
+			want: want{
+				code:     `${$$maybeRenderHead($$result)}<a class="test">ツ</a>`,
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log('foo')%s }`, BACKTICK, BACKTICK)}},
+			},
+		},
+
+		{
 			name:        "transition:name with an expression",
 			source:      `<div transition:name={one + '-' + 'two'}></div>`,
 			filename:    "/projects/app/src/pages/page.astro",

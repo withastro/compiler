@@ -73,12 +73,11 @@ var base64 = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456
 // bit. The continuation bit tells us whether there are more digits in this
 // value following this digit.
 //
-//   Continuation
-//   |    Sign
-//   |    |
-//   V    V
-//   101011
-//
+//	Continuation
+//	|    Sign
+//	|    |
+//	V    V
+//	101011
 func EncodeVLQ(value int) []byte {
 	var vlq int
 	if value < 0 {
@@ -675,7 +674,9 @@ func (b *ChunkBuilder) AddSourceMapping(location loc.Loc, output []byte) {
 	line := &lineOffsetTables[originalLine]
 	originalColumn := int(location.Start - line.byteOffsetToStartOfLine)
 	if line.columnsForNonASCII != nil && originalColumn >= int(line.byteOffsetToFirstNonASCII) {
-		originalColumn = int(line.columnsForNonASCII[originalColumn-int(line.byteOffsetToFirstNonASCII)])
+		if len(line.columnsForNonASCII) > originalColumn-int(line.byteOffsetToFirstNonASCII) {
+			originalColumn = int(line.columnsForNonASCII[originalColumn-int(line.byteOffsetToFirstNonASCII)])
+		}
 	}
 
 	b.updateGeneratedLineAndColumn(output)
