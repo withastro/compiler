@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.3.4
+
+### Patch Changes
+
+- 56e1959: Fixes a memory reference error when an expression is the final node in a file
+
 ## 2.3.3
 
 ### Patch Changes
