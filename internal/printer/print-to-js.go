@@ -92,7 +92,7 @@ func expressionOnlyHasComment(n *Node) bool {
 	if n.FirstChild == nil {
 		return false
 	}
-	clean, _ := helpers.RemoveComments(n.FirstChild.Data)
+	clean := helpers.RemoveComments(n.FirstChild.Data)
 	trimmedData := strings.TrimLeft(n.FirstChild.Data, whitespace)
 	result := n.FirstChild.NextSibling == nil &&
 		n.FirstChild.Type == TextNode &&

@@ -1,15 +1,15 @@
 package helpers
 
 import (
-	"errors"
 	"strings"
 )
 
-// RemoveComments removes both block and inline comments from a string
 func peekIs(input string, cur int, assert byte) bool {
 	return cur+1 < len(input) && input[cur+1] == assert
 }
-func RemoveComments(input string) (string, error) {
+
+// RemoveComments removes both block and inline comments from a string
+func RemoveComments(input string) string {
 	var (
 		sb        = strings.Builder{}
 		inComment = false
@@ -38,8 +38,8 @@ func RemoveComments(input string) (string, error) {
 	}
 
 	if inComment {
-		return "", errors.New("unterminated comment")
+		return ""
 	}
 
-	return strings.TrimSpace(sb.String()), nil
+	return strings.TrimSpace(sb.String())
 }

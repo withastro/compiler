@@ -351,7 +351,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 			p.print("}")
 			endLoc = a.KeyLoc.Start + len(a.Key) + 1
 		case astro.ShorthandAttribute:
-			withoutComments, _ := helpers.RemoveComments(a.Key)
+			withoutComments := helpers.RemoveComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}
@@ -422,7 +422,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		case astro.SpreadAttribute:
 			// noop
 		case astro.ShorthandAttribute:
-			withoutComments, _ := helpers.RemoveComments(a.Key)
+			withoutComments := helpers.RemoveComments(a.Key)
 			if len(withoutComments) == 0 {
 				return
 			}
