@@ -15,13 +15,17 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+func getTSXPrefix() string {
+	return "/** @jsx astroHTML */\n\n"
+}
+
 func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
 		opts:       opts,
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
-
+	p.print(getTSXPrefix())
 	renderTsx(p, n)
 	return PrintResult{
 		Output:         p.output,
@@ -112,7 +116,7 @@ func renderTsx(p *printer, n *Node) {
 					// If the existing buffer ends with any character other than ;, we need to add a `;`
 					if char != ';' {
 						p.addNilSourceMapping()
-						p.print("\"\";")
+						p.print("{};")
 					}
 				}
 				// We always need to start the body with `<Fragment>`
