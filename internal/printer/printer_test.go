@@ -833,6 +833,20 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			},
 		},
 		{
+			name:   "HTML comment in component inside expression I",
+			source: "{(() => <Component><!--Hi--></Component>)}",
+			want: want{
+				code: "${(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
+			},
+		},
+		{
+			name:   "HTML comment in component inside expression II",
+			source: "{list.map(() => <Component><!--Hi--></Component>)}",
+			want: want{
+				code: "${list.map(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}",
+			},
+		},
+		{
 			name:   "nested expressions",
 			source: `<article>{(previous || next) && <aside>{previous && <div>Previous Article: <a rel="prev" href={new URL(previous.link, Astro.site).pathname}>{previous.text}</a></div>}{next && <div>Next Article: <a rel="next" href={new URL(next.link, Astro.site).pathname}>{next.text}</a></div>}</aside>}</article>`,
 			want: want{
@@ -1010,7 +1024,7 @@ const name = "world";
 			},
 		},
 		{
-			name: "head expression and conditional renderin of fragment",
+			name: "head expression and conditional rendering of fragment",
 			source: `---
 const testBool = true;
 ---
@@ -2826,10 +2840,48 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:   "comment only expressions are removed",
+			name:   "comment only expressions are removed I",
 			source: `{/* a comment 1 */}<h1>{/* a comment 2*/}Hello</h1>`,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<h1>Hello</h1>`,
+			},
+		},
+		{
+			name: "comment only expressions are removed II",
+			source: `{
+    list.map((i) => (
+        <Component>
+            {
+                // hello
+            }
+        </Component>
+    ))
+}`,
+			want: want{
+				code: `${
+    list.map((i) => (
+        $$render` + BACKTICK + `${$$renderComponent($$result,'Component',Component,{},{})}` + BACKTICK + `
+    ))
+}`,
+			},
+		},
+		{
+			name: "comment only expressions are removed III",
+			source: `{
+    list.map((i) => (
+        <Component>
+            {
+                /* hello */
+            }
+        </Component>
+    ))
+}`,
+			want: want{
+				code: `${
+    list.map((i) => (
+        $$render` + BACKTICK + `${$$renderComponent($$result,'Component',Component,{},{})}` + BACKTICK + `
+    ))
+}`,
 			},
 		},
 		{
