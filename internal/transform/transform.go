@@ -280,6 +280,62 @@ func isWhitespaceInsensitiveElement(n *astro.Node) bool {
 	return n.Data == "head"
 }
 
+var knownTextElements = map[string]bool{
+	"a":          true,
+	"abbr":       true,
+	"b":          true,
+	"bdi":        true,
+	"bdo":        true,
+	"blockquote": true,
+	"br":         true,
+	"caption":    true,
+	"cite":       true,
+	"code":       true,
+	"col":        true,
+	"colgroup":   true,
+	"data":       true,
+	"del":        true,
+	"dfn":        true,
+	"em":         true,
+	"h1":         true,
+	"h2":         true,
+	"h3":         true,
+	"h4":         true,
+	"h5":         true,
+	"h6":         true,
+	"i":          true,
+	"ins":        true,
+	"kbd":        true,
+	"mark":       true,
+	"p":          true,
+	"q":          true,
+	"rp":         true,
+	"rt":         true,
+	"ruby":       true,
+	"s":          true,
+	"samp":       true,
+	"small":      true,
+	"span":       true,
+	"strong":     true,
+	"sub":        true,
+	"sup":        true,
+	"table":      true,
+	"tbody":      true,
+	"td":         true,
+	"tfoot":      true,
+	"th":         true,
+	"thead":      true,
+	"time":       true,
+	"tr":         true,
+	"u":          true,
+	"var":        true,
+	"wbr":        true,
+}
+
+func isTextElement(n *astro.Node) bool {
+	return knownTextElements[n.Data]
+}
+
 func collapseWhitespace(doc *astro.Node) {
 	walk(doc, func(n *astro.Node) {
 		if n.Type == astro.TextNode {
@@ -304,10 +360,13 @@ func collapseWhitespace(doc *astro.Node) {
 
 			// If the node is only whitespace, clear it
 			if len(strings.TrimFunc(n.Data, unicode.IsSpace)) == 0 {
-				// If it's a lone text node, or if it's within a whitespace-insensitive element, clear completely
-				if (n.PrevSibling == nil && n.NextSibling == nil) || n.Closest(isWhitespaceInsensitiveElement) != nil {
+				if isTextElement(n) {
+					// Known textual elements can be handled early
+					n.Data = " "
+				} else if (n.PrevSibling == nil && n.NextSibling == nil) || n.Closest(isWhitespaceInsensitiveElement) != nil {
+					// If it's a lone text node, or if it's within a whitespace-insensitive element, clear completely
 					n.Data = ""
-				} else {
+				} else if n.Parent != nil {
 					n.Data = " "
 				}
 				return
