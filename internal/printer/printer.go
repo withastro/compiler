@@ -352,7 +352,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.addSourceMapping(a.KeyLoc)
 			p.printf(`"%s"`, strings.TrimSpace(a.Key))
 			p.print(":")
-			p.print("`" + strings.TrimSpace(a.Key) + "`")
+			p.print("`" + strings.TrimSpace(a.Val) + "`")
 		}
 	}
 	p.print("}")

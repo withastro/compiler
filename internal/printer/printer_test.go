@@ -2733,6 +2733,20 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "template literal attribute on component",
+			source: `<Component class=` + BACKTICK + `red` + BACKTICK + ` />`,
+			want: want{
+				code: `${$$renderComponent($$result,'Component',Component,{"class":` + BACKTICK + `red` + BACKTICK + `})}`,
+			},
+		},
+		{
+			name:   "template literal attribute with variable on component",
+			source: `<Component class=` + BACKTICK + `${color}` + BACKTICK + ` />`,
+			want: want{
+				code: `${$$renderComponent($$result,'Component',Component,{"class":` + BACKTICK + `${color}` + BACKTICK + `})}`,
+			},
+		},
+		{
 			name:   "define:vars on style",
 			source: "<style>h1{color:green;}</style><style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1>testing</h1>",
 			want: want{
