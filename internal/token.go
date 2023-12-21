@@ -1879,6 +1879,14 @@ frontmatter_loop:
 			return z.tt
 		}
 
+		// handle string
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.tt = TextToken
+			z.data.End = z.raw.End
+			return z.tt
+		}
+
 		s := z.buf[z.raw.Start : z.raw.Start+1][0]
 
 		if s == '<' || s == '{' || s == '}' || c == '<' || c == '{' || c == '}' {
@@ -1890,14 +1898,6 @@ frontmatter_loop:
 				z.raw.End--
 				goto loop
 			}
-		}
-
-		// handle string
-		if c == '\'' || c == '"' || c == '`' {
-			z.readString(c)
-			z.tt = TextToken
-			z.data.End = z.raw.End
-			return z.tt
 		}
 
 		z.dashCount = 0
