@@ -1251,10 +1251,11 @@ func (z *Tokenizer) readUnclosedTag() bool {
 		if close != -1 && len(buf) < close {
 			buf = buf[0:close]
 		}
-	}
-	close = bytes.Index(buf, []byte{'>'})
-	if close != -1 && len(buf) < close {
-		buf = buf[0:close]
+	} else {
+		close = bytes.Index(buf, []byte{'>'})
+		if close != -1 && len(buf) < close {
+			buf = buf[0:close]
+		}
 	}
 	if close == -1 {
 		// We can't find a closing tag...
