@@ -1248,12 +1248,12 @@ func (z *Tokenizer) readUnclosedTag() bool {
 	var close int
 	if z.fm == FrontmatterOpen {
 		close = strings.Index(string(buf), "---")
-		if close != -1 {
+		if close != -1 && len(buf) < close {
 			buf = buf[0:close]
 		}
 	}
 	close = bytes.Index(buf, []byte{'>'})
-	if close != -1 {
+	if close != -1 && len(buf) < close {
 		buf = buf[0:close]
 	}
 	if close == -1 {
