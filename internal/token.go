@@ -1448,6 +1448,18 @@ func (z *Tokenizer) readTagAttrVal() {
 		for {
 			c := z.readByte()
 			if z.err != nil {
+				if z.err == io.EOF {
+					z.pendingAttr[1].End = z.pendingAttr[1].Start
+					z.handler.AppendError(&loc.ErrorWithRange{
+						Code: loc.ERROR_UNTERMINATED_STRING,
+						Text: `Unterminated quoted attribute`,
+						Range: loc.Range{
+							Loc: loc.Loc{Start: z.data.Start},
+							Len: z.raw.End,
+						},
+					})
+					return
+				}
 				z.pendingAttr[1].End = z.raw.End
 				return
 			}
