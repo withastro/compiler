@@ -16,13 +16,27 @@ test('does not panic on unfinished template literal attribute', async () => {
   assert.equal(error, 0, `compiler should not have panicked`);
 });
 
-test('does not panic on unfinished quoted attribute', async () => {
+test('does not panic on unfinished double quoted attribute', async () => {
   const input = `<main id="gotcha />`;
   let error = 0;
   try {
     const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
     assert.match(output.code, `id=""`);
   } catch (e) {
+    error = 1;
+  }
+
+  assert.equal(error, 0, `compiler should not have panicked`);
+});
+
+test('does not panic on unfinished single quoted attribute', async () => {
+  const input = `<main id='gotcha />`;
+  let error = 0;
+  try {
+    const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+    assert.match(output.code, `id=""`);
+  } catch (e) {
+    console.log;
     error = 1;
   }
 
