@@ -16,7 +16,7 @@ import (
 )
 
 func getTSXPrefix() string {
-	return "/** @jsx astroHTML */\n\n"
+	return "/** @jsxImportSource astro */\n\n"
 }
 
 func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *handler.Handler) PrintResult {
