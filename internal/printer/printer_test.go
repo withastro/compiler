@@ -2057,6 +2057,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "table expression with trailing div",
+			source: `<table><tr><td>{title}</td></tr></table><div>Div</div>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<table><tr><td>${title}</td></tr></table><div>Div</div>`,
+			},
+		},
+		{
 			name: "tbody expressions",
 			source: `---
 const items = ["Dog", "Cat", "Platipus"];
