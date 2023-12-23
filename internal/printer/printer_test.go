@@ -2019,8 +2019,6 @@ const content = "lol";
 `,
 			want: want{
 				frontmatter: []string{"", `const content = "lol";`},
-				// TODO: This output is INCORRECT, but we're testing a regression
-				// The trailing text (`Hello`) shouldn't be consumed by the <table> element!
 				code: `<html>
   ${$$maybeRenderHead($$result)}<body>
     <table>
