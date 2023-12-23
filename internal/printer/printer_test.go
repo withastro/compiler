@@ -2101,8 +2101,9 @@ const content = "lol";
                             <thead>
                                 <tr>
                                     ${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${Array(7).fill(false).map((entry, index) => $$render` + BACKTICK + `<th>A</th>` + BACKTICK + `)}` + BACKTICK + `,})}
-                            </tr>
-</thead><tbody>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 <tr><td></td></tr>
                             </tbody>
                         </table>
