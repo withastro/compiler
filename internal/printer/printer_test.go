@@ -2033,8 +2033,9 @@ const content = "lol";
             <td>1</td>
           </tr>` + BACKTICK + `
         )
-      }    Hello
-  </table></body>
+      }
+    </table>Hello
+  </body>
 </html>`,
 			},
 		},
