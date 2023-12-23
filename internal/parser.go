@@ -1792,7 +1792,6 @@ func inTableIM(p *parser) bool {
 		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
 			p.originalIM = inTableIM
 			p.im = inLiteralIM
-			p.exitLiteralIM = getExitLiteralFunc(p)
 			return false
 		}
 		switch p.tok.DataAtom {
