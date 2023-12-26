@@ -487,7 +487,7 @@ import type data from "test"
 			},
 		},
 		{
-			name:   "nested template literal expression",
+			name:   "component in expression with its child expression before its child element",
 			source: "{list.map(() => (<Component>{name}<link rel=\"stylesheet\" /></Component>))}",
 			want: want{
 				code: "${list.map(() => ($$render`${$$renderComponent($$result,'Component',Component,{},{\"default\": () => $$render`${name}<link rel=\"stylesheet\">`,})}`))}",
