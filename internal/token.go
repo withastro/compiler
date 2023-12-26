@@ -1451,7 +1451,7 @@ func (z *Tokenizer) readTagAttrVal() {
 				if z.err == io.EOF {
 					for i := z.pendingAttr[1].Start; i < z.raw.End; i++ {
 						c := z.buf[i]
-						if c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '/' || c == '>' {
+						if unicode.IsSpace(rune(c)) || c == '/' || c == '>' {
 							z.pendingAttr[1].End = i
 							break
 						}
@@ -1487,7 +1487,7 @@ func (z *Tokenizer) readTagAttrVal() {
 				if z.err == io.EOF {
 					for i := z.pendingAttr[1].Start; i < z.raw.End; i++ {
 						c := z.buf[i]
-						if c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '/' || c == '>' {
+						if unicode.IsSpace(rune(c)) || c == '/' || c == '>' {
 							z.pendingAttr[1].End = i
 							break
 						}
