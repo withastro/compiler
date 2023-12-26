@@ -3280,12 +3280,17 @@ const c = '\''
 		{
 			name:   "element with unterminated double quote attribute",
 			source: `<main id="gotcha />`,
-			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "", Raw: "\"g"}}}},
+			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "gotcha", Raw: "\"gotcha"}}}},
 		},
 		{
 			name:   "element with unterminated single quote attribute",
 			source: `<main id='gotcha />`,
-			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "", Raw: "'g"}}}},
+			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "gotcha", Raw: "'gotcha"}}}},
+		},
+		{
+			name:   "element with unterminated template literal attribute",
+			source: `<main id=` + BACKTICK + `gotcha />`,
+			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
 		},
 	}
 
