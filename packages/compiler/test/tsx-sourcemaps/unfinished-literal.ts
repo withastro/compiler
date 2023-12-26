@@ -21,7 +21,7 @@ test('does not panic on unfinished double quoted attribute', async () => {
   let error = 0;
   try {
     const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-    assert.match(output.code, `id=""`);
+    assert.match(output.code, `id="gotcha"`);
   } catch (e) {
     error = 1;
   }
@@ -30,13 +30,12 @@ test('does not panic on unfinished double quoted attribute', async () => {
 });
 
 test('does not panic on unfinished single quoted attribute', async () => {
-  const input = `<main id='gotcha />`;
+  const input = `<main id='gotcha/>`;
   let error = 0;
   try {
     const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-    assert.match(output.code, `id=""`);
+    assert.match(output.code, `id="gotcha"`);
   } catch (e) {
-    console.log;
     error = 1;
   }
 
