@@ -494,6 +494,53 @@ import type data from "test"
 			},
 		},
 		{
+			name: "expression returning multiple elements",
+			source: `<Layout title="Welcome to Astro.">
+	<main>
+		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
+		{
+			Object.entries(DUMMY_DATA).map(([dummyKey, dummyValue]) => {
+				return (
+					<p>
+						onlyp {dummyKey}
+					</p>
+					<h2>
+						onlyh2 {dummyKey}
+					</h2>
+					<div>
+						<h2>div+h2 {dummyKey}</h2>
+					</div>
+					<p>
+						<h2>p+h2 {dummyKey}</h2>
+					</p>
+				);
+			})
+		}
+	</main>
+</Layout>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},{"default": () => $$render` + BACKTICK + `
+	${$$maybeRenderHead($$result)}<main>
+		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
+		${
+			Object.entries(DUMMY_DATA).map(([dummyKey, dummyValue]) => {
+				return (
+					$$render` + BACKTICK + `<p>
+						onlyp ${dummyKey}
+					</p><h2>
+						onlyh2 ${dummyKey}
+					</h2><div>
+						<h2>div+h2 ${dummyKey}</h2>
+					</div><p>
+						</p><h2>p+h2 ${dummyKey}</h2>` + BACKTICK + `
+				);
+			})
+		}
+	</main>
+` + BACKTICK + `,})}`,
+			},
+		},
+		{
 			name:   "complex nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
 			want: want{
