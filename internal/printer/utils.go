@@ -27,7 +27,6 @@ func escapeBraces(src string) string {
 
 func escapeStarSlash(src string) string {
 	return strings.ReplaceAll(src, "*/", "*\\/")
-	// return src
 }
 
 func getTSXComponentName(filename string) string {
