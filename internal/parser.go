@@ -342,11 +342,6 @@ func (p *parser) addText(text string) {
 		return
 	}
 
-	// Inside of expressions we can skip whitespace
-	if p.top().Expression && strings.TrimSpace(text) == "" {
-		return
-	}
-
 	t := p.top()
 	if n := t.LastChild; n != nil && n.Type == TextNode {
 		n.Data += text
