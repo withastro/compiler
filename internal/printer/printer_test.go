@@ -2313,8 +2313,22 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "Empty expression with whitespace",
+			source: "<body>({   })</body>",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<body>(${(void 0)   })</body>`,
+			},
+		},
+		{
 			name:   "Empty attribute expression",
 			source: "<body attr={}></body>",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<body${$$addAttribute((void 0), "attr")}></body>`,
+			},
+		},
+		{
+			name:   "Empty attribute expression with whitespace",
+			source: "<body attr={     }></body>",
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<body${$$addAttribute((void 0), "attr")}></body>`,
 			},
