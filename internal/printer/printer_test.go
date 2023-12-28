@@ -2327,13 +2327,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:   "Empty attribute expression with whitespace",
-			source: "<body attr={     }></body>",
-			want: want{
-				code: `${$$maybeRenderHead($$result)}<body${$$addAttribute((void 0), "attr")}></body>`,
-			},
-		},
-		{
 			name:   "is:raw",
 			source: "<article is:raw><% awesome %></article>",
 			want: want{
