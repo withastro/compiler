@@ -1,6 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { TSXPrefix } from '../utils';
 
 test('basic', async () => {
   const input = `
@@ -11,7 +12,7 @@ let value = 'world';
 <h1 name="value" empty {shorthand} expression={true} literal=\`tags\`>Hello {value}</h1>
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 let value = 'world';
 
 <Fragment>
@@ -33,7 +34,7 @@ let value = 'world';
 <h1 name="value" empty {shorthand} expression={true} literal=\`tags\`>Hello {value}</h1>
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 let value = 'world';
 
 <Fragment>
@@ -48,7 +49,7 @@ export default function Test__AstroComponent_(_props: Record<string, any>): any 
 
 test('moves @attributes to spread', async () => {
   const input = `<div @click={() => {}} name="value"></div>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <div name="value" {...{"@click":(() => {})}}></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -64,10 +65,10 @@ console.log("hello")
 
 {hello}
 `;
-  const output = `
+  const output = `${TSXPrefix}
 console.log("hello")
 
-"";<Fragment>
+{};<Fragment>
 {hello}
 
 </Fragment>
@@ -84,10 +85,10 @@ const { hello } = Astro.props
 
 <div class={hello}></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 const { hello } = Astro.props
 
-"";<Fragment>
+{};<Fragment>
 <div class={hello}></div>
 
 </Fragment>
@@ -98,7 +99,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('moves attributes with dots in them to spread', async () => {
   const input = `<div x-on:keyup.shift.enter="alert('Astro')" name="value"></div>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <div name="value" {...{"x-on:keyup.shift.enter":"alert('Astro')"}}></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -108,7 +109,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('moves attributes that starts with : to spread', async () => {
   const input = `<div :class="hey" name="value"></div>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <div name="value" {...{":class":"hey"}}></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -118,7 +119,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test("Don't move attributes to spread unnecessarily", async () => {
   const input = `<div 丽dfds_fsfdsfs name="value"></div>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <div 丽dfds_fsfdsfs name="value"></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -128,7 +129,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('preserves unclosed tags', async () => {
   const input = `<components.`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <components.
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -138,7 +139,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('template literal attribute', async () => {
   const input = `<div class=\`\${hello}\`></div>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <div class={\`\${hello}\`}></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -152,7 +153,7 @@ const myMarkdown = await import('../content/post.md');
 ---
 
 <myMarkdown.`;
-  const output = `
+  const output = `${TSXPrefix}
 const myMarkdown = await import('../content/post.md');
 
 <Fragment>
@@ -170,7 +171,7 @@ const myMarkdown = await import('../content/post.md');
 
 <myMarkdown.
 `;
-  const output = `
+  const output = `${TSXPrefix}
 const myMarkdown = await import('../content/post.md');
 
 <Fragment>
@@ -184,7 +185,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('spread object', async () => {
   const input = `<DocSearch {...{ lang, labels: { modal, placeholder } }} client:only="preact" />`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <DocSearch {...{ lang, labels: { modal, placeholder } }} client:only="preact" />
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -195,7 +196,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 test('spread object II', async () => {
   const input = `<MainLayout {...Astro.props}>
 </MainLayout>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <MainLayout {...Astro.props}>
 </MainLayout>
 </Fragment>
@@ -206,7 +207,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('fragment with no name', async () => {
   const input = '<>+0123456789</>';
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <>+0123456789</>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -216,7 +217,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('preserves spaces in tag', async () => {
   const input = '<Button ></Button>';
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <Button ></Button>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -226,7 +227,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('preserves spaces after attributes in tag', async () => {
   const input = '<Button a="b" ></Button>';
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <Button a="b" ></Button>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -236,7 +237,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('preserves spaces in tag', async () => {
   const input = '<Button      >';
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <Button ></Button>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;

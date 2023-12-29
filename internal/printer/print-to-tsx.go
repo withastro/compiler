@@ -111,7 +111,7 @@ func renderTsx(p *printer, n *Node) {
 			// Without this, TypeScript can get tripped up by the body of our file.
 			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
 				buf := strings.TrimSpace(string(p.output))
-				if len(buf) > 1 {
+				if len(buf)-len(getTSXPrefix()) > 1 {
 					char := rune(buf[len(buf)-1:][0])
 					// If the existing buffer ends with any character other than ;, we need to add a `;`
 					if char != ';' {

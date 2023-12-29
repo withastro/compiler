@@ -1,6 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { TSXPrefix } from '../utils';
 
 // https://mathiasbynens.be/notes/javascript-identifiers
 const value = `
@@ -55,7 +56,7 @@ ${value}
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 ${value}
 
 <Fragment>
