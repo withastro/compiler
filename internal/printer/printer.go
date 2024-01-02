@@ -19,6 +19,8 @@ import (
 type PrintResult struct {
 	Output         []byte
 	SourceMapChunk sourcemap.Chunk
+	// Optional, used only for TSX output
+	TSXRanges TSXRanges
 }
 
 type printer struct {
@@ -31,6 +33,9 @@ type printer struct {
 	hasInternalImports bool
 	hasCSSImports      bool
 	needsTransitionCSS bool
+
+	// Optional, used only for TSX output
+	ranges TSXRanges
 }
 
 var TEMPLATE_TAG = "$$render"
@@ -66,6 +71,14 @@ func (p *printer) printf(format string, a ...interface{}) {
 
 func (p *printer) println(text string) {
 	p.print(text + "\n")
+}
+
+func (p *printer) setTSXFrontmatterRange(frontmatterRange loc.TSXRange) {
+	p.ranges.Frontmatter = frontmatterRange
+}
+
+func (p *printer) setTSXBodyRange(componentRange loc.TSXRange) {
+	p.ranges.Body = componentRange
 }
 
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {

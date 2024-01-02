@@ -1,10 +1,11 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { TSXPrefix } from '../utils';
 
 test('escapes braces in comment', async () => {
   const input = `<!-- {<div>Not JSX!<div/>}-->`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 {/** \\\\{<div>Not JSX!<div/>\\\\}*/}
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -14,7 +15,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('always inserts space before comment', async () => {
   const input = `<!--/<div>Error?<div/>-->`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 {/** /<div>Error?<div/>*/}
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -24,7 +25,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('simple escapes star slashes (*/)', async () => {
   const input = `<!--*/<div>Evil comment<div/>-->`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 {/** *\\/<div>Evil comment<div/>*/}
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -34,7 +35,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('multiple escapes star slashes (*/)', async () => {
   const input = `<!--***/*/**/*/*/*/<div>Even more evil comment<div/>-->`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 {/** ***\\/*\\/**\\/*\\/*\\/*\\/<div>Even more evil comment<div/>*/}
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
