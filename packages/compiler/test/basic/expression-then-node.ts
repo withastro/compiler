@@ -38,7 +38,7 @@ test('expression followed by node', () => {
     result.code,
     `yield '
 ';
-}`,
+		}`,
     'Expected output to properly handle expression!'
   );
 });

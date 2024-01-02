@@ -821,7 +821,8 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			items.map(item => {
 				return %s<li>${item}</li>%s;
 			})
-		}</ul>%s})}
+		}</ul>%s
+	})}
 </div>`, "$$render"+BACKTICK, "$$render"+BACKTICK, BACKTICK, BACKTICK),
 			},
 		},
@@ -871,7 +872,7 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			name:   "nested expressions IV",
 			source: `<div>{() => { if (value > 0.25) { return <span>Default</span> } else if (value > 0.5) { return <span>Another</span> } else if (value > 0.75) { return <span>Other</span> } return <span>Yet Other</span> }}</div>`,
 			want: want{
-				code: "${$$maybeRenderHead($$result)}<div>${() => { if (value > 0.25) { return $$render`<span>Default</span>`} else if (value > 0.5) { return $$render`<span>Another</span>`} else if (value > 0.75) { return $$render`<span>Other</span>`} return $$render`<span>Yet Other</span>`}}</div>",
+				code: "${$$maybeRenderHead($$result)}<div>${() => { if (value > 0.25) { return $$render`<span>Default</span>` } else if (value > 0.5) { return $$render`<span>Another</span>` } else if (value > 0.75) { return $$render`<span>Other</span>` } return $$render`<span>Yet Other</span>` }}</div>",
 			},
 		},
 		{
@@ -921,10 +922,10 @@ const items = ['red', 'yellow', 'blue'];
 				code: `${$$maybeRenderHead($$result)}<div>
   ${items.map((item) => (
     // foo < > < }
-$$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
+    $$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
   ))}
   ${items.map((item) => (
-    /* foo < > < } */$$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
+    /* foo < > < } */ $$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
   ))}
 </div>`,
 			},
@@ -2309,6 +2310,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: "<body>({})</body>",
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<body>(${(void 0)})</body>`,
+			},
+		},
+		{
+			name:   "Empty expression with whitespace",
+			source: "<body>({   })</body>",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<body>(${(void 0)   })</body>`,
 			},
 		},
 		{

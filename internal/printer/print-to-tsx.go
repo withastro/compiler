@@ -262,9 +262,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		p.addSourceMapping(n.Loc[0])
 		if n.FirstChild == nil {
 			p.print("{(void 0)")
-		} else if expressionOnlyHasComment(n) {
-			// we do not print expressions that only contain comment blocks
-			return
 		} else {
 			p.print("{")
 		}
