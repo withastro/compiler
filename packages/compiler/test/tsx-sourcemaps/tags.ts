@@ -1,7 +1,7 @@
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
 import { convertToTSX } from '@astrojs/compiler';
 import { generatedPositionFor, TraceMap } from '@jridgewell/trace-mapping';
+import { test } from 'uvu';
+import * as assert from 'uvu/assert';
 import { testTSXSourcemap } from '../utils';
 
 test('tag close', async () => {
@@ -24,7 +24,7 @@ test('tag with spaces', async () => {
   const generated = generatedPositionFor(tracer, { source: 'index.astro', line: 1, column: 14 });
 
   assert.equal(generated, {
-    line: 2,
+    line: 4,
     column: 9,
   });
 });

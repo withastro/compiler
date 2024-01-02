@@ -16,13 +16,17 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+func getTSXPrefix() string {
+	return "/** @jsxImportSource astro */\n\n"
+}
+
 func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
 		opts:       opts,
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
-
+	p.print(getTSXPrefix())
 	renderTsx(p, n)
 	return PrintResult{
 		Output:         p.output,
@@ -108,12 +112,12 @@ func renderTsx(p *printer, n *Node) {
 			// Without this, TypeScript can get tripped up by the body of our file.
 			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
 				buf := strings.TrimSpace(string(p.output))
-				if len(buf) > 1 {
+				if len(buf)-len(getTSXPrefix()) > 1 {
 					char := rune(buf[len(buf)-1:][0])
 					// If the existing buffer ends with any character other than ;, we need to add a `;`
 					if char != ';' {
 						p.addNilSourceMapping()
-						p.print("\"\";")
+						p.print("{};")
 					}
 				}
 				// We always need to start the body with `<Fragment>`
