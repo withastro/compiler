@@ -788,6 +788,7 @@ func inHeadIM(p *parser) bool {
 				return true
 			}
 			p.tok.Data = s
+			return textIM(p)
 		} else if p.oe.top() != nil && (isComponent(p.oe.top().Data) || isFragment((p.oe.top().Data))) {
 			p.addText(p.tok.Data)
 			return true
@@ -2730,10 +2731,6 @@ func inLiteralIM(p *parser) bool {
 }
 
 func inExpressionIM(p *parser) bool {
-	if p.oe.contains(a.Table) {
-		p.clearActiveFormattingElements()
-		return inLiteralIM(p)
-	}
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
@@ -2780,14 +2777,7 @@ func inExpressionIM(p *parser) bool {
 	case EndExpressionToken:
 		p.addLoc()
 		p.oe.pop()
-		nextOpenElement := p.oe.top()
-		if nextOpenElement == nil {
-			return true
-		}
-		// only switch the insertion mode when we're no longer inside an expression
-		if !nextOpenElement.Parent.Expression {
-			p.im = textIM
-		}
+		p.resetInsertionMode()
 		return true
 	case CommentToken:
 		p.addChild(&Node{

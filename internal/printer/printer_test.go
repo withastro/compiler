@@ -2020,8 +2020,6 @@ const content = "lol";
 `,
 			want: want{
 				frontmatter: []string{"", `const content = "lol";`},
-				// TODO: This output is INCORRECT, but we're testing a regression
-				// The trailing text (`Hello`) shouldn't be consumed by the <table> element!
 				code: `<html>
   ${$$maybeRenderHead($$result)}<body>
     <table>
@@ -2034,8 +2032,9 @@ const content = "lol";
             <td>1</td>
           </tr>` + BACKTICK + `
         )
-      }    Hello
-  </table></body>
+      }
+    </table>Hello
+  </body>
 </html>`,
 			},
 		},
@@ -2055,6 +2054,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: `<table><caption>{title}</caption><tr><td>Hello</td></tr></table>`,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<table><caption>${title}</caption><tr><td>Hello</td></tr></table>`,
+			},
+		},
+		{
+			name:   "table expression with trailing div",
+			source: `<table><tr><td>{title}</td></tr></table><div>Div</div>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<table><tr><td>${title}</td></tr></table><div>Div</div>`,
 			},
 		},
 		{
