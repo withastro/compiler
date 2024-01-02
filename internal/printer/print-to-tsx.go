@@ -195,7 +195,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	if n.Type == FrontmatterNode {
 		p.addSourceMapping(loc.Loc{Start: 0})
-		var frontmatterStart = len(p.output)
+		frontmatterStart := len(p.output)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				if len(c.Loc) > 0 {
