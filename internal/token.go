@@ -1449,6 +1449,7 @@ func (z *Tokenizer) readTagAttrVal() {
 			c := z.readByte()
 			if z.err != nil {
 				if z.err == io.EOF {
+					// rescan, closing any potentially unterminated quoted attribute values
 					for i := z.pendingAttr[1].Start; i < z.raw.End; i++ {
 						c := z.buf[i]
 						if unicode.IsSpace(rune(c)) || c == '/' || c == '>' {
