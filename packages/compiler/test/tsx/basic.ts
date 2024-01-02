@@ -261,4 +261,20 @@ test('return ranges', async () => {
   });
 });
 
+test('return ranges - no frontmatter', async () => {
+  const input = `<div></div>`;
+  const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
+
+  assert.equal(metaRanges, {
+    frontmatter: {
+      start: 31,
+      end: 31,
+    },
+    body: {
+      start: 42,
+      end: 54,
+    },
+  });
+});
+
 test.run();
