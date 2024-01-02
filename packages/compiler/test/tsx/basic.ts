@@ -245,4 +245,20 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('return ranges', async () => {
+  const input = `---\nconsole.log("Hello!")\n---\n\n<div></div>`;
+  const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
+
+  assert.equal(metaRanges, {
+    frontmatter: {
+      start: 31,
+      end: 55,
+    },
+    body: {
+      start: 69,
+      end: 81,
+    },
+  });
+});
+
 test.run();

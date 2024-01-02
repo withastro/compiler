@@ -130,11 +130,18 @@ func renderTsx(p *printer, n *Node) {
 				// We always need to start the body with `<Fragment>`
 				p.addNilSourceMapping()
 				p.print("<Fragment>\n")
+
+				// Update the start location of the body to the start of the first child
+				startLoc = len(p.output)
+
 				hasChildren = true
 			}
 			if c.PrevSibling == nil && c.Type != FrontmatterNode {
 				p.addNilSourceMapping()
 				p.print("<Fragment>\n")
+
+				startLoc = len(p.output)
+
 				hasChildren = true
 			}
 			renderTsx(p, c)
@@ -143,6 +150,11 @@ func renderTsx(p *printer, n *Node) {
 		p.print("\n")
 
 		p.addNilSourceMapping()
+		p.setTSXBodyRange(loc.TSXRange{
+			Start: startLoc,
+			End:   len(p.output),
+		})
+
 		// Only close the body with `</Fragment>` if we printed a body
 		if hasChildren {
 			p.print("</Fragment>\n")
@@ -157,10 +169,6 @@ func renderTsx(p *printer, n *Node) {
 			}
 		}
 
-		p.setTSXBodyRange(loc.TSXRange{
-			Start: startLoc,
-			End:   len(p.output),
-		})
 		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics))
 		if hasGetStaticPaths {
 			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
