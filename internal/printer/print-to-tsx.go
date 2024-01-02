@@ -31,7 +31,13 @@ func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *
 	return PrintResult{
 		Output:         p.output,
 		SourceMapChunk: p.builder.GenerateChunk(p.output),
+		TSXRanges:      p.ranges,
 	}
+}
+
+type TSXRanges struct {
+	Frontmatter loc.TSXRange `js:"frontmatter"`
+	Body        loc.TSXRange `js:"body"`
 }
 
 func isScript(p *astro.Node) bool {
@@ -106,6 +112,7 @@ func renderTsx(p *printer, n *Node) {
 		props := js_scanner.GetPropsType(source)
 		hasGetStaticPaths := js_scanner.HasGetStaticPaths(source)
 		hasChildren := false
+		startLoc := len(p.output)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
@@ -150,6 +157,10 @@ func renderTsx(p *printer, n *Node) {
 			}
 		}
 
+		p.setTSXBodyRange(loc.TSXRange{
+			Start: startLoc,
+			End:   len(p.output),
+		})
 		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics))
 		if hasGetStaticPaths {
 			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
@@ -176,6 +187,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	if n.Type == FrontmatterNode {
 		p.addSourceMapping(loc.Loc{Start: 0})
+		var frontmatterStart = len(p.output)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				if len(c.Loc) > 0 {
@@ -192,6 +204,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 			p.addSourceMapping(loc.Loc{Start: n.FirstChild.Loc[0].Start + len(n.FirstChild.Data) + 3})
 			p.println("")
 		}
+		p.setTSXFrontmatterRange(loc.TSXRange{
+			Start: frontmatterStart,
+			End:   len(p.output),
+		})
 		return
 	}
 
