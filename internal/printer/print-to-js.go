@@ -335,7 +335,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTextWithSourcemap(c.Data, c.Loc[0])
 				continue
 			}
-			if c.PrevSibling == nil || c.PrevSibling.Type == TextNode {
+			if c.PrevSibling == nil || (c.PrevSibling.Type == TextNode && strings.TrimSpace(c.PrevSibling.Data) != "") {
 				p.printTemplateLiteralOpen()
 			}
 			render1(p, c, RenderOptions{
@@ -346,7 +346,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				cssLen:           opts.cssLen,
 				printedMaybeHead: opts.printedMaybeHead,
 			})
-			if c.NextSibling == nil || c.NextSibling.Type == TextNode {
+			if c.NextSibling == nil || (c.NextSibling.Type == TextNode && strings.TrimSpace(c.NextSibling.Data) != "") {
 				p.printTemplateLiteralClose()
 			}
 		}
@@ -557,7 +557,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
-				p.printTemplateLiteralClose()
+				// p.printTemplateLiteralClose()
 				p.print(`,}`)
 			case isComponent:
 				p.print(`,`)
