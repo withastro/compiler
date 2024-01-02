@@ -557,7 +557,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						printedMaybeHead: opts.printedMaybeHead,
 					})
 				}
-				// p.printTemplateLiteralClose()
+				p.printTemplateLiteralClose()
 				p.print(`,}`)
 			case isComponent:
 				p.print(`,`)
