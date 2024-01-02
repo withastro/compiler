@@ -845,6 +845,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 				updatedExpressionChildren := make([]*Node, 0)
 			child_loop:
 				for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
+					fmt.Printf("c1: %+v\n", c1)
 					isPreviousTextNode := c1.PrevSibling != nil && c1.PrevSibling.Type == TextNode
 					isNextTextNode := c1.NextSibling != nil && c1.NextSibling.Type == TextNode
 					const continueNextSlotRenderFunction = ", %s: () => "

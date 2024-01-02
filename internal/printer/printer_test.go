@@ -186,7 +186,7 @@ func TestPrinter(t *testing.T) {
 			name:   "refactored slots",
 			source: `<Component>{items.map((item)=><p slot={item.id} />)}</Component>`,
 			want: want{
-				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(items.map((item) => ({[item.id]: () => $$render`${items.map((item)=>$$render`${$$maybeRenderHead($$result)}<p></p>`)}`,})})))}",
+				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(items.map((item) => ({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`,}))))}",
 			},
 		},
 		{
