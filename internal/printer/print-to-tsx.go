@@ -221,6 +221,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		// p.addSourceMapping(n.Loc[0])
 		p.addNilSourceMapping()
 		p.print("{/**")
+		if !unicode.IsSpace(rune(n.Data[0])) {
+			// always add a space after the opening comment
+			p.print(" ")
+		}
 		p.addSourceMapping(n.Loc[0])
 		p.printTextWithSourcemap(escapeBraces(n.Data), n.Loc[0])
 		p.addNilSourceMapping()
