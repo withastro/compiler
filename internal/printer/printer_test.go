@@ -527,13 +527,17 @@ import type data from "test"
 				return (
 					$$render` + BACKTICK + `<p>
 						onlyp ${dummyKey}
-					</p><h2>
+					</p>
+					<h2>
 						onlyh2 ${dummyKey}
-					</h2><div>
+					</h2>
+					<div>
 						<h2>div+h2 ${dummyKey}</h2>
-					</div><p>
-						</p><h2>p+h2 ${dummyKey}</h2>` + BACKTICK + `
-				);
+					</div>
+					<p>
+						</p><h2>p+h2 ${dummyKey}</h2>
+					` + BACKTICK + `	
+			);
 			})
 		}
 	</main>
