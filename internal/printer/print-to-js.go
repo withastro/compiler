@@ -842,6 +842,10 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							nestedSlotProp := fmt.Sprintf(`[%s]`, a.Val)
 							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
 							hasAnyDynamicSlots = true
+						} else if a.Type == TemplateLiteralAttribute {
+							nestedSlotProp := fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
+							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
+							hasAnyDynamicSlots = true
 						} else {
 							panic(`unknown slot attribute type`)
 						}
