@@ -540,7 +540,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if !isAllWhiteSpace {
 			switch true {
 			case n.CustomElement:
-				p.print(`,{`)
+				p.print(`,({`)
 				p.print(fmt.Sprintf(`"%s": () => `, "default"))
 				p.printTemplateLiteralOpen()
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -554,7 +554,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					})
 				}
 				p.printTemplateLiteralClose()
-				p.print(`,}`)
+				p.print(`,})`)
 			case isComponent:
 				handleSlots(p, n, opts, depth)
 			case isSlot:
