@@ -335,9 +335,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTextWithSourcemap(c.Data, c.Loc[0])
 				continue
 			}
-			// Only print the template literal open if the previous sibling is not
-			// nil or a text node with only whitespace
-			// we always open on the first child
+			// Print a tagged render function before a node, but only when it
+			// meets either of these conditions:
+			// - It does not have a previous sibling.
+			// - It has a text node that contains more than just whitespace.
+			// - It is the first child of its parent expression.
 			if c.PrevSibling == nil || c.PrevSibling == n.FirstChild || (c.PrevSibling.Type == TextNode && strings.TrimSpace(c.PrevSibling.Data) != "") {
 				p.printTemplateLiteralOpen()
 			}
@@ -349,9 +351,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				cssLen:           opts.cssLen,
 				printedMaybeHead: opts.printedMaybeHead,
 			})
-			// Only print the template literal close if the next sibling is not
-			// nil or a text node with only whitespace
-			// we always close on the last child
+
+			// Print a tagged render function after a node, but only when it
+			// meets either of these conditions:
+			// - It does not have a next sibling.
+			// - It has a text node that contains more than just whitespace.
+			// - It is the last child of its parent expression.
 			if c.NextSibling == nil || c.NextSibling == n.LastChild || (c.NextSibling.Type == TextNode && strings.TrimSpace(c.NextSibling.Data) != "") {
 				p.printTemplateLiteralClose()
 			}
