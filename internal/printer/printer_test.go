@@ -1328,7 +1328,7 @@ const name = 'named';
 			want: want{
 				frontmatter: []string{`import Component from 'test';`, `const name = 'named';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,}))}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},({[name]: () => $$render` + "`" + `${$$maybeRenderHead($$result)}<div>Named</div>` + "`" + `,}))}`,
 			},
 		},
 		{
