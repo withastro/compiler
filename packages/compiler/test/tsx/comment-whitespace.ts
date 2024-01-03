@@ -1,6 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { TSXPrefix } from '../utils';
 
 test('preverve whitespace around jsx comments', async () => {
   const input = `{/* @ts-expect-error */}
@@ -20,7 +21,7 @@ test('preverve whitespace around jsx comments', async () => {
 // @ts-expect-error
 <Component prop="value"></Component>
 }`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 {/* @ts-expect-error */}
 <Component prop="value"></Component>
 
