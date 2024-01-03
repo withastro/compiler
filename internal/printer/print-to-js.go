@@ -335,8 +335,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				p.printTextWithSourcemap(c.Data, c.Loc[0])
 				continue
 			}
-			// Print a tagged render function before a node, but only when it
-			// meets either of these conditions:
+			// Print the opening of a tagged render function before
+			// a node, only when it meets either of these conditions:
 			// - It does not have a previous sibling.
 			// - It has a text node that contains more than just whitespace.
 			// - It is the first child of its parent expression.
@@ -352,8 +352,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				printedMaybeHead: opts.printedMaybeHead,
 			})
 
-			// Print a tagged render function after a node, but only when it
-			// meets either of these conditions:
+			// Print the closing of a tagged render function after
+			// a node, only when it meets either of these conditions:
 			// - It does not have a next sibling.
 			// - It has a text node that contains more than just whitespace.
 			// - It is the last child of its parent expression.
