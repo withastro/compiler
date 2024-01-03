@@ -816,7 +816,6 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 					slotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 				} else if a.Type == ExpressionAttribute {
 					slotProp = fmt.Sprintf(`[%s]`, a.Val)
-					hasAnyDynamicSlots = true
 				} else {
 					p.handler.AppendError(&loc.ErrorWithRange{
 						Code:  loc.ERROR_UNSUPPORTED_SLOT_ATTRIBUTE,
