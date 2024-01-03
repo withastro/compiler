@@ -533,7 +533,7 @@ import type data from "test"
 	</main>
 </Layout>`,
 			want: want{
-				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},{"default": () => $$render` + BACKTICK + `
+				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},({"default": () => $$render` + BACKTICK + `
 	${$$maybeRenderHead($$result)}<main>
 		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
 		${
@@ -555,7 +555,7 @@ import type data from "test"
 			})
 		}
 	</main>
-` + BACKTICK + `,})}`,
+` + BACKTICK + `,}))}`,
 			},
 		},
 		{
