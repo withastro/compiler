@@ -501,10 +501,57 @@ import type data from "test"
 			},
 		},
 		{
-			name:   "nested template literal expression II",
+			name:   "component in expression with its child expression before its child element",
 			source: "{list.map(() => (<Component>{name}<link rel=\"stylesheet\" /></Component>))}",
 			want: want{
 				code: "${list.map(() => ($$render`${$$renderComponent($$result,'Component',Component,{},({\"default\": () => $$render`${name}<link rel=\"stylesheet\">`,}))}`))}",
+			},
+		},
+		{
+			name: "expression returning multiple elements",
+			source: `<Layout title="Welcome to Astro.">
+	<main>
+		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
+		{
+			Object.entries(DUMMY_DATA).map(([dummyKey, dummyValue]) => {
+				return (
+					<p>
+						onlyp {dummyKey}
+					</p>
+					<h2>
+						onlyh2 {dummyKey}
+					</h2>
+					<div>
+						<h2>div+h2 {dummyKey}</h2>
+					</div>
+					<p>
+						<h2>p+h2 {dummyKey}</h2>
+					</p>
+				);
+			})
+		}
+	</main>
+</Layout>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},{"default": () => $$render` + BACKTICK + `
+	${$$maybeRenderHead($$result)}<main>
+		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
+		${
+			Object.entries(DUMMY_DATA).map(([dummyKey, dummyValue]) => {
+				return (
+					$$render` + BACKTICK + `<p>
+						onlyp ${dummyKey}
+					</p><h2>
+						onlyh2 ${dummyKey}
+					</h2><div>
+						<h2>div+h2 ${dummyKey}</h2>
+					</div><p>
+						</p><h2>p+h2 ${dummyKey}</h2>` + BACKTICK + `
+				);
+			})
+		}
+	</main>
+` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -835,7 +882,8 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			items.map(item => {
 				return %s<li>${item}</li>%s;
 			})
-		}</ul>%s})}
+		}</ul>%s
+	})}
 </div>`, "$$render"+BACKTICK, "$$render"+BACKTICK, BACKTICK, BACKTICK),
 			},
 		},
@@ -885,7 +933,7 @@ const groups = [[0, 1, 2], [3, 4, 5]];
 			name:   "nested expressions IV",
 			source: `<div>{() => { if (value > 0.25) { return <span>Default</span> } else if (value > 0.5) { return <span>Another</span> } else if (value > 0.75) { return <span>Other</span> } return <span>Yet Other</span> }}</div>`,
 			want: want{
-				code: "${$$maybeRenderHead($$result)}<div>${() => { if (value > 0.25) { return $$render`<span>Default</span>`} else if (value > 0.5) { return $$render`<span>Another</span>`} else if (value > 0.75) { return $$render`<span>Other</span>`} return $$render`<span>Yet Other</span>`}}</div>",
+				code: "${$$maybeRenderHead($$result)}<div>${() => { if (value > 0.25) { return $$render`<span>Default</span>` } else if (value > 0.5) { return $$render`<span>Another</span>` } else if (value > 0.75) { return $$render`<span>Other</span>` } return $$render`<span>Yet Other</span>` }}</div>",
 			},
 		},
 		{
@@ -935,10 +983,10 @@ const items = ['red', 'yellow', 'blue'];
 				code: `${$$maybeRenderHead($$result)}<div>
   ${items.map((item) => (
     // foo < > < }
-$$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
+    $$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
   ))}
   ${items.map((item) => (
-    /* foo < > < } */$$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
+    /* foo < > < } */ $$render` + "`" + `<div${$$addAttribute(color, "id")}>color</div>` + "`" + `
   ))}
 </div>`,
 			},
@@ -2033,8 +2081,6 @@ const content = "lol";
 `,
 			want: want{
 				frontmatter: []string{"", `const content = "lol";`},
-				// TODO: This output is INCORRECT, but we're testing a regression
-				// The trailing text (`Hello`) shouldn't be consumed by the <table> element!
 				code: `<html>
   ${$$maybeRenderHead($$result)}<body>
     <table>
@@ -2047,8 +2093,9 @@ const content = "lol";
             <td>1</td>
           </tr>` + BACKTICK + `
         )
-      }    Hello
-  </table></body>
+      }
+    </table>Hello
+  </body>
 </html>`,
 			},
 		},
@@ -2068,6 +2115,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: `<table><caption>{title}</caption><tr><td>Hello</td></tr></table>`,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<table><caption>${title}</caption><tr><td>Hello</td></tr></table>`,
+			},
+		},
+		{
+			name:   "table expression with trailing div",
+			source: `<table><tr><td>{title}</td></tr></table><div>Div</div>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<table><tr><td>${title}</td></tr></table><div>Div</div>`,
 			},
 		},
 		{
@@ -2323,6 +2377,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: "<body>({})</body>",
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<body>(${(void 0)})</body>`,
+			},
+		},
+		{
+			name:   "Empty expression with whitespace",
+			source: "<body>({   })</body>",
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<body>(${(void 0)   })</body>`,
 			},
 		},
 		{

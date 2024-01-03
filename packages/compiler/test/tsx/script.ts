@@ -1,10 +1,11 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { TSXPrefix } from '../utils';
 
 test('script function', async () => {
   const input = `<script type="module">console.log({ test: \`literal\` })</script>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <script type="module">
 {() => {console.log({ test: \`literal\` })}}
 </script>
@@ -16,7 +17,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('partytown function', async () => {
   const input = `<script type="text/partytown">console.log({ test: \`literal\` })</script>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <script type="text/partytown">
 {() => {console.log({ test: \`literal\` })}}
 </script>
@@ -28,7 +29,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('ld+json wrapping', async () => {
   const input = `<script type="application/ld+json">{"a":"b"}</script>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <script type="application/ld+json">{\`{"a":"b"}\`}</script>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;

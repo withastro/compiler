@@ -1,6 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { TSXPrefix } from '../utils';
 
 const PREFIX = (component: string = '__AstroComponent_') => `/**
  * Astro global available in all contexts in .astro files
@@ -11,7 +12,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<Props, typeof ${compon
 
 test('no props', async () => {
   const input = `<div></div>`;
-  const output = `<Fragment>
+  const output = `${TSXPrefix}<Fragment>
 <div></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
@@ -23,7 +24,7 @@ test('nested Props', async () => {
   const input = `---
 function DoTheThing(Props) {}
 ---`;
-  const output = `
+  const output = `${TSXPrefix}
 function DoTheThing(Props) {}
 
 
@@ -40,10 +41,10 @@ interface Props {}
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 interface Props {}
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 
 </Fragment>
@@ -61,7 +62,7 @@ import { Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 import { Props } from './somewhere';
 
 <Fragment>
@@ -82,7 +83,7 @@ import { MyComponent as Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 import { MyComponent as Props } from './somewhere';
 
 <Fragment>
@@ -103,7 +104,7 @@ import type { Props } from './somewhere';
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 import type { Props } from './somewhere';
 
 <Fragment>
@@ -124,10 +125,10 @@ type Props = {}
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 type Props = {}
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 
 </Fragment>
@@ -145,10 +146,10 @@ interface Props<T> {}
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 interface Props<T> {}
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 
 </Fragment>
@@ -166,10 +167,10 @@ interface Props<T extends Other<{ [key: string]: any }>> {}
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 interface Props<T extends Other<{ [key: string]: any }>> {}
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 
 </Fragment>
@@ -187,10 +188,10 @@ interface Props<T extends { [key: string]: any }, P extends string ? { [key: str
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 
 </Fragment>
@@ -208,10 +209,10 @@ interface Props<T extends Something<false> ? A : B, P extends string ? { [key: s
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 
 </Fragment>
@@ -231,12 +232,12 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
 
 <div></div>
 `;
-  const output = `
+  const output = `${TSXPrefix}
 interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<Tag> {
   as?: Tag;
 }
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 
 </Fragment>
@@ -254,7 +255,7 @@ import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 
 <SvelteOptionalProps />
 `;
-  const output = `
+  const output = `${TSXPrefix}
 import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 
 <Fragment>
@@ -273,10 +274,10 @@ import type { Props as ComponentBProps } from './ComponentB.astro'
 
 <div />
 `;
-  const output = `
+  const output = `${TSXPrefix}
 import type { Props as ComponentBProps } from './ComponentB.astro'
 
-"";<Fragment>
+{};<Fragment>
 <div />
 
 </Fragment>
