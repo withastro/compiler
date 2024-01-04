@@ -545,6 +545,23 @@ import type data from "test"
 			},
 		},
 		{
+			name: "nested template literal expression",
+			source: `<html lang="en">
+<body>
+{Object.keys(importedAuthors).map(author => <p><div>hello</div></p>)}
+{Object.keys(importedAuthors).map(author => <p><div>{author}</div></p>)}
+</body>
+</html>`,
+			want: want{
+				code: `<html lang="en">
+${$$maybeRenderHead($$result)}<body>
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>hello</div>` + BACKTICK + `)}
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>${author}</div>` + BACKTICK + `)}
+</body>
+</html>`,
+			},
+		},
+		{
 			name:   "complex nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
 			want: want{
