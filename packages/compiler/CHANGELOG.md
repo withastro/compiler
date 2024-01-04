@@ -1,5 +1,23 @@
 # @astrojs/compiler
 
+## 2.4.0
+
+### Minor Changes
+
+- 9ff6342: Return generated frontmatter and body ranges in TSX output
+
+### Patch Changes
+
+- b52f7d1: Fixes an issue where unterminated quoted attributes caused the compiler to crash
+- 24e2886: Fixes a regression that caused whitespace between elements in an expression to result invalid code
+- c5bcbd0: Prefix TSX output with a JSX pragma to ensure proper types are used
+- 4f74c05: Fixes an issue where HTML and JSX comments lead to subsequent content being incorrectly treated as plain text when they have parent expressions.
+- cad2606: Fixes an issue where components with template literal attributes were printed with the name of the attribute as value.
+- 14ccba5: Fixes an issue where a `tr` element which contained an expression would cause its parent table to swallow any trailing element inside said table
+- f9373f2: Fixes an issue where Astro fragments used inside a `table` element would cause lots of missing pieces of markup
+- 4de359b: Preserve whitespace in expressions
+- fe2f0c8: Fixes an issue where `/` or `*/` would cause prematurely closed comments in the tsx output
+
 ## 2.3.4
 
 ### Patch Changes
