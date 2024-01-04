@@ -230,7 +230,7 @@ func renderNode(p *printer, parent *ASTNode, n *Node, opts t.ParseOptions) {
 				}
 				position := attrPositionAt(p, &attr, opts)
 				raw := ""
-				if attr.Type == QuotedAttribute {
+				if attr.Type == QuotedAttribute || attr.Type == TemplateLiteralAttribute {
 					start := attr.ValLoc.Start - 1
 					end := attr.ValLoc.Start + len(attr.Val)
 

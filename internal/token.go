@@ -1448,6 +1448,29 @@ func (z *Tokenizer) readTagAttrVal() {
 		for {
 			c := z.readByte()
 			if z.err != nil {
+				if z.err == io.EOF {
+					// rescan, closing any potentially unterminated quoted attribute values
+					for i := z.pendingAttr[1].Start; i < z.raw.End; i++ {
+						c := z.buf[i]
+						if unicode.IsSpace(rune(c)) || c == '/' || c == '>' {
+							z.pendingAttr[1].End = i
+							break
+						}
+						if i == z.raw.End-1 {
+							z.pendingAttr[1].End = i
+							break
+						}
+					}
+					z.handler.AppendError(&loc.ErrorWithRange{
+						Code: loc.ERROR_UNTERMINATED_STRING,
+						Text: `Unterminated quoted attribute`,
+						Range: loc.Range{
+							Loc: loc.Loc{Start: z.data.Start},
+							Len: z.raw.End,
+						},
+					})
+					return
+				}
 				z.pendingAttr[1].End = z.raw.End
 				return
 			}
@@ -1463,7 +1486,18 @@ func (z *Tokenizer) readTagAttrVal() {
 			c := z.readByte()
 			if z.err != nil {
 				if z.err == io.EOF {
-					z.pendingAttr[1].End = z.pendingAttr[1].Start
+					// rescan, closing any potentially unterminated attribute values
+					for i := z.pendingAttr[1].Start; i < z.raw.End; i++ {
+						c := z.buf[i]
+						if unicode.IsSpace(rune(c)) || c == '/' || c == '>' {
+							z.pendingAttr[1].End = i
+							break
+						}
+						if i == z.raw.End-1 {
+							z.pendingAttr[1].End = i
+							break
+						}
+					}
 					z.handler.AppendError(&loc.ErrorWithRange{
 						Code: loc.ERROR_UNTERMINATED_STRING,
 						Text: `Unterminated template literal attribute`,

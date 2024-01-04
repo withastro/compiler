@@ -106,6 +106,16 @@ export interface TSXResult {
   code: string;
   map: SourceMap;
   diagnostics: DiagnosticMessage[];
+  metaRanges: {
+    frontmatter: {
+      start: number;
+      end: number;
+    };
+    body: {
+      start: number;
+      end: number;
+    };
+  };
 }
 
 export interface ParseResult {

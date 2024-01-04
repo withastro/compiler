@@ -173,6 +173,7 @@ type TSXResult struct {
 	Code        string                  `js:"code"`
 	Map         string                  `js:"map"`
 	Diagnostics []loc.DiagnosticMessage `js:"diagnostics"`
+	Ranges      printer.TSXRanges       `js:"metaRanges"`
 }
 
 type TransformResult struct {
@@ -269,6 +270,7 @@ func ConvertToTSX() any {
 			Code:        code,
 			Map:         sourcemapString,
 			Diagnostics: h.Diagnostics(),
+			Ranges:      result.TSXRanges,
 		}).Value
 	})
 }

@@ -1,5 +1,5 @@
-import { transform, convertToTSX } from '@astrojs/compiler';
-import { generatedPositionFor, originalPositionFor, TraceMap } from '@jridgewell/trace-mapping';
+import { convertToTSX, transform } from '@astrojs/compiler';
+import { TraceMap, generatedPositionFor, originalPositionFor } from '@jridgewell/trace-mapping';
 import sass from 'sass';
 
 export async function preprocessStyle(value, attrs): Promise<any> {
@@ -78,3 +78,4 @@ export async function testJSSourcemap(input: string, snippet: string) {
 
   return originalPosition;
 }
+export const TSXPrefix = '/** @jsxImportSource astro */\n\n';

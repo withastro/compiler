@@ -20,9 +20,13 @@ func escapeText(src string) string {
 }
 
 func escapeBraces(src string) string {
-	return escapeTSXExpressions(
+	return escapeStarSlash(escapeTSXExpressions(
 		escapeExistingEscapes(src),
-	)
+	))
+}
+
+func escapeStarSlash(src string) string {
+	return strings.ReplaceAll(src, "*/", "*\\/")
 }
 
 func getTSXComponentName(filename string) string {
