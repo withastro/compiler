@@ -1785,10 +1785,9 @@ func inTableIM(p *parser) bool {
 		p.im = inExpressionIM
 		return true
 	case StartTagToken:
-		if isComponent(p.tok.Data) {
+		if isComponent(p.tok.Data) || isFragment(p.tok.Data) {
 			p.originalIM = inTableIM
 			p.im = inLiteralIM
-			p.exitLiteralIM = getExitLiteralFunc(p)
 			return false
 		}
 		switch p.tok.DataAtom {
