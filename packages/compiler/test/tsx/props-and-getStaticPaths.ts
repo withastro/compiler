@@ -1,6 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import { TSXPrefix } from '../utils';
 
 function getPrefix({
   props = `ASTRO__MergeUnion<ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>>`,
@@ -37,13 +38,14 @@ export function getStaticPaths() {
 
 <div></div>`;
   const output =
+    TSXPrefix +
     '\n' +
     `interface Props {};
 export function getStaticPaths() {
   return {};
 }
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
@@ -62,12 +64,13 @@ export function getStaticPaths() {
 
 <div></div>`;
   const output =
+    TSXPrefix +
     '\n' +
     `export function getStaticPaths() {
   return {};
 }
 
-"";<Fragment>
+{};<Fragment>
 <div></div>
 </Fragment>
 export default function __AstroComponent_(_props: ASTRO__MergeUnion<ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>>): any {}

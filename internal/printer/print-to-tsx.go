@@ -16,18 +16,28 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+func getTSXPrefix() string {
+	return "/** @jsxImportSource astro */\n\n"
+}
+
 func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
 		opts:       opts,
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
-
+	p.print(getTSXPrefix())
 	renderTsx(p, n)
 	return PrintResult{
 		Output:         p.output,
 		SourceMapChunk: p.builder.GenerateChunk(p.output),
+		TSXRanges:      p.ranges,
 	}
+}
+
+type TSXRanges struct {
+	Frontmatter loc.TSXRange `js:"frontmatter"`
+	Body        loc.TSXRange `js:"body"`
 }
 
 func isScript(p *astro.Node) bool {
@@ -102,28 +112,36 @@ func renderTsx(p *printer, n *Node) {
 		props := js_scanner.GetPropsType(source)
 		hasGetStaticPaths := js_scanner.HasGetStaticPaths(source)
 		hasChildren := false
+		startLoc := len(p.output)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
 			// Without this, TypeScript can get tripped up by the body of our file.
 			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
 				buf := strings.TrimSpace(string(p.output))
-				if len(buf) > 1 {
+				if len(buf)-len(getTSXPrefix()) > 1 {
 					char := rune(buf[len(buf)-1:][0])
 					// If the existing buffer ends with any character other than ;, we need to add a `;`
 					if char != ';' {
 						p.addNilSourceMapping()
-						p.print("\"\";")
+						p.print("{};")
 					}
 				}
 				// We always need to start the body with `<Fragment>`
 				p.addNilSourceMapping()
 				p.print("<Fragment>\n")
+
+				// Update the start location of the body to the start of the first child
+				startLoc = len(p.output)
+
 				hasChildren = true
 			}
 			if c.PrevSibling == nil && c.Type != FrontmatterNode {
 				p.addNilSourceMapping()
 				p.print("<Fragment>\n")
+
+				startLoc = len(p.output)
+
 				hasChildren = true
 			}
 			renderTsx(p, c)
@@ -132,6 +150,11 @@ func renderTsx(p *printer, n *Node) {
 		p.print("\n")
 
 		p.addNilSourceMapping()
+		p.setTSXBodyRange(loc.TSXRange{
+			Start: startLoc,
+			End:   len(p.output),
+		})
+
 		// Only close the body with `</Fragment>` if we printed a body
 		if hasChildren {
 			p.print("</Fragment>\n")
@@ -172,6 +195,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	if n.Type == FrontmatterNode {
 		p.addSourceMapping(loc.Loc{Start: 0})
+		frontmatterStart := len(p.output)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				if len(c.Loc) > 0 {
@@ -188,6 +212,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 			p.addSourceMapping(loc.Loc{Start: n.FirstChild.Loc[0].Start + len(n.FirstChild.Data) + 3})
 			p.println("")
 		}
+		p.setTSXFrontmatterRange(loc.TSXRange{
+			Start: frontmatterStart,
+			End:   len(p.output),
+		})
 		return
 	}
 
@@ -217,6 +245,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		// p.addSourceMapping(n.Loc[0])
 		p.addNilSourceMapping()
 		p.print("{/**")
+		if !unicode.IsSpace(rune(n.Data[0])) {
+			// always add a space after the opening comment
+			p.print(" ")
+		}
 		p.addSourceMapping(n.Loc[0])
 		p.printTextWithSourcemap(escapeBraces(n.Data), n.Loc[0])
 		p.addNilSourceMapping()
@@ -230,9 +262,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		p.addSourceMapping(n.Loc[0])
 		if n.FirstChild == nil {
 			p.print("{(void 0)")
-		} else if expressionOnlyHasComment(n) {
-			// we do not print expressions that only contain comment blocks
-			return
 		} else {
 			p.print("{")
 		}

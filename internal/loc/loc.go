@@ -20,6 +20,11 @@ type Span struct {
 	Start, End int
 }
 
+type TSXRange struct {
+	Start int `js:"start"`
+	End   int `js:"end"`
+}
+
 // A NodeType is the type of a Node.
 type DiagnosticSeverity int
 
