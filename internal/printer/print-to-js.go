@@ -443,6 +443,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					p.print(`"` + escapeDoubleQuote(a.Val) + `"`)
 					slotted = true
 				default:
+					// add ability to use expressions for slot names later
 					p.handler.AppendError(&loc.ErrorWithRange{
 						Code:  loc.ERROR_UNSUPPORTED_SLOT_ATTRIBUTE,
 						Text:  "slot[name] must be a static string",
@@ -831,10 +832,12 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 					slotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 				} else if a.Type == ExpressionAttribute {
 					slotProp = fmt.Sprintf(`[%s]`, a.Val)
+				} else if a.Type == TemplateLiteralAttribute {
+					slotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
 				} else {
 					p.handler.AppendError(&loc.ErrorWithRange{
 						Code:  loc.ERROR_UNSUPPORTED_SLOT_ATTRIBUTE,
-						Text:  "slot[name] must be a static string",
+						Text:  "Unsupported slot attribute type",
 						Range: loc.Range{Loc: a.ValLoc, Len: len(a.Val)},
 					})
 				}
@@ -847,23 +850,30 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			// - transforms them into valid slot props
 			// - use them as keys in the `$$slots` object
 			for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
+				foundNamedSlot := false
 				for _, a := range c1.Attr {
 					if a.Key == "slot" {
 						if a.Type == QuotedAttribute {
 							nestedSlotProp := fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
+							foundNamedSlot = true
 						} else if a.Type == ExpressionAttribute {
 							nestedSlotProp := fmt.Sprintf(`[%s]`, a.Val)
 							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
 							hasAnyDynamicSlots = true
+							foundNamedSlot = true
 						} else if a.Type == TemplateLiteralAttribute {
 							nestedSlotProp := fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
 							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
 							hasAnyDynamicSlots = true
+							foundNamedSlot = true
 						} else {
 							panic(`unknown slot attribute type`)
 						}
 					}
+				}
+				if !foundNamedSlot && c1 != nil && c1.Type == ElementNode {
+					nestedSlotsProps = append(nestedSlotsProps, `"default"`)
 				}
 			}
 
@@ -882,12 +892,15 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 				// `nestedSlotValues` is an array of nodes that represents nodes
 				// in a particular expression that will constitute the `$$slots` object
 				nestedSlotValues := make([]*Node, 0)
+				nestedDefaultSlotValues := make([]*Node, 0)
+				const continueNextSlotRenderFunction = ", %s: () => "
+				const openNewSlotRenderFunction = "({%s: () => "
 			child_loop:
 				for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
+					foundNamedSlot := false
+					fmt.Println(foundNamedSlot)
 					isPreviousNonElement := c1.PrevSibling == nil || c1.PrevSibling.Type != ElementNode
 					isNextNonElement := c1.NextSibling == nil || c1.NextSibling.Type != ElementNode
-					const continueNextSlotRenderFunction = ", %s: () => "
-					const openNewSlotRenderFunction = "({%s: () => "
 					for _, a := range c1.Attr {
 						if a.Key == "slot" {
 							var slotRenderFunction string
@@ -902,12 +915,17 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							if a.Type == QuotedAttribute {
 								nestedSlotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 								hasAnyDynamicSlots = true
+								foundNamedSlot = true
 							} else if a.Type == ExpressionAttribute {
 								nestedSlotProp = fmt.Sprintf(`[%s]`, a.Val)
 								hasAnyDynamicSlots = true
+								foundNamedSlot = true
 							} else if a.Type == TemplateLiteralAttribute {
 								hasAnyDynamicSlots = true
 								nestedSlotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
+								foundNamedSlot = true
+							} else {
+								panic(`unknown slot attribute type`)
 							}
 							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
 							nestedSlotValues = append(nestedSlotValues, &Node{Type: TextNode, Data: fmt.Sprintf(slotRenderFunction, nestedSlotProp), Loc: make([]loc.Loc, 1)})
@@ -918,9 +936,19 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							continue child_loop
 						}
 					}
-					nestedSlotValues = append(nestedSlotValues, c1)
+
+					if !foundNamedSlot && c1.Type == ElementNode {
+						nestedDefaultSlotValues = append(nestedDefaultSlotValues, c1)
+					} else {
+						nestedSlotValues = append(nestedSlotValues, c1)
+					}
 				}
 				nestedSlottedChildren = append(nestedSlottedChildren, nestedSlotValues)
+				if len(nestedDefaultSlotValues) > 0 {
+					nestedDefaultSlotValues = append([]*Node{{Type: TextNode, Data: fmt.Sprintf(continueNextSlotRenderFunction, `"default"`), Loc: make([]loc.Loc, 1)}}, nestedDefaultSlotValues...)
+					nestedSlotValues = append(nestedSlotValues, nestedDefaultSlotValues...)
+					// nestedSlottedChildren = append(nestedSlottedChildren, nestedDefaultSlotValues)
+				}
 				continue
 			}
 		}
@@ -988,7 +1016,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 		}
 	}
 	p.print(`})`)
-	if len(nestedSlottedChildren) > 0 || hasAnyDynamicSlots {
+	if len(nestedSlottedChildren) > 0 {
 		for _, children := range nestedSlottedChildren {
 			p.print(",")
 			for _, child := range children {

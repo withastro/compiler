@@ -197,6 +197,16 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name:   "refactored slots III",
+			source: `<Component>{items.map((item)=> <div>hey</div><p slot={item.id} /><span>There</span><p slot={item.id} /><section>!</section>)}</Component>`,
+			want: want{
+				// $$render`${$$maybeRenderHead($$result)}<div>hey</div>`
+				// `$$render`<span>There</span>`
+				// $$render`<section>!</section>`
+				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item)=> ({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`, [item.id]: () => $$render`<p></p>`,\"default\": () => $$render`<div>hey</div><span>There</span><section>!</section>`}))))}",
+			},
+		},
+		{
 			name:   "conditional slot",
 			source: `<Component>{value && <div slot="test">foo</div>}</Component>`,
 			want: want{
