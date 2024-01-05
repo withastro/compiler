@@ -569,6 +569,23 @@ import type data from "test"
 			},
 		},
 		{
+			name: "nested template literal expression",
+			source: `<html lang="en">
+<body>
+{Object.keys(importedAuthors).map(author => <p><div>hello</div></p>)}
+{Object.keys(importedAuthors).map(author => <p><div>{author}</div></p>)}
+</body>
+</html>`,
+			want: want{
+				code: `<html lang="en">
+${$$maybeRenderHead($$result)}<body>
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>hello</div>` + BACKTICK + `)}
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>${author}</div>` + BACKTICK + `)}
+</body>
+</html>`,
+			},
+		},
+		{
 			name:   "complex nested template literal expression",
 			source: "<div value={`${attr ? `a/b ${`c ${`d ${cool}`}`}` : \"d\"} ahhhh`} />",
 			want: want{
@@ -2114,6 +2131,99 @@ const content = "lol";
 			},
 		},
 		{
+			name: "complex table",
+			source: `<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Astro Multi Table</title>
+    </head>
+    <body>
+        <main>
+            <section>
+                {Array(3).fill(false).map((item, idx) => <div>
+                    <div class="row">
+                        {'a'}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <>{Array(7).fill(false).map((entry, index) => <th>A</th>)}</>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>)}
+            </section>
+            <section>
+                <div class="row">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>B</th>
+                                <th>B</th>
+                                <th>B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>`,
+			want: want{
+				code: `<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Astro Multi Table</title>
+    ${$$renderHead($$result)}</head>
+    <body>
+        <main>
+            <section>
+                ${Array(3).fill(false).map((item, idx) => $$render` + BACKTICK + `<div>
+                    <div class="row">
+                        ${'a'}
+                        <table>
+                            <thead>
+                                <tr>
+                                    ${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${Array(7).fill(false).map((entry, index) => $$render` + BACKTICK + `<th>A</th>` + BACKTICK + `)}` + BACKTICK + `,})}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>` + BACKTICK + `)}
+            </section>
+            <section>
+                <div class="row">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>B</th>
+                                <th>B</th>
+                                <th>B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>`,
+			},
+		},
+		{
 			name: "table expressions (no implicit tbody)",
 			source: `---
 const items = ["Dog", "Cat", "Platipus"];
@@ -3365,6 +3475,21 @@ const c = '\''
 			name:   "style in body",
 			source: `<html><body><h1>Hello world!</h1><style></style></body></html>`,
 			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}, {Type: "element", Name: "style"}}}}}},
+		},
+		{
+			name:   "element with unterminated double quote attribute",
+			source: `<main id="gotcha />`,
+			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "gotcha", Raw: "\"gotcha"}}}},
+		},
+		{
+			name:   "element with unterminated single quote attribute",
+			source: `<main id='gotcha />`,
+			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "gotcha", Raw: "'gotcha"}}}},
+		},
+		{
+			name:   "element with unterminated template literal attribute",
+			source: `<main id=` + BACKTICK + `gotcha />`,
+			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
 		},
 	}
 
