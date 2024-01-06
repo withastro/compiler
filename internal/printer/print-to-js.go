@@ -818,12 +818,17 @@ func _handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	}
 }
 
+type NestedSlotEntry struct {
+	SlotProp string
+	Node     []*Node
+}
+
 func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	p.print(`,`)
 	slottedChildren := make(map[string][]*Node)
-	// this represents an array of nestedSlots
-	nestedSlottedChildren := make([][]*Node, 0)
 	hasAnyDynamicSlots := false
+	nestedSlotEntries := make([]*NestedSlotEntry, 0)
+
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		slotProp := `"default"`
 		for _, a := range c.Attr {
@@ -844,110 +849,72 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			}
 		}
 		if c.Expression {
-			nestedSlotsProps := make([]string, 0)
-			// - loops through the child nodes of the expression,
-			// - collects all the slot keys
-			// - transforms them into valid slot props
-			// - use them as keys in the `$$slots` object
+			nestedSlotsCount := 0
+			var firstNestedSlotProp string
 			for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
-				foundNamedSlot := false
 				for _, a := range c1.Attr {
 					if a.Key == "slot" {
-						if a.Type == QuotedAttribute {
-							nestedSlotProp := fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
-							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
-							foundNamedSlot = true
-						} else if a.Type == ExpressionAttribute {
-							nestedSlotProp := fmt.Sprintf(`[%s]`, a.Val)
-							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
-							hasAnyDynamicSlots = true
-							foundNamedSlot = true
-						} else if a.Type == TemplateLiteralAttribute {
-							nestedSlotProp := fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
-							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
-							hasAnyDynamicSlots = true
-							foundNamedSlot = true
-						} else {
-							panic(`unknown slot attribute type`)
+						if firstNestedSlotProp == "" {
+							if a.Type == QuotedAttribute {
+								firstNestedSlotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
+							} else if a.Type == ExpressionAttribute {
+								firstNestedSlotProp = fmt.Sprintf(`[%s]`, a.Val)
+								hasAnyDynamicSlots = true
+							} else if a.Type == TemplateLiteralAttribute {
+								firstNestedSlotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
+								hasAnyDynamicSlots = true
+							} else {
+								panic(`unknown slot attribute type`)
+							}
 						}
 					}
+					if firstNestedSlotProp != "" {
+						nestedSlotsCount++
+					}
 				}
-				if !foundNamedSlot && c1 != nil && c1.Type == ElementNode {
-					nestedSlotsProps = append(nestedSlotsProps, `"default"`)
-				}
+
 			}
 
-			if len(nestedSlotsProps) == 1 && !hasAnyDynamicSlots {
-				slotProp = nestedSlotsProps[0]
-				slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
+			if nestedSlotsCount == 1 && !hasAnyDynamicSlots {
+				slottedChildren[firstNestedSlotProp] = append(slottedChildren[firstNestedSlotProp], c)
 				continue
-			} else if len(nestedSlotsProps) > 1 || hasAnyDynamicSlots {
-				// - loops through the child nodes of the expression,
-				// - collects all the slot keys
-				// - transforms them into valid slot props
-				// - use them as keys in the `$$slots` object
-				// - contruct an array of nodes that will be used to construct the `$$slots` object
-				// (e.g `<C>{<p slot="a">a</p><p slot="b">b</p>}</C>`
-				// -> `{"a": () => <p slot="a">a</p>, "b": () => <p slot="b">b</p>}`
-				// `nestedSlotValues` is an array of nodes that represents nodes
-				// in a particular expression that will constitute the `$$slots` object
-				nestedSlotValues := make([]*Node, 0)
-				nestedDefaultSlotValues := make([]*Node, 0)
-				const continueNextSlotRenderFunction = ", %s: () => "
-				const openNewSlotRenderFunction = "({%s: () => "
+			} else if nestedSlotsCount > 1 || hasAnyDynamicSlots {
 			child_loop:
 				for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
 					foundNamedSlot := false
 					fmt.Println(foundNamedSlot)
-					isPreviousNonElement := c1.PrevSibling == nil || c1.PrevSibling.Type != ElementNode
-					isNextNonElement := c1.NextSibling == nil || c1.NextSibling.Type != ElementNode
 					for _, a := range c1.Attr {
 						if a.Key == "slot" {
-							var slotRenderFunction string
-
-							if isPreviousNonElement {
-								slotRenderFunction = openNewSlotRenderFunction
-							} else {
-								slotRenderFunction = continueNextSlotRenderFunction
-							}
-
 							var nestedSlotProp string
+							var nestedSlotEntry *NestedSlotEntry
 							if a.Type == QuotedAttribute {
 								nestedSlotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 								hasAnyDynamicSlots = true
-								foundNamedSlot = true
 							} else if a.Type == ExpressionAttribute {
 								nestedSlotProp = fmt.Sprintf(`[%s]`, a.Val)
 								hasAnyDynamicSlots = true
-								foundNamedSlot = true
 							} else if a.Type == TemplateLiteralAttribute {
 								hasAnyDynamicSlots = true
 								nestedSlotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
-								foundNamedSlot = true
 							} else {
 								panic(`unknown slot attribute type`)
 							}
-							nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
-							nestedSlotValues = append(nestedSlotValues, &Node{Type: TextNode, Data: fmt.Sprintf(slotRenderFunction, nestedSlotProp), Loc: make([]loc.Loc, 1)})
-							nestedSlotValues = append(nestedSlotValues, c1)
-							if isNextNonElement {
-								nestedSlotValues = append(nestedSlotValues, &Node{Type: TextNode, Data: "})", Loc: make([]loc.Loc, 1)})
-							}
+							foundNamedSlot = true
+							nestedSlotEntry = &NestedSlotEntry{nestedSlotProp, []*Node{c1}}
+							// nestedSlotsProps = append(nestedSlotsProps, nestedSlotProp)
+							nestedSlotEntries = append(nestedSlotEntries, nestedSlotEntry)
 							continue child_loop
 						}
 					}
 
 					if !foundNamedSlot && c1.Type == ElementNode {
-						nestedDefaultSlotValues = append(nestedDefaultSlotValues, c1)
+						pseudoSlotEntry := &NestedSlotEntry{`"default"`, []*Node{c1}}
+						nestedSlotEntries = append(nestedSlotEntries, pseudoSlotEntry)
 					} else {
-						nestedSlotValues = append(nestedSlotValues, c1)
+						nestedSlotEntry := &NestedSlotEntry{`"@@PSEUDO_SLOT_ENTRY"`, []*Node{c1}}
+						nestedSlotEntries = append(nestedSlotEntries, nestedSlotEntry)
 					}
-				}
-				nestedSlottedChildren = append(nestedSlottedChildren, nestedSlotValues)
-				if len(nestedDefaultSlotValues) > 0 {
-					nestedDefaultSlotValues = append([]*Node{{Type: TextNode, Data: fmt.Sprintf(continueNextSlotRenderFunction, `"default"`), Loc: make([]loc.Loc, 1)}}, nestedDefaultSlotValues...)
-					nestedSlotValues = append(nestedSlotValues, nestedDefaultSlotValues...)
-					// nestedSlottedChildren = append(nestedSlottedChildren, nestedDefaultSlotValues)
+
 				}
 				continue
 			}
@@ -968,7 +935,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 		slottedKeys = append(slottedKeys, k)
 	}
 	sort.Strings(slottedKeys)
-	if len(nestedSlottedChildren) > 0 || hasAnyDynamicSlots {
+	if len(nestedSlotEntries) > 0 || hasAnyDynamicSlots {
 		p.print(`$$mergeSlots(`)
 	}
 	p.print(`({`)
@@ -1016,13 +983,20 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 		}
 	}
 	p.print(`})`)
-	if len(nestedSlottedChildren) > 0 {
-		for _, children := range nestedSlottedChildren {
-			p.print(",")
-			for _, child := range children {
-				if child.Type == ElementNode {
-					p.printTemplateLiteralOpen()
+	if len(nestedSlotEntries) > 0 || hasAnyDynamicSlots {
+		p.print(`,`)
+		nestedSlotChains := getNestedSlotChains(nestedSlotEntries)
+		for _, nestedSlotChain := range nestedSlotChains {
+			for j, nestedSlotEntry := range nestedSlotChain {
+				if nestedSlotEntry.SlotProp == `"@@PSEUDO_SLOT_ENTRY"` {
+					for _, child := range nestedSlotEntry.Node {
+						p.print(child.Data)
+					}
+					continue
 				}
+				slotRenderFunction := getSlotRenderFunction(j == 0)
+				child := &Node{Type: TextNode, Data: fmt.Sprintf(slotRenderFunction, nestedSlotEntry.SlotProp), Loc: make([]loc.Loc, 1)}
+
 				render1(p, child, RenderOptions{
 					isRoot:           false,
 					isExpression:     opts.isExpression,
@@ -1031,11 +1005,94 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 					cssLen:           opts.cssLen,
 					printedMaybeHead: opts.printedMaybeHead,
 				})
-				if child.Type == ElementNode {
-					p.printTemplateLiteralClose()
+				p.printTemplateLiteralOpen()
+				for _, child := range nestedSlotEntry.Node {
+					render1(p, child, RenderOptions{
+						isRoot:           false,
+						isExpression:     opts.isExpression,
+						depth:            depth + 1,
+						opts:             opts.opts,
+						cssLen:           opts.cssLen,
+						printedMaybeHead: opts.printedMaybeHead,
+					})
+				}
+				p.printTemplateLiteralClose()
+
+				if j == len(nestedSlotChain)-1 {
+					p.print(`})`)
 				}
 			}
 		}
 		p.print(`)`)
 	}
+}
+
+func getSlotRenderFunction(isNewSlotObject bool) string {
+	const continueNextSlotRenderFunction = ", %s: () => "
+	const openNewSlotRenderFunction = "({%s: () => "
+
+	if isNewSlotObject {
+		return openNewSlotRenderFunction
+	}
+	return continueNextSlotRenderFunction
+}
+
+func getNestedSlotChains(nestedSlotEntries []*NestedSlotEntry) [][]*NestedSlotEntry {
+	nestedSlotChains := make([][]*NestedSlotEntry, 0)
+
+	nestedSlotChainHolder := make([]*NestedSlotEntry, 0)
+	isPrevSameType := true
+	for i, nestedSlotEntry := range nestedSlotEntries {
+		if i > 0 {
+			isPrevSameType = nestedSlotEntries[i-1].Node[0].Type == nestedSlotEntry.Node[0].Type
+		}
+		if !isPrevSameType {
+			nestedSlotChains = append(nestedSlotChains, nestedSlotChainHolder)
+			nestedSlotChainHolder = make([]*NestedSlotEntry, 0)
+		}
+		nestedSlotChainHolder = append(nestedSlotChainHolder, nestedSlotEntry)
+
+		if i == len(nestedSlotEntries)-1 {
+			nestedSlotChains = append(nestedSlotChains, nestedSlotChainHolder)
+		}
+	}
+	mergeDefaults(&nestedSlotChains)
+	return nestedSlotChains
+}
+
+// if in a chain, there are multiple slots named
+// "default", we need to dedupe them. The deduplication
+// is done by merging the default slot into the first
+// By "merging", I mean taking the .Node value of a
+// duplicated entry and appending it to the .Node
+// value of a "default" entry
+// TODO: Right now we're creating a new temporary array to hold the deduped values
+// later we can optimize this by mutating the original array in place
+func mergeDefaults(nestedSlotChains *([][]*NestedSlotEntry)) {
+	newNestedSlotChains := make([][]*NestedSlotEntry, 0)
+	for _, nestedSlotChain := range *nestedSlotChains {
+		defaultSlotEntry := &NestedSlotEntry{SlotProp: `"default"`, Node: make([]*Node, 0)}
+		indexesWithDefault := make([]int, 0)
+		newNestedSlotChain := make([]*NestedSlotEntry, 0)
+		for i, nestedSlotEntry := range nestedSlotChain {
+			if nestedSlotEntry.SlotProp == `"default"` {
+				indexesWithDefault = append(indexesWithDefault, i)
+				defaultSlotEntry.Node = append(defaultSlotEntry.Node, nestedSlotEntry.Node...)
+			}
+		}
+	upper_loop:
+		for i, nestedSlotEntry := range nestedSlotChain {
+			for _, index := range indexesWithDefault {
+				if i == index {
+					continue upper_loop
+				}
+			}
+			newNestedSlotChain = append(newNestedSlotChain, nestedSlotEntry)
+		}
+		if len(defaultSlotEntry.Node) > 0 {
+			newNestedSlotChain = append(newNestedSlotChain, defaultSlotEntry)
+		}
+		newNestedSlotChains = append(newNestedSlotChains, newNestedSlotChain)
+	}
+	*nestedSlotChains = newNestedSlotChains
 }
