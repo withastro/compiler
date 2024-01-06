@@ -198,12 +198,12 @@ func TestPrinter(t *testing.T) {
 		},
 		{
 			name:   "refactored slots III",
-			source: `<Component>{items.map((item)=> <div>hey</div><p slot={item.id} /><span>There</span><p slot={item.id} /><section>!</section>)}</Component>`,
+			source: `<Component>{items.map((item)=> <div>hey</div><p slot={item.id} /><span>There</span><p slot={item.id+1} /><section>!</section>)}</Component>`,
 			want: want{
 				// $$render`${$$maybeRenderHead($$result)}<div>hey</div>`
 				// `$$render`<span>There</span>`
 				// $$render`<section>!</section>`
-				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item)=> ({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`, [item.id]: () => $$render`<p></p>`,\"default\": () => $$render`<div>hey</div><span>There</span><section>!</section>`}))))}",
+				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item)=> ({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`, [item.id+1]: () => $$render`<p></p>`, \"default\": () => $$render`<div>hey</div><span>There</span><section>!</section>`}))))}",
 			},
 		},
 		{
@@ -2192,7 +2192,7 @@ const content = "lol";
                         <table>
                             <thead>
                                 <tr>
-                                    ${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `${Array(7).fill(false).map((entry, index) => $$render` + BACKTICK + `<th>A</th>` + BACKTICK + `)}` + BACKTICK + `,})}
+                                    ${$$renderComponent($$result,'Fragment',Fragment,{},({"default": () => $$render` + BACKTICK + `${Array(7).fill(false).map((entry, index) => $$render` + BACKTICK + `<th>A</th>` + BACKTICK + `)}` + BACKTICK + `,}))}
                                 </tr>
                             </thead>
                             <tbody>
