@@ -183,27 +183,47 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
-			name:   "refactored slots I",
+			name:   "nested dynamic slots I",
 			source: `<Component>{items.map((item)=><p slot={item.id} />)}</Component>`,
 			want: want{
 				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item)=>({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`}))))}",
 			},
 		},
 		{
-			name:   "refactored slots II",
+			name:   "nested dynamic slots II",
 			source: `<Component>{items.map((item)=><p slot={item.id} /><p slot={item.id+1} />)}</Component>`,
 			want: want{
 				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item)=>({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`, [item.id+1]: () => $$render`<p></p>`}))))}",
 			},
 		},
 		{
-			name:   "refactored slots III",
+			name:   "nested dynamic slots III",
 			source: `<Component>{items.map((item)=> <div>hey</div><p slot={item.id} /><span>There</span><p slot={item.id+1} /><section>!</section>)}</Component>`,
 			want: want{
-				// $$render`${$$maybeRenderHead($$result)}<div>hey</div>`
-				// `$$render`<span>There</span>`
-				// $$render`<section>!</section>`
 				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item)=> ({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`, [item.id+1]: () => $$render`<p></p>`, \"default\": () => $$render`<div>hey</div><span>There</span><section>!</section>`}))))}",
+			},
+		},
+		{
+			name:   "nested dynamic slots IV",
+			source: `<Component>{items.map((item)=> <div>hey</div> <p slot={item.id} /> <span>There</span> <p slot={item.id+1} /> <section>!</section>)}</Component>`,
+			want: want{
+				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item)=>  ({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`  , [item.id+1]: () => $$render`<p></p>` , \"default\": () => $$render`<div>hey</div><span>There</span><section>!</section>`}))))}",
+			},
+		},
+		{
+			name: "nested dynamic slots V",
+			source: `
+<Component>
+	{items.map((item) => (
+		<div>hey</div>
+		<p slot={item.id} />
+		<span>There</span>
+		<p slot={item.id + 1} />
+		<section>!</section>
+	))}
+</Component>`,
+			want: want{
+				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots(({}),items.map((item) => (\n\t\t({[item.id]: () => $$render`${$$maybeRenderHead($$result)}<p></p>`\n\t\t, [item.id + 1]: () => $$render`<p></p>`\n\t\t, \"default\": () => $$render`<div>hey</div><span>There</span><section>!</section>`})\n\t))))}",
 			},
 		},
 		{
