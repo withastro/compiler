@@ -919,7 +919,7 @@ func mergeDefaultSlotsAndUpdateIndexes(nestedSlotEntries *[]*NestedSlotEntry, en
 			mergedSlotEntries = append(mergedSlotEntries, nestedSlotEntry)
 		}
 		if shouldMergeDefaultSlot(endSlotIndexes, i, defaultSlotEntry) {
-			resetEndSlotIndexes(endSlotIndexes, i, numberOfMergedSlotsInSlotChain)
+			resetEndSlotIndexes(endSlotIndexes, i, &numberOfMergedSlotsInSlotChain)
 			mergedSlotEntries = append(mergedSlotEntries, defaultSlotEntry)
 			defaultSlotEntry = &NestedSlotEntry{SlotProp: `"default"`, Children: []*Node{}}
 		}
@@ -949,8 +949,8 @@ func shouldMergeDefaultSlot(endSlotIndexes map[int]bool, i int, defaultSlotEntry
 	return endSlotIndexes[i] && len(defaultSlotEntry.Children) > 0
 }
 
-func resetEndSlotIndexes(endSlotIndexes map[int]bool, i int, numberOfMergedSlotsInSlotChain int) {
+func resetEndSlotIndexes(endSlotIndexes map[int]bool, i int, numberOfMergedSlotsInSlotChain *int) {
 	endSlotIndexes[i] = false
-	endSlotIndexes[i-numberOfMergedSlotsInSlotChain+1] = true
-	numberOfMergedSlotsInSlotChain = 0
+	endSlotIndexes[i-(*numberOfMergedSlotsInSlotChain)+1] = true
+	(*numberOfMergedSlotsInSlotChain) = 0
 }
