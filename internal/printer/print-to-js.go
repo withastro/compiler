@@ -823,7 +823,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	// print nested slots
 	if len(nestedSlotEntries) > 0 || hasAnyDynamicSlots {
 		p.print(`,`)
-		endSlotIndexes := processNestedSlotEntries(nestedSlotEntries)
+		endSlotIndexes := generateEndSlotIndexes(nestedSlotEntries)
 		mergeDefaultSlotsAndUpdateIndexes(&nestedSlotEntries, endSlotIndexes)
 
 		hasFoundFirstElementNode := false
@@ -886,7 +886,7 @@ func renderSlotEntry(p *printer, nestedSlotEntry *NestedSlotEntry, isFirstElemen
 	}
 }
 
-func processNestedSlotEntries(nestedSlotEntries []*NestedSlotEntry) map[int]bool {
+func generateEndSlotIndexes(nestedSlotEntries []*NestedSlotEntry) map[int]bool {
 	endSlotIndexes := make(map[int]bool)
 	var latestElementNodeIndex int
 
