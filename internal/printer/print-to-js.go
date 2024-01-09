@@ -749,7 +749,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 						pseudoSlotEntry := &NestedSlotEntry{`"default"`, []*Node{c1}}
 						nestedSlotEntries = append(nestedSlotEntries, pseudoSlotEntry)
 					} else {
-						nestedSlotEntry := &NestedSlotEntry{`"@@PSEUDO_SLOT_ENTRY"`, []*Node{c1}}
+						nestedSlotEntry := &NestedSlotEntry{`"@@NON_ELEMENT_ENTRY"`, []*Node{c1}}
 						nestedSlotEntries = append(nestedSlotEntries, nestedSlotEntry)
 					}
 
@@ -824,7 +824,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	if len(nestedSlotEntries) > 0 || hasAnyDynamicSlots {
 		p.print(`,`)
 		endSlotIndexes := processNestedSlotEntries(nestedSlotEntries)
-		mergeDefaultSlotsAndUpdateIndexes(&nestedSlotEntries, &endSlotIndexes)
+		mergeDefaultSlotsAndUpdateIndexes(&nestedSlotEntries, endSlotIndexes)
 
 		hasFoundFirstElementNode := false
 		for j, nestedSlotEntry := range nestedSlotEntries {
@@ -848,7 +848,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 
 // Helper function to encapsulate nested slot entry rendering
 func renderSlotEntry(p *printer, nestedSlotEntry *NestedSlotEntry, isFirstElementInChain bool, isLastInChain bool, depth int, opts RenderOptions) {
-	if nestedSlotEntry.SlotProp == `"@@PSEUDO_SLOT_ENTRY"` {
+	if nestedSlotEntry.SlotProp == `"@@NON_ELEMENT_ENTRY"` {
 		for _, child := range nestedSlotEntry.Children {
 			p.print(child.Data)
 		}
@@ -906,7 +906,7 @@ func processNestedSlotEntries(nestedSlotEntries []*NestedSlotEntry) map[int]bool
 	return endSlotIndexes
 }
 
-func mergeDefaultSlotsAndUpdateIndexes(nestedSlotEntries *[]*NestedSlotEntry, endSlotIndexes *map[int]bool) {
+func mergeDefaultSlotsAndUpdateIndexes(nestedSlotEntries *[]*NestedSlotEntry, endSlotIndexes map[int]bool) {
 	defaultSlotEntry := &NestedSlotEntry{SlotProp: `"default"`, Children: []*Node{}}
 	mergedSlotEntries := make([]*NestedSlotEntry, 0)
 	numberOfMergedSlotsInSlotChain := 0
@@ -918,8 +918,8 @@ func mergeDefaultSlotsAndUpdateIndexes(nestedSlotEntries *[]*NestedSlotEntry, en
 		} else {
 			mergedSlotEntries = append(mergedSlotEntries, nestedSlotEntry)
 		}
-		if shouldMergeDefaultSlot(endSlotIndexes, i, &numberOfMergedSlotsInSlotChain, defaultSlotEntry) {
-			resetEndSlotIndexes(endSlotIndexes, i, &numberOfMergedSlotsInSlotChain)
+		if shouldMergeDefaultSlot(endSlotIndexes, i, defaultSlotEntry) {
+			resetEndSlotIndexes(endSlotIndexes, i, numberOfMergedSlotsInSlotChain)
 			mergedSlotEntries = append(mergedSlotEntries, defaultSlotEntry)
 			defaultSlotEntry = &NestedSlotEntry{SlotProp: `"default"`, Children: []*Node{}}
 		}
@@ -945,12 +945,12 @@ func isDefaultSlot(entry *NestedSlotEntry) bool {
 	return entry.SlotProp == `"default"`
 }
 
-func shouldMergeDefaultSlot(endSlotIndexes *map[int]bool, i int, numberOfMergedSlotsInSlotChain *int, defaultSlotEntry *NestedSlotEntry) bool {
-	return (*endSlotIndexes)[i] && len(defaultSlotEntry.Children) > 0
+func shouldMergeDefaultSlot(endSlotIndexes map[int]bool, i int, defaultSlotEntry *NestedSlotEntry) bool {
+	return endSlotIndexes[i] && len(defaultSlotEntry.Children) > 0
 }
 
-func resetEndSlotIndexes(endSlotIndexes *map[int]bool, i int, numberOfMergedSlotsInSlotChain *int) {
-	(*endSlotIndexes)[i] = false
-	(*endSlotIndexes)[i-(*numberOfMergedSlotsInSlotChain)+1] = true
-	*numberOfMergedSlotsInSlotChain = 0
+func resetEndSlotIndexes(endSlotIndexes map[int]bool, i int, numberOfMergedSlotsInSlotChain int) {
+	endSlotIndexes[i] = false
+	endSlotIndexes[i-numberOfMergedSlotsInSlotChain+1] = true
+	numberOfMergedSlotsInSlotChain = 0
 }
