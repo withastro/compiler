@@ -316,11 +316,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 	// Tip! Comment this block out to debug expressions
 	if n.Expression {
-		clean := ""
-		if n.FirstChild != nil {
-			clean = strings.TrimSpace(n.FirstChild.Data)
-		}
-		if n.FirstChild == nil || clean == "" {
+		if n.FirstChild == nil || emptyTextNodeWithoutSiblings(n.FirstChild) {
 			p.print("${(void 0)")
 		} else if expressionOnlyHasComment(n) {
 			// we do not print expressions that only contain comment blocks

@@ -2487,6 +2487,20 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name: "expression with leading whitespace",
+			source: `<section>
+<ul class="font-mono text-sm flex flex-col gap-0.5">
+	{
+		<li>Build: { new Date().toISOString() }</li>
+		<li>NODE_VERSION: { process.env.NODE_VERSION }</li>
+	}
+</ul>
+</section>`,
+			want: want{
+				code: "${$$maybeRenderHead($$result)}<section>\n<ul class=\"font-mono text-sm flex flex-col gap-0.5\">\n\t${\n\n\t\t$$render`<li>Build: ${ new Date().toISOString() }</li>\n\t\t<li>NODE_VERSION: ${ process.env.NODE_VERSION }</li>`\n\t}\n</ul>\n</section>",
+			},
+		},
+		{
 			name:   "Empty attribute expression",
 			source: "<body attr={}></body>",
 			want: want{
