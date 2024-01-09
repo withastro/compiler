@@ -2,4 +2,4 @@
 '@astrojs/compiler': patch
 ---
 
-Fix expression regression when the first child of an expression is whitespace and is followed by any other node
+Fixes a bug where expressions starting with whitespace, followed by anything else, weren't printed correctly.
