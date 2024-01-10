@@ -692,24 +692,27 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			var firstNestedSlotProp string
 			for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
 				for _, a := range c1.Attr {
+					var slotProp = ""
 					if a.Key == "slot" {
-						if firstNestedSlotProp == "" {
-							if a.Type == QuotedAttribute {
-								firstNestedSlotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
-							} else if a.Type == ExpressionAttribute {
-								firstNestedSlotProp = fmt.Sprintf(`[%s]`, a.Val)
-								hasAnyDynamicSlots = true
-							} else if a.Type == TemplateLiteralAttribute {
-								firstNestedSlotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
-								hasAnyDynamicSlots = true
-							} else {
-								panic(`unknown slot attribute type`)
-							}
+						if a.Type == QuotedAttribute {
+							slotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
+						} else if a.Type == ExpressionAttribute {
+							slotProp = fmt.Sprintf(`[%s]`, a.Val)
+							hasAnyDynamicSlots = true
+						} else if a.Type == TemplateLiteralAttribute {
+							slotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
+							hasAnyDynamicSlots = true
+						} else {
+							panic(`unknown slot attribute type`)
 						}
 					}
-					if firstNestedSlotProp != "" {
-						nestedSlotsCount++
+
+					if firstNestedSlotProp == "" {
+						firstNestedSlotProp = slotProp
 					}
+				}
+				if firstNestedSlotProp != "" {
+					nestedSlotsCount++
 				}
 
 			}
@@ -721,7 +724,6 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			child_loop:
 				for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
 					foundNamedSlot := false
-					fmt.Println(foundNamedSlot)
 					for _, a := range c1.Attr {
 						if a.Key == "slot" {
 							var nestedSlotProp string
@@ -752,7 +754,6 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 						nestedSlotEntry := &NestedSlotEntry{`"@@NON_ELEMENT_ENTRY"`, []*Node{c1}}
 						nestedSlotEntries = append(nestedSlotEntries, nestedSlotEntry)
 					}
-
 				}
 				continue
 			}

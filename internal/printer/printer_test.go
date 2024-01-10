@@ -241,6 +241,21 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name: "ternary slot with one implicit default",
+			source: `<Main>
+	{useSlot
+		? <div slot="outside">Inside slot with red background</div>
+		: <div>Outside slot without background</div>
+	}
+</Main>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Main',Main,{},$$mergeSlots(({}),useSlot
+		? ({"outside": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>Inside slot with red background</div>` + BACKTICK + `})
+		: ({"default": () => $$render` + BACKTICK + `<div>Outside slot without background</div>` + BACKTICK + `})
+	))}`,
+			},
+		},
+		{
 			name:   "function expression slots",
 			source: "<Component>\n{() => { switch (value) {\ncase 'a': return <div slot=\"a\">A</div>\ncase 'b': return <div slot=\"b\">B</div>\ncase 'c': return <div slot=\"c\">C</div>\n}\n}}\n</Component>",
 			want: want{
