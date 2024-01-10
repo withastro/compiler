@@ -15,7 +15,7 @@ test('basic', async () => {
 test('preservation', async () => {
   assert.match(await minify(`<pre>  !  </pre>`), '$$render`<pre>  !  </pre>`');
   assert.match(await minify(`<div is:raw>  !  </div>`), '$$render`<div>  !  </div>`');
-  assert.match(await minify(`<Markdown is:raw>  !  </Markdown>`), '$$render`  !  `');
+  assert.match(await minify(`<Markdown is:raw>  !  </Markdown>`), '$$renderSlotTemplate`  !  `');
 });
 
 test('collapsing', async () => {
