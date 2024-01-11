@@ -264,10 +264,54 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
-			name:   "expression slot",
+			name:   "expression slot I",
 			source: `<Component>{true && <div slot="a">A</div>}{false && <div slot="b">B</div>}</Component>`,
 			want: want{
 				code: "${$$renderComponent($$result,'Component',Component,{},({\"a\": () => $$renderSlotTemplate`${true && $$render`${$$maybeRenderHead($$result)}<div>A</div>`}`,\"b\": () => $$renderSlotTemplate`${false && $$render`<div>B</div>`}`,}))}",
+			},
+		},
+		{
+			name: "expression slot II",
+			source: `<Slotted>
+	{true && <span slot="a">A</span>}
+	{true ? <span slot="b">B</span> : null}
+	{() => <span slot="c">C</span>}
+	{true && <span>Default</span>}
+</Slotted>`,
+			want: want{
+				code: "${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({\"a\": () => $$renderSlotTemplate`${true && $$render`${$$maybeRenderHead($$result)}<span>A</span>`}`,}),true ? ({\"b\": () => $$renderSlotTemplate`<span>B</span>`}) : null,() => ({\"c\": () => $$renderSlotTemplate`<span>C</span>`}),true && ({\"default\": () => $$renderSlotTemplate`<span>Default</span>`})))}",
+			},
+		},
+		{
+			name: "expression slot III",
+			source: `<Slotted>
+	{true && <span slot={"a"}>A</span>}
+	{true ? <span slot="b">B</span> : null}
+	{() => <span slot="c">C</span>}
+	{() => {
+		const value = 0.33;
+		if (value > 0.25) {
+			return <span>Default</span><span slot="hey">Another</span>
+		} else if (value > 0.5) {
+			return <span slot="hey">Another</span>
+		} else if (value > 0.75) {
+			return <span>Other</span>
+		}
+		return <span>Yet Another</span>
+	}}
+</Slotted>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({}),true && ({["a"]: () => $$renderSlotTemplate` + BACKTICK + `${$$maybeRenderHead($$result)}<span>A</span>` + BACKTICK + `}),true ? ({"b": () => $$renderSlotTemplate` + BACKTICK + `<span>B</span>` + BACKTICK + `}) : null,() => ({"c": () => $$renderSlotTemplate` + BACKTICK + `<span>C</span>` + BACKTICK + `}),() => {
+		const value = 0.33;
+		if (value > 0.25) {
+			return ({"hey": () => $$renderSlotTemplate` + BACKTICK + `<span>Another</span>` + BACKTICK + `, "default": () => $$renderSlotTemplate` + BACKTICK + `<span>Default</span>` + BACKTICK + `})
+		} else if (value > 0.5) {
+			return ({"hey": () => $$renderSlotTemplate` + BACKTICK + `<span>Another</span>` + BACKTICK + `})
+		} else if (value > 0.75) {
+			return ({"default": () => $$renderSlotTemplate` + BACKTICK + `<span>Other</span>` + BACKTICK + `})
+		}
+		return ({"default": () => $$renderSlotTemplate` + BACKTICK + `<span>Yet Another</span>` + BACKTICK + `})
+	}))}`,
 			},
 		},
 		{
