@@ -564,7 +564,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			case n.CustomElement:
 				p.print(`,({`)
 				p.print(fmt.Sprintf(`"%s": () => `, "default"))
-				p.printSlotTemplateLiteralOpen()
+				p.printTemplateLiteralOpen()
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					render1(p, c, RenderOptions{
 						isRoot:           false,
@@ -807,7 +807,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 				p.print(fmt.Sprintf(`%s: () => `, slotProp))
 			}
 
-			p.printSlotTemplateLiteralOpen()
+			p.printTemplateLiteralOpen()
 			for _, child := range children {
 				render1(p, child, RenderOptions{
 					isRoot:           false,
@@ -872,7 +872,7 @@ func renderNestedSlotChild(p *printer, nestedSlotChild *NestedSlotChild, isFirst
 	})
 
 	// print the nested slotted children
-	p.printSlotTemplateLiteralOpen()
+	p.printTemplateLiteralOpen()
 	for _, child := range nestedSlotChild.Children {
 		render1(p, child, RenderOptions{
 			isRoot:           false,
