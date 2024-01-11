@@ -234,7 +234,7 @@ func TrimTrailingSpace(doc *astro.Node) {
 		return
 	}
 
-	if doc.LastChild.Type == astro.TextNode {
+	if doc.LastChild.Type == astro.TextNode && len(doc.LastChild.Data) < len(strings.TrimRightFunc(doc.LastChild.Data, unicode.IsSpace)) {
 		doc.LastChild.Data = strings.TrimRightFunc(doc.LastChild.Data, unicode.IsSpace)
 		return
 	}
@@ -246,7 +246,6 @@ func TrimTrailingSpace(doc *astro.Node) {
 			n = n.LastChild
 			continue
 		} else {
-			n = nil
 			break
 		}
 	}

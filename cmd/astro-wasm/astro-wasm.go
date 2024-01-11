@@ -226,7 +226,7 @@ func Parse() any {
 		h := handler.NewHandler(source, parseOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(h))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -250,7 +250,7 @@ func ConvertToTSX() any {
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(h))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -301,7 +301,7 @@ func Transform() any {
 					}
 				}()
 
-				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(h))
 				if err != nil {
 					reject.Invoke(wasm_utils.ErrorToJSError(h, err))
 					return

@@ -1412,6 +1412,14 @@ const name = 'named';
 			},
 		},
 		{
+			name:   "top-level component does not drop body attributes",
+			source: `<Base><body class="foobar"><slot /></body></Base>`,
+			only:   true,
+			want: want{
+				code: "${$$renderComponent($$result,'Base',Base,{},{\"default\": () => $$render`${$$maybeRenderHead($$result)}<body class=\"foobar\">${$$renderSlot($$result,$$slots[\"default\"])}</body>`,})}",
+			},
+		},
+		{
 			name: "custom elements",
 			source: `---
 import 'test';
@@ -3227,8 +3235,8 @@ const items = ["Dog", "Cat", "Platipus"];
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.Parse(strings.NewReader(code))
 			h := handler.NewHandler(code, "<stdin>")
+			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(h))
 
 			if err != nil {
 				t.Error(err)
@@ -3480,6 +3488,11 @@ const c = '\''
 			name:   "element with unterminated template literal attribute",
 			source: `<main id=` + BACKTICK + `gotcha />`,
 			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
+		},
+		{
+			name:   "top-level component does not drop body attributes",
+			source: `<Base><body class="foobar"><slot /></body></Base>`,
+			want:   []ASTNode{{Type: "component", Name: "Base", Attributes: []ASTNode{}, Children: []ASTNode{{Type: "element", Name: "body", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "class", Value: "foobar", Raw: "\"foobar\""}}, Children: []ASTNode{{Type: "element", Name: "slot"}}}}}},
 		},
 	}
 
