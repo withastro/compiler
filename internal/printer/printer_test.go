@@ -226,7 +226,7 @@ func TestPrinter(t *testing.T) {
 		},
 		{
 			name:   "slot with fallback",
-			source: `<body><slot><p>Hello world!</p></slot><body>`,
+			source: `<body><slot><p>Hello world!</p></slot></body>`,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<body>${$$renderSlot($$result,$$slots["default"],$$render` + BACKTICK + `<p>Hello world!</p>` + BACKTICK + `)}</body>`,
 			},
@@ -1477,7 +1477,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 		},
 		{
 			name:   "Self-closing script in head works",
-			source: `<html><head><script is:inline /></head><html>`,
+			source: `<html><head><script is:inline /></head></html>`,
 			want: want{
 				code: `<html><head><script></script>` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
@@ -1498,7 +1498,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 		},
 		{
 			name:   "Self-closing components in head can have siblings",
-			source: `<html><head><BaseHead /><link href="test"></head><html>`,
+			source: `<html><head><BaseHead /><link href="test"></head></html>`,
 			want: want{
 				code: `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
