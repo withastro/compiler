@@ -1414,7 +1414,6 @@ const name = 'named';
 		{
 			name:   "top-level component does not drop body attributes",
 			source: `<Base><body class="foobar"><slot /></body></Base>`,
-			only:   true,
 			want: want{
 				code: "${$$renderComponent($$result,'Base',Base,{},{\"default\": () => $$render`${$$maybeRenderHead($$result)}<body class=\"foobar\">${$$renderSlot($$result,$$slots[\"default\"])}</body>`,})}",
 			},
