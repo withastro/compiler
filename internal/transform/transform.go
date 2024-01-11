@@ -253,7 +253,11 @@ func TrimTrailingSpace(doc *astro.Node) {
 	// Collapse all trailing text nodes
 	for n != nil && n.Type == astro.TextNode {
 		n.Data = strings.TrimRightFunc(n.Data, unicode.IsSpace)
-		n = n.PrevSibling
+		if len(n.Data) > 0 {
+			break
+		} else {
+			n = n.PrevSibling
+		}
 	}
 }
 
