@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.4.1
+
+### Patch Changes
+
+- 7a07089: Fixes a bug where expressions starting with whitespace, followed by anything else, weren't printed correctly.
+
 ## 2.4.0
 
 ### Minor Changes
