@@ -46,6 +46,7 @@ var RENDER_HEAD = "$$renderHead"
 var MAYBE_RENDER_HEAD = "$$maybeRenderHead"
 var UNESCAPE_HTML = "$$unescapeHTML"
 var RENDER_SLOT = "$$renderSlot"
+var SLOT_TEMPLATE_TAG = "$$renderSlotTemplate"
 var MERGE_SLOTS = "$$mergeSlots"
 var ADD_ATTRIBUTE = "$$addAttribute"
 var RENDER_TRANSITION = "$$renderTransition"
@@ -124,6 +125,8 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	p.addNilSourceMapping()
 	p.print("renderSlot as " + RENDER_SLOT + ",\n  ")
 	p.addNilSourceMapping()
+	p.print("renderSlotTemplate as " + SLOT_TEMPLATE_TAG + ",\n  ")
+	p.addNilSourceMapping()
 	p.print("mergeSlots as " + MERGE_SLOTS + ",\n  ")
 	p.addNilSourceMapping()
 	p.print("addAttribute as " + ADD_ATTRIBUTE + ",\n  ")
@@ -195,6 +198,11 @@ func (p *printer) printReturnClose() {
 func (p *printer) printTemplateLiteralOpen() {
 	p.addNilSourceMapping()
 	p.print(fmt.Sprintf("%s%s", TEMPLATE_TAG, BACKTICK))
+}
+
+func (p *printer) printSlotTemplateLiteralOpen() {
+	p.addNilSourceMapping()
+	p.print(fmt.Sprintf("%s%s", SLOT_TEMPLATE_TAG, BACKTICK))
 }
 
 func (p *printer) printTemplateLiteralClose() {
