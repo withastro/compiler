@@ -1237,11 +1237,11 @@ const testBool = true;
 			want: want{
 				code: `${
   props.title && (
-    $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `
+    $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},({"default": () => $$render` + BACKTICK + `
       <title>${props.title}</title>
       <meta property="og:title"${$$addAttribute(props.title, "content")}>
       <meta name="twitter:title"${$$addAttribute(props.title, "content")}>
-    ` + BACKTICK + `,})}` + BACKTICK + `
+    ` + BACKTICK + `,}))}` + BACKTICK + `
   )
 }`,
 			},
