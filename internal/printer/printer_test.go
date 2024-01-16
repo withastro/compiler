@@ -1224,6 +1224,29 @@ const testBool = true;
 			},
 		},
 		{
+			name: "conditional rendering of title containing expression",
+			source: `{
+  props.title && (
+    <>
+      <title>{props.title}</title>
+      <meta property="og:title" content={props.title} />
+      <meta name="twitter:title" content={props.title} />
+    </>
+  )
+}`,
+			want: want{
+				code: `${
+  props.title && (
+    $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `
+      <title>${props.title}</title>
+      <meta property="og:title"${$$addAttribute(props.title, "content")}>
+      <meta name="twitter:title"${$$addAttribute(props.title, "content")}>
+    ` + BACKTICK + `,})}` + BACKTICK + `
+  )
+}`,
+			},
+		},
+		{
 			name: "styles (no frontmatter)",
 			source: `<style>
 		  .title {
