@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.4.2
+
+### Patch Changes
+
+- 9938bc1: Fixes a sourcemap-related crash when using multibyte characters
+
 ## 2.4.1
 
 ### Patch Changes
