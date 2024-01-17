@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 2.5.0
+
+### Minor Changes
+
+- db13db9: - Adds support for dynamic slots inside loops
+  - Fixes an issue where successive named slotted elements would cause a runtime error
+  - Fixes an issue in which if there was an implicit default slotted element next to named one, the former would get swallowed by the later.
+
 ## 2.4.2
 
 ### Patch Changes
