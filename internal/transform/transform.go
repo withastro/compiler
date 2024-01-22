@@ -476,22 +476,10 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 
 	eachImportStatement(doc, func(stmt js_scanner.ImportStatement) bool {
 		for _, imported := range stmt.Imports {
-
-			if strings.Contains(n.Data, ".") && strings.HasPrefix(n.Data, fmt.Sprintf("%s.", imported.LocalName)) {
-				exportName := n.Data
-				if imported.ExportName == "*" {
-					exportName = strings.Replace(exportName, fmt.Sprintf("%s.", imported.LocalName), "", 1)
-				} else if imported.ExportName == "default" {
-					exportName = strings.Replace(exportName, imported.LocalName, "default", 1)
-				}
+			exportName, isUsed := js_scanner.ExtractComponentExportName(n.Data, imported)
+			if isUsed {
 				match = &ImportMatch{
 					ExportName: exportName,
-					Specifier:  stmt.Specifier,
-				}
-				return false
-			} else if imported.LocalName == n.Data {
-				match = &ImportMatch{
-					ExportName: imported.ExportName,
 					Specifier:  stmt.Specifier,
 				}
 				return false
