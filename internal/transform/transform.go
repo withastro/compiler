@@ -481,6 +481,8 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 				exportName := n.Data
 				if imported.ExportName == "*" {
 					exportName = strings.Replace(exportName, fmt.Sprintf("%s.", imported.LocalName), "", 1)
+				} else if imported.ExportName == "default" {
+					exportName = strings.Replace(exportName, imported.LocalName, "default", 1)
 				}
 				match = &ImportMatch{
 					ExportName: exportName,
