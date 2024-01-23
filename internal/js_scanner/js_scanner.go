@@ -712,21 +712,22 @@ Returns the export name and a boolean indicating whether
 the component is imported AND used in the template.
 */
 func ExtractComponentExportName(data string, imported Import) (string, bool) {
-	dotPrefix := fmt.Sprintf("%s.", imported.LocalName)
-	hasDotPrefix := strings.Contains(data, ".") && strings.HasPrefix(data, dotPrefix)
-	isNamespacedImport := imported.ExportName == "*"
-	isDefaultImport := imported.ExportName == "default"
-	if hasDotPrefix || imported.LocalName == data {
+	namespacePrefix := fmt.Sprintf("%s.", imported.LocalName)
+	isNamespacedComponent := strings.Contains(data, ".") && strings.HasPrefix(data, namespacePrefix)
+	localNameEqualsData := imported.LocalName == data
+	if isNamespacedComponent || localNameEqualsData {
 		var exportName string
 		switch true {
-		case imported.LocalName == data:
+		case localNameEqualsData:
 			exportName = imported.ExportName
-		case isNamespacedImport:
-			exportName = strings.Replace(data, dotPrefix, "", 1)
-		case isDefaultImport:
+		case imported.ExportName == "*":
+			// matched a namespaced import
+			exportName = strings.Replace(data, namespacePrefix, "", 1)
+		case imported.ExportName == "default":
+			// matched a default import
 			exportName = strings.Replace(data, imported.LocalName, "default", 1)
 		default:
-			// we matched a named import
+			// matched a named import
 			exportName = data
 		}
 		return exportName, true
