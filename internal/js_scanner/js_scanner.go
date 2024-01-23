@@ -716,15 +716,18 @@ func ExtractComponentExportName(data string, imported Import) (string, bool) {
 	hasDotPrefix := strings.Contains(data, ".") && strings.HasPrefix(data, dotPrefix)
 	isNamespacedImport := imported.ExportName == "*"
 	isDefaultImport := imported.ExportName == "default"
-	if (isNamespacedImport || isDefaultImport) && hasDotPrefix || imported.LocalName == data {
+	if hasDotPrefix || imported.LocalName == data {
 		var exportName string
 		switch true {
 		case imported.LocalName == data:
 			exportName = imported.ExportName
 		case isNamespacedImport:
-			exportName = strings.Replace(data, fmt.Sprintf("%s.", imported.LocalName), "", 1)
+			exportName = strings.Replace(data, dotPrefix, "", 1)
 		case isDefaultImport:
 			exportName = strings.Replace(data, imported.LocalName, "default", 1)
+		default:
+			// we matched a named import
+			exportName = data
 		}
 		return exportName, true
 	}
