@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.5.1
+
+### Patch Changes
+
+- d071b0b: Fixes an issue which caused the hydration script of default exported components to fail loading in some cases.
+
 ## 2.5.0
 
 ### Minor Changes
