@@ -528,37 +528,8 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	component_loop:
 		for _, n := range doc.ClientOnlyComponentNodes {
 			for _, imported := range statement.Imports {
-				if imported.ExportName == "*" {
-					prefix := fmt.Sprintf("%s.", imported.LocalName)
-
-					if strings.HasPrefix(n.Data, prefix) {
-						exportParts := strings.Split(n.Data[len(prefix):], ".")
-						exportName := exportParts[0]
-						attrTemplate := `"%s"`
-						if opts.ResolvePath == nil {
-							attrTemplate = `$$metadata.resolvePath("%s")`
-						}
-						// Inject metadata attributes to `client:only` Component
-						pathAttr := astro.Attribute{
-							Key:  "client:component-path",
-							Val:  fmt.Sprintf(attrTemplate, transform.ResolveIdForMatch(statement.Specifier, &opts)),
-							Type: astro.ExpressionAttribute,
-						}
-						n.Attr = append(n.Attr, pathAttr)
-						conlyspecs = append(conlyspecs, statement.Specifier)
-
-						exportAttr := astro.Attribute{
-							Key:  "client:component-export",
-							Val:  exportName,
-							Type: astro.QuotedAttribute,
-						}
-						n.Attr = append(n.Attr, exportAttr)
-						unfoundconly = remove(unfoundconly, n)
-
-						isClientOnlyImport = true
-						continue component_loop
-					}
-				} else if imported.LocalName == n.Data {
+				exportName, isUsed := js_scanner.ExtractComponentExportName(n.Data, imported)
+				if isUsed {
 					attrTemplate := `"%s"`
 					if opts.ResolvePath == nil {
 						attrTemplate = `$$metadata.resolvePath("%s")`
@@ -571,14 +542,14 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 					}
 					n.Attr = append(n.Attr, pathAttr)
 					conlyspecs = append(conlyspecs, statement.Specifier)
-					unfoundconly = remove(unfoundconly, n)
 
 					exportAttr := astro.Attribute{
 						Key:  "client:component-export",
-						Val:  imported.ExportName,
+						Val:  exportName,
 						Type: astro.QuotedAttribute,
 					}
 					n.Attr = append(n.Attr, exportAttr)
+					unfoundconly = remove(unfoundconly, n)
 
 					isClientOnlyImport = true
 					continue component_loop

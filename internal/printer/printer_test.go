@@ -870,6 +870,64 @@ import * as components from '../components';
 			},
 		},
 		{
+			name: "client:only component (namespaced default)",
+			source: `---
+import defaultImport from '../components/ui-1';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+	<defaultImport.Counter1 client:only />
+  </body>
+</html>`,
+			want: want{
+				frontmatter: []string{"import defaultImport from '../components/ui-1';"},
+				metadata: metadata{
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components/ui-1"},
+				},
+				// Specifically do NOT render any metadata here, we need to skip this import
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  ` + RENDER_HEAD_RESULT + `</head>
+  <body>
+	${` + RENDER_COMPONENT + `($$result,'defaultImport.Counter1',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components/ui-1")),"client:component-export":"default.Counter1"})}
+  </body></html>`,
+			},
+		},
+		{
+			name: "client:only component (namespaced named)",
+			source: `---
+import { namedImport } from '../components/ui-2';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+	<namedImport.Counter2 client:only />
+  </body>
+</html>`,
+			want: want{
+				frontmatter: []string{"import { namedImport } from '../components/ui-2';"},
+				metadata: metadata{
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components/ui-2"},
+				},
+				// Specifically do NOT render any metadata here, we need to skip this import
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  ` + RENDER_HEAD_RESULT + `</head>
+  <body>
+	${` + RENDER_COMPONENT + `($$result,'namedImport.Counter2',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components/ui-2")),"client:component-export":"namedImport.Counter2"})}
+  </body></html>`,
+			},
+		},
+		{
 			name: "client:only component (multiple)",
 			source: `---
 import Component from '../components';

@@ -703,3 +703,34 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 		i += len(value)
 	}
 }
+
+/*
+Determines the export name of a component, i.e. the object path to which
+we can access the module, if it were imported using a dynamic import (`import()`)
+
+Returns the export name and a boolean indicating whether
+the component is imported AND used in the template.
+*/
+func ExtractComponentExportName(data string, imported Import) (string, bool) {
+	namespacePrefix := fmt.Sprintf("%s.", imported.LocalName)
+	isNamespacedComponent := strings.Contains(data, ".") && strings.HasPrefix(data, namespacePrefix)
+	localNameEqualsData := imported.LocalName == data
+	if isNamespacedComponent || localNameEqualsData {
+		var exportName string
+		switch true {
+		case localNameEqualsData:
+			exportName = imported.ExportName
+		case imported.ExportName == "*":
+			// matched a namespaced import
+			exportName = strings.Replace(data, namespacePrefix, "", 1)
+		case imported.ExportName == "default":
+			// matched a default import
+			exportName = strings.Replace(data, imported.LocalName, "default", 1)
+		default:
+			// matched a named import
+			exportName = data
+		}
+		return exportName, true
+	}
+	return "", false
+}
