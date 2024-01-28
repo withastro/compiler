@@ -1,0 +1,20 @@
+[package]
+name = "ts_parser"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+oxc_allocator = "0.5.0"
+oxc_ast = { version = "0.5.0", features = ["serde"] }
+oxc_parser = "0.5.0"
+oxc_span = "0.5.0"
+serde_json = "1.0.112"
+wasm-bindgen = "0.2.90"
+
+[dev-dependencies]
+project-root = "0.2.2"

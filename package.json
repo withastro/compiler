@@ -14,7 +14,7 @@
     "format": "prettier -w .",
     "prerelease": "pnpm run build:compiler",
     "release": "changeset publish",
-    "test": "tsx node_modules/uvu/bin.js packages test -i utils -i stress",
+    "test": "tsx node_modules/uvu/bin.js packages/compiler test -i utils -i stress",
     "test:only": "tsx node_modules/uvu/bin.js packages",
     "test:stress": "tsx packages/compiler/test/stress/index.ts",
     "test:ci": "pnpm run test && pnpm run test:stress"
