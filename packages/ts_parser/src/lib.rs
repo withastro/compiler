@@ -3,17 +3,13 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use serde_json;
 use wasm_bindgen::prelude::*;
-
-// Instruction:
-// create a `test.js`,
-// run `cargo run -p oxc_parser --example parser`
-// or `cargo watch -x "run -p oxc_parser --example parser"`
+use web_sys::console;
 
 // A function that takes a string of TypeScript source code
 // and prints its AST in JSON format.
 #[wasm_bindgen]
-pub fn print_ast(source_text: String) {
-    // the source text is always typescript
+pub fn print_ast(source_text: String) -> String {
+    // the source text is always typescript in Astro
     const FILE_NAME_OF_TYPE: &str = "template.ts";
     let source_type = SourceType::from_path(FILE_NAME_OF_TYPE).unwrap();
 
@@ -21,12 +17,18 @@ pub fn print_ast(source_text: String) {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     if ret.errors.is_empty() {
-        println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
-        println!("Parsed Successfully.");
+        let json_string = format!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
+        console::log_1(&json_string.clone().into());
+        return json_string;
     } else {
-        for error in ret.errors {
-            let error = error.with_source_code(source_text.clone());
-            println!("{error:?}");
-        }
+        console::log_1(&"A TypeScript error occured in your Astro component".into());
+        // let's not handle errors for now
+        return "{\"hey\": \"there\"}".to_string();
+        // for error in ret.errors {
+        //     let error = error.with_source_code(source_text.clone());
+        //     let error = format!("{error:?}");
+        //     // console::log_1(&error.into());
+        //     return error;
+        // }
     }
 }
