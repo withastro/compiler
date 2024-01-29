@@ -829,7 +829,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	}
 	p.print(`})`)
 	// print nested slots
-	if len(nestedSlotChildren) > 0 || hasAnyNestedDynamicSlot {
+	if len(nestedSlotChildren) > 0 {
 		endSlotIndexes := generateEndSlotIndexes(nestedSlotChildren)
 		mergeDefaultSlotsAndUpdateIndexes(&nestedSlotChildren, endSlotIndexes)
 
