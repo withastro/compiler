@@ -705,12 +705,10 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							slotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 						} else if a.Type == ExpressionAttribute {
 							slotProp = fmt.Sprintf(`[%s]`, a.Val)
-							hasAnyNestedDynamicSlot = true
-							hasAnyDynamicSlotsInExpr = true
+							hasAnyNestedDynamicSlot, hasAnyDynamicSlotsInExpr = true, true
 						} else if a.Type == TemplateLiteralAttribute {
 							slotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
-							hasAnyNestedDynamicSlot = true
-							hasAnyDynamicSlotsInExpr = true
+							hasAnyNestedDynamicSlot, hasAnyDynamicSlotsInExpr = true, true
 						} else {
 							panic(`unknown slot attribute type`)
 						}
