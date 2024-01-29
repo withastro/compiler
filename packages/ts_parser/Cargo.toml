@@ -16,9 +16,9 @@ oxc_span = "0.5.0"
 serde_json = "1.0.112"
 wee_alloc = "0.4.5"
 
-[dependencies.web-sys]
-version = "0.3.67"
-features = ["console"]
+# [dependencies.web-sys]
+# version = "0.3.67"
+# features = ["console"]
 
 [dev-dependencies]
 project-root = "0.2.2"

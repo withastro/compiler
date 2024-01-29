@@ -43,10 +43,6 @@ importers:
         version: 0.5.6
 
   packages/compiler:
-    dependencies:
-      ts_parser:
-        specifier: workspace:^
-        version: link:../ts_parser
     devDependencies:
       '@jridgewell/trace-mapping':
         specifier: ^0.3.16
@@ -70,29 +66,7 @@ importers:
         specifier: ~5.0.2
         version: 5.0.2
 
-  packages/ts_parser:
-    devDependencies:
-      '@jridgewell/trace-mapping':
-        specifier: ^0.3.16
-        version: 0.3.16
-      '@types/node':
-        specifier: ^18.15.11
-        version: 18.15.11
-      '@types/sass':
-        specifier: ^1.43.1
-        version: 1.43.1
-      acorn:
-        specifier: ^8.8.1
-        version: 8.8.1
-      esbuild:
-        specifier: ^0.17.17
-        version: 0.17.17
-      tsup:
-        specifier: ^6.7.0
-        version: 6.7.0(typescript@5.0.2)
-      typescript:
-        specifier: ~5.0.2
-        version: 5.0.2
+  packages/ts_parser: {}
 
 packages:
 

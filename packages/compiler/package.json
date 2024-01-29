@@ -54,8 +54,5 @@
     "esbuild": "^0.17.17",
     "tsup": "^6.7.0",
     "typescript": "~5.0.2"
-  },
-  "dependencies": {
-    "ts_parser": "workspace:^"
   }
 }

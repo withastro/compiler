@@ -9,6 +9,8 @@ cargo build --target $TARGET --release
 wasm-strip $BINARY
 mkdir -p dist
 cp $BINARY dist/ts_parser.wasm
+mkdir -p ../../cmd/astro-wasm/ts-parser
+cp dist/* ../../cmd/astro-wasm/ts-parser
 # mkdir -p www
 # wasm-opt -o www/ts_parser.wasm -Oz $BINARY
 # ls -lh www/ts_parser.wasm

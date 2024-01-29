@@ -21,33 +21,32 @@ import (
 	"github.com/withastro/compiler/internal/sourcemap"
 	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
-	"github.com/withastro/compiler/internal/ts_parser"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 )
 
-func initTsParser() js.Func {
-	return js.FuncOf(func(this js.Value, args []js.Value) any {
-		var tsParser any = args[0]
-		fmt.Println("tsParser", tsParser)
-		var tsParserFn ts_parser.TypescriptParser
-		if tsParser.(js.Value).Type() == js.TypeFunction {
-			tsParserFn = func(sourceText string) ts_parser.ParserReturnBody {
-				result := tsParser.(js.Value).Invoke(sourceText)
-				jsonAst := result.String()
-				// parser the json ast
-				var body ts_parser.ParserReturnBody
-				json.Unmarshal([]byte(jsonAst), &body)
-				return body
-			}
-		}
-		typescriptParser := ts_parser.Get()
-		fmt.Println("typescriptParser", typescriptParser)
-		typescriptParser.SetParser(tsParserFn)
-		return js.Null()
-	})
-}
+// func initTsParser() js.Func {
+// 	return js.FuncOf(func(this js.Value, args []js.Value) any {
+// 		var tsParser any = args[0]
+// 		fmt.Println("tsParser", tsParser)
+// 		var tsParserFn ts_parser.TypescriptParser
+// 		if tsParser.(js.Value).Type() == js.TypeFunction {
+// 			tsParserFn = func(sourceText string) ts_parser.ParserReturnBody {
+// 				result := tsParser.(js.Value).Invoke(sourceText)
+// 				jsonAst := result.String()
+// 				// parser the json ast
+// 				var body ts_parser.ParserReturnBody
+// 				json.Unmarshal([]byte(jsonAst), &body)
+// 				return body
+// 			}
+// 		}
+// 		typescriptParser := ts_parser.Get()
+// 		fmt.Println("typescriptParser", typescriptParser)
+// 		typescriptParser.SetParser(tsParserFn)
+// 		return js.Null()
+// 	})
+// }
 
-//go:embed ts-parser/node/*.wasm
+//go:embed ts-parser/*.wasm
 var wasmFolder embed.FS
 
 func main() {
@@ -55,7 +54,7 @@ func main() {
 	r := wazero.NewRuntime(ctx)
 	defer r.Close(ctx)
 
-	wasmBytes, _ := wasmFolder.ReadFile("ts-parser/node/ts_parser_bg.wasm")
+	wasmBytes, _ := wasmFolder.ReadFile("ts-parser/ts_parser.wasm")
 
 	mod, err := r.Instantiate(ctx, wasmBytes)
 	if err != nil {
@@ -90,9 +89,22 @@ func main() {
 	}
 
 	// Now, we can call "print_ast", which reads the string we wrote to memory!
-	_, err = printAst.Call(ctx, sourceTextPtr, sourceTextSize)
+	ptrSize, err := printAst.Call(ctx, sourceTextPtr, sourceTextSize)
 	if err != nil {
 		log.Panicln(err)
+	}
+
+	astPtr := uint32(ptrSize[0] >> 32)
+	astSize := uint32(ptrSize[0])
+
+	defer deallocate.Call(ctx, uint64(astPtr), uint64(astSize))
+
+	// The pointer is a linear memory offset, which is where we write the name.
+	if bytes, ok := mod.Memory().Read(astPtr, astSize); !ok {
+		log.Panicf("Memory.Read(%d, %d) out of range of memory size %d",
+			astPtr, astSize, mod.Memory().Size())
+	} else {
+		fmt.Printf("print_ast returned: %s\n", string(bytes))
 	}
 
 	//// end wasm init
