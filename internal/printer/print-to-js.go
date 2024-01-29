@@ -690,9 +690,8 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 		if c.Expression {
 			nestedSlotsInExprCount := 0
 			hasAnyDynamicSlotsInExpr := false
-			var firstNestedSlotProp string
+			var slotProp = DEFAULT_SLOT_PROP
 			for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
-				var slotProp = ""
 				for _, a := range c1.Attr {
 					if a.Key == "slot" {
 						if a.Type == QuotedAttribute {
@@ -709,17 +708,14 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							panic(`unknown slot attribute type`)
 						}
 					}
-					if firstNestedSlotProp == "" && slotProp != "" {
-						firstNestedSlotProp = slotProp
-					}
 				}
-				if firstNestedSlotProp != "" {
+				if c1.Type == ElementNode {
 					nestedSlotsInExprCount++
 				}
 			}
 
 			if nestedSlotsInExprCount == 1 && !hasAnyDynamicSlotsInExpr {
-				slottedChildren[firstNestedSlotProp] = append(slottedChildren[firstNestedSlotProp], c)
+				slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 				continue
 			} else if nestedSlotsInExprCount > 1 || hasAnyDynamicSlotsInExpr {
 			child_loop:
