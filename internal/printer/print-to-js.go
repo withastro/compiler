@@ -738,7 +738,6 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							var nestedSlotEntry *NestedSlotChild
 							if a.Type == QuotedAttribute {
 								nestedSlotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
-								hasAnyNestedDynamicSlot = true
 							} else if a.Type == ExpressionAttribute {
 								nestedSlotProp = fmt.Sprintf(`[%s]`, a.Val)
 								hasAnyNestedDynamicSlot = true
