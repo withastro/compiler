@@ -278,7 +278,7 @@ func TestPrinter(t *testing.T) {
 	{true && <span>Default</span>}
 </Slotted>`,
 			want: want{
-				code: "${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({\"a\": () => $$render`${true && $$render`${$$maybeRenderHead($$result)}<span>A</span>`}`,}),true ? ({\"b\": () => $$render`<span>B</span>`}) : null,() => ({\"c\": () => $$render`<span>C</span>`}),true && ({\"default\": () => $$render`<span>Default</span>`})))}",
+				code: "${$$renderComponent($$result,'Slotted',Slotted,{},({\"a\": () => $$render`${true && $$render`${$$maybeRenderHead($$result)}<span>A</span>`}`,\"b\": () => $$render`${true ? $$render`<span>B</span>` : null}`,\"c\": () => $$render`${() => $$render`<span>C</span>`}`,\"default\": () => $$render`${true && $$render`<span>Default</span>`}`,}))}",
 			},
 		},
 		{
@@ -300,7 +300,7 @@ func TestPrinter(t *testing.T) {
 	}}
 </Slotted>`,
 			want: want{
-				code: `${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({}),true && ({["a"]: () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<span>A</span>` + BACKTICK + `}),true ? ({"b": () => $$render` + BACKTICK + `<span>B</span>` + BACKTICK + `}) : null,() => ({"c": () => $$render` + BACKTICK + `<span>C</span>` + BACKTICK + `}),() => {
+				code: `${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({"b": () => $$render` + BACKTICK + `${true ? $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<span>B</span>` + BACKTICK + ` : null}` + BACKTICK + `,"c": () => $$render` + BACKTICK + `${() => $$render` + BACKTICK + `<span>C</span>` + BACKTICK + `}` + BACKTICK + `,}),true && ({["a"]: () => $$render` + BACKTICK + `<span>A</span>` + BACKTICK + `}),() => {
 		const value = 0.33;
 		if (value > 0.25) {
 			return ({"hey": () => $$render` + BACKTICK + `<span>Another</span>` + BACKTICK + `, "default": () => $$render` + BACKTICK + `<span>Default</span>` + BACKTICK + `})
