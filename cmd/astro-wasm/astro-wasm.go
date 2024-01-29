@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"syscall/js"
 	"unicode"
 
 	"github.com/norunners/vert"
+	"github.com/tetratelabs/wazero"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
@@ -17,12 +21,85 @@ import (
 	"github.com/withastro/compiler/internal/sourcemap"
 	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
+	"github.com/withastro/compiler/internal/ts_parser"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
 )
 
+func initTsParser() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
+		var tsParser any = args[0]
+		fmt.Println("tsParser", tsParser)
+		var tsParserFn ts_parser.TypescriptParser
+		if tsParser.(js.Value).Type() == js.TypeFunction {
+			tsParserFn = func(sourceText string) ts_parser.ParserReturnBody {
+				result := tsParser.(js.Value).Invoke(sourceText)
+				jsonAst := result.String()
+				// parser the json ast
+				var body ts_parser.ParserReturnBody
+				json.Unmarshal([]byte(jsonAst), &body)
+				return body
+			}
+		}
+		typescriptParser := ts_parser.Get()
+		fmt.Println("typescriptParser", typescriptParser)
+		typescriptParser.SetParser(tsParserFn)
+		return js.Null()
+	})
+}
+
+//go:embed ts-parser/node/*.wasm
+var wasmFolder embed.FS
+
 func main() {
+	ctx := context.Background()
+	r := wazero.NewRuntime(ctx)
+	defer r.Close(ctx)
+
+	wasmBytes, _ := wasmFolder.ReadFile("ts-parser/node/ts_parser_bg.wasm")
+
+	mod, err := r.Instantiate(ctx, wasmBytes)
+	if err != nil {
+		log.Panicf("failed to instantiate module: %v", err)
+	}
+
+	printAst := mod.ExportedFunction("print_ast")
+	allocate := mod.ExportedFunction("allocate")
+	deallocate := mod.ExportedFunction("deallocate")
+
+	sourceText := "const a = 1"
+	sourceTextSize := uint64(len(sourceText))
+
+	// Instead of an arbitrary memory offset, use Rust's allocator. Notice
+	// there is nothing string-specific in this allocation function. The same
+	// function could be used to pass binary serialized data to Wasm.
+	results, err := allocate.Call(ctx, sourceTextSize)
+
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	sourceTextPtr := results[0]
+
+	// This pointer was allocated by Rust, but owned by Go, So, we have to
+	// deallocate it when finished
+	defer deallocate.Call(ctx, sourceTextPtr, sourceTextSize)
+
+	if !mod.Memory().Write(uint32(sourceTextPtr), []byte(sourceText)) {
+		log.Panicf("Memory.Write(%d, %d) out of range of memory size %d",
+			sourceTextPtr, sourceTextSize, mod.Memory().Size())
+	}
+
+	// Now, we can call "print_ast", which reads the string we wrote to memory!
+	_, err = printAst.Call(ctx, sourceTextPtr, sourceTextSize)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	//// end wasm init
+
 	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
 	module := js.Global().Get("@astrojs/compiler")
+	// module.Set("initTsParser", initTsParser())
 	module.Set("transform", Transform())
 	module.Set("parse", Parse())
 	module.Set("convertToTSX", ConvertToTSX())

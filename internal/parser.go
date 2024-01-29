@@ -12,6 +12,7 @@ import (
 
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
+	"github.com/withastro/compiler/internal/ts_parser"
 	a "golang.org/x/net/html/atom"
 )
 
@@ -619,6 +620,20 @@ const whitespace = " \t\r\n\f"
 
 // Section 12.2.6.4.1.
 func initialIM(p *parser) bool {
+	// fmt.Printf("initialIM: %s\n", p.tok)
+	tsParser := ts_parser.Get()
+	tsParser.Parse(`export const hello: string = 'Hello World';
+  export default hello;
+  export { hello };
+  export { hello as hello2 };
+  export * from './file2.ts';
+  export { hello as hello3 } from './file3.ts';
+  import { hello as hello4 } from './file4.ts';
+  import * as hello5 from './file5.ts';
+  import hello6 from './file6.ts';
+  import hello7, { hello8 } from './file7.ts';
+
+console.log(hello);`)
 	switch p.tok.Type {
 	case FrontmatterFenceToken:
 		p.setOriginalIM()
