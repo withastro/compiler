@@ -664,9 +664,11 @@ var voidElements = map[string]bool{
 func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	p.print(`,`)
 	slottedChildren := make(map[string][]*Node)
-	hasAnyDynamicSlots := false
+	hasAnyNestedDynamicSlot := false
 	nestedSlotChildren := make([]*NestedSlotChild, 0)
-	numberOfNestedSlots := 0
+
+	// the highest number of nested slots in an expression
+	maxNestedSlotsCount := 0
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		slotProp := DEFAULT_SLOT_PROP
@@ -703,11 +705,11 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							slotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 						} else if a.Type == ExpressionAttribute {
 							slotProp = fmt.Sprintf(`[%s]`, a.Val)
-							hasAnyDynamicSlots = true
+							hasAnyNestedDynamicSlot = true
 							hasAnyDynamicSlotsInExpr = true
 						} else if a.Type == TemplateLiteralAttribute {
 							slotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
-							hasAnyDynamicSlots = true
+							hasAnyNestedDynamicSlot = true
 							hasAnyDynamicSlotsInExpr = true
 						} else {
 							panic(`unknown slot attribute type`)
@@ -723,6 +725,9 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 				slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 				continue
 			} else if nestedSlotsInExprCount > 1 || hasAnyDynamicSlotsInExpr {
+				if nestedSlotsInExprCount > maxNestedSlotsCount {
+					maxNestedSlotsCount = nestedSlotsInExprCount
+				}
 			child_loop:
 				for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
 					foundNamedSlot := false
@@ -733,12 +738,12 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 							var nestedSlotEntry *NestedSlotChild
 							if a.Type == QuotedAttribute {
 								nestedSlotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
-								hasAnyDynamicSlots = true
+								hasAnyNestedDynamicSlot = true
 							} else if a.Type == ExpressionAttribute {
 								nestedSlotProp = fmt.Sprintf(`[%s]`, a.Val)
-								hasAnyDynamicSlots = true
+								hasAnyNestedDynamicSlot = true
 							} else if a.Type == TemplateLiteralAttribute {
-								hasAnyDynamicSlots = true
+								hasAnyNestedDynamicSlot = true
 								nestedSlotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
 							} else {
 								panic(`unknown slot attribute type`)
@@ -756,7 +761,6 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 						nestedSlotEntry := &NestedSlotChild{`"@@NON_ELEMENT_ENTRY"`, []*Node{c1}, isFirstInGroup}
 						nestedSlotChildren = append(nestedSlotChildren, nestedSlotEntry)
 					}
-					numberOfNestedSlots++
 				}
 				continue
 			}
@@ -772,7 +776,12 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 		slottedKeys = append(slottedKeys, k)
 	}
 	sort.Strings(slottedKeys)
-	if numberOfNestedSlots > 0 || hasAnyDynamicSlots {
+
+	// if any slotted expression contains more than one nested slot (e.g. <Component>{true ? <div slot="bar">Bar</div> : <div slot="foo">Foo</div> }</Component>)
+	// OR if any expression contains a dynamic slot (e.g. <Component>{items.map((item)=> (<div slot={item.id}>{item.name}</div>)}</Component>)
+	// we need to use $$mergeSlots
+	shouldPrintMergeSlots := maxNestedSlotsCount > 1 || hasAnyNestedDynamicSlot
+	if shouldPrintMergeSlots {
 		p.print(`$$mergeSlots(`)
 	}
 	p.print(`({`)
@@ -820,7 +829,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	}
 	p.print(`})`)
 	// print nested slots
-	if numberOfNestedSlots > 0 || hasAnyDynamicSlots {
+	if len(nestedSlotChildren) > 0 || hasAnyNestedDynamicSlot {
 		endSlotIndexes := generateEndSlotIndexes(nestedSlotChildren)
 		mergeDefaultSlotsAndUpdateIndexes(&nestedSlotChildren, endSlotIndexes)
 
@@ -843,6 +852,9 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 				hasFoundFirstElementNode = false
 			}
 		}
+	}
+	if shouldPrintMergeSlots {
+		// close $$mergeSlots call
 		p.print(`)`)
 	}
 }
