@@ -686,7 +686,8 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			}
 		}
 		if c.Expression {
-			nestedSlotsCount := 0
+			nestedSlotsInExprCount := 0
+			hasAnyDynamicSlotsInExpr := false
 			var firstNestedSlotProp string
 			for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
 				var slotProp = ""
@@ -697,9 +698,11 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 						} else if a.Type == ExpressionAttribute {
 							slotProp = fmt.Sprintf(`[%s]`, a.Val)
 							hasAnyDynamicSlots = true
+							hasAnyDynamicSlotsInExpr = true
 						} else if a.Type == TemplateLiteralAttribute {
 							slotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
 							hasAnyDynamicSlots = true
+							hasAnyDynamicSlotsInExpr = true
 						} else {
 							panic(`unknown slot attribute type`)
 						}
@@ -709,17 +712,18 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 					}
 				}
 				if firstNestedSlotProp != "" {
-					nestedSlotsCount++
+					nestedSlotsInExprCount++
 				}
 			}
 
-			if nestedSlotsCount == 1 && !hasAnyDynamicSlots {
+			if nestedSlotsInExprCount == 1 && !hasAnyDynamicSlotsInExpr {
 				slottedChildren[firstNestedSlotProp] = append(slottedChildren[firstNestedSlotProp], c)
 				continue
-			} else if nestedSlotsCount > 1 || hasAnyDynamicSlots {
+			} else if nestedSlotsInExprCount > 1 || hasAnyDynamicSlotsInExpr {
 			child_loop:
 				for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
 					foundNamedSlot := false
+					isFirstInGroup := c1 == c.FirstChild
 					for _, a := range c1.Attr {
 						if a.Key == "slot" {
 							var nestedSlotProp string
@@ -737,13 +741,11 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 								panic(`unknown slot attribute type`)
 							}
 							foundNamedSlot = true
-							isFirstInGroup := c1 == c.FirstChild
 							nestedSlotEntry = &NestedSlotChild{nestedSlotProp, []*Node{c1}, isFirstInGroup}
 							nestedSlotChildren = append(nestedSlotChildren, nestedSlotEntry)
 							continue child_loop
 						}
 					}
-					isFirstInGroup := c1 == c.FirstChild
 					if !foundNamedSlot && c1.Type == ElementNode {
 						pseudoSlotEntry := &NestedSlotChild{`"default"`, []*Node{c1}, isFirstInGroup}
 						nestedSlotChildren = append(nestedSlotChildren, pseudoSlotEntry)
