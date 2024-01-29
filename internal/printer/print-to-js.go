@@ -688,6 +688,11 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			}
 		}
 		if c.Expression {
+			// Only slot ElementNodes (except expressions containing only comments) or non-empty TextNodes!
+			// CommentNode, JSX comments and others should not be slotted
+			if expressionOnlyHasComment(c) {
+				continue
+			}
 			nestedSlotsInExprCount := 0
 			hasAnyDynamicSlotsInExpr := false
 			var slotProp = DEFAULT_SLOT_PROP
@@ -757,11 +762,6 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			}
 		}
 
-		// Only slot ElementNodes (except expressions containing only comments) or non-empty TextNodes!
-		// CommentNode, JSX comments and others should not be slotted
-		if expressionOnlyHasComment(c) {
-			continue
-		}
 		if c.Type == ElementNode || c.Type == TextNode && !emptyTextNodeWithoutSiblings(c) {
 			slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 		}
