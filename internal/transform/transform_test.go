@@ -8,6 +8,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/ts_parser"
 )
 
 func transformScopingFixtures() []struct {
@@ -175,10 +176,13 @@ func transformScopingFixtures() []struct {
 func TestTransformScoping(t *testing.T) {
 	tests := transformScopingFixtures()
 	var b strings.Builder
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+			doc, err := astro.Parse(strings.NewReader(tt.source), tsParser)
 			if err != nil {
 				t.Error(err)
 			}
@@ -203,11 +207,14 @@ func TestTransformScoping(t *testing.T) {
 
 func FuzzTransformScoping(f *testing.F) {
 	tests := transformScopingFixtures()
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		f.Add(tt.source) // Use f.Add to provide a seed corpus
 	}
 	f.Fuzz(func(t *testing.T, source string) {
-		doc, err := astro.Parse(strings.NewReader(source))
+		doc, err := astro.Parse(strings.NewReader(source), tsParser)
 		if err != nil {
 			t.Skip("Invalid parse, skipping rest of fuzz test")
 		}
@@ -299,10 +306,13 @@ func TestFullTransform(t *testing.T) {
 		},
 	}
 	var b strings.Builder
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+			doc, err := astro.Parse(strings.NewReader(tt.source), tsParser)
 			if err != nil {
 				t.Error(err)
 			}
@@ -347,10 +357,13 @@ func TestTransformTrailingSpace(t *testing.T) {
 		},
 	}
 	var b strings.Builder
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+			doc, err := astro.Parse(strings.NewReader(tt.source), tsParser)
 			if err != nil {
 				t.Error(err)
 			}
@@ -465,10 +478,13 @@ func TestCompactTransform(t *testing.T) {
 		},
 	}
 	var b strings.Builder
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+			doc, err := astro.Parse(strings.NewReader(tt.source), tsParser)
 			if err != nil {
 				t.Error(err)
 			}
@@ -510,10 +526,13 @@ func TestAnnotation(t *testing.T) {
 		},
 	}
 	var b strings.Builder
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+			doc, err := astro.Parse(strings.NewReader(tt.source), tsParser)
 			if err != nil {
 				t.Error(err)
 			}

@@ -7,6 +7,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/ts_parser"
 	"golang.org/x/net/html/atom"
 )
 
@@ -101,10 +102,13 @@ func tests() []struct {
 
 func TestScopeHTML(t *testing.T) {
 	tests := tests()
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := handler.NewHandler(tt.source, "TestScopeHTML.astro")
-			nodes, err := astro.ParseFragmentWithOptions(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
+			nodes, err := astro.ParseFragmentWithOptions(strings.NewReader(tt.source), tsParser, &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
 			}
@@ -116,7 +120,7 @@ func TestScopeHTML(t *testing.T) {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 			// check whether another pass doesn't error
-			nodes, err = astro.ParseFragmentWithOptions(strings.NewReader(tt.source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
+			nodes, err = astro.ParseFragmentWithOptions(strings.NewReader(tt.source), tsParser, &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
 			}
@@ -129,12 +133,15 @@ func TestScopeHTML(t *testing.T) {
 
 func FuzzScopeHTML(f *testing.F) {
 	tests := tests()
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		f.Add(tt.source) // Use f.Add to provide a seed corpus
 	}
 	f.Fuzz(func(t *testing.T, source string) {
 		h := handler.NewHandler(source, "FuzzScopeHTML.astro")
-		nodes, err := astro.ParseFragmentWithOptions(strings.NewReader(source), &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
+		nodes, err := astro.ParseFragmentWithOptions(strings.NewReader(source), tsParser, &astro.Node{Type: astro.ElementNode, DataAtom: atom.Body, Data: atom.Body.String()}, astro.ParseOptionWithHandler(h))
 		if err != nil {
 			t.Error(err)
 		}

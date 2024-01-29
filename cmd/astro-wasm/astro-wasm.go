@@ -1,19 +1,15 @@
 package main
 
 import (
-	"context"
-	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"syscall/js"
 	"unicode"
 
 	"github.com/norunners/vert"
-	"github.com/tetratelabs/wazero"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
@@ -22,6 +18,7 @@ import (
 	t "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/transform"
 	wasm_utils "github.com/withastro/compiler/internal_wasm/utils"
+	"github.com/withastro/compiler/ts_parser"
 )
 
 // func initTsParser() js.Func {
@@ -46,75 +43,33 @@ import (
 // 	})
 // }
 
-//go:embed ts-parser/*.wasm
-var wasmFolder embed.FS
-
 func main() {
-	ctx := context.Background()
-	r := wazero.NewRuntime(ctx)
-	defer r.Close(ctx)
-
-	wasmBytes, _ := wasmFolder.ReadFile("ts-parser/ts_parser.wasm")
-
-	mod, err := r.Instantiate(ctx, wasmBytes)
-	if err != nil {
-		log.Panicf("failed to instantiate module: %v", err)
-	}
-
-	printAst := mod.ExportedFunction("print_ast")
-	allocate := mod.ExportedFunction("allocate")
-	deallocate := mod.ExportedFunction("deallocate")
-
-	sourceText := "const a = 1"
-	sourceTextSize := uint64(len(sourceText))
-
-	// Instead of an arbitrary memory offset, use Rust's allocator. Notice
-	// there is nothing string-specific in this allocation function. The same
-	// function could be used to pass binary serialized data to Wasm.
-	results, err := allocate.Call(ctx, sourceTextSize)
-
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	sourceTextPtr := results[0]
-
-	// This pointer was allocated by Rust, but owned by Go, So, we have to
-	// deallocate it when finished
-	defer deallocate.Call(ctx, sourceTextPtr, sourceTextSize)
-
-	if !mod.Memory().Write(uint32(sourceTextPtr), []byte(sourceText)) {
-		log.Panicf("Memory.Write(%d, %d) out of range of memory size %d",
-			sourceTextPtr, sourceTextSize, mod.Memory().Size())
-	}
-
-	// Now, we can call "print_ast", which reads the string we wrote to memory!
-	ptrSize, err := printAst.Call(ctx, sourceTextPtr, sourceTextSize)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	astPtr := uint32(ptrSize[0] >> 32)
-	astSize := uint32(ptrSize[0])
-
-	defer deallocate.Call(ctx, uint64(astPtr), uint64(astSize))
-
-	// The pointer is a linear memory offset, which is where we write the name.
-	if bytes, ok := mod.Memory().Read(astPtr, astSize); !ok {
-		log.Panicf("Memory.Read(%d, %d) out of range of memory size %d",
-			astPtr, astSize, mod.Memory().Size())
-	} else {
-		fmt.Printf("print_ast returned: %s\n", string(bytes))
-	}
 
 	//// end wasm init
 
 	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
 	module := js.Global().Get("@astrojs/compiler")
 	// module.Set("initTsParser", initTsParser())
-	module.Set("transform", Transform())
-	module.Set("parse", Parse())
-	module.Set("convertToTSX", ConvertToTSX())
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+
+	tsParser(`
+	export type Hey = string;
+	export const hello: string = 'Hello World';
+	export default hello;
+	export { hello };
+	export { hello as hello2 };
+	export * from './file2.ts';
+	export { hello as hello3 } from './file3.ts';
+	import { hello as hello4 } from './file4.ts';
+	import * as hello5 from './file5.ts';
+	import hello6 from './file6.ts';
+	import hello7, { hello8 } from './file7.ts';
+	console.log(hello);`)
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
+	module.Set("transform", Transform(tsParser))
+	module.Set("parse", Parse(tsParser))
+	module.Set("convertToTSX", ConvertToTSX(tsParser))
 
 	<-make(chan struct{})
 }
@@ -306,7 +261,7 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	style.FirstChild.Data = str
 }
 
-func Parse() any {
+func Parse(tsParser ts_parser.TypescriptParser) any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 		parseOptions := makeParseOptions(js.Value(args[1]))
@@ -315,7 +270,7 @@ func Parse() any {
 		h := handler.NewHandler(source, parseOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), tsParser, astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -331,7 +286,7 @@ func Parse() any {
 	})
 }
 
-func ConvertToTSX() any {
+func ConvertToTSX(tsParser ts_parser.TypescriptParser) any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 		transformOptions := makeTransformOptions(js.Value(args[1]))
@@ -339,7 +294,7 @@ func ConvertToTSX() any {
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), tsParser, astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -364,7 +319,7 @@ func ConvertToTSX() any {
 	})
 }
 
-func Transform() any {
+func Transform(tsParser ts_parser.TypescriptParser) any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := strings.TrimRightFunc(jsString(args[0]), unicode.IsSpace)
 
@@ -390,7 +345,7 @@ func Transform() any {
 					}
 				}()
 
-				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), tsParser, astro.ParseOptionWithHandler(h))
 				if err != nil {
 					reject.Invoke(wasm_utils.ErrorToJSError(h, err))
 					return

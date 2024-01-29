@@ -8,6 +8,7 @@ import (
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/test_utils"
 	"github.com/withastro/compiler/internal/transform"
+	"github.com/withastro/compiler/ts_parser"
 )
 
 type testcase_css struct {
@@ -74,12 +75,15 @@ func TestPrinterCSS(t *testing.T) {
 		},
 	}
 
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.Parse(strings.NewReader(code))
+			doc, err := astro.Parse(strings.NewReader(code), tsParser)
 
 			if err != nil {
 				t.Error(err)

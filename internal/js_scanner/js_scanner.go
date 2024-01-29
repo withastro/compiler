@@ -10,6 +10,7 @@ import (
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 	"github.com/withastro/compiler/internal/loc"
+	"github.com/withastro/compiler/ts_parser"
 )
 
 type HoistedScripts struct {
@@ -213,6 +214,27 @@ outer:
 
 func isKeyword(value []byte) bool {
 	return js.Keywords[string(value)] != 0
+}
+
+func CollectImportsAndExports(source []byte) (imports []ts_parser.BodyItem, exports []ts_parser.BodyItem) {
+	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	// TODO(mk): revisit where the cleanup should be called
+	defer cleanup()
+
+	imports = make([]ts_parser.BodyItem, 0)
+	exports = make([]ts_parser.BodyItem, 0)
+
+	tsAst := tsParser(string(source))
+
+	for _, bodyItem := range tsAst.Body {
+		switch bodyItem.Type {
+		case ts_parser.ExportNamedDeclaration, ts_parser.ExportAllDeclaration, ts_parser.ExportDefaultDeclaration:
+			exports = append(exports, bodyItem)
+		case ts_parser.ImportDeclaration:
+			imports = append(imports, bodyItem)
+		}
+	}
+	return
 }
 
 func HoistImports(source []byte) HoistedScripts {

@@ -155,6 +155,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if n.FirstChild == nil {
 			p.printCSSImports(opts.cssLen)
 		}
+		// tsParser, cleanup := ts_parser.CreateTypescripParser()
+		// // TODO(mk): revisit where the cleanup should be called
+		// defer cleanup()
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
@@ -164,6 +167,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				if len(n.Loc) > 0 {
 					start = c.Loc[0].Start
 				}
+
 				render := js_scanner.HoistImports([]byte(c.Data))
 				if len(render.Hoisted) > 0 {
 					for i, hoisted := range render.Hoisted {
