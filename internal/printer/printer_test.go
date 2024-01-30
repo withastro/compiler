@@ -241,6 +241,35 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name: "ternary slot II",
+			source: `<Layout>
+	{
+		Astro.request.method === 'GET' ? (
+			<h2>Contact Form</h2>
+			<form action="/contact" method="get">
+				<input type="hidden" name="name" value="Testing">
+				<button id="submit" type="submit" formmethod="post" formaction="/form-three">Submit</button>
+			</form>
+		) : (
+			<div id="three-result">Got: {formData?.get('name')}</div>
+		)
+	}
+</Layout>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Layout',Layout,{},$$mergeSlots(({}),
+		Astro.request.method === 'GET' ? (
+			
+			({"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<h2>Contact Form</h2><form action="/contact" method="get">
+				<input type="hidden" name="name" value="Testing">
+				<button id="submit" type="submit" formmethod="post" formaction="/form-three">Submit</button>
+			</form>` + BACKTICK + `})
+		) : (
+			({"default": () => $$render` + BACKTICK + `<div id="three-result">Got: ${formData?.get('name')}</div>` + BACKTICK + `})
+		)
+	))}`,
+			},
+		},
+		{
 			name: "ternary slot with one implicit default",
 			source: `<Main>
 	{useSlot
@@ -278,7 +307,7 @@ func TestPrinter(t *testing.T) {
 	{true && <span>Default</span>}
 </Slotted>`,
 			want: want{
-				code: "${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({\"a\": () => $$render`${true && $$render`${$$maybeRenderHead($$result)}<span>A</span>`}`,}),true ? ({\"b\": () => $$render`<span>B</span>`}) : null,() => ({\"c\": () => $$render`<span>C</span>`}),true && ({\"default\": () => $$render`<span>Default</span>`})))}",
+				code: "${$$renderComponent($$result,'Slotted',Slotted,{},({\"a\": () => $$render`${true && $$render`${$$maybeRenderHead($$result)}<span>A</span>`}`,\"b\": () => $$render`${true ? $$render`<span>B</span>` : null}`,\"c\": () => $$render`${() => $$render`<span>C</span>`}`,\"default\": () => $$render`${true && $$render`<span>Default</span>`}`,}))}",
 			},
 		},
 		{
@@ -300,7 +329,7 @@ func TestPrinter(t *testing.T) {
 	}}
 </Slotted>`,
 			want: want{
-				code: `${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({}),true && ({["a"]: () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<span>A</span>` + BACKTICK + `}),true ? ({"b": () => $$render` + BACKTICK + `<span>B</span>` + BACKTICK + `}) : null,() => ({"c": () => $$render` + BACKTICK + `<span>C</span>` + BACKTICK + `}),() => {
+				code: `${$$renderComponent($$result,'Slotted',Slotted,{},$$mergeSlots(({"b": () => $$render` + BACKTICK + `${true ? $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<span>B</span>` + BACKTICK + ` : null}` + BACKTICK + `,"c": () => $$render` + BACKTICK + `${() => $$render` + BACKTICK + `<span>C</span>` + BACKTICK + `}` + BACKTICK + `,}),true && ({["a"]: () => $$render` + BACKTICK + `<span>A</span>` + BACKTICK + `}),() => {
 		const value = 0.33;
 		if (value > 0.25) {
 			return ({"hey": () => $$render` + BACKTICK + `<span>Another</span>` + BACKTICK + `, "default": () => $$render` + BACKTICK + `<span>Default</span>` + BACKTICK + `})

@@ -432,7 +432,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.printAttributesToObject(n)
 	} else if isSlot {
 		if len(n.Attr) == 0 {
-			p.print(`"default"`)
+			p.print(DEFAULT_SLOT_PROP)
 		} else {
 			slotted := false
 			for _, a := range n.Attr {
@@ -454,7 +454,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				}
 			}
 			if !slotted {
-				p.print(`"default"`)
+				p.print(DEFAULT_SLOT_PROP)
 			}
 		}
 		p.print(`]`)
@@ -559,7 +559,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			switch true {
 			case n.CustomElement:
 				p.print(`,({`)
-				p.print(fmt.Sprintf(`"%s": () => `, "default"))
+				p.print(fmt.Sprintf(`%s: () => `, DEFAULT_SLOT_PROP))
 				p.printTemplateLiteralOpen()
 				for c := n.FirstChild; c != nil; c = c.NextSibling {
 					render1(p, c, RenderOptions{
@@ -638,6 +638,8 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 }
 
+const DEFAULT_SLOT_PROP = `"default"`
+
 // Section 12.1.2, "Elements", gives this list of void elements. Void elements
 // are those that can't have any contents.
 // nolint
@@ -662,12 +664,14 @@ var voidElements = map[string]bool{
 func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	p.print(`,`)
 	slottedChildren := make(map[string][]*Node)
-	hasAnyDynamicSlots := false
+	hasAnyNestedDynamicSlot := false
 	nestedSlotChildren := make([]*NestedSlotChild, 0)
-	numberOfNestedSlots := 0
+
+	// the highest number of nested slots in an expression
+	maxNestedSlotsCount := 0
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		slotProp := `"default"`
+		slotProp := DEFAULT_SLOT_PROP
 		for _, a := range c.Attr {
 			if a.Key == "slot" {
 				if a.Type == QuotedAttribute {
@@ -686,82 +690,79 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			}
 		}
 		if c.Expression {
-			nestedSlotsCount := 0
-			var firstNestedSlotProp string
+			// Only slot ElementNodes (except expressions containing only comments) or non-empty TextNodes!
+			// CommentNode, JSX comments and others should not be slotted
+			if expressionOnlyHasComment(c) {
+				continue
+			}
+			nestedSlotsInExprCount := 0
+			hasAnyDynamicSlotsInExpr := false
+			var slotProp = DEFAULT_SLOT_PROP
 			for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
-				var slotProp = ""
 				for _, a := range c1.Attr {
 					if a.Key == "slot" {
 						if a.Type == QuotedAttribute {
 							slotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
 						} else if a.Type == ExpressionAttribute {
 							slotProp = fmt.Sprintf(`[%s]`, a.Val)
-							hasAnyDynamicSlots = true
+							hasAnyNestedDynamicSlot, hasAnyDynamicSlotsInExpr = true, true
 						} else if a.Type == TemplateLiteralAttribute {
 							slotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
-							hasAnyDynamicSlots = true
+							hasAnyNestedDynamicSlot, hasAnyDynamicSlotsInExpr = true, true
 						} else {
 							panic(`unknown slot attribute type`)
 						}
 					}
-					if firstNestedSlotProp == "" && slotProp != "" {
-						firstNestedSlotProp = slotProp
-					}
 				}
-				if firstNestedSlotProp != "" {
-					nestedSlotsCount++
+				if c1.Type == ElementNode {
+					nestedSlotsInExprCount++
 				}
 			}
 
-			if nestedSlotsCount == 1 && !hasAnyDynamicSlots {
-				slottedChildren[firstNestedSlotProp] = append(slottedChildren[firstNestedSlotProp], c)
+			if nestedSlotsInExprCount == 1 && !hasAnyDynamicSlotsInExpr {
+				slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 				continue
-			} else if nestedSlotsCount > 1 || hasAnyDynamicSlots {
+			} else if nestedSlotsInExprCount > 1 || hasAnyDynamicSlotsInExpr {
+				if nestedSlotsInExprCount > maxNestedSlotsCount {
+					maxNestedSlotsCount = nestedSlotsInExprCount
+				}
 			child_loop:
 				for c1 := c.FirstChild; c1 != nil; c1 = c1.NextSibling {
 					foundNamedSlot := false
+					isFirstInGroup := c1 == c.FirstChild
 					for _, a := range c1.Attr {
 						if a.Key == "slot" {
 							var nestedSlotProp string
 							var nestedSlotEntry *NestedSlotChild
 							if a.Type == QuotedAttribute {
 								nestedSlotProp = fmt.Sprintf(`"%s"`, escapeDoubleQuote(a.Val))
-								hasAnyDynamicSlots = true
 							} else if a.Type == ExpressionAttribute {
 								nestedSlotProp = fmt.Sprintf(`[%s]`, a.Val)
-								hasAnyDynamicSlots = true
+								hasAnyNestedDynamicSlot = true
 							} else if a.Type == TemplateLiteralAttribute {
-								hasAnyDynamicSlots = true
+								hasAnyNestedDynamicSlot = true
 								nestedSlotProp = fmt.Sprintf(`[%s%s%s]`, BACKTICK, a.Val, BACKTICK)
 							} else {
 								panic(`unknown slot attribute type`)
 							}
 							foundNamedSlot = true
-							isFirstInGroup := c1 == c.FirstChild
 							nestedSlotEntry = &NestedSlotChild{nestedSlotProp, []*Node{c1}, isFirstInGroup}
 							nestedSlotChildren = append(nestedSlotChildren, nestedSlotEntry)
 							continue child_loop
 						}
 					}
-					isFirstInGroup := c1 == c.FirstChild
 					if !foundNamedSlot && c1.Type == ElementNode {
-						pseudoSlotEntry := &NestedSlotChild{`"default"`, []*Node{c1}, isFirstInGroup}
+						pseudoSlotEntry := &NestedSlotChild{DEFAULT_SLOT_PROP, []*Node{c1}, isFirstInGroup}
 						nestedSlotChildren = append(nestedSlotChildren, pseudoSlotEntry)
 					} else {
 						nestedSlotEntry := &NestedSlotChild{`"@@NON_ELEMENT_ENTRY"`, []*Node{c1}, isFirstInGroup}
 						nestedSlotChildren = append(nestedSlotChildren, nestedSlotEntry)
 					}
-					numberOfNestedSlots++
 				}
 				continue
 			}
 		}
 
-		// Only slot ElementNodes (except expressions containing only comments) or non-empty TextNodes!
-		// CommentNode, JSX comments and others should not be slotted
-		if expressionOnlyHasComment(c) {
-			continue
-		}
 		if c.Type == ElementNode || c.Type == TextNode && !emptyTextNodeWithoutSiblings(c) {
 			slottedChildren[slotProp] = append(slottedChildren[slotProp], c)
 		}
@@ -772,7 +773,12 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 		slottedKeys = append(slottedKeys, k)
 	}
 	sort.Strings(slottedKeys)
-	if numberOfNestedSlots > 0 || hasAnyDynamicSlots {
+
+	// if any slotted expression contains more than one nested slot (e.g. <Component>{true ? <div slot="bar">Bar</div> : <div slot="foo">Foo</div> }</Component>)
+	// OR if any expression contains a dynamic slot (e.g. <Component>{items.map((item)=> (<div slot={item.id}>{item.name}</div>)}</Component>)
+	// we need to use $$mergeSlots
+	shouldPrintMergeSlots := maxNestedSlotsCount > 1 || hasAnyNestedDynamicSlot
+	if shouldPrintMergeSlots {
 		p.print(`$$mergeSlots(`)
 	}
 	p.print(`({`)
@@ -783,7 +789,7 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 			children := slottedChildren[slotProp]
 
 			// If there are named slots, the default slot cannot be only whitespace
-			if numberOfSlots > 1 && slotProp == "\"default\"" {
+			if numberOfSlots > 1 && slotProp == DEFAULT_SLOT_PROP {
 				// Loop over the children and verify that at least one non-whitespace node exists.
 				foundNonWhitespace := false
 				for _, child := range children {
@@ -820,10 +826,9 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 	}
 	p.print(`})`)
 	// print nested slots
-	if numberOfNestedSlots > 0 || hasAnyDynamicSlots {
+	if len(nestedSlotChildren) > 0 {
 		endSlotIndexes := generateEndSlotIndexes(nestedSlotChildren)
-		mergeDefaultSlotsAndUpdateIndexes(&nestedSlotChildren, endSlotIndexes)
-
+		mergeDefaultSlotsAndUpdateIndexes(&nestedSlotChildren, &endSlotIndexes)
 		hasFoundFirstElementNode := false
 		for j, nestedSlot := range nestedSlotChildren {
 			if nestedSlot.FirstInGroup {
@@ -843,6 +848,9 @@ func handleSlots(p *printer, n *Node, opts RenderOptions, depth int) {
 				hasFoundFirstElementNode = false
 			}
 		}
+	}
+	if shouldPrintMergeSlots {
+		// close $$mergeSlots call
 		p.print(`)`)
 	}
 }
@@ -907,25 +915,42 @@ func generateEndSlotIndexes(nestedSlotChildren []*NestedSlotChild) map[int]bool 
 	return endSlotIndexes
 }
 
-func mergeDefaultSlotsAndUpdateIndexes(nestedSlotChildren *[]*NestedSlotChild, endSlotIndexes map[int]bool) {
-	defaultSlot := &NestedSlotChild{SlotProp: `"default"`, Children: []*Node{}}
-	mergedSlotChildren := make([]*NestedSlotChild, 0)
-	numberOfMergedSlotsInSlotChain := 0
+func mergeDefaultSlotsAndUpdateIndexes(nestedSlotChildren *[]*NestedSlotChild, endSlotIndexes *map[int]bool) {
+	bufferedDefaultSlot := &NestedSlotChild{SlotProp: DEFAULT_SLOT_PROP, Children: []*Node{}}
+	updatedNestedSlotChildren := make([]*NestedSlotChild, 0)
+	updatedEndSlotIndexes := make(map[int]bool)
 
 	for i, nestedSlot := range *nestedSlotChildren {
 		if isDefaultSlot(nestedSlot) {
-			defaultSlot.Children = append(defaultSlot.Children, nestedSlot.Children...)
-			numberOfMergedSlotsInSlotChain++
+			bufferedDefaultSlot.Children = append(bufferedDefaultSlot.Children, nestedSlot.Children...)
 		} else {
-			mergedSlotChildren = append(mergedSlotChildren, nestedSlot)
+			updatedNestedSlotChildren = append(updatedNestedSlotChildren, nestedSlot)
 		}
-		if shouldMergeDefaultSlot(endSlotIndexes, i, defaultSlot) {
-			resetEndSlotIndexes(endSlotIndexes, i, &numberOfMergedSlotsInSlotChain)
-			mergedSlotChildren = append(mergedSlotChildren, defaultSlot)
-			defaultSlot = &NestedSlotChild{SlotProp: `"default"`, Children: []*Node{}}
+
+		// we reached the end of a slot chain
+		if (*endSlotIndexes)[i] {
+			// free up memory, this information is now outdated
+			// the updated information is stored in updatedEndSlotIndexes
+			delete(*endSlotIndexes, i)
+
+			if len(bufferedDefaultSlot.Children) > 0 {
+				// if the buffered default slot contains any children
+				// add it to the updated nested slot children
+				updatedNestedSlotChildren = append(updatedNestedSlotChildren, bufferedDefaultSlot)
+
+				// reset the buffered default slot
+				bufferedDefaultSlot = &NestedSlotChild{SlotProp: DEFAULT_SLOT_PROP, Children: []*Node{}}
+			}
+			// record the index of the last slot in the chain
+			updatedEndSlotIndexes[len(updatedNestedSlotChildren)-1] = true
 		}
+
+		// free up memory, the actual information of nested slot
+		// is now stored in updatedNestedSlotChildren
+		(*nestedSlotChildren)[i] = nil
 	}
-	*nestedSlotChildren = mergedSlotChildren
+	*nestedSlotChildren = updatedNestedSlotChildren
+	*endSlotIndexes = updatedEndSlotIndexes
 }
 
 func getSlotRenderFunction(isNewSlotObject bool) string {
@@ -943,15 +968,5 @@ func isNonWhitespaceTextNode(n *Node) bool {
 }
 
 func isDefaultSlot(slot *NestedSlotChild) bool {
-	return slot.SlotProp == `"default"`
-}
-
-func shouldMergeDefaultSlot(endSlotIndexes map[int]bool, i int, defaultSlot *NestedSlotChild) bool {
-	return endSlotIndexes[i] && len(defaultSlot.Children) > 0
-}
-
-func resetEndSlotIndexes(endSlotIndexes map[int]bool, i int, numberOfMergedSlotsInSlotChain *int) {
-	endSlotIndexes[i] = false
-	endSlotIndexes[i-(*numberOfMergedSlotsInSlotChain)+1] = true
-	(*numberOfMergedSlotsInSlotChain) = 0
+	return slot.SlotProp == DEFAULT_SLOT_PROP
 }
