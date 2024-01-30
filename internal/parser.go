@@ -2730,10 +2730,6 @@ func inLiteralIM(p *parser) bool {
 }
 
 func inExpressionIM(p *parser) bool {
-	// if p.oe.contains(a.Table) {
-	// 	p.clearActiveFormattingElements()
-	// 	return inLiteralIM(p)
-	// }
 	switch p.tok.Type {
 	case ErrorToken:
 		p.oe.pop()
