@@ -2413,6 +2413,100 @@ const content = "lol";
 			},
 		},
 		{
+			name: "blah blah",
+			source: `---
+const { title, footnotes, tables } = Astro.props;
+
+interface Table {
+	title: string;
+	data: any[];
+	showTitle: boolean;
+	footnotes: string;
+}
+console.log(tables);
+---
+
+<div>
+	<div>
+	<h2>
+		{title}
+	</h2>
+	{
+		tables.map((table: Table) => (
+		<>
+			<div>
+			<h3 class="text-3xl sm:text-5xl font-bold">{table.title}</h3>
+			<table>
+				<thead>
+				{Object.keys(table.data[0]).map((thead) => (
+					<th>{thead}</th>
+				))}
+				</thead>
+				<tbody>
+				{table.data.map((trow) => (
+					<tr>
+					{Object.values(trow).map((cell, index) => (
+						<td>
+						{cell}
+						</td>
+					))}
+					</tr>
+				))}
+				</tbody>
+			</table>
+			</div>
+		</>
+		))
+	}
+	</div>
+</div>`,
+			want: want{
+				frontmatter: []string{``, `const { title, footnotes, tables } = Astro.props;
+
+interface Table {
+	title: string;
+	data: any[];
+	showTitle: boolean;
+	footnotes: string;
+}
+console.log(tables);`},
+				code: `${$$maybeRenderHead($$result)}<div>
+	<div>
+	<h2>
+		${title}
+	</h2>
+	${
+		tables.map((table: Table) => (
+		$$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},({"default": () => $$render` + BACKTICK + `
+			<div>
+			<h3 class="text-3xl sm:text-5xl font-bold">${table.title}</h3>
+			<table>
+				<thead>
+				${Object.keys(table.data[0]).map((thead) => (
+					$$render` + BACKTICK + `<th>${thead}</th>` + BACKTICK + `
+				))}
+				</thead>
+				<tbody>
+				${table.data.map((trow) => (
+					$$render` + BACKTICK + `<tr>
+					${Object.values(trow).map((cell, index) => (
+						$$render` + BACKTICK + `<td>
+						${cell}
+						</td>` + BACKTICK + `
+					))}
+					</tr>` + BACKTICK + `
+				))}
+				</tbody>
+			</table>
+			</div>
+		` + BACKTICK + `,}))}` + BACKTICK + `
+		))
+	}
+	</div>
+</div>`,
+			},
+		},
+		{
 			name: "table expressions (no implicit tbody)",
 			source: `---
 const items = ["Dog", "Cat", "Platipus"];
