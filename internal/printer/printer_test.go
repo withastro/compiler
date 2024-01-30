@@ -2413,7 +2413,7 @@ const content = "lol";
 			},
 		},
 		{
-			name: "blah blah",
+			name: "table with expression in 'th'",
 			source: `---
 const { title, footnotes, tables } = Astro.props;
 
