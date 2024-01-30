@@ -916,15 +916,13 @@ func generateEndSlotIndexes(nestedSlotChildren []*NestedSlotChild) map[int]bool 
 }
 
 func mergeDefaultSlotsAndUpdateIndexes(nestedSlotChildren *[]*NestedSlotChild, endSlotIndexes *map[int]bool) {
-	defaultSlot := &NestedSlotChild{SlotProp: DEFAULT_SLOT_PROP, Children: []*Node{}}
+	bufferedDefaultSlot := &NestedSlotChild{SlotProp: DEFAULT_SLOT_PROP, Children: []*Node{}}
 	updatedNestedSlotChildren := make([]*NestedSlotChild, 0)
 	updatedEndSlotIndexes := make(map[int]bool)
 
 	for i, nestedSlot := range *nestedSlotChildren {
-		var isDefault bool
 		if isDefaultSlot(nestedSlot) {
-			isDefault = true
-			defaultSlot.Children = append(defaultSlot.Children, nestedSlot.Children...)
+			bufferedDefaultSlot.Children = append(bufferedDefaultSlot.Children, nestedSlot.Children...)
 		} else {
 			updatedNestedSlotChildren = append(updatedNestedSlotChildren, nestedSlot)
 		}
@@ -935,17 +933,16 @@ func mergeDefaultSlotsAndUpdateIndexes(nestedSlotChildren *[]*NestedSlotChild, e
 			// the updated information is stored in updatedEndSlotIndexes
 			delete(*endSlotIndexes, i)
 
-			if len(defaultSlot.Children) > 0 {
-				// if the last element in a slot chain is a default slot
-				// let's add it to the updated nested slot children
-				updatedEndSlotIndexes[len(updatedNestedSlotChildren)] = true
-				updatedNestedSlotChildren = append(updatedNestedSlotChildren, defaultSlot)
-				defaultSlot = &NestedSlotChild{SlotProp: DEFAULT_SLOT_PROP, Children: []*Node{}}
-			} else if !isDefault {
-				// if it's not a default slot, we just need to set the updated end slot indexes
-				// we already added it in the previous iteration
-				updatedEndSlotIndexes[len(updatedNestedSlotChildren)-1] = true
+			if len(bufferedDefaultSlot.Children) > 0 {
+				// if the buffered default slot contains any children
+				// add it to the updated nested slot children
+				updatedNestedSlotChildren = append(updatedNestedSlotChildren, bufferedDefaultSlot)
+
+				// reset the buffered default slot
+				bufferedDefaultSlot = &NestedSlotChild{SlotProp: DEFAULT_SLOT_PROP, Children: []*Node{}}
 			}
+			// record the index of the last slot in the chain
+			updatedEndSlotIndexes[len(updatedNestedSlotChildren)-1] = true
 		}
 
 		// free up memory, the actual information of nested slot
