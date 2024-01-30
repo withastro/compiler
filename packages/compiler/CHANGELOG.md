@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.5.2
+
+### Patch Changes
+
+- 418558c: Fixes an issue where a slotted element in an expression would cause subsequent ones to be incorrectly printed
+- db93975: Fixes an issue where an expression inside a `th` tag would cause an infinite loop
+
 ## 2.5.1
 
 ### Patch Changes
