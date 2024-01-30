@@ -21,36 +21,14 @@ import (
 	"github.com/withastro/compiler/ts_parser"
 )
 
-// func initTsParser() js.Func {
-// 	return js.FuncOf(func(this js.Value, args []js.Value) any {
-// 		var tsParser any = args[0]
-// 		fmt.Println("tsParser", tsParser)
-// 		var tsParserFn ts_parser.TypescriptParser
-// 		if tsParser.(js.Value).Type() == js.TypeFunction {
-// 			tsParserFn = func(sourceText string) ts_parser.ParserReturnBody {
-// 				result := tsParser.(js.Value).Invoke(sourceText)
-// 				jsonAst := result.String()
-// 				// parser the json ast
-// 				var body ts_parser.ParserReturnBody
-// 				json.Unmarshal([]byte(jsonAst), &body)
-// 				return body
-// 			}
-// 		}
-// 		typescriptParser := ts_parser.Get()
-// 		fmt.Println("typescriptParser", typescriptParser)
-// 		typescriptParser.SetParser(tsParserFn)
-// 		return js.Null()
-// 	})
-// }
-
 func main() {
 
 	//// end wasm init
 
 	js.Global().Set("@astrojs/compiler", js.ValueOf(make(map[string]interface{})))
 	module := js.Global().Get("@astrojs/compiler")
-	// module.Set("initTsParser", initTsParser())
-	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	tsParser, cleanup := ts_parser.GetParser()
+	defer cleanup()
 
 	tsParser(`
 	export type Hey = string;
@@ -66,10 +44,9 @@ func main() {
 	import hello7, { hello8 } from './file7.ts';
 	console.log(hello);`)
 	// TODO(mk): revisit where the cleanup should be called
-	defer cleanup()
-	module.Set("transform", Transform(tsParser))
-	module.Set("parse", Parse(tsParser))
-	module.Set("convertToTSX", ConvertToTSX(tsParser))
+	module.Set("transform", Transform())
+	module.Set("parse", Parse())
+	module.Set("convertToTSX", ConvertToTSX())
 
 	<-make(chan struct{})
 }
@@ -261,7 +238,7 @@ func preprocessStyle(i int, style *astro.Node, transformOptions transform.Transf
 	style.FirstChild.Data = str
 }
 
-func Parse(tsParser ts_parser.TypescriptParser) any {
+func Parse() any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 		parseOptions := makeParseOptions(js.Value(args[1]))
@@ -270,7 +247,7 @@ func Parse(tsParser ts_parser.TypescriptParser) any {
 		h := handler.NewHandler(source, parseOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), tsParser, astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -286,7 +263,7 @@ func Parse(tsParser ts_parser.TypescriptParser) any {
 	})
 }
 
-func ConvertToTSX(tsParser ts_parser.TypescriptParser) any {
+func ConvertToTSX() any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := jsString(args[0])
 		transformOptions := makeTransformOptions(js.Value(args[1]))
@@ -294,7 +271,7 @@ func ConvertToTSX(tsParser ts_parser.TypescriptParser) any {
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), tsParser, astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -319,7 +296,7 @@ func ConvertToTSX(tsParser ts_parser.TypescriptParser) any {
 	})
 }
 
-func Transform(tsParser ts_parser.TypescriptParser) any {
+func Transform() any {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
 		source := strings.TrimRightFunc(jsString(args[0]), unicode.IsSpace)
 
@@ -345,7 +322,7 @@ func Transform(tsParser ts_parser.TypescriptParser) any {
 					}
 				}()
 
-				doc, err := astro.ParseWithOptions(strings.NewReader(source), tsParser, astro.ParseOptionWithHandler(h))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h))
 				if err != nil {
 					reject.Invoke(wasm_utils.ErrorToJSError(h, err))
 					return

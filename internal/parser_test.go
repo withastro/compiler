@@ -7,7 +7,6 @@ import (
 
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/test_utils"
-	"github.com/withastro/compiler/ts_parser"
 )
 
 type ParserLocTest struct {
@@ -73,14 +72,11 @@ func TestParserLocation(t *testing.T) {
 }
 
 func runParserLocTest(t *testing.T, suite []ParserLocTest) {
-	tsParser, cleanup := ts_parser.CreateTypescripParser()
-	// TODO(mk): revisit where the cleanup should be called
-	defer cleanup()
 	for _, tt := range suite {
 		t.Run(tt.name, func(t *testing.T) {
 			code := test_utils.Dedent(tt.input)
 
-			doc, err := Parse(strings.NewReader(code), tsParser)
+			doc, err := Parse(strings.NewReader(code))
 
 			if err != nil {
 				t.Error(err)

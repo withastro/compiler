@@ -6,7 +6,6 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/test_utils"
-	"github.com/withastro/compiler/ts_parser"
 )
 
 func TestScopeStyle(t *testing.T) {
@@ -276,14 +275,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   "@starting-style{.class:where(.astro-xxxxxx){}}",
 		},
 	}
-	tsParser, cleanup := ts_parser.CreateTypescripParser()
-	// TODO(mk): revisit where the cleanup should be called
-	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// note: the "{}" is only added to make it valid CSS
 			code := test_utils.Dedent("<style>\n" + tt.source + " \n</style>")
-			doc, err := astro.Parse(strings.NewReader(code), tsParser)
+			doc, err := astro.Parse(strings.NewReader(code))
 			if err != nil {
 				t.Error(err)
 			}

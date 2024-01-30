@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/tetratelabs/wazero"
@@ -33,12 +32,22 @@ type ParserReturn struct {
 	Body []BodyItem `json:"body"`
 }
 
+var parserSingleton TypescriptParser
+var cleanupSingleton func()
+
+func GetParser() (TypescriptParser, func()) {
+	if parserSingleton == nil {
+		parserSingleton, cleanupSingleton = createTypescripParser()
+	}
+	return parserSingleton, cleanupSingleton
+}
+
 type TypescriptParser func(string) ParserReturn
 
 //go:embed wasm/*.wasm
 var wasmFolder embed.FS
 
-func CreateTypescripParser() (parser TypescriptParser, cleanup func()) {
+func createTypescripParser() (TypescriptParser, func()) {
 	ctx := context.Background()
 	r := wazero.NewRuntime(ctx)
 
@@ -53,12 +62,13 @@ func CreateTypescripParser() (parser TypescriptParser, cleanup func()) {
 	allocate := mod.ExportedFunction("allocate")
 	deallocate := mod.ExportedFunction("deallocate")
 
-	parser = createParserWrapper(&ctx, &allocate, &deallocate, &printAst, &mod)
+	parser := createParserWrapper(&ctx, &allocate, &deallocate, &printAst, &mod)
 
-	cleanup = func() {
+	cleanup := func() {
 		r.Close(ctx)
+		parserSingleton = nil
 	}
-	return
+	return parser, cleanup
 }
 
 func createParserWrapper(ctx *context.Context, allocate *api.Function, deallocate *api.Function, printAst *api.Function, mod *api.Module) func(string) ParserReturn {
@@ -103,7 +113,7 @@ func createParserWrapper(ctx *context.Context, allocate *api.Function, deallocat
 				astPtr, astSize, (*mod).Memory().Size())
 		}
 
-		fmt.Printf("Returned ast: %s\n", string(bytes))
+		// fmt.Printf("Returned ast: %s\n", string(bytes))
 
 		var ast ParserReturn
 		error := json.Unmarshal(bytes, &ast)

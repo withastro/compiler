@@ -217,9 +217,8 @@ func isKeyword(value []byte) bool {
 }
 
 func CollectImportsAndExports(source []byte) (imports []ts_parser.BodyItem, exports []ts_parser.BodyItem) {
-	tsParser, cleanup := ts_parser.CreateTypescripParser()
+	tsParser, _ := ts_parser.GetParser()
 	// TODO(mk): revisit where the cleanup should be called
-	defer cleanup()
 
 	imports = make([]ts_parser.BodyItem, 0)
 	exports = make([]ts_parser.BodyItem, 0)

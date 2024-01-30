@@ -13,7 +13,6 @@ import (
 	types "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/test_utils"
 	"github.com/withastro/compiler/internal/transform"
-	"github.com/withastro/compiler/ts_parser"
 )
 
 var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.Join([]string{
@@ -2092,7 +2091,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 import Header from '../../components/Header.jsx'
 import Footer from '../../components/Footer.astro'
 import ProductPageContent from '../../components/ProductPageContent.jsx';
-
+import("hey")
 export async function getStaticPaths() {
   let products = await fetch(%s${import.meta.env.PUBLIC_NETLIFY_URL}/.netlify/functions/get-product-list%s)
     .then(res => res.json()).then((response) => {
@@ -3407,15 +3406,12 @@ const items = ["Dog", "Cat", "Platipus"];
 		}
 	}
 
-	tsParser, cleanup := ts_parser.CreateTypescripParser()
-	// TODO(mk): revisit where the cleanup should be called
-	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.Parse(strings.NewReader(code), tsParser)
+			doc, err := astro.Parse(strings.NewReader(code))
 			h := handler.NewHandler(code, "<stdin>")
 
 			if err != nil {
@@ -3670,15 +3666,12 @@ const c = '\''
 			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
 		},
 	}
-	tsParser, cleanup := ts_parser.CreateTypescripParser()
-	// TODO(mk): revisit where the cleanup should be called
-	defer cleanup()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.ParseWithOptions(strings.NewReader(code), tsParser, astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(&handler.Handler{}))
+			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(&handler.Handler{}))
 
 			if err != nil {
 				t.Error(err)

@@ -12,7 +12,6 @@ import (
 
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/loc"
-	"github.com/withastro/compiler/ts_parser"
 	a "golang.org/x/net/html/atom"
 )
 
@@ -62,9 +61,6 @@ type parser struct {
 	// (section 12.4).
 	context *Node
 	handler *handler.Handler
-
-	// our ts parser
-	tsParser ts_parser.TypescriptParser
 }
 
 func (p *parser) top() *Node {
@@ -3012,8 +3008,8 @@ func (p *parser) parse() error {
 // with no corresponding node in the resulting tree.
 //
 // The input is assumed to be UTF-8 encoded.
-func Parse(r io.Reader, tsParser ts_parser.TypescriptParser) (*Node, error) {
-	return ParseWithOptions(r, tsParser)
+func Parse(r io.Reader) (*Node, error) {
+	return ParseWithOptions(r)
 }
 
 // ParseOption configures a parser.
@@ -3043,7 +3039,7 @@ func ParseOptionEnableLiteral(enable bool) ParseOption {
 }
 
 // ParseWithOptions is like Parse, with options.
-func ParseWithOptions(r io.Reader, tsParser ts_parser.TypescriptParser, opts ...ParseOption) (*Node, error) {
+func ParseWithOptions(r io.Reader, opts ...ParseOption) (*Node, error) {
 	p := &parser{
 		tokenizer: NewTokenizer(r),
 		doc: &Node{
@@ -3054,7 +3050,6 @@ func ParseWithOptions(r io.Reader, tsParser ts_parser.TypescriptParser, opts ...
 		im:               initialIM,
 		frontmatterState: FrontmatterInitial,
 		exitLiteralIM:    func() bool { return false },
-		tsParser:         tsParser,
 	}
 
 	for _, f := range opts {
@@ -3070,7 +3065,7 @@ func ParseWithOptions(r io.Reader, tsParser ts_parser.TypescriptParser, opts ...
 // ParseFragmentWithOptions parses a fragment of HTML and returns the nodes that were
 // found. If the fragment is the InnerHTML for an existing element, pass that
 // element in context.
-func ParseFragmentWithOptions(r io.Reader, tsParser ts_parser.TypescriptParser, context *Node, opts ...ParseOption) ([]*Node, error) {
+func ParseFragmentWithOptions(r io.Reader, context *Node, opts ...ParseOption) ([]*Node, error) {
 	contextTag := ""
 	if context != nil {
 		if context.Type != ElementNode {
@@ -3093,7 +3088,6 @@ func ParseFragmentWithOptions(r io.Reader, tsParser ts_parser.TypescriptParser, 
 		context:          context,
 		frontmatterState: FrontmatterInitial,
 		exitLiteralIM:    func() bool { return false },
-		tsParser:         tsParser,
 	}
 	if context != nil && context.Namespace != "" {
 		p.tokenizer = NewTokenizer(r)
