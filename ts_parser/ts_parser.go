@@ -13,17 +13,17 @@ import (
 // the typescript parser will be a singleton initialized at startup
 // so we can import it from anywhere without having to pass it around
 
-type InterestingKinds string
+type interestingKinds string
 
 const (
-	ExportNamedDeclaration   InterestingKinds = "ExportNamedDeclaration"
-	ExportDefaultDeclaration InterestingKinds = "ExportDefaultDeclaration"
-	ExportAllDeclaration     InterestingKinds = "ExportAllDeclaration"
-	ImportDeclaration        InterestingKinds = "ImportDeclaration"
+	ExportNamedDeclaration   interestingKinds = "ExportNamedDeclaration"
+	ExportDefaultDeclaration interestingKinds = "ExportDefaultDeclaration"
+	ExportAllDeclaration     interestingKinds = "ExportAllDeclaration"
+	ImportDeclaration        interestingKinds = "ImportDeclaration"
 )
 
 type BodyItem struct {
-	Type  InterestingKinds `json:"type"`
+	Type  interestingKinds `json:"type"`
 	Start uint32           `json:"start"`
 	End   uint32           `json:"end"`
 }
@@ -32,22 +32,28 @@ type ParserReturn struct {
 	Body []BodyItem `json:"body"`
 }
 
-var parserSingleton TypescriptParser
+var parserSingleton typescriptParser
 var cleanupSingleton func()
 
-func GetParser() (TypescriptParser, func()) {
+/*
+A function that returns a parser function and a cleanup function
+
+The cleanup function is used to free-up memory allocated by the parser.
+It should only be called when the parser is no longer needed.
+*/
+func GetParser() (typescriptParser, func()) {
 	if parserSingleton == nil {
-		parserSingleton, cleanupSingleton = createTypescripParser()
+		parserSingleton, cleanupSingleton = createTypescriptParser()
 	}
 	return parserSingleton, cleanupSingleton
 }
 
-type TypescriptParser func(string) ParserReturn
+type typescriptParser func(string) ParserReturn
 
 //go:embed wasm/*.wasm
 var wasmFolder embed.FS
 
-func createTypescripParser() (TypescriptParser, func()) {
+func createTypescriptParser() (typescriptParser, func()) {
 	ctx := context.Background()
 	r := wazero.NewRuntime(ctx)
 
@@ -62,7 +68,7 @@ func createTypescripParser() (TypescriptParser, func()) {
 	allocate := mod.ExportedFunction("allocate")
 	deallocate := mod.ExportedFunction("deallocate")
 
-	parser := createParserWrapper(&ctx, &allocate, &deallocate, &printAst, &mod)
+	parser := createParserFunction(&ctx, &allocate, &deallocate, &printAst, &mod)
 
 	cleanup := func() {
 		r.Close(ctx)
@@ -71,7 +77,7 @@ func createTypescripParser() (TypescriptParser, func()) {
 	return parser, cleanup
 }
 
-func createParserWrapper(ctx *context.Context, allocate *api.Function, deallocate *api.Function, printAst *api.Function, mod *api.Module) func(string) ParserReturn {
+func createParserFunction(ctx *context.Context, allocate *api.Function, deallocate *api.Function, printAst *api.Function, mod *api.Module) func(string) ParserReturn {
 	return func(sourceText string) ParserReturn {
 		sourceTextSize := uint64(len(sourceText))
 
