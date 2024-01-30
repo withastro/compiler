@@ -241,6 +241,35 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
+			name: "ternary slot II",
+			source: `<Layout>
+	{
+		Astro.request.method === 'GET' ? (
+			<h2>Contact Form</h2>
+			<form action="/contact" method="get">
+				<input type="hidden" name="name" value="Testing">
+				<button id="submit" type="submit" formmethod="post" formaction="/form-three">Submit</button>
+			</form>
+		) : (
+			<div id="three-result">Got: {formData?.get('name')}</div>
+		)
+	}
+</Layout>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Layout',Layout,{},$$mergeSlots(({}),
+		Astro.request.method === 'GET' ? (
+			
+			({"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<h2>Contact Form</h2><form action="/contact" method="get">
+				<input type="hidden" name="name" value="Testing">
+				<button id="submit" type="submit" formmethod="post" formaction="/form-three">Submit</button>
+			</form>` + BACKTICK + `})
+		) : (
+			({"default": () => $$render` + BACKTICK + `<div id="three-result">Got: ${formData?.get('name')}</div>` + BACKTICK + `})
+		)
+	))}`,
+			},
+		},
+		{
 			name: "ternary slot with one implicit default",
 			source: `<Main>
 	{useSlot
