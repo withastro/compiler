@@ -108,7 +108,7 @@ import Test from "../components/Test.astro";`,
 		{
 			name: "import/export",
 			source: `import { fn } from "package";
-export async fn() {}
+export async function fn() {}
 const b = await fetch()`,
 			want: `import { fn } from "package";`,
 		},
