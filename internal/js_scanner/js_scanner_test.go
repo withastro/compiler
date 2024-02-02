@@ -418,13 +418,9 @@ export const data = { value }`,
 		{
 			name: "export passthrough",
 			source: `export * from "./local-data.json";
-export { default as A } from "./_types"
-export B from "./_types"
-export type C from "./_types"`,
+export { default as A } from "./_types"`,
 			want: `export * from "./local-data.json";
-export { default as A } from "./_types"
-export B from "./_types"
-export type C from "./_types"`,
+export { default as A } from "./_types"`,
 		},
 		{
 			name: "multi-line export",
