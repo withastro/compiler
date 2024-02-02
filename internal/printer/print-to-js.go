@@ -155,33 +155,43 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		if n.FirstChild == nil {
 			p.printCSSImports(opts.cssLen)
 		}
-
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if c.Type == TextNode {
-				p.printInternalImports(p.opts.InternalURL, &opts)
-
-				start := 0
-				if len(n.Loc) > 0 {
-					start = c.Loc[0].Start
-				}
-
-				render := js_scanner.HoistImports([]byte(c.Data))
-				imp, exp := js_scanner.CollectImportsAndExports([]byte(c.Data))
-
-				if len(imp) > 0 {
-					fmt.Println("imp:", imp)
-				}
-				if len(exp) > 0 {
-					fmt.Println("exp:", exp)
-				}
-				if len(render.Hoisted) > 0 {
-					for i, hoisted := range render.Hoisted {
-						if len(bytes.TrimSpace(hoisted)) == 0 {
-							continue
-						}
-						hoistedLoc := render.HoistedLocs[i]
-						p.printTextWithSourcemap(string(hoisted)+"\n", loc.Loc{Start: start + hoistedLoc.Start})
+		var imports js_scanner.HoistedScripts
+		var starts []int
+		// TODO(mk): maybe rename the next two vars later for consistency with the code base?
+		var fullFrontmatterText string
+		var firstNonTextFmNode *Node
+		if n.FirstChild != nil {
+			if n.FirstChild.Type == TextNode {
+				// aggregate all the data and render that in the next step
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					if c.Type != TextNode {
+						firstNonTextFmNode = c
+						break
 					}
+					start := 0
+					if len(n.Loc) > 0 {
+						start = c.Loc[0].Start
+					}
+					starts = append(starts, start)
+					fullFrontmatterText += c.Data
+				}
+				p.printInternalImports(p.opts.InternalURL, &opts)
+				imports = js_scanner.HoistImports([]byte(fullFrontmatterText))
+
+				var strippedOutImports []byte
+				for _, body := range imports.Body {
+					strippedOutImports = append(strippedOutImports, body...)
+				}
+
+				exports := js_scanner.HoistExports(strippedOutImports)
+
+				// PRINT IMPORTS
+				for i, hoisted := range imports.Hoisted {
+					if len(bytes.TrimSpace(hoisted)) == 0 {
+						continue
+					}
+					hoistedLoc := imports.HoistedLocs[i]
+					p.printTextWithSourcemap(string(hoisted)+"\n", loc.Loc{Start: hoistedLoc.Start})
 				}
 
 				p.addNilSourceMapping()
@@ -194,61 +204,38 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 				p.printTopLevelAstro(opts.opts)
 
-				exports := make([][]byte, 0)
-				exportLocs := make([]loc.Loc, 0)
-				bodies := make([][]byte, 0)
-				bodiesLocs := make([]loc.Loc, 0)
-
-				if len(render.Body) > 0 {
-					for i, innerBody := range render.Body {
-						innerStart := render.BodyLocs[i].Start
-						if len(bytes.TrimSpace(innerBody)) == 0 {
-							continue
-						}
-
-						// Extract exports
-						preprocessed := js_scanner.HoistExports(append(innerBody, '\n'))
-						if len(preprocessed.Hoisted) > 0 {
-							for j, exported := range preprocessed.Hoisted {
-								exportedLoc := preprocessed.HoistedLocs[j]
-								exportLocs = append(exportLocs, loc.Loc{Start: start + innerStart + exportedLoc.Start})
-								exports = append(exports, exported)
-							}
-						}
-
-						if len(preprocessed.Body) > 0 {
-							for j, body := range preprocessed.Body {
-								bodyLoc := preprocessed.BodyLocs[j]
-								bodiesLocs = append(bodiesLocs, loc.Loc{Start: start + innerStart + bodyLoc.Start})
-								bodies = append(bodies, body)
-							}
-						}
-					}
-				}
-
 				// PRINT EXPORTS
-				if len(exports) > 0 {
-					for i, exported := range exports {
-						exportLoc := exportLocs[i]
-						if len(bytes.TrimSpace(exported)) == 0 {
-							continue
-						}
-						p.printTextWithSourcemap(string(exported), exportLoc)
-						p.addNilSourceMapping()
-						p.println("")
+				for i, exported := range exports.Hoisted {
+					exportLoc := exports.HoistedLocs[i]
+					if len(bytes.TrimSpace(exported)) == 0 {
+						continue
 					}
+					p.printTextWithSourcemap(string(exported),
+						// +"\n"
+						exportLoc)
+					p.addNilSourceMapping()
+					p.println("")
 				}
 
 				p.printFuncPrelude(opts.opts)
 				// PRINT BODY
-				if len(bodies) > 0 {
-					for i, body := range bodies {
-						bodyLoc := bodiesLocs[i]
-						if len(bytes.TrimSpace(body)) == 0 {
-							continue
-						}
-						p.printTextWithSourcemap(string(body), bodyLoc)
+				bodies := make([][]byte, 0)
+				bodiesLocs := make([]loc.Loc, 0)
+				if len(exports.Body) > 0 {
+					for j, body := range exports.Body {
+						bodyLoc := exports.BodyLocs[j]
+						bodiesLocs = append(bodiesLocs, loc.Loc{Start: bodyLoc.Start})
+						bodies = append(bodies, body)
+						// fmt.Printf("Body: %s\n", body)
+
 					}
+				}
+				for i, body := range bodies {
+					bodyLoc := bodiesLocs[i]
+					if len(bytes.TrimSpace(body)) == 0 {
+						continue
+					}
+					p.printTextWithSourcemap(string(body), bodyLoc)
 				}
 				// Print empty just to ensure a newline
 				p.println("")
@@ -261,16 +248,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 				p.printReturnOpen()
 			} else {
-				render1(p, c, RenderOptions{
-					isRoot:           false,
-					isExpression:     true,
-					depth:            depth + 1,
-					opts:             opts.opts,
-					cssLen:           opts.cssLen,
-					printedMaybeHead: opts.printedMaybeHead,
-				})
-				if len(n.Loc) > 1 {
-					p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
+				for c := firstNonTextFmNode; c != nil; c = c.NextSibling {
+					render1(p, c, RenderOptions{
+						isRoot:           false,
+						isExpression:     true,
+						depth:            depth + 1,
+						opts:             opts.opts,
+						cssLen:           opts.cssLen,
+						printedMaybeHead: opts.printedMaybeHead,
+					})
+					if len(n.Loc) > 1 {
+						p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
+					}
 				}
 			}
 		}

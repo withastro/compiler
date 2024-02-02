@@ -20,7 +20,7 @@ type HoistedScripts struct {
 	BodyLocs    []loc.Loc
 }
 
-func HoistExports(source []byte) HoistedScripts {
+func hoistExports(source []byte) HoistedScripts {
 	shouldHoist := bytes.Contains(source, []byte("export"))
 	if !shouldHoist {
 		body := make([][]byte, 0)
@@ -216,12 +216,17 @@ func isKeyword(value []byte) bool {
 	return js.Keywords[string(value)] != 0
 }
 
-func CollectImportsAndExports(source []byte) (imports []ts_parser.BodyItem, exports []ts_parser.BodyItem) {
+type importItems []ts_parser.BodyItem
+type exportItems []ts_parser.BodyItem
+type otherItems []ts_parser.BodyItem
+
+func CollectImportsAndExports(source []byte) (importItems, exportItems, otherItems) {
 	tsParser, _ := ts_parser.GetParser()
 	// TODO(mk): revisit where the cleanup should be called
 
-	imports = make([]ts_parser.BodyItem, 0)
-	exports = make([]ts_parser.BodyItem, 0)
+	imports := make([]ts_parser.BodyItem, 0)
+	exports := make([]ts_parser.BodyItem, 0)
+	others := make([]ts_parser.BodyItem, 0)
 
 	tsAst := tsParser(string(source))
 
@@ -231,12 +236,76 @@ func CollectImportsAndExports(source []byte) (imports []ts_parser.BodyItem, expo
 			exports = append(exports, bodyItem)
 		case ts_parser.ImportDeclaration:
 			imports = append(imports, bodyItem)
+		default:
+			others = append(others, bodyItem)
 		}
 	}
-	return
+	return imports, exports, others
+}
+
+func HoistExports(source []byte) HoistedScripts {
+	body := make([][]byte, 0)
+	bodyLocs := make([]loc.Loc, 0)
+	cursor := 0
+	shouldHoist := bytes.Contains(source, []byte("export"))
+	if !shouldHoist {
+		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
+		body = append(body, source)
+		return HoistedScripts{Body: body, BodyLocs: bodyLocs}
+	}
+
+	exports := make([][]byte, 0)
+	exportLocs := make([]loc.Loc, 0)
+	_, exportsAst, bodiesAst := CollectImportsAndExports(source)
+	for _, exportAst := range exportsAst {
+		exports = append(exports, source[exportAst.Start:exportAst.End])
+		exportLocs = append(exportLocs, loc.Loc{Start: exportAst.Start})
+		cursor = exportAst.End
+	}
+	if cursor == 0 {
+		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
+		body = append(body, source)
+		return HoistedScripts{Body: body, BodyLocs: bodyLocs}
+	}
+
+	for _, bodyAst := range bodiesAst {
+		body = append(body, source[bodyAst.Start:bodyAst.End])
+		bodyLocs = append(bodyLocs, loc.Loc{Start: bodyAst.Start})
+	}
+	return HoistedScripts{Hoisted: exports, HoistedLocs: exportLocs, Body: body, BodyLocs: bodyLocs}
 }
 
 func HoistImports(source []byte) HoistedScripts {
+	body := make([][]byte, 0)
+	bodyLocs := make([]loc.Loc, 0)
+	cursor := 0
+	shouldHoist := bytes.Contains(source, []byte("import"))
+	if !shouldHoist {
+		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
+		body = append(body, source)
+		return HoistedScripts{Body: body, BodyLocs: bodyLocs}
+	}
+	imports := make([][]byte, 0)
+	importLocs := make([]loc.Loc, 0)
+	importsAst, _, _ := CollectImportsAndExports(source)
+	for _, importAst := range importsAst {
+		bodyLocs = append(bodyLocs, loc.Loc{Start: cursor})
+		body = append(body, source[cursor:importAst.Start])
+		imports = append(imports, source[importAst.Start:importAst.End])
+		importLocs = append(importLocs, loc.Loc{Start: importAst.Start})
+		cursor = importAst.End
+	}
+	if cursor == 0 {
+		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
+		body = append(body, source)
+		return HoistedScripts{Body: body, BodyLocs: bodyLocs}
+	}
+	bodyLocs = append(bodyLocs, loc.Loc{Start: cursor})
+	body = append(body, source[cursor:])
+	return HoistedScripts{Hoisted: imports, HoistedLocs: importLocs, Body: body, BodyLocs: bodyLocs}
+}
+
+func hoistImports(source []byte) HoistedScripts {
 	imports := make([][]byte, 0)
 	importLocs := make([]loc.Loc, 0)
 	body := make([][]byte, 0)
