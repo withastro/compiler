@@ -2091,7 +2091,6 @@ import { Container, Col, Row } from 'react-bootstrap';
 import Header from '../../components/Header.jsx'
 import Footer from '../../components/Footer.astro'
 import ProductPageContent from '../../components/ProductPageContent.jsx';
-import("hey")
 export async function getStaticPaths() {
   let products = await fetch(%s${import.meta.env.PUBLIC_NETLIFY_URL}/.netlify/functions/get-product-list%s)
     .then(res => res.json()).then((response) => {
