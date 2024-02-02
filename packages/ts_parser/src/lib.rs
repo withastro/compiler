@@ -11,7 +11,7 @@ use serde_json;
 // and prints its AST in JSON format.
 pub fn print_ast(source_text: &String) -> String {
     // the source text is always typescript in Astro
-    const FILE_NAME_OF_TYPE: &str = "template.ts";
+    const FILE_NAME_OF_TYPE: &str = "astro.ts";
     let source_type = SourceType::from_path(FILE_NAME_OF_TYPE).unwrap();
 
     let allocator = Allocator::default();
