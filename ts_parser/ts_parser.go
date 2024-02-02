@@ -24,8 +24,8 @@ const (
 
 type BodyItem struct {
 	Type  interestingKinds `json:"type"`
-	Start uint32           `json:"start"`
-	End   uint32           `json:"end"`
+	Start int              `json:"start"`
+	End   int              `json:"end"`
 }
 
 type ParserReturn struct {
