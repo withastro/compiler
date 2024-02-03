@@ -769,10 +769,17 @@ import * as ns from '../components';
 			},
 		},
 		{
-			name:   "#955 ternary slot",
+			name:   "#955 ternary slot with text",
 			source: `<Component>Hello{isLeaf ? <p>Leaf</p> : <p>Branch</p>}world</Component>`,
 			want: want{
 				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},$$mergeSlots(({"default": () => $$render` + BACKTICK + `Hello` + BACKTICK + `,isLeaf ? ({"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<p>Leaf</p>` + BACKTICK + `}) : undefined, ,isLeaf ? ({"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<p>Branch</p>` + BACKTICK + `}) : undefined}), ({"default": () => $$render` + BACKTICK + `world` + BACKTICK + `}),))}`,
+			},
+		},
+		{
+			name:   "#955 ternary slot with elements",
+			source: `<Component><div>{isLeaf ? <p>Leaf</p> : <p>Branch</p>}</div></Component>`,
+			want: want{
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},$$mergeSlots(({"default": () => $$render` + BACKTICK + `<div>` + BACKTICK + `,isLeaf ? ({"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<p>Leaf</p>` + BACKTICK + `}) : undefined, ,isLeaf ? ({"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<p>Branch</p>` + BACKTICK + `}) : undefined}), ({"default": () => $$render` + BACKTICK + `</div>` + BACKTICK + `}),))}`,
 			},
 		},
 		{
