@@ -297,6 +297,19 @@ import a from "a";`,
 }`,
 		},
 		{
+			name: "getStaticPaths with complex type",
+			source: `export const getStaticPaths: () => Promise<
+  { params: { year: number }; props: Props }[]
+> = async () => {
+  return {}
+}`,
+			want: `export const getStaticPaths: () => Promise<
+  { params: { year: number }; props: Props }[]
+> = async () => {
+  return {}
+}`,
+		},
+		{
 			name: "getStaticPaths with divider",
 			source: `export async function getStaticPaths() {
   const pattern = a / b;
@@ -370,6 +383,19 @@ export const foo = "bar"`,
 	open?: boolean;
 }
 export const foo = "bar"`,
+		},
+		{
+			name: "export with type assertions",
+			source: `export const foo = {
+} as const;
+
+export const bar = {
+} satisfies object;`,
+			want: `export const foo = {
+} as const;
+
+export const bar = {
+} satisfies object;`,
 		},
 		{
 			name: "export multiple with content after",
@@ -462,7 +488,35 @@ export type FooAndBar1 = 'Foo' &
 export type FooAndBar2 = 'Foo'
 & 'Bar';
 export type FooOrBar = 'Foo'
-| 'Bar';`,
+| 'Bar';
+
+export type Props1 = {
+  specs: {
+    name: string;
+  };
+} & {
+  additional: string;
+}
+
+export type Props = {
+  margin?: number | string
+} & SomeType;
+
+export interface Props2
+	extends object {
+		name: string;
+}
+
+export type Bar2 =
+	| string
+	| null
+	
+export const foo2 =
+	"test"
+	
+export type Props = MarkdownLayoutProps<{
+  title: string;
+}>`,
 			want: `export type Theme = 'light' | 'dark';
 export type Props =
 {
@@ -476,7 +530,30 @@ export type FooAndBar1 = 'Foo' &
 export type FooAndBar2 = 'Foo'
 & 'Bar';
 export type FooOrBar = 'Foo'
-| 'Bar';`,
+| 'Bar';
+export type Props1 = {
+  specs: {
+    name: string;
+  };
+} & {
+  additional: string;
+}
+export type Props = {
+  margin?: number | string
+} & SomeType;
+export interface Props2
+	extends object {
+		name: string;
+}
+export type Bar2 =
+	| string
+	| null
+export const foo2 =
+	"test"
+export type Props = MarkdownLayoutProps<{
+  title: string;
+}>
+`,
 		},
 		{
 			name: "Picture",
