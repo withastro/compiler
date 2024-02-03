@@ -1,6 +1,6 @@
 use project_root;
 use std::path::Path;
-use ts_parser::print_ast;
+use ts_parser::parser::print_ast;
 
 fn main() {
     let root =
