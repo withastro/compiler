@@ -286,4 +286,61 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
   assert.snapshot(code, output, `expected code to match snapshot`);
 });
 
+test('`as` in Props type field', async () => {
+  const input = `---
+interface Props {
+  as?: string;
+  href?: string;
+}
+
+const { as: Component, href } = Astro.props;
+---
+
+<Component {href} />
+`;
+  const output = `${TSXPrefix}
+interface Props {
+  as?: string;
+  href?: string;
+}
+
+const { as: Component, href } = Astro.props;
+
+<Fragment>
+<Component href={href} />
+
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX()}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
+// TODO(mk): find a better place and better test name for this
+test("type assertion doesn't prevent Props type detection", async () => {
+  const input = `---
+interface Props {
+  myFunction: (value) => string;
+}
+
+const variable = { } as const;
+
+Astro.props;
+---`;
+  const output = `${TSXPrefix}
+interface Props {
+  myFunction: (value) => string;
+}
+
+const variable = { } as const;
+
+Astro.props;
+
+
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX()}`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, `expected code to match snapshot`);
+});
+
 test.run();
