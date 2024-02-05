@@ -2345,7 +2345,7 @@ console.log(tables);`},
 	</h2>
 	${
 		tables.map((table: Table) => (
-		$$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},({"default": () => $$render` + BACKTICK + `
+		$$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `
 			<div>
 			<h3 class="text-3xl sm:text-5xl font-bold">${table.title}</h3>
 			<table>
@@ -2367,7 +2367,7 @@ console.log(tables);`},
 				</tbody>
 			</table>
 			</div>
-		` + BACKTICK + `,}))}` + BACKTICK + `
+		` + BACKTICK + `,})}` + BACKTICK + `
 		))
 	}
 	</div>
