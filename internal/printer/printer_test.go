@@ -197,10 +197,41 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
-			name:   "function expression slots",
+			name:   "function expression slots I",
 			source: "<Component>\n{() => { switch (value) {\ncase 'a': return <div slot=\"a\">A</div>\ncase 'b': return <div slot=\"b\">B</div>\ncase 'c': return <div slot=\"c\">C</div>\n}\n}}\n</Component>",
 			want: want{
 				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},() => { switch (value) {\ncase 'a': return {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`}\ncase 'b': return {\"b\": () => $$render`<div>B</div>`}\ncase 'c': return {\"c\": () => $$render`<div>C</div>`}}\n}))}",
+			},
+		},
+		{
+			name: "function expression slots II (#959)",
+			source: `<Layout title="Welcome to Astro.">
+	<main>
+		<Layout title="switch bug">
+			{components.map((component, i) => {
+				switch(component) {
+					case "Hero":
+						return <div>Hero</div>
+					case "Component2":
+						return <div>Component2</div>
+				}
+			})}
+		</Layout>
+	</main>
+</Layout>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},{"default": () => $$render` + BACKTICK + `
+	${$$maybeRenderHead($$result)}<main>
+		${$$renderComponent($$result,'Layout',Layout,{"title":"switch bug"},{"default": () => $$render` + BACKTICK + `${components.map((component, i) => {
+				switch(component) {
+					case "Hero":
+						return $$render` + BACKTICK + `<div>Hero</div>` + BACKTICK + `
+					case "Component2":
+						return $$render` + BACKTICK + `<div>Component2</div>` + BACKTICK + `
+				}
+			})}` + BACKTICK + `,})}
+	</main>
+` + BACKTICK + `,})}`,
 			},
 		},
 		{
