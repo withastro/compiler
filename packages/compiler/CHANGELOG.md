@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.5.3
+
+### Patch Changes
+
+- c17734d: Rollbacks the dynamic slot generation feature to rework it
+
 ## 2.5.2
 
 ### Patch Changes
