@@ -647,7 +647,7 @@ import * as ns from '../components';
 			name:   "#955 ternary slot with elements",
 			source: `<Component><div>{isLeaf ? <p>Leaf</p> : <p>Branch</p>}</div></Component>`,
 			want: want{
-				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},({"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>${isLeaf ? $$render` + BACKTICK + `<p>Leaf</p>` + BACKTICK + ` : $$render` + BACKTICK + `<p>Branch</p>` + BACKTICK + `}</div>` + BACKTICK + `,}))}`,
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>${isLeaf ? $$render` + BACKTICK + `<p>Leaf</p>` + BACKTICK + ` : $$render` + BACKTICK + `<p>Branch</p>` + BACKTICK + `}</div>` + BACKTICK + `,})}`,
 			},
 		},
 		{
