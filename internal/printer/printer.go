@@ -299,6 +299,7 @@ var skippedAttributes = map[string]bool{
 	"transition:animate": true,
 	"transition:name":    true,
 	"transition:persist": true,
+	"transition:reload":  true,
 }
 
 var skippedAttributesToObject = map[string]bool{
@@ -308,6 +309,7 @@ var skippedAttributesToObject = map[string]bool{
 	"transition:animate": true,
 	"transition:name":    true,
 	"transition:persist": true,
+	"transition:reload":  true,
 }
 
 func (p *printer) printAttributesToObject(n *astro.Node) {
@@ -511,6 +513,11 @@ func maybeConvertTransition(n *astro.Node) {
 				Type: astro.ExpressionAttribute,
 			})
 		}
+	}
+	if transform.HasAttr(n, transform.TRANSITION_RELOAD) {
+		transitionReloadIndex := transform.AttrIndex(n, transform.TRANSITION_RELOAD)
+		// Just rename the attribute
+		n.Attr[transitionReloadIndex].Key = "data-astro-reload"
 	}
 }
 

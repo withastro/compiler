@@ -16,6 +16,7 @@ import (
 const TRANSITION_ANIMATE = "transition:animate"
 const TRANSITION_NAME = "transition:name"
 const TRANSITION_PERSIST = "transition:persist"
+const TRANSITION_RELOAD = "transition:reload"
 
 type TransformOptions struct {
 	Scope                   string
@@ -45,7 +46,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) {
+		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) { // TRANSITION_RELOAD does not need a new transition scope
 			doc.Transition = true
 			doc.HeadPropagation = true
 			getOrCreateTransitionScope(n, &opts, i)
