@@ -483,7 +483,7 @@ func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {
 	return append(slice[:s], slice[s+1:]...)
 }
 
-func maybeConvertTransition(n *astro.Node) {
+func maybeConvertTransition(n *astro.Node, h *handler.Handler) {
 	if transform.HasAttr(n, transform.TRANSITION_ANIMATE) || transform.HasAttr(n, transform.TRANSITION_NAME) {
 		animationExpr := convertAttributeValue(n, transform.TRANSITION_ANIMATE)
 		transitionExpr := convertAttributeValue(n, transform.TRANSITION_NAME)
@@ -516,8 +516,29 @@ func maybeConvertTransition(n *astro.Node) {
 	}
 	if transform.HasAttr(n, transform.TRANSITION_RELOAD) {
 		transitionReloadIndex := transform.AttrIndex(n, transform.TRANSITION_RELOAD)
-		// Just rename the attribute
-		n.Attr[transitionReloadIndex].Key = "data-astro-reload"
+		attr := n.Attr[transitionReloadIndex]
+
+		if n.Type == astro.ElementNode &&
+			(n.Data == "a" || n.Data == "area" || n.Data == "form" || n.Data == "script") {
+
+			if attr.Val != "" {
+				h.AppendWarning(&loc.ErrorWithRange{
+					Code:  loc.WARNING_UNSUPPORTED_EXPRESSION,
+					Text:  "The attribute transition:reload does not accept a value",
+					Hint:  fmt.Sprintf("Use transition:reload without \"%s\"", attr.Val),
+					Range: loc.Range{Loc: attr.ValLoc, Len: len(attr.Val)},
+				})
+			} else {
+				// Just rename the attribute
+				attr.Key = "data-astro-reload"
+			}
+		} else {
+			h.AppendWarning(&loc.ErrorWithRange{
+				Code:  loc.WARNING_MISPLACED_DIRECTIVE,
+				Text:  "Attribute transition:reload is only valid on <a>, <form>, <area> and <script> elements.",
+				Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+			})
+		}
 	}
 }
 

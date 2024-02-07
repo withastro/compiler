@@ -19,6 +19,7 @@ const (
 	WARNING_CANNOT_DEFINE_VARS        DiagnosticCode = 2007
 	WARNING_INVALID_SPREAD            DiagnosticCode = 2008
 	WARNING_UNEXPECTED_CHARACTER      DiagnosticCode = 2009
+	WARNING_MISPLACED_DIRECTIVE       DiagnosticCode = 2010
 	INFO                              DiagnosticCode = 3000
 	HINT                              DiagnosticCode = 4000
 )
