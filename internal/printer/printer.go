@@ -516,7 +516,7 @@ func maybeConvertTransition(n *astro.Node, h *handler.Handler) {
 	}
 	if transform.HasAttr(n, transform.TRANSITION_RELOAD) {
 		transitionReloadIndex := transform.AttrIndex(n, transform.TRANSITION_RELOAD)
-		attr := n.Attr[transitionReloadIndex]
+		attr := &n.Attr[transitionReloadIndex]
 
 		if n.Type == astro.ElementNode &&
 			(n.Data == "a" || n.Data == "area" || n.Data == "form" || n.Data == "script") {
