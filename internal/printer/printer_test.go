@@ -1141,7 +1141,7 @@ import Component from "test";
 			want: want{
 				frontmatter: []string{`import Component from "test";`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -1157,7 +1157,7 @@ import Component from 'test';
 			want: want{
 				frontmatter: []string{`import Component from 'test';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -3423,6 +3423,18 @@ const items = ["Dog", "Cat", "Platipus"];
 			transitions: true,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "peuy4xf7", "", "foo"), "data-astro-transition-scope")}></div>`,
+			},
+		},
+		{
+			name: "transition:reload is converted to a data attribute",
+			source: `
+			---
+			import "transitions.css";
+			---
+			<a transition:reload></a>`,
+			transitions: false,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<a data-astro-reload></a>`,
 			},
 		},
 		{
