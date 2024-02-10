@@ -519,7 +519,7 @@ func maybeConvertTransition(n *astro.Node, h *handler.Handler) {
 
 		/*
 			For supported elements, the transition:reload directive is translated 1:1 into a data-astro-reload attribute.
-			When set on <a>, <form> and <area>, it replaces the transitions between views with the full page load.
+			When set on <a>, <form> and <area>, it replaces the view transitions with a full page load.
 			If set on a supported <script> element, the script will be executed again during the next view transition, 
 			even if it was already part of the previous page. All scripts are supported, except external ECMAScript modules.
 			The transition:reload directive is not supported for other elements. The directive does not accept any value.
