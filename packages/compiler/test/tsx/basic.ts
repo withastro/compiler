@@ -251,12 +251,12 @@ test('return ranges', async () => {
 
   assert.equal(metaRanges, {
     frontmatter: {
-      start: 31,
-      end: 55,
+      start: 30,
+      end: 54,
     },
     body: {
-      start: 69,
-      end: 81,
+      start: 68,
+      end: 80,
     },
   });
 });
@@ -267,12 +267,12 @@ test('return ranges - no frontmatter', async () => {
 
   assert.equal(metaRanges, {
     frontmatter: {
-      start: 31,
-      end: 31,
+      start: 30,
+      end: 30,
     },
     body: {
-      start: 42,
-      end: 54,
+      start: 41,
+      end: 53,
     },
   });
 });
