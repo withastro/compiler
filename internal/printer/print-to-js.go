@@ -62,6 +62,7 @@ type RenderOptions struct {
 	cssLen           int
 	opts             transform.TransformOptions
 	printedMaybeHead *bool
+	scriptCount      *int
 }
 
 type ExtractedStatement struct {
@@ -71,6 +72,7 @@ type ExtractedStatement struct {
 
 func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions) PrintResult {
 	printedMaybeHead := false
+	scriptCount := 0
 	render1(p, n, RenderOptions{
 		cssLen:           cssLen,
 		isRoot:           true,
@@ -78,6 +80,7 @@ func printToJs(p *printer, n *Node, cssLen int, opts transform.TransformOptions)
 		depth:            0,
 		opts:             opts,
 		printedMaybeHead: &printedMaybeHead,
+		scriptCount:      &scriptCount,
 	})
 
 	return PrintResult{
@@ -136,6 +139,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				opts:             opts.opts,
 				cssLen:           opts.cssLen,
 				printedMaybeHead: opts.printedMaybeHead,
+				scriptCount:      opts.scriptCount,
 			})
 		}
 
@@ -253,6 +257,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					opts:             opts.opts,
 					cssLen:           opts.cssLen,
 					printedMaybeHead: opts.printedMaybeHead,
+					scriptCount:      opts.scriptCount,
 				})
 				if len(n.Loc) > 1 {
 					p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
@@ -346,6 +351,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				opts:             opts.opts,
 				cssLen:           opts.cssLen,
 				printedMaybeHead: opts.printedMaybeHead,
+				scriptCount:      opts.scriptCount,
 			})
 
 			// Print the closing of a tagged render function after
@@ -369,6 +375,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	isClientOnly := isComponent && transform.HasAttr(n, "client:only")
 	isSlot := n.DataAtom == atom.Slot
 	isImplicit := false
+	isHandledScript := n.HandledScript
 	for _, a := range n.Attr {
 		if isSlot && a.Key == "is:inline" {
 			isSlot = false
@@ -386,6 +393,14 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		p.print(fmt.Sprintf("${%s(%s,'%s',", RENDER_COMPONENT, RESULT, n.Data))
 	case isSlot:
 		p.print(fmt.Sprintf("${%s(%s,%s[", RENDER_SLOT, RESULT, SLOTS))
+	case isHandledScript:
+		// import '/src/pages/index.astro?astro&type=script&index=0&lang.ts';
+		scriptUrl := fmt.Sprintf("%s?astro&type=script&index=%v&lang.ts", p.opts.Filename, *opts.scriptCount)
+		resolvedScriptUrl := transform.ResolveIdForMatch(scriptUrl, &p.opts)
+		escapedScriptUrl := escapeDoubleQuote(resolvedScriptUrl)
+		p.print(fmt.Sprintf("${%s(%s,\"%s\")}", RENDER_SCRIPT, RESULT, escapedScriptUrl))
+		*opts.scriptCount++
+		return
 	case isImplicit:
 		// do nothing
 	default:
@@ -528,6 +543,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					opts:             opts.opts,
 					cssLen:           opts.cssLen,
 					printedMaybeHead: opts.printedMaybeHead,
+					scriptCount:      opts.scriptCount,
 				})
 			}
 		}
@@ -562,6 +578,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						opts:             opts.opts,
 						cssLen:           opts.cssLen,
 						printedMaybeHead: opts.printedMaybeHead,
+						scriptCount:      opts.scriptCount,
 					})
 				}
 				p.printTemplateLiteralClose()
@@ -696,6 +713,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 								opts:             opts.opts,
 								cssLen:           opts.cssLen,
 								printedMaybeHead: opts.printedMaybeHead,
+								scriptCount:      opts.scriptCount,
 							})
 						}
 						p.printTemplateLiteralClose()
@@ -717,6 +735,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 								opts:             opts.opts,
 								cssLen:           opts.cssLen,
 								printedMaybeHead: opts.printedMaybeHead,
+								scriptCount:      opts.scriptCount,
 							})
 							if child.Type == ElementNode {
 								p.printTemplateLiteralClose()
@@ -736,6 +755,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						opts:             opts.opts,
 						cssLen:           opts.cssLen,
 						printedMaybeHead: opts.printedMaybeHead,
+						scriptCount:      opts.scriptCount,
 					})
 				}
 				p.printTemplateLiteralClose()
@@ -748,6 +768,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						opts:             opts.opts,
 						cssLen:           opts.cssLen,
 						printedMaybeHead: opts.printedMaybeHead,
+						scriptCount:      opts.scriptCount,
 					})
 				}
 			}

@@ -389,6 +389,7 @@ func (p *parser) addExpression() {
 		Expression:    true,
 		Component:     false,
 		CustomElement: false,
+		HandledScript: false,
 		Loc:           p.generateLoc(),
 	})
 }
@@ -433,6 +434,7 @@ func (p *parser) addElement() {
 		Fragment:      isFragment(p.tok.Data),
 		Component:     isComponent(p.tok.Data),
 		CustomElement: isCustomElement(p.tok.Data),
+		HandledScript: false,
 		Loc:           p.generateLoc(),
 	})
 }

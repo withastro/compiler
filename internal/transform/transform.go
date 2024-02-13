@@ -31,6 +31,7 @@ type TransformOptions struct {
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
 	AnnotateSourceFile      bool
+	RenderScript            bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -81,8 +82,10 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	NormalizeSetDirectives(doc, h)
 
 	// Important! Remove scripts from original location *after* walking the doc
-	for _, script := range doc.Scripts {
-		script.Parent.RemoveChild(script)
+	if !opts.RenderScript {
+		for _, script := range doc.Scripts {
+			script.Parent.RemoveChild(script)
+		}
 	}
 
 	// If we've emptied out all the nodes, this was a Fragment that only contained hoisted elements
@@ -389,6 +392,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			// prepend node to maintain authored order
 			if shouldAdd {
 				doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
+				n.HandledScript = true
 			}
 		} else {
 			for _, attr := range n.Attr {
