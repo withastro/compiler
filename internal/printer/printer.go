@@ -141,7 +141,7 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	p.addNilSourceMapping()
 	p.print("renderScript as " + RENDER_SCRIPT + ",\n  ")
 
-	// Only needed if using fazllback `resolvePath` as it calls `$$metadata.resolvePath`
+	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
 	if opts.opts.ResolvePath == nil {
 		p.addNilSourceMapping()
 		p.print("createMetadata as " + CREATE_METADATA)
