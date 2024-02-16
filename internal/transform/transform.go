@@ -406,13 +406,15 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 }
 
 func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
-	if n.Type == astro.ElementNode && n.DataAtom == a.Script && len(n.Attr) > 0 && (!HasInlineDirective(n) || len(n.Attr) == 1 && n.Attr[0].Key != "src") {
+	if n.Type == astro.ElementNode && n.DataAtom == a.Script && len(n.Attr) > 0 && !HasInlineDirective(n) {
+		if len(n.Attr) == 1 && n.Attr[0].Key == "src" {
+			return
+		}
 		h.AppendHint(&loc.ErrorWithRange{
 			Code:  loc.HINT,
 			Text:  "Astro processes your script tags to allow using TypeScript and npm packages, and to optimize browser performance.\n\nAttributes cannot be used on Astro-processed script tags. Therefore, this script tag will be treated as if it has the `is:inline` directive, opting it out of the processing steps and its features.\n\nFor clarity, you might want to add the `is:inline` directive explicitly.\n\nSee docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.",
 			Range: loc.Range{Loc: n.Attr[0].KeyLoc, Len: len(n.Attr[0].Key)},
 		})
-
 	}
 }
 
