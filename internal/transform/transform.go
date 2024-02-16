@@ -40,7 +40,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	i := 0
 	walk(doc, func(n *astro.Node) {
 		i++
-		HintAboutImplicitInlineDirective(doc, n, &opts, h)
+		HintAboutImplicitInlineDirective(n, h)
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
@@ -405,7 +405,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 	}
 }
 
-func HintAboutImplicitInlineDirective(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *handler.Handler) {
+func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script && len(n.Attr) > 0 && !HasInlineDirective(n) {
 		h.AppendHint(&loc.ErrorWithRange{
 			Code:  loc.HINT,
