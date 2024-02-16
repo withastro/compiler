@@ -12,8 +12,9 @@ test.before(async () => {
 });
 
 test('reports a hint for adding attributes to a script tag without is:inline', () => {
+  console.log(result.diagnostics[0])
   assert.equal(result.diagnostics[0].severity, 4);
-  assert.match(result.diagnostics[0].text, /Astro processes your script tags to allow using TypeScript and NPM packages/);
+  assert.match(result.diagnostics[0].text, /Astro processes your script tags to allow using TypeScript and npm packages/);
 });
 
 test.run();
