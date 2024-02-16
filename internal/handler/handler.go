@@ -45,6 +45,7 @@ func (h *Handler) AppendWarning(err error) {
 func (h *Handler) AppendInfo(err error) {
 	h.infos = append(h.infos, err)
 }
+
 func (h *Handler) AppendHint(err error) {
 	h.hints = append(h.hints, err)
 }
