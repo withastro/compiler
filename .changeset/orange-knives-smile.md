@@ -2,4 +2,4 @@
 '@astrojs/compiler': patch
 ---
 
-Adds an error message indicating that `data-astro-rerun` is used on external ECMAScript modules.
+Adds warnings indicating that the `data-astro-rerun` attribute can not be used on external ECMAScript Modules and that `data-astro-reload` is only supported on `<a>`, `<area>` and `<form>` elements.
