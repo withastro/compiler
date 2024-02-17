@@ -16,7 +16,6 @@ import (
 const TRANSITION_ANIMATE = "transition:animate"
 const TRANSITION_NAME = "transition:name"
 const TRANSITION_PERSIST = "transition:persist"
-const TRANSITION_RELOAD = "transition:reload"
 
 type TransformOptions struct {
 	Scope                   string
@@ -41,12 +40,13 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	i := 0
 	walk(doc, func(n *astro.Node) {
 		i++
+		WarnAboutRerunOnExternalESMs(doc, n, &opts, h)
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) { // TRANSITION_RELOAD does not need a new transition scope
+		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) {
 			doc.Transition = true
 			doc.HeadPropagation = true
 			getOrCreateTransitionScope(n, &opts, i)
@@ -348,6 +348,21 @@ func collapseWhitespace(doc *astro.Node) {
 			}
 		}
 	})
+}
+
+func WarnAboutRerunOnExternalESMs(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *handler.Handler) {
+	if n.Data == "script" && HasAttr(n, "src") && HasAttr(n, "type") {
+		src := &n.Attr[AttrIndex(n, "src")]
+		typ := &n.Attr[AttrIndex(n, "type")]
+		if typ.Val == "module" && src.Val != "" {
+			h.AppendWarning(&loc.ErrorWithRange{
+				Code:  loc.WARNING_CANNOT_RERUN,
+				Text:  "Attribute data-astro-rerun is not supported on external ECMAScript Modules.",
+				Hint:  "Two out of three is fine: type=\"module\", src=\"...\", or data-astro-rerun",
+				Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
+			})
+		}
+	}
 }
 
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *handler.Handler) {

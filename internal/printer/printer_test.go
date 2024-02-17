@@ -1141,7 +1141,7 @@ import Component from "test";
 			want: want{
 				frontmatter: []string{`import Component from "test";`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -1157,7 +1157,7 @@ import Component from 'test';
 			want: want{
 				frontmatter: []string{`import Component from 'test';`},
 				metadata:    metadata{modules: []string{`{ module: $$module1, specifier: 'test', assert: {} }`}},
-				code: `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
+				code:        `${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render` + "`" + `	${$$maybeRenderHead($$result)}<div>Default</div>` + "`" + `,"named": () => $$render` + "`" + `<div>Named</div>` + "`" + `,})}`,
 			},
 		},
 		{
@@ -3426,14 +3426,6 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
-			name:        "transition:reload is converted to a data attribute",
-			source:      `<a transition:reload></a>`,
-			transitions: false,
-			want: want{
-				code: `${$$maybeRenderHead($$result)}<a data-astro-reload></a>`,
-			},
-		},
-		{
 			name:   "trailing expression",
 			source: `<Component />{}`,
 			want: want{
@@ -3478,7 +3470,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			output := string(result.Output)
 
 			toMatch := INTERNAL_IMPORTS
-			if tt.transitions && strings.Count(tt.source, "transition:") > 0 {
+			if strings.Count(tt.source, "transition:") > 0 {
 				toMatch += `import "transitions.css";`
 			}
 			if len(tt.want.frontmatter) > 0 {

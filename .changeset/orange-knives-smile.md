@@ -1,5 +1,5 @@
 ---
-'@astrojs/compiler': minor
+'@astrojs/compiler': patch
 ---
 
-Adds transition:reload directive
+Adds an error message indicating that `data-astro-rerun` is used on external ECMAScript modules.

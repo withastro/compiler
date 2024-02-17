@@ -421,7 +421,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if isImplicit {
 		// do nothing
 	} else if isComponent {
-		maybeConvertTransition(n, p.handler)
+		maybeConvertTransition(n)
 		p.print(",")
 		p.printAttributesToObject(n)
 	} else if isSlot {
@@ -452,7 +452,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		p.print(`]`)
 	} else {
-		maybeConvertTransition(n, p.handler)
+		maybeConvertTransition(n)
 
 		for _, a := range n.Attr {
 			if transform.IsImplicitNodeMarker(a) || a.Key == "is:inline" {

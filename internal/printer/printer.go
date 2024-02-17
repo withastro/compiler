@@ -299,7 +299,6 @@ var skippedAttributes = map[string]bool{
 	"transition:animate": true,
 	"transition:name":    true,
 	"transition:persist": true,
-	"transition:reload":  true,
 }
 
 var skippedAttributesToObject = map[string]bool{
@@ -309,7 +308,6 @@ var skippedAttributesToObject = map[string]bool{
 	"transition:animate": true,
 	"transition:name":    true,
 	"transition:persist": true,
-	"transition:reload":  true,
 }
 
 func (p *printer) printAttributesToObject(n *astro.Node) {
@@ -483,7 +481,7 @@ func remove(slice []*astro.Node, node *astro.Node) []*astro.Node {
 	return append(slice[:s], slice[s+1:]...)
 }
 
-func maybeConvertTransition(n *astro.Node, h *handler.Handler) {
+func maybeConvertTransition(n *astro.Node) {
 	if transform.HasAttr(n, transform.TRANSITION_ANIMATE) || transform.HasAttr(n, transform.TRANSITION_NAME) {
 		animationExpr := convertAttributeValue(n, transform.TRANSITION_ANIMATE)
 		transitionExpr := convertAttributeValue(n, transform.TRANSITION_NAME)
@@ -513,51 +511,6 @@ func maybeConvertTransition(n *astro.Node, h *handler.Handler) {
 				Type: astro.ExpressionAttribute,
 			})
 		}
-	}
-	if transform.HasAttr(n, transform.TRANSITION_RELOAD) {
-		attr := &n.Attr[transform.AttrIndex(n, transform.TRANSITION_RELOAD)]
-
-		/*
-			For supported elements, the transition:reload directive is translated 1:1 into a data-astro-reload attribute.
-			When set on <a>, <form> and <area>, it replaces the view transitions with a full page load.
-			If set on a supported <script> element, the script will be executed again during the next view transition, 
-			even if it was already part of the previous page. All scripts are supported, except external ECMAScript modules.
-			The transition:reload directive is not supported for other elements. The directive does not accept any value.
-		*/
-
-		if n.Type != astro.ElementNode ||
-			n.Data != "a" && n.Data != "area" && n.Data != "form" && n.Data != "script" {
-			h.AppendWarning(&loc.ErrorWithRange{
-				Code:  loc.WARNING_MISPLACED_DIRECTIVE,
-				Text:  "Attribute transition:reload is only supported on <a>, <form>, <area> and <script> elements.",
-				Range: loc.Range{Loc: attr.KeyLoc, Len: len(attr.Key)},
-			})
-			return
-		}
-		if attr.Val != "" {
-			h.AppendWarning(&loc.ErrorWithRange{
-				Code:  loc.WARNING_UNSUPPORTED_EXPRESSION,
-				Text:  "transition:reload does not accept a value",
-				Hint:  fmt.Sprintf("Use transition:reload without \"%s\"", attr.Val),
-				Range: loc.Range{Loc: attr.ValLoc, Len: len(attr.Val)},
-			})
-			return
-		}
-		if n.Data == "script" && transform.HasAttr(n, "src") && transform.HasAttr(n, "type") {
-			src := n.Attr[transform.AttrIndex(n, "src")]
-			typ := n.Attr[transform.AttrIndex(n, "type")]
-			if typ.Val == "module" && src.Val != "" {
-				h.AppendWarning(&loc.ErrorWithRange{
-					Code:  loc.WARNING_MISPLACED_DIRECTIVE,
-					Text:  "Attribute transition:reload is not supported on external ES modules.",
-					Hint:  "Two out of three is fine: type=\"module\", src=\"...\", transition:reload",
-					Range: loc.Range{Loc: n.Loc[0], Len: len(n.Data)},
-				})
-				return
-			}
-		}
-		// Just rename the attribute
-		attr.Key = "data-astro-reload"
 	}
 }
 
