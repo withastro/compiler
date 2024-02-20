@@ -412,7 +412,7 @@ func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
 		}
 		h.AppendHint(&loc.ErrorWithRange{
 			Code:  loc.HINT,
-			Text:  "Astro processes your script tags to allow using TypeScript and npm packages, and to optimize browser performance.\n\nAttributes cannot be used on Astro-processed script tags. Therefore, this script tag will be treated as if it has the `is:inline` directive, opting it out of the processing steps and its features.\n\nFor clarity, you might want to add the `is:inline` directive explicitly.\n\nSee docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.",
+			Text: "This script contains an attribute (ex: `type="module"`, `type="text/partytown"`, `async`) or a directive (`define:vars`) and will not be processed and bundled for optimized browser performance.\n\nThis script will be treated as if it has the `is:inline` directive and therefore features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.\n\nSee docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.",
 			Range: loc.Range{Loc: n.Attr[0].KeyLoc, Len: len(n.Attr[0].Key)},
 		})
 	}
