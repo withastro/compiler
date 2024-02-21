@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 2.6.0
+
+### Minor Changes
+
+- a90d99e: Adds a new `renderScript` option to render non-inline script tags using a `renderScript` function from `internalURL`, instead of stripping the script entirely
+
+### Patch Changes
+
+- 6ffa54b: Fix TSX output prefixing output with unnecessary jsdoc comment
+- 86221d6: Adds a lint rule to display a message when attributes are added to a script tag, explaining that the script will be treated as `is:inline`.
+
 ## 2.5.3
 
 ### Patch Changes
