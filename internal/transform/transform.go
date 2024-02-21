@@ -41,6 +41,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	i := 0
 	walk(doc, func(n *astro.Node) {
 		i++
+		HintAboutImplicitInlineDirective(n, h)
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
@@ -405,6 +406,19 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 				}
 			}
 		}
+	}
+}
+
+func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
+	if n.Type == astro.ElementNode && n.DataAtom == a.Script && len(n.Attr) > 0 && !HasInlineDirective(n) {
+		if len(n.Attr) == 1 && n.Attr[0].Key == "src" {
+			return
+		}
+		h.AppendHint(&loc.ErrorWithRange{
+			Code:  loc.HINT,
+			Text:  "This script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.\n\nSee docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.\n\nAdd the `is:inline` directive explicitly to silence this hint.",
+			Range: loc.Range{Loc: n.Attr[0].KeyLoc, Len: len(n.Attr[0].Key)},
+		})
 	}
 }
 
