@@ -393,7 +393,7 @@ func WarnAboutRerunOnExternalESMs(n *astro.Node, h *handler.Handler) {
 		if typ.Val == "module" && src.Val != "" {
 			h.AppendWarning(&loc.ErrorWithRange{
 				Code:  loc.WARNING_CANNOT_RERUN,
-				Text:  "Attribute data-astro-rerun is not supported on external ECMAScript Modules.",
+				Text:  "The data-astro-rerun attribute is not supported on an external module <script>",
 				Hint:  "Two out of three is OK: type=\"module\", src=\"...\", or data-astro-rerun",
 				Range: loc.Range{Loc: rerun.KeyLoc, Len: len(rerun.Key)},
 			})
