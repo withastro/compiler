@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Check if user has admin access (only admins can publish snapshot releases).'
-        uses: 'lannonbr/repo-permission-check-action@2.0.0'
+        uses: 'lannonbr/repo-permission-check-action@2.0.2'
         with:
           permission: 'admin'
         env:
@@ -43,7 +43,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ steps.refs.outputs.head_ref }}
 
@@ -51,7 +51,7 @@ jobs:
         uses: pnpm/action-setup@v3
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 16
           registry-url: 'https://registry.npmjs.org'
