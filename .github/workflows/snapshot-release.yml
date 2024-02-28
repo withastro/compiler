@@ -24,7 +24,7 @@ jobs:
 
       - name: Extract the snapshot name from comment body
         id: getSnapshotName
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const splitComment = context.payload.comment.body.split(' ');
@@ -83,7 +83,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Pull Request Notification
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           MESSAGE: ${{ steps.publish.outputs.result }}
         with:
