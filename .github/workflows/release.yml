@@ -20,7 +20,7 @@ jobs:
           go-version: 1.19
 
       - name: Set up PNPM
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v3
 
       - name: Set up Node.js
         uses: actions/setup-node@v2

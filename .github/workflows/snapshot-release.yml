@@ -48,7 +48,7 @@ jobs:
           ref: ${{ steps.refs.outputs.head_ref }}
 
       - name: Setup PNPM
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v3
 
       - name: Setup Node
         uses: actions/setup-node@v3
