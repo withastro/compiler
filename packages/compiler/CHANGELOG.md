@@ -1,5 +1,49 @@
 # @astrojs/compiler
 
+## 2.6.0
+
+### Minor Changes
+
+- a90d99e: Adds a new `renderScript` option to render non-inline script tags using a `renderScript` function from `internalURL`, instead of stripping the script entirely
+
+### Patch Changes
+
+- 6ffa54b: Fix TSX output prefixing output with unnecessary jsdoc comment
+- 86221d6: Adds a lint rule to display a message when attributes are added to a script tag, explaining that the script will be treated as `is:inline`.
+
+## 2.5.3
+
+### Patch Changes
+
+- c17734d: Rollbacks the dynamic slot generation feature to rework it
+
+## 2.5.2
+
+### Patch Changes
+
+- 418558c: Fixes an issue where a slotted element in an expression would cause subsequent ones to be incorrectly printed
+- db93975: Fixes an issue where an expression inside a `th` tag would cause an infinite loop
+
+## 2.5.1
+
+### Patch Changes
+
+- d071b0b: Fixes an issue which caused the hydration script of default exported components to fail loading in some cases.
+
+## 2.5.0
+
+### Minor Changes
+
+- db13db9: - Adds support for dynamic slots inside loops
+  - Fixes an issue where successive named slotted elements would cause a runtime error
+  - Fixes an issue in which if there was an implicit default slotted element next to named one, the former would get swallowed by the later.
+
+## 2.4.2
+
+### Patch Changes
+
+- 9938bc1: Fixes a sourcemap-related crash when using multibyte characters
+
 ## 2.4.1
 
 ### Patch Changes

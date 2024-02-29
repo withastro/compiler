@@ -85,6 +85,9 @@ type Node struct {
 	Expression      bool
 	Transition      bool
 	TransitionScope string
+	// Whether this node is a script that should be rendered with the `renderScript` runtime,
+	// so that the runtime handles how this is bundled and referenced.
+	HandledScript bool
 
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
 
@@ -233,6 +236,7 @@ func (n *Node) clone() *Node {
 		Attr:          make([]Attribute, len(n.Attr)),
 		CustomElement: n.CustomElement,
 		Component:     n.Component,
+		HandledScript: n.HandledScript,
 		Loc:           n.Loc,
 	}
 	copy(m.Attr, n.Attr)

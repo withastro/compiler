@@ -616,7 +616,7 @@ func (b *ChunkBuilder) GetLineAndColumnForLocation(location loc.Loc) []int {
 	for count > 0 {
 		step := count / 2
 		i := originalLine + step
-		if lineOffsetTables[i].byteOffsetToStartOfLine <= location.Start {
+		if len(lineOffsetTables) > i && lineOffsetTables[i].byteOffsetToStartOfLine <= location.Start {
 			originalLine = i + 1
 			count = count - step - 1
 		} else {
@@ -629,7 +629,10 @@ func (b *ChunkBuilder) GetLineAndColumnForLocation(location loc.Loc) []int {
 	line := &lineOffsetTables[originalLine]
 	originalColumn := int(location.Start - line.byteOffsetToStartOfLine)
 	if line.columnsForNonASCII != nil && originalColumn >= int(line.byteOffsetToFirstNonASCII) {
-		originalColumn = int(line.columnsForNonASCII[originalColumn-int(line.byteOffsetToFirstNonASCII)])
+		newColumn := originalColumn - int(line.byteOffsetToFirstNonASCII)
+		if len(line.columnsForNonASCII) > newColumn {
+			originalColumn = int(line.columnsForNonASCII[newColumn])
+		}
 	}
 
 	// 1-based line, 1-based column

@@ -32,6 +32,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
 	"renderTransition as " + RENDER_TRANSITION,
 	"createTransitionScope as " + CREATE_TRANSITION_SCOPE,
+	"renderScript as " + RENDER_SCRIPT,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
@@ -77,12 +78,13 @@ type metadata struct {
 }
 
 type testcase struct {
-	name        string
-	source      string
-	only        bool
-	transitions bool
-	filename    string
-	want        want
+	name             string
+	source           string
+	only             bool
+	transitions      bool
+	transformOptions transform.TransformOptions
+	filename         string
+	want             want
 }
 
 type jsonTestcase struct {
@@ -197,10 +199,41 @@ func TestPrinter(t *testing.T) {
 			},
 		},
 		{
-			name:   "function expression slots",
+			name:   "function expression slots I",
 			source: "<Component>\n{() => { switch (value) {\ncase 'a': return <div slot=\"a\">A</div>\ncase 'b': return <div slot=\"b\">B</div>\ncase 'c': return <div slot=\"c\">C</div>\n}\n}}\n</Component>",
 			want: want{
 				code: "${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},() => { switch (value) {\ncase 'a': return {\"a\": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`}\ncase 'b': return {\"b\": () => $$render`<div>B</div>`}\ncase 'c': return {\"c\": () => $$render`<div>C</div>`}}\n}))}",
+			},
+		},
+		{
+			name: "function expression slots II (#959)",
+			source: `<Layout title="Welcome to Astro.">
+	<main>
+		<Layout title="switch bug">
+			{components.map((component, i) => {
+				switch(component) {
+					case "Hero":
+						return <div>Hero</div>
+					case "Component2":
+						return <div>Component2</div>
+				}
+			})}
+		</Layout>
+	</main>
+</Layout>`,
+			want: want{
+				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},{"default": () => $$render` + BACKTICK + `
+	${$$maybeRenderHead($$result)}<main>
+		${$$renderComponent($$result,'Layout',Layout,{"title":"switch bug"},{"default": () => $$render` + BACKTICK + `${components.map((component, i) => {
+				switch(component) {
+					case "Hero":
+						return $$render` + BACKTICK + `<div>Hero</div>` + BACKTICK + `
+					case "Component2":
+						return $$render` + BACKTICK + `<div>Component2</div>` + BACKTICK + `
+				}
+			})}` + BACKTICK + `,})}
+	</main>
+` + BACKTICK + `,})}`,
 			},
 		},
 		{
@@ -637,6 +670,20 @@ import * as ns from '../components';
 			},
 		},
 		{
+			name:   "#955 ternary slot with text",
+			source: `<Component>Hello{isLeaf ? <p>Leaf</p> : <p>Branch</p>}world</Component>`,
+			want: want{
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `Hello${isLeaf ? $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<p>Leaf</p>` + BACKTICK + ` : $$render` + BACKTICK + `<p>Branch</p>` + BACKTICK + `}world` + BACKTICK + `,})}`,
+			},
+		},
+		{
+			name:   "#955 ternary slot with elements",
+			source: `<Component><div>{isLeaf ? <p>Leaf</p> : <p>Branch</p>}</div></Component>`,
+			want: want{
+				code: `${` + RENDER_COMPONENT + `($$result,'Component',Component,{},{"default": () => $$render` + BACKTICK + `${$$maybeRenderHead($$result)}<div>${isLeaf ? $$render` + BACKTICK + `<p>Leaf</p>` + BACKTICK + ` : $$render` + BACKTICK + `<p>Branch</p>` + BACKTICK + `}</div>` + BACKTICK + `,})}`,
+			},
+		},
+		{
 			name: "noscript component",
 			source: `
 <html>
@@ -763,6 +810,64 @@ import * as components from '../components';
   ` + RENDER_HEAD_RESULT + `</head>
   <body>
     ${` + RENDER_COMPONENT + `($$result,'components.A',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"A"})}
+  </body></html>`,
+			},
+		},
+		{
+			name: "client:only component (namespaced default)",
+			source: `---
+import defaultImport from '../components/ui-1';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+	<defaultImport.Counter1 client:only />
+  </body>
+</html>`,
+			want: want{
+				frontmatter: []string{"import defaultImport from '../components/ui-1';"},
+				metadata: metadata{
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components/ui-1"},
+				},
+				// Specifically do NOT render any metadata here, we need to skip this import
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  ` + RENDER_HEAD_RESULT + `</head>
+  <body>
+	${` + RENDER_COMPONENT + `($$result,'defaultImport.Counter1',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components/ui-1")),"client:component-export":"default.Counter1"})}
+  </body></html>`,
+			},
+		},
+		{
+			name: "client:only component (namespaced named)",
+			source: `---
+import { namedImport } from '../components/ui-2';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+	<namedImport.Counter2 client:only />
+  </body>
+</html>`,
+			want: want{
+				frontmatter: []string{"import { namedImport } from '../components/ui-2';"},
+				metadata: metadata{
+					hydrationDirectives:  []string{"only"},
+					clientOnlyComponents: []string{"../components/ui-2"},
+				},
+				// Specifically do NOT render any metadata here, we need to skip this import
+				code: `<html>
+  <head>
+    <title>Hello world</title>
+  ` + RENDER_HEAD_RESULT + `</head>
+  <body>
+	${` + RENDER_COMPONENT + `($$result,'namedImport.Counter2',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components/ui-2")),"client:component-export":"namedImport.Counter2"})}
   </body></html>`,
 			},
 		},
@@ -1121,6 +1226,29 @@ const testBool = true;
 			},
 		},
 		{
+			name: "conditional rendering of title containing expression",
+			source: `{
+  props.title && (
+    <>
+      <title>{props.title}</title>
+      <meta property="og:title" content={props.title} />
+      <meta name="twitter:title" content={props.title} />
+    </>
+  )
+}`,
+			want: want{
+				code: `${
+  props.title && (
+    $$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `
+      <title>${props.title}</title>
+      <meta property="og:title"${$$addAttribute(props.title, "content")}>
+      <meta name="twitter:title"${$$addAttribute(props.title, "content")}>
+    ` + BACKTICK + `,})}` + BACKTICK + `
+  )
+}`,
+			},
+		},
+		{
 			name: "styles (no frontmatter)",
 			source: `<style>
 		  .title {
@@ -1355,6 +1483,69 @@ import Widget2 from '../components/Widget2.astro';`},
 			want: want{
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sHere%s }`, BACKTICK, BACKTICK)}},
 				code:     `${$$maybeRenderHead($$result)}<div></div>`,
+			},
+		},
+		{
+			name:   "script (renderScript: true)",
+			source: `<main><script>console.log("Hello");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
+				code:     `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}</main>`,
+			},
+		},
+		{
+			name:   "script multiple (renderScript: true)",
+			source: `<main><script>console.log("Hello");</script><script>console.log("World");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{
+					hoisted: []string{
+						fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("World");%s }`, BACKTICK, BACKTICK),
+						fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK),
+					},
+				},
+				code: `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=1&lang.ts")}</main>`,
+			},
+		},
+		{
+			name:   "script external (renderScript: true)",
+			source: `<main><script src="./hello.js"></script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{hoisted: []string{`{ type: 'external', src: './hello.js' }`}},
+				code:     `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}</main>`,
+			},
+		},
+		{
+			name:   "script inline (renderScript: true)",
+			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<main><script type="module">console.log("Hello");</script></main>`,
+			},
+		},
+		{
+			name:   "script mixed handled and inline (renderScript: true)",
+			source: `<main><script>console.log("Hello");</script><script is:inline>console.log("World");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
+				code:     `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}<script>console.log("World");</script></main>`,
 			},
 		},
 		{
@@ -2204,6 +2395,100 @@ const content = "lol";
         </main>
     </body>
 </html>`,
+			},
+		},
+		{
+			name: "table with expression in 'th'",
+			source: `---
+const { title, footnotes, tables } = Astro.props;
+
+interface Table {
+	title: string;
+	data: any[];
+	showTitle: boolean;
+	footnotes: string;
+}
+console.log(tables);
+---
+
+<div>
+	<div>
+	<h2>
+		{title}
+	</h2>
+	{
+		tables.map((table: Table) => (
+		<>
+			<div>
+			<h3 class="text-3xl sm:text-5xl font-bold">{table.title}</h3>
+			<table>
+				<thead>
+				{Object.keys(table.data[0]).map((thead) => (
+					<th>{thead}</th>
+				))}
+				</thead>
+				<tbody>
+				{table.data.map((trow) => (
+					<tr>
+					{Object.values(trow).map((cell, index) => (
+						<td>
+						{cell}
+						</td>
+					))}
+					</tr>
+				))}
+				</tbody>
+			</table>
+			</div>
+		</>
+		))
+	}
+	</div>
+</div>`,
+			want: want{
+				frontmatter: []string{``, `const { title, footnotes, tables } = Astro.props;
+
+interface Table {
+	title: string;
+	data: any[];
+	showTitle: boolean;
+	footnotes: string;
+}
+console.log(tables);`},
+				code: `${$$maybeRenderHead($$result)}<div>
+	<div>
+	<h2>
+		${title}
+	</h2>
+	${
+		tables.map((table: Table) => (
+		$$render` + BACKTICK + `${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render` + BACKTICK + `
+			<div>
+			<h3 class="text-3xl sm:text-5xl font-bold">${table.title}</h3>
+			<table>
+				<thead>
+				${Object.keys(table.data[0]).map((thead) => (
+					$$render` + BACKTICK + `<th>${thead}</th>` + BACKTICK + `
+				))}
+				</thead>
+				<tbody>
+				${table.data.map((trow) => (
+					$$render` + BACKTICK + `<tr>
+					${Object.values(trow).map((cell, index) => (
+						$$render` + BACKTICK + `<td>
+						${cell}
+						</td>` + BACKTICK + `
+					))}
+					</tr>` + BACKTICK + `
+				))}
+				</tbody>
+			</table>
+			</div>
+		` + BACKTICK + `,})}` + BACKTICK + `
+		))
+	}
+	</div>
+</div>`,
 			},
 		},
 		{
@@ -3243,8 +3528,10 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			hash := astro.HashString(code)
 			transform.ExtractStyles(doc)
+			// combine from tt.transformOptions
 			transformOptions := transform.TransformOptions{
-				Scope: hash,
+				Scope:        hash,
+				RenderScript: tt.transformOptions.RenderScript,
 			}
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{

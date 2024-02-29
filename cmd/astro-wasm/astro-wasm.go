@@ -126,6 +126,11 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		scopedStyleStrategy = "where"
 	}
 
+	renderScript := false
+	if jsBool(options.Get("renderScript")) {
+		renderScript = true
+	}
+
 	return transform.TransformOptions{
 		Filename:                filename,
 		NormalizedFilename:      normalizedFilename,
@@ -139,6 +144,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		ScopedStyleStrategy:     scopedStyleStrategy,
 		TransitionsAnimationURL: transitionsAnimationURL,
 		AnnotateSourceFile:      annotateSourceFile,
+		RenderScript:            renderScript,
 	}
 }
 

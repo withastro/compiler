@@ -78,4 +78,4 @@ export async function testJSSourcemap(input: string, snippet: string) {
 
   return originalPosition;
 }
-export const TSXPrefix = '/** @jsxImportSource astro */\n\n';
+export const TSXPrefix = '/* @jsxImportSource astro */\n\n';

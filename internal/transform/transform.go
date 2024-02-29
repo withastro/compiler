@@ -31,6 +31,7 @@ type TransformOptions struct {
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
 	AnnotateSourceFile      bool
+	RenderScript            bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -40,6 +41,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	i := 0
 	walk(doc, func(n *astro.Node) {
 		i++
+		HintAboutImplicitInlineDirective(n, h)
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
@@ -81,8 +83,10 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	NormalizeSetDirectives(doc, h)
 
 	// Important! Remove scripts from original location *after* walking the doc
-	for _, script := range doc.Scripts {
-		script.Parent.RemoveChild(script)
+	if !opts.RenderScript {
+		for _, script := range doc.Scripts {
+			script.Parent.RemoveChild(script)
+		}
 	}
 
 	// If we've emptied out all the nodes, this was a Fragment that only contained hoisted elements
@@ -392,6 +396,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			// prepend node to maintain authored order
 			if shouldAdd {
 				doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
+				n.HandledScript = true
 			}
 		} else {
 			for _, attr := range n.Attr {
@@ -404,6 +409,19 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 				}
 			}
 		}
+	}
+}
+
+func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
+	if n.Type == astro.ElementNode && n.DataAtom == a.Script && len(n.Attr) > 0 && !HasInlineDirective(n) {
+		if len(n.Attr) == 1 && n.Attr[0].Key == "src" {
+			return
+		}
+		h.AppendHint(&loc.ErrorWithRange{
+			Code:  loc.HINT,
+			Text:  "This script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.\n\nSee docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.\n\nAdd the `is:inline` directive explicitly to silence this hint.",
+			Range: loc.Range{Loc: n.Attr[0].KeyLoc, Len: len(n.Attr[0].Key)},
+		})
 	}
 }
 
@@ -479,20 +497,10 @@ func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
 
 	eachImportStatement(doc, func(stmt js_scanner.ImportStatement) bool {
 		for _, imported := range stmt.Imports {
-
-			if strings.Contains(n.Data, ".") && strings.HasPrefix(n.Data, fmt.Sprintf("%s.", imported.LocalName)) {
-				exportName := n.Data
-				if imported.ExportName == "*" {
-					exportName = strings.Replace(exportName, fmt.Sprintf("%s.", imported.LocalName), "", 1)
-				}
+			exportName, isUsed := js_scanner.ExtractComponentExportName(n.Data, imported)
+			if isUsed {
 				match = &ImportMatch{
 					ExportName: exportName,
-					Specifier:  stmt.Specifier,
-				}
-				return false
-			} else if imported.LocalName == n.Data {
-				match = &ImportMatch{
-					ExportName: imported.ExportName,
 					Specifier:  stmt.Specifier,
 				}
 				return false
