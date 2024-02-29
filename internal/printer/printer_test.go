@@ -568,9 +568,9 @@ import type data from "test"
 						<h2>div+h2 ${dummyKey}</h2>
 					</div>
 					<p>
-						</p><h2>p+h2 ${dummyKey}</h2>
-					` + BACKTICK + `	
-			);
+						<h2>p+h2 ${dummyKey}</h2>
+					</p>` + BACKTICK + `
+				);
 			})
 		}
 	</main>
@@ -588,8 +588,8 @@ import type data from "test"
 			want: want{
 				code: `<html lang="en">
 ${$$maybeRenderHead($$result)}<body>
-${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>hello</div>` + BACKTICK + `)}
-${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>${author}</div>` + BACKTICK + `)}
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p><div>hello</div></p>` + BACKTICK + `)}
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p><div>${author}</div></p>` + BACKTICK + `)}
 </body>
 </html>`,
 			},
@@ -2089,7 +2089,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			name:   "Preserve namespaces in expressions",
 			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href={` + BACKTICK + `#${iconId}` + BACKTICK + `}></svg>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect ${$$addAttribute(` + BACKTICK + `#${iconId}` + BACKTICK + `, "xlink:href")}></rect></svg>`,
+				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect${$$addAttribute(` + BACKTICK + `#${iconId}` + BACKTICK + `, "xlink:href")}></rect></svg>`,
 			},
 		},
 		{
