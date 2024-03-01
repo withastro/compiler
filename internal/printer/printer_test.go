@@ -2324,6 +2324,19 @@ const content = "lol";
 			},
 		},
 		{
+			name: "#971",
+			source: `<template>
+    <a href="https://example.com">{text}</a>.
+</template>
+<p>This should not be a link</p>`,
+			want: want{
+				code: `<template>
+    ${$$maybeRenderHead($$result)}<a href="https://example.com">${text}</a>.
+</template>
+<p>This should not be a link</p>`,
+			},
+		},
+		{
 			name: "complex table",
 			source: `<html lang="en">
     <head>
