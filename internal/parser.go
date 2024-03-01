@@ -902,8 +902,10 @@ func inHeadIM(p *parser) bool {
 			p.im = afterHeadIM
 			return true
 		case a.Body, a.Html, a.Br:
-			p.parseImpliedToken(EndTagToken, a.Head, a.Head.String())
+			p.oe.pop()
 			p.addLoc()
+			p.originalIM = nil
+			p.im = afterHeadIM
 			return false
 		case a.Template:
 			if !p.oe.contains(a.Template) {
