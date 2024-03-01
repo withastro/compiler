@@ -2305,7 +2305,9 @@ const content = "lol";
 			},
 		},
 		{
-			name: "#958",
+			// ensurethere are no duplicate elements matching the ones in the link below (`<a>` in this test)
+			// https://github.com/withastro/compiler/blob/a90d99ee8cc3ad92d1b39d73df1f7301011ee970/internal/parser.go#L1490
+			name: "<a> tag with expression in table ",
 			source: `<main>
 	<table>
 		<tr>
@@ -2324,7 +2326,9 @@ const content = "lol";
 			},
 		},
 		{
-			name: "#971",
+			// makes sure that there are no duplicate elements matching the ones in the link below (`<a>` in this test)
+			// https://github.com/withastro/compiler/blob/a90d99ee8cc3ad92d1b39d73df1f7301011ee970/internal/parser.go#L1490
+			name: "<a> tag with expression in template",
 			source: `<template>
     <a href="https://example.com">{text}</a>.
 </template>
