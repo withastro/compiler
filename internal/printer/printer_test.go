@@ -3765,6 +3765,11 @@ const c = '\''
 			want:   []ASTNode{{Type: "element", Name: "style"}, {Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}},
 		},
 		{
+			name:   "empty style",
+			source: `<style define:vars={{ color: "Gainsboro" }}></style>`,
+			want:   []ASTNode{{Type: "element", Name: "style", Attributes: []ASTNode{{Type: "attribute", Kind: "expression", Name: "define:vars", Value: "{ color: \"Gainsboro\" }"}}}},
+		},
+		{
 			name:   "style after html",
 			source: `<html><body><h1>Hello world!</h1></body></html><style></style>`,
 			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}, {Type: "element", Name: "style"}},
