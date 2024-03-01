@@ -91,6 +91,7 @@ type jsonTestcase struct {
 	name   string
 	source string
 	want   []ASTNode
+	only   bool
 }
 
 func TestPrinter(t *testing.T) {
@@ -3768,6 +3769,14 @@ const c = '\''
 			source: `<main id=` + BACKTICK + `gotcha />`,
 			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
 		},
+	}
+
+	for _, tt := range tests {
+		if tt.only {
+			tests = make([]jsonTestcase, 0)
+			tests = append(tests, tt)
+			break
+		}
 	}
 
 	for _, tt := range tests {
