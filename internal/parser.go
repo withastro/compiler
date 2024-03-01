@@ -354,7 +354,7 @@ func (p *parser) addText(text string) {
 	})
 }
 
-func (p *parser) addFrontmatter(empty bool) {
+func (p *parser) addFrontmatter() {
 	if p.frontmatterState == FrontmatterInitial {
 		if p.doc.FirstChild != nil {
 			p.fm = &Node{
@@ -369,13 +369,8 @@ func (p *parser) addFrontmatter(empty bool) {
 			}
 			p.doc.AppendChild(p.fm)
 		}
-		if empty {
-			p.frontmatterState = FrontmatterClosed
-			p.fm.Attr = append(p.fm.Attr, Attribute{Key: ImplicitNodeMarker, Type: EmptyAttribute})
-		} else {
-			p.frontmatterState = FrontmatterOpen
-			p.oe = append(p.oe, p.fm)
-		}
+		p.frontmatterState = FrontmatterOpen
+		p.oe = append(p.oe, p.fm)
 	}
 }
 
@@ -645,9 +640,6 @@ func initialIM(p *parser) bool {
 		p.quirks = quirks
 		p.im = beforeHTMLIM
 		return true
-	}
-	if p.frontmatterState == FrontmatterInitial {
-		p.addFrontmatter(true)
 	}
 	p.quirks = true
 	p.im = beforeHTMLIM
@@ -1533,9 +1525,6 @@ func inBodyIM(p *parser) bool {
 				return true
 			}
 		}
-	}
-	if p.frontmatterState == FrontmatterInitial {
-		p.addFrontmatter(true)
 	}
 	return true
 }
@@ -2642,7 +2631,7 @@ func frontmatterIM(p *parser) bool {
 	switch p.tok.Type {
 	case FrontmatterFenceToken:
 		if p.frontmatterState == FrontmatterInitial {
-			p.addFrontmatter(false)
+			p.addFrontmatter()
 			return true
 		} else {
 			p.frontmatterState = FrontmatterClosed
