@@ -3470,7 +3470,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "daiq24ry", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "eh4gbiwl", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -3479,7 +3479,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "vvov4lyr", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "2oo357hq", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -3488,7 +3488,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "ih7yuffh", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "x2dt3p4g", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -3497,7 +3497,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "wkm5vset", "morph", ""))})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "byigm4lx", "morph", ""))})}`,
 			},
 		},
 		{
@@ -3505,7 +3505,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<div transition:persist></div>`,
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "pflz5ime"), "data-astro-transition-persist")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "z45b6una"), "data-astro-transition-persist")}></div>`,
 			},
 		},
 		{
@@ -3513,7 +3513,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<div transition:persist transition:name="foo"></div>`,
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "peuy4xf7", "", "foo"), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "nqtd2ecx", "", "foo"), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
