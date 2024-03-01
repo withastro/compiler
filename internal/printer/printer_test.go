@@ -2305,6 +2305,25 @@ const content = "lol";
 			},
 		},
 		{
+			name: "#958",
+			source: `<main>
+	<table>
+		<tr>
+			<td><a href={linkURL}>{linkURL}</a></td>
+		</tr>
+	</table>
+</main>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<main>
+	<table>
+		<tr>
+			<td><a${$$addAttribute(linkURL, "href")}>${linkURL}</a></td>
+		</tr>
+	</table>
+</main>`,
+			},
+		},
+		{
 			name: "complex table",
 			source: `<html lang="en">
     <head>
