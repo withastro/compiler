@@ -902,8 +902,8 @@ func inHeadIM(p *parser) bool {
 			p.im = afterHeadIM
 			return true
 		case a.Body, a.Html, a.Br:
-			p.oe.pop()
 			p.addLoc()
+			p.oe.pop()
 			p.originalIM = nil
 			p.im = afterHeadIM
 			return false
