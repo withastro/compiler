@@ -514,6 +514,12 @@ func maybeConvertTransition(n *astro.Node) {
 				Type: astro.ExpressionAttribute,
 			})
 		}
+
+		// Do a simple rename for `transition:persist-props`
+		transitionPersistPropsIndex := transform.AttrIndex(n, transform.TRANSITION_PERSIST_PROPS)
+		if transitionPersistPropsIndex != -1 {
+			n.Attr[transitionPersistPropsIndex].Key = "data-astro-transition-persist-props"
+		}
 	}
 }
 
