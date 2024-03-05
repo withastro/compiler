@@ -8,8 +8,8 @@ const FIXTURE = `
   <form data-astro-reload="x">.</form>
   <area data-astro-reload/>
   <svg xmlns="http://www.w3.org/2000/svg"><a data-astro-reload>.</a></svg>
-  <script data-astro-rerun src="some.js" type="module" />
-  <script data-astro-rerun>"Bar"</script>
+  <script is:inline data-astro-rerun src="some.js" type="module" />
+  <script is:inline data-astro-rerun>"Bar"</script>
 </div>`;
 
 test('Issues warnings for data-astro-* attributes', async () => {
