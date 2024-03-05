@@ -3750,6 +3750,11 @@ const c = '\''
 			want:   []ASTNode{{Type: "element", Name: "html", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "lang", Value: "en", Raw: "\"en\""}}, Children: []ASTNode{{Type: "element", Name: "head", Children: []ASTNode{{Type: "component", Name: "BaseHead"}}}}}, {Type: "element", Name: "style", Children: []ASTNode{{Type: "text", Value: "@use \"../styles/global.scss\";"}}}},
 		},
 		{
+			name:   "style after html with component in head and body",
+			source: `<html lang="en"><head><BaseHead /></head><body><Header /></body></html><style>@use "../styles/global.scss";</style>`,
+			want:   []ASTNode{{Type: "element", Name: "html", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "lang", Value: "en", Raw: "\"en\""}}, Children: []ASTNode{{Type: "element", Name: "head", Children: []ASTNode{{Type: "component", Name: "BaseHead"}}}, {Type: "element", Name: "body", Children: []ASTNode{{Type: "component", Name: "Header"}}}}}, {Type: "element", Name: "style", Children: []ASTNode{{Type: "text", Value: "@use \"../styles/global.scss\";"}}}},
+		},
+		{
 			name:   "style in html",
 			source: `<html><body><h1>Hello world!</h1></body><style></style></html>`,
 			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}, {Type: "element", Name: "style"}}}},
