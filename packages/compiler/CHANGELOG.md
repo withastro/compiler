@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 2.7.0
+
+### Minor Changes
+
+- 50fc0a9: Implement the `transition:persist-props` transformation
+
+### Patch Changes
+
+- f45dbfd: Updates deprecated Node.js 16 github actions.
+
 ## 2.6.0
 
 ### Minor Changes
