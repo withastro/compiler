@@ -32,6 +32,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"defineScriptVars as " + DEFINE_SCRIPT_VARS,
 	"renderTransition as " + RENDER_TRANSITION,
 	"createTransitionScope as " + CREATE_TRANSITION_SCOPE,
+	"renderScript as " + RENDER_SCRIPT,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
@@ -77,12 +78,13 @@ type metadata struct {
 }
 
 type testcase struct {
-	name        string
-	source      string
-	only        bool
-	transitions bool
-	filename    string
-	want        want
+	name             string
+	source           string
+	only             bool
+	transitions      bool
+	transformOptions transform.TransformOptions
+	filename         string
+	want             want
 }
 
 type jsonTestcase struct {
@@ -1481,6 +1483,69 @@ import Widget2 from '../components/Widget2.astro';`},
 			want: want{
 				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sHere%s }`, BACKTICK, BACKTICK)}},
 				code:     `${$$maybeRenderHead($$result)}<div></div>`,
+			},
+		},
+		{
+			name:   "script (renderScript: true)",
+			source: `<main><script>console.log("Hello");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
+				code:     `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}</main>`,
+			},
+		},
+		{
+			name:   "script multiple (renderScript: true)",
+			source: `<main><script>console.log("Hello");</script><script>console.log("World");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{
+					hoisted: []string{
+						fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("World");%s }`, BACKTICK, BACKTICK),
+						fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK),
+					},
+				},
+				code: `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=1&lang.ts")}</main>`,
+			},
+		},
+		{
+			name:   "script external (renderScript: true)",
+			source: `<main><script src="./hello.js"></script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{hoisted: []string{`{ type: 'external', src: './hello.js' }`}},
+				code:     `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}</main>`,
+			},
+		},
+		{
+			name:   "script inline (renderScript: true)",
+			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<main><script type="module">console.log("Hello");</script></main>`,
+			},
+		},
+		{
+			name:   "script mixed handled and inline (renderScript: true)",
+			source: `<main><script>console.log("Hello");</script><script is:inline>console.log("World");</script>`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+			want: want{
+				metadata: metadata{hoisted: []string{fmt.Sprintf(`{ type: 'inline', value: %sconsole.log("Hello");%s }`, BACKTICK, BACKTICK)}},
+				code:     `${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}<script>console.log("World");</script></main>`,
 			},
 		},
 		{
@@ -3456,8 +3521,10 @@ const items = ["Dog", "Cat", "Platipus"];
 
 			hash := astro.HashString(code)
 			transform.ExtractStyles(doc)
+			// combine from tt.transformOptions
 			transformOptions := transform.TransformOptions{
-				Scope: hash,
+				Scope:        hash,
+				RenderScript: tt.transformOptions.RenderScript,
 			}
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{

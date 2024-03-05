@@ -54,6 +54,7 @@ var SPREAD_ATTRIBUTES = "$$spreadAttributes"
 var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
 var CREATE_METADATA = "$$createMetadata"
+var RENDER_SCRIPT = "$$renderScript"
 var METADATA = "$$metadata"
 var RESULT = "$$result"
 var SLOTS = "$$slots"
@@ -137,6 +138,8 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	p.print("renderTransition as " + RENDER_TRANSITION + ",\n  ")
 	p.addNilSourceMapping()
 	p.print("createTransitionScope as " + CREATE_TRANSITION_SCOPE + ",\n  ")
+	p.addNilSourceMapping()
+	p.print("renderScript as " + RENDER_SCRIPT + ",\n  ")
 
 	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
 	if opts.opts.ResolvePath == nil {
