@@ -16,6 +16,7 @@ import (
 const TRANSITION_ANIMATE = "transition:animate"
 const TRANSITION_NAME = "transition:name"
 const TRANSITION_PERSIST = "transition:persist"
+const TRANSITION_PERSIST_PROPS = "transition:persist-props"
 
 type TransformOptions struct {
 	Scope                   string

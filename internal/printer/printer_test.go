@@ -3534,6 +3534,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:        "transition:persist-props converted to a data attribute",
+			source:      `<my-island transition:persist transition:persist-props="false"></my-island>`,
+			transitions: true,
+			want: want{
+				code: `${$$renderComponent($$result,'my-island','my-island',{"data-astro-transition-persist-props":"false","data-astro-transition-persist":($$createTransitionScope($$result, "otghnj5u"))})}`,
+			},
+		},
+		{
 			name:   "trailing expression",
 			source: `<Component />{}`,
 			want: want{
