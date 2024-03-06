@@ -45,7 +45,7 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('preserve style tag position III', async () => {
   const input = `<html lang="en"><head><BaseHead /></head><body><Header /></body></html>
-<style>@use "../styles/global.scss"</style>`;
+<style>@use "../styles/global.scss";</style>`;
   const output = `${TSXPrefix}<Fragment>
 <html lang="en"><head><BaseHead /></head><body><Header /></body></html>
 <style>{\`@use "../styles/global.scss";\`}</style>
