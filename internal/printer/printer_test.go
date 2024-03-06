@@ -3538,7 +3538,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<my-island transition:persist transition:persist-props="false"></my-island>`,
 			transitions: true,
 			want: want{
-				code: `${$$renderComponent($$result,'my-island','my-island',{"data-astro-transition-persist-props":"false","data-astro-transition-persist":($$createTransitionScope($$result, "otghnj5u"))})}`,
+				code: `${$$renderComponent($$result,'my-island','my-island',{"data-astro-transition-persist-props":"false","data-astro-transition-persist":($$createTransitionScope($$result, "rho3aldc"))})}`,
 			},
 		},
 		{
