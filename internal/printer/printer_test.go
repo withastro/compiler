@@ -571,9 +571,6 @@ import type data from "test"
 						<h2>p+h2 ${dummyKey}</h2>
 					</p>` + BACKTICK + `
 				);
-						<h2>p+h2 ${dummyKey}</h2>
-					</p>` + BACKTICK + `
-				);
 			})
 		}
 	</main>
