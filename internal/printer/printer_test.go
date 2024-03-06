@@ -571,6 +571,9 @@ import type data from "test"
 						<h2>p+h2 ${dummyKey}</h2>
 					</p>` + BACKTICK + `
 				);
+						<h2>p+h2 ${dummyKey}</h2>
+					</p>` + BACKTICK + `
+				);
 			})
 		}
 	</main>
@@ -2305,7 +2308,9 @@ const content = "lol";
 			},
 		},
 		{
-			name: "#958",
+			// ensurethere are no duplicate elements matching the ones in the link below (`<a>` in this test)
+			// https://github.com/withastro/compiler/blob/a90d99ee8cc3ad92d1b39d73df1f7301011ee970/internal/parser.go#L1490
+			name: "<a> tag with expression in table ",
 			source: `<main>
 	<table>
 		<tr>
@@ -2321,6 +2326,21 @@ const content = "lol";
 		</tr>
 	</table>
 </main>`,
+			},
+		},
+		{
+			// makes sure that there are no duplicate elements matching the ones in the link below (`<a>` in this test)
+			// https://github.com/withastro/compiler/blob/a90d99ee8cc3ad92d1b39d73df1f7301011ee970/internal/parser.go#L1490
+			name: "<a> tag with expression in template",
+			source: `<template>
+    <a href="https://example.com">{text}</a>.
+</template>
+<p>This should not be a link</p>`,
+			want: want{
+				code: `<template>
+    ${$$maybeRenderHead($$result)}<a href="https://example.com">${text}</a>.
+</template>
+<p>This should not be a link</p>`,
 			},
 		},
 		{
