@@ -267,8 +267,8 @@ test('return ranges - no frontmatter', async () => {
 
   assert.equal(metaRanges, {
     frontmatter: {
-      start: 30,
-      end: 30,
+      start: 0,
+      end: 0,
     },
     body: {
       start: 41,

@@ -253,13 +253,13 @@ func TestFullTransform(t *testing.T) {
 		},
 		{
 			name:   "Component before html I",
-			source: `<Navigation /><html><body><h1>Astro</h1></body></html>`,
-			want:   `<Navigation></Navigation><h1>Astro</h1>`,
+			source: `<Navigation /><html lang="en"><body><h1>Astro</h1></body></html>`,
+			want:   `<Navigation></Navigation><html lang="en"><body><h1>Astro</h1></body></html>`,
 		},
 		{
 			name:   "Component before html II",
 			source: `<MainHead title={title} description={description} /><html lang="en"><body><slot /></body></html>`,
-			want:   `<MainHead title={title} description={description}></MainHead><slot></slot>`,
+			want:   `<MainHead title={title} description={description}></MainHead><html lang="en"><body><slot></slot></body></html>`,
 		},
 		{
 			name:   "respects explicitly authored elements",
@@ -282,6 +282,11 @@ func TestFullTransform(t *testing.T) {
 			want:   `<Component></Component>`,
 		},
 		{
+			name:   "top-level component does not drop body attributes",
+			source: `<Base><body class="foobar"><slot /></body></Base>`,
+			want:   `<Base><body class="foobar"><slot></slot></body></Base>`,
+		},
+		{
 			name:   "works with nested components",
 			source: `<style></style><A><div><B /></div></A>`,
 			want:   `<A><div><B></B></div></A>`,
@@ -302,7 +307,7 @@ func TestFullTransform(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+			doc, err := astro.ParseWithOptions(strings.NewReader(tt.source), astro.ParseOptionEnableLiteral(true))
 			if err != nil {
 				t.Error(err)
 			}
@@ -513,11 +518,12 @@ func TestAnnotation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+
+			h := handler.NewHandler(tt.source, "/src/pages/index.astro")
+			doc, err := astro.ParseWithOptions(strings.NewReader(tt.source), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(h))
 			if err != nil {
 				t.Error(err)
 			}
-			h := handler.NewHandler(tt.source, "/src/pages/index.astro")
 			Transform(doc, TransformOptions{
 				AnnotateSourceFile: true,
 				Filename:           "/src/pages/index.astro",

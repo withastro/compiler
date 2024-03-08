@@ -500,6 +500,11 @@ func TestBasic(t *testing.T) {
 			`<div></div><MyAstroComponent` + "\n",
 			[]TokenType{StartTagToken, EndTagToken, TextToken},
 		},
+		{
+			"literal body",
+			`<body><slot><p>Hello world!</p></slot></body>`,
+			[]TokenType{StartTagToken, StartTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken, EndTagToken},
+		},
 	}
 
 	runTokenTypeTest(t, Basic)

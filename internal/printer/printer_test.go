@@ -259,7 +259,7 @@ func TestPrinter(t *testing.T) {
 		},
 		{
 			name:   "slot with fallback",
-			source: `<body><slot><p>Hello world!</p></slot><body>`,
+			source: `<body><slot><p>Hello world!</p></slot></body>`,
 			want: want{
 				code: `${$$maybeRenderHead($$result)}<body>${$$renderSlot($$result,$$slots["default"],$$render` + BACKTICK + `<p>Hello world!</p>` + BACKTICK + `)}</body>`,
 			},
@@ -568,9 +568,9 @@ import type data from "test"
 						<h2>div+h2 ${dummyKey}</h2>
 					</div>
 					<p>
-						</p><h2>p+h2 ${dummyKey}</h2>
-					` + BACKTICK + `	
-			);
+						<h2>p+h2 ${dummyKey}</h2>
+					</p>` + BACKTICK + `
+				);
 			})
 		}
 	</main>
@@ -588,8 +588,8 @@ import type data from "test"
 			want: want{
 				code: `<html lang="en">
 ${$$maybeRenderHead($$result)}<body>
-${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>hello</div>` + BACKTICK + `)}
-${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p></p><div>${author}</div>` + BACKTICK + `)}
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p><div>hello</div></p>` + BACKTICK + `)}
+${Object.keys(importedAuthors).map(author => $$render` + BACKTICK + `<p><div>${author}</div></p>` + BACKTICK + `)}
 </body>
 </html>`,
 			},
@@ -1603,6 +1603,13 @@ const name = 'named';
 			},
 		},
 		{
+			name:   "top-level component does not drop body attributes",
+			source: `<Base><body class="foobar"><slot /></body></Base>`,
+			want: want{
+				code: "${$$renderComponent($$result,'Base',Base,{},{\"default\": () => $$render`${$$maybeRenderHead($$result)}<body class=\"foobar\">${$$renderSlot($$result,$$slots[\"default\"])}</body>`,})}",
+			},
+		},
+		{
 			name: "custom elements",
 			source: `---
 import 'test';
@@ -1661,7 +1668,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 		},
 		{
 			name:   "Self-closing script in head works",
-			source: `<html><head><script is:inline /></head><html>`,
+			source: `<html><head><script is:inline /></head></html>`,
 			want: want{
 				code: `<html><head><script></script>` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
@@ -1682,7 +1689,7 @@ ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"clie
 		},
 		{
 			name:   "Self-closing components in head can have siblings",
-			source: `<html><head><BaseHead /><link href="test"></head><html>`,
+			source: `<html><head><BaseHead /><link href="test"></head></html>`,
 			want: want{
 				code: `<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">` + RENDER_HEAD_RESULT + `</head></html>`,
 			},
@@ -2082,7 +2089,7 @@ import { Container, Col, Row } from 'react-bootstrap';
 			name:   "Preserve namespaces in expressions",
 			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href={` + BACKTICK + `#${iconId}` + BACKTICK + `}></svg>`,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect ${$$addAttribute(` + BACKTICK + `#${iconId}` + BACKTICK + `, "xlink:href")}></rect></svg>`,
+				code: `${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect${$$addAttribute(` + BACKTICK + `#${iconId}` + BACKTICK + `, "xlink:href")}></rect></svg>`,
 			},
 		},
 		{
@@ -2295,6 +2302,42 @@ const content = "lol";
     </table>Hello
   </body>
 </html>`,
+			},
+		},
+		{
+			// ensurethere are no duplicate elements matching the ones in the link below (`<a>` in this test)
+			// https://github.com/withastro/compiler/blob/a90d99ee8cc3ad92d1b39d73df1f7301011ee970/internal/parser.go#L1490
+			name: "<a> tag with expression in table ",
+			source: `<main>
+	<table>
+		<tr>
+			<td><a href={linkURL}>{linkURL}</a></td>
+		</tr>
+	</table>
+</main>`,
+			want: want{
+				code: `${$$maybeRenderHead($$result)}<main>
+	<table>
+		<tr>
+			<td><a${$$addAttribute(linkURL, "href")}>${linkURL}</a></td>
+		</tr>
+	</table>
+</main>`,
+			},
+		},
+		{
+			// makes sure that there are no duplicate elements matching the ones in the link below (`<a>` in this test)
+			// https://github.com/withastro/compiler/blob/a90d99ee8cc3ad92d1b39d73df1f7301011ee970/internal/parser.go#L1490
+			name: "<a> tag with expression in template",
+			source: `<template>
+    <a href="https://example.com">{text}</a>.
+</template>
+<p>This should not be a link</p>`,
+			want: want{
+				code: `<template>
+    ${$$maybeRenderHead($$result)}<a href="https://example.com">${text}</a>.
+</template>
+<p>This should not be a link</p>`,
 			},
 		},
 		{
@@ -3444,7 +3487,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "daiq24ry", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "eh4gbiwl", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -3453,7 +3496,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "vvov4lyr", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "2oo357hq", "", ` + BACKTICK + `${one}-two` + BACKTICK + `), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -3462,7 +3505,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "ih7yuffh", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "x2dt3p4g", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -3471,7 +3514,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 			want: want{
-				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "wkm5vset", "morph", ""))})}`,
+				code: `${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "byigm4lx", "morph", ""))})}`,
 			},
 		},
 		{
@@ -3479,7 +3522,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<div transition:persist></div>`,
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "pflz5ime"), "data-astro-transition-persist")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "z45b6una"), "data-astro-transition-persist")}></div>`,
 			},
 		},
 		{
@@ -3487,7 +3530,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<div transition:persist transition:name="foo"></div>`,
 			transitions: true,
 			want: want{
-				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "peuy4xf7", "", "foo"), "data-astro-transition-scope")}></div>`,
+				code: `${$$maybeRenderHead($$result)}<div data-astro-transition-persist="foo"${$$addAttribute($$renderTransition($$result, "nqtd2ecx", "", "foo"), "data-astro-transition-scope")}></div>`,
 			},
 		},
 		{
@@ -3495,7 +3538,7 @@ const items = ["Dog", "Cat", "Platipus"];
 			source:      `<my-island transition:persist transition:persist-props="false"></my-island>`,
 			transitions: true,
 			want: want{
-				code: `${$$renderComponent($$result,'my-island','my-island',{"data-astro-transition-persist-props":"false","data-astro-transition-persist":($$createTransitionScope($$result, "otghnj5u"))})}`,
+				code: `${$$renderComponent($$result,'my-island','my-island',{"data-astro-transition-persist-props":"false","data-astro-transition-persist":($$createTransitionScope($$result, "rho3aldc"))})}`,
 			},
 		},
 		{
@@ -3520,8 +3563,8 @@ const items = ["Dog", "Cat", "Platipus"];
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.Parse(strings.NewReader(code))
 			h := handler.NewHandler(code, "<stdin>")
+			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(h))
 
 			if err != nil {
 				t.Error(err)
@@ -3747,6 +3790,11 @@ const c = '\''
 			want:   []ASTNode{{Type: "element", Name: "style"}, {Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}},
 		},
 		{
+			name:   "empty style",
+			source: `<style define:vars={{ color: "Gainsboro" }}></style>`,
+			want:   []ASTNode{{Type: "element", Name: "style", Attributes: []ASTNode{{Type: "attribute", Kind: "expression", Name: "define:vars", Value: "{ color: \"Gainsboro\" }"}}}},
+		},
+		{
 			name:   "style after html",
 			source: `<html><body><h1>Hello world!</h1></body></html><style></style>`,
 			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}, {Type: "element", Name: "style"}},
@@ -3775,6 +3823,11 @@ const c = '\''
 			name:   "element with unterminated template literal attribute",
 			source: `<main id=` + BACKTICK + `gotcha />`,
 			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
+		},
+		{
+			name:   "top-level component does not drop body attributes",
+			source: `<Base><body class="foobar"><slot /></body></Base>`,
+			want:   []ASTNode{{Type: "component", Name: "Base", Attributes: []ASTNode{}, Children: []ASTNode{{Type: "element", Name: "body", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "class", Value: "foobar", Raw: "\"foobar\""}}, Children: []ASTNode{{Type: "element", Name: "slot"}}}}}},
 		},
 	}
 
