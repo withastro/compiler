@@ -22,6 +22,10 @@ test('collapsing', async () => {
   assert.match(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
   assert.match(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span>\ninline ${expression}</span>`');
   assert.match(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${expression}</span>`');
+  assert.match(
+    await minify('<div>\n  <p>{"text"} <span>text</span></p>\n  <p><span>text</span> <span>text</span></p>\n</div>'),
+    '<div> <p>${"text"} <span>text</span></p> <p><span>text</span> <span>text</span></p> </div>'
+  );
 });
 
 test('space normalization between attributes', async () => {
