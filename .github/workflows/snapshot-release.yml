@@ -15,12 +15,21 @@ jobs:
     if: ${{ github.repository_owner == 'withastro' && github.event.issue.pull_request && startsWith(github.event.comment.body, '!preview') }}
     runs-on: ubuntu-latest
     steps:
-      - name: 'Check if user has admin access (only admins can publish snapshot releases).'
-        uses: 'lannonbr/repo-permission-check-action@2.0.2'
+      - name: Check if user has admin access (only admins can publish snapshot releases).
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
         with:
-          permission: 'admin'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          require: admin
+          username: ${{ github.triggering_actor }}
+
+      # if the user does not have the required permission, we should return exit code 1 to stop the workflow
+      - name: Check user permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          exit 0
 
       - name: Extract the snapshot name from comment body
         id: getSnapshotName
