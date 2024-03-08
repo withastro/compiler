@@ -23,7 +23,7 @@ jobs:
           username: ${{ github.triggering_actor }}
 
       # if the user does not have the required permission, we should return exit code 1 to stop the workflow
-      - name: Check User Permission
+      - name: Check user permission
         if: steps.checkAccess.outputs.require-result == 'false'
         run: |
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
