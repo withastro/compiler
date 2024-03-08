@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Check if user has admin access (only admins can publish snapshot releases).
         id: checkAccess
-        uses: actions-cool/check-user-permission@v2.2.1
+        uses: actions-cool/check-user-permission@v2
         with:
           require: admin
           username: ${{ github.triggering_actor }}
