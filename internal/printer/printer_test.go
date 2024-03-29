@@ -3505,6 +3505,31 @@ const items = ["Dog", "Cat", "Platipus"];
 				code: `${$$renderComponent($$result,'Component',Component,{})}${(void 0)}`,
 			},
 		},
+		{
+			name: "nested head content stays in the head",
+			source: `---
+const meta = { title: 'My App' };
+---
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+
+		{
+			meta && <title>{meta.title}</title>
+		}
+
+		<meta name="after">
+	</head>
+	<body>
+		<h1>My App</h1>
+	</body>
+</html>`,
+			want: want{
+				frontmatter: []string{"", `const meta = { title: 'My App' };`},
+				code:        `<html>	<head>		<meta charset="utf-8">		${			meta && $$render` + BACKTICK + `<title>${meta.title}</title>` + BACKTICK + `		}		<meta name="after">	${$$renderHead($$result)}</head>	<body>		<h1>My App</h1>	</body></html>`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -3535,6 +3560,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				RenderScript: tt.transformOptions.RenderScript,
 			}
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
 				Scope:                   "XXXX",
 				InternalURL:             "http://localhost:3000/",
