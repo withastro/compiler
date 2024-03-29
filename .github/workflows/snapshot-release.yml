@@ -71,9 +71,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      - name: Build WASM
-        run: make wasm
-
       - name: Install dependencies
         run: pnpm install
 
