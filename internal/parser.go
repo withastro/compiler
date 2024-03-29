@@ -392,6 +392,7 @@ func (p *parser) addExpression() {
 		HandledScript: false,
 		Loc:           p.generateLoc(),
 	})
+
 }
 
 func isFragment(data string) bool {
@@ -942,6 +943,7 @@ func inHeadIM(p *parser) bool {
 	case StartExpressionToken:
 		p.addExpression()
 		p.afe = append(p.afe, &scopeMarker)
+		p.templateStack = append(p.templateStack, inExpressionIM)
 		if p.originalIM == nil {
 			p.setOriginalIM()
 		}

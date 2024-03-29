@@ -551,6 +551,7 @@ import type data from "test"
 		}
 	</main>
 </Layout>`,
+
 			want: want{
 				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},{"default": () => $$render` + BACKTICK + `
 	${$$maybeRenderHead($$result)}<main>
@@ -569,8 +570,8 @@ import type data from "test"
 					</div>
 					<p>
 						</p><h2>p+h2 ${dummyKey}</h2>
-					` + BACKTICK + `	
-			);
+					` + BACKTICK + `
+				);
 			})
 		}
 	</main>
