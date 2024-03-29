@@ -56,6 +56,11 @@ jobs:
         with:
           ref: ${{ steps.refs.outputs.head_ref }}
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: '../go.mod'
+
       - name: Setup PNPM
         uses: pnpm/action-setup@v3
 
