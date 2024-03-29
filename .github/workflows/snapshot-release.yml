@@ -56,6 +56,11 @@ jobs:
         with:
           ref: ${{ steps.refs.outputs.head_ref }}
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.19
+
       - name: Setup PNPM
         uses: pnpm/action-setup@v3
 
@@ -65,6 +70,9 @@ jobs:
           node-version: 16
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
+
+      - name: Build WASM
+        run: make wasm
 
       - name: Install dependencies
         run: pnpm install
