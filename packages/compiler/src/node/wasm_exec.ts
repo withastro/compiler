@@ -165,7 +165,7 @@ export default class Go {
 
     const timeOrigin = Date.now() - performance.now();
     this.importObject = {
-      go: {
+      gojs: {
         // Go's SP does not change as long as no Go code is running. Some operations (e.g. calls, getters and setters)
         // may synchronously trigger a Go event handler. This makes Go code get executed in the middle of the imported
         // function. A goroutine can switch to a new stack if the current stack is too small (see morestack function).
