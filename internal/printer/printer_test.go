@@ -3803,6 +3803,16 @@ const c = '\''
 			source: `<main id=` + BACKTICK + `gotcha />`,
 			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
 		},
+		{
+			name:   "text with <",
+			source: `<span>n <value </span>`,
+			want:   []ASTNode{{Type: "element", Name: "span", Children: []ASTNode{{Type: "text", Value: "n <value "}}}},
+		},
+		{
+			name:   "unclosed element",
+			source: "<div class=\"name\"\n<h1 />",
+			want:   []ASTNode{{Type: "element", Name: "div", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "class", Value: "name", Raw: `"name"`}}, Children: []ASTNode{{Type: "element", Name: "h1"}}}},
+		},
 	}
 
 	for _, tt := range tests {
