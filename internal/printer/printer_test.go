@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gkampitakis/go-snaps/snaps"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	types "github.com/withastro/compiler/internal/t"
@@ -3707,6 +3708,14 @@ const meta = { title: 'My App' };
 			if diff := test_utils.ANSIDiff(test_utils.RemoveNewlines(test_utils.Dedent(toMatch)), test_utils.RemoveNewlines(test_utils.Dedent(output))); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+
+			s := snaps.WithConfig(
+				snaps.Filename(
+					strings.ReplaceAll(tt.name, " ", "_")),
+				snaps.Update(false),
+			)
+
+			s.MatchSnapshot(t, test_utils.Dedent(output))
 		})
 	}
 }

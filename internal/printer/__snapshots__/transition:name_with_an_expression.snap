@@ -1,0 +1,36 @@
+
+[TestPrinter/transition:name_with_an_expression - 1]
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+import "transitions.css";
+
+export const $$metadata = $$createMetadata("/projects/app/src/pages/page.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+
+const $$Astro = $$createAstro('https://astro.build');
+const Astro = $$Astro;
+const $$Page = $$createComponent(async ($$result, $$props, $$slots) => {
+const Astro = $$result.createAstro($$Astro, $$props, $$slots);
+Astro.self = $$Page;
+
+return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "daiq24ry", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`;
+}, '/projects/app/src/pages/page.astro', 'self');
+export default $$Page;
+---
