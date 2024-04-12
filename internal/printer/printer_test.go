@@ -3286,6 +3286,13 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:   "style is:inline define:vars",
+			source: "<style is:inline define:vars={{color:'green'}}>h1{color:var(--color)}</style>",
+			want: want{
+				code: `<style>h1{color:var(--color)}</style>`,
+			},
+		},
+		{
 			name: "define:vars on script with StaticExpression turned on",
 			// 1. An inline script with is:inline - right
 			// 2. A hoisted script - wrong, shown up in scripts.add
