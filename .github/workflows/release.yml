@@ -29,7 +29,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Build WASM
-        run: make wasm
+        run: pnpm build
 
       - name: Install NPM Dependencies
         run: pnpm install
