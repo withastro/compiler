@@ -35,9 +35,9 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"renderScript as " + RENDER_SCRIPT,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
-var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
-const Astro = $$result.createAstro($$Astro, $$props, %s);
-Astro.self = $$Component;%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n\n")
+var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
+var PRELUDE_ASTRO_GLOBAL = fmt.Sprintf(`const Astro = $$result.createAstro($$Astro, $$props, %s);
+Astro.self = $$Component;`, SLOTS)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 }, undefined, undefined);
@@ -3571,6 +3571,8 @@ const meta = { title: 'My App' };
 			}, h)
 			output := string(result.Output)
 
+			// The compiler prints Astro global code only if it's loosely used
+			printAstroGlobal := strings.Contains(tt.source, "Astro")
 			toMatch := INTERNAL_IMPORTS
 			if strings.Count(tt.source, "transition:") > 0 {
 				toMatch += `import "transitions.css";`
@@ -3654,11 +3656,17 @@ const meta = { title: 'My App' };
 				patharg = fmt.Sprintf("\"%s\"", escapedFilename)
 			}
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(%s, %s);\n\n", METADATA, CREATE_METADATA, patharg, metadata)
-			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n"
+			if printAstroGlobal {
+				toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n"
+			}
 			if len(tt.want.getStaticPaths) > 0 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
 			}
-			toMatch += test_utils.Dedent(PRELUDE) + "\n"
+			if printAstroGlobal {
+				toMatch += test_utils.Dedent(PRELUDE) + test_utils.Dedent(PRELUDE_ASTRO_GLOBAL) + "\n"
+			} else {
+				toMatch += test_utils.Dedent(PRELUDE) + "\n"
+			}
 			if len(tt.want.frontmatter) > 1 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.frontmatter[1]))
 			}
