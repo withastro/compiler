@@ -269,8 +269,15 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions, printAstroGl
 		return
 	}
 	componentName := getComponentName(opts.Filename)
+
+	// Decide whether to print `async` if top-level await is used. Use a loose check for now.
+	funcPrefix := ""
+	if strings.Contains(p.sourcetext, "await") {
+		funcPrefix = "async "
+	}
+
 	p.addNilSourceMapping()
-	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
+	p.println(fmt.Sprintf("const %s = %s(%s(%s, $$props, %s) => {", componentName, CREATE_COMPONENT, funcPrefix, RESULT, SLOTS))
 	if printAstroGlobal {
 		p.addNilSourceMapping()
 		p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
