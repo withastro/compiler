@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 2.8.0
+
+### Minor Changes
+
+- 17f8932: The WASM binaries for the compiler are now built using Go 1.22.
+
+### Patch Changes
+
+- e8b6cdf: Skips printing `createAstro` code if the `Astro` global is not referenced
+- ecd7e90: Skips printing `async` for component functions if `await` is not used
+
 ## 2.7.1
 
 ### Patch Changes
