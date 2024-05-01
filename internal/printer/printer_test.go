@@ -35,7 +35,8 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"renderScript as " + RENDER_SCRIPT,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
-var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
+var PRELUDE = fmt.Sprintf(`const $$Component = %s(($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
+var PRELUDE_WITH_ASYNC = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
 var PRELUDE_ASTRO_GLOBAL = fmt.Sprintf(`const Astro = $$result.createAstro($$Astro, $$props, %s);
 Astro.self = $$Component;`, SLOTS)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
@@ -3662,11 +3663,15 @@ const meta = { title: 'My App' };
 			if len(tt.want.getStaticPaths) > 0 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
 			}
-			if printAstroGlobal {
-				toMatch += test_utils.Dedent(PRELUDE) + test_utils.Dedent(PRELUDE_ASTRO_GLOBAL) + "\n"
+			if strings.Contains(tt.source, "await") {
+				toMatch += test_utils.Dedent(PRELUDE_WITH_ASYNC)
 			} else {
-				toMatch += test_utils.Dedent(PRELUDE) + "\n"
+				toMatch += test_utils.Dedent(PRELUDE)
 			}
+			if printAstroGlobal {
+				toMatch += test_utils.Dedent(PRELUDE_ASTRO_GLOBAL)
+			}
+			toMatch += "\n"
 			if len(tt.want.frontmatter) > 1 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.frontmatter[1]))
 			}
