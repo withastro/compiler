@@ -419,6 +419,16 @@ func TestCompactTransform(t *testing.T) {
 			want:   "<div>Click <a>here</a> <span>space</span></div>",
 		},
 		{
+			name:   "preserve in-between inline elements I",
+			source: "<p>{'text'} <span>text</span></p>",
+			want:   "<p>{'text'} <span>text</span></p>",
+		},
+		{
+			name:   "preserve in-between inline elements II",
+			source: "<p><span>text</span> <span>text</span></p>",
+			want:   "<p><span>text</span> <span>text</span></p>",
+		},
+		{
 			name:   "expression trim first",
 			source: "<div>{\n() => {\n\t\treturn <span />}}</div>",
 			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
@@ -462,6 +472,21 @@ func TestCompactTransform(t *testing.T) {
 			name:   "expression math",
 			source: "<div>{ a + b }</div>",
 			want:   "<div>{a + b}</div>",
+		},
+		{
+			name:   "meaningful whitspace regression I",
+			source: "<a href={``}>\n<span />\n<span />\n<span>{title}</span></a>",
+			want:   "<a href={``}> <span></span> <span></span> <span>{title}</span></a>",
+		},
+		{
+			name:   "meaningful whitspace regression I",
+			source: "<a href={``}>\n<span />\n<span />\n<span>{title}</span></a>",
+			want:   "<a href={``}> <span></span> <span></span> <span>{title}</span></a>",
+		},
+		{
+			name:   "meaningful whitespace regression II",
+			source: "<h2>\n    <span>Contributors with this achievement</span>\n    <span>Badge</span>\n</h2>",
+			want:   "<h2> <span>Contributors with this achievement</span> <span>Badge</span> </h2>",
 		},
 	}
 	var b strings.Builder
