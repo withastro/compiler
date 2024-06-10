@@ -98,6 +98,7 @@ type Node struct {
 	ClientOnlyComponentNodes []*Node
 	ClientOnlyComponents     []*HydratedComponentMetadata
 	HydrationDirectives      map[string]bool
+	ServerComponents         []*HydratedComponentMetadata
 	ContainsHead             bool
 	HeadPropagation          bool
 

@@ -523,6 +523,38 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 				}
 
 				break
+			} else if strings.HasPrefix(attr.Key, "server:") {
+				parts := strings.Split(attr.Key, ":")
+				directive := parts[1]
+
+				hydrationAttr := astro.Attribute{
+					Key: "server:component-directive",
+					Val: directive,
+				}
+				n.Attr = append(n.Attr, hydrationAttr)
+
+				match := matchNodeToImportStatement(doc, n)
+				if match != nil {
+					doc.HydratedComponents = append(doc.HydratedComponents, &astro.HydratedComponentMetadata{
+						ExportName:   match.ExportName,
+						Specifier:    match.Specifier,
+						ResolvedPath: ResolveIdForMatch(match.Specifier, opts),
+					})
+
+					pathAttr := astro.Attribute{
+						Key:  "server:component-path",
+						Val:  fmt.Sprintf(`"%s"`, ResolveIdForMatch(match.Specifier, opts)),
+						Type: astro.ExpressionAttribute,
+					}
+					n.Attr = append(n.Attr, pathAttr)
+
+					exportAttr := astro.Attribute{
+						Key:  "server:component-export",
+						Val:  fmt.Sprintf(`"%s"`, match.ExportName),
+						Type: astro.ExpressionAttribute,
+					}
+					n.Attr = append(n.Attr, exportAttr)
+				}
 			}
 		}
 	}
