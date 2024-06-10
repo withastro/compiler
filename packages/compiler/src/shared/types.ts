@@ -109,6 +109,7 @@ export interface TransformResult {
 	scripts: HoistedScript[];
 	hydratedComponents: HydratedComponent[];
 	clientOnlyComponents: HydratedComponent[];
+	serverComponents: HydratedComponent[];
 	containsHead: boolean;
 	propagation: boolean;
 }

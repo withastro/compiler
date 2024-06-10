@@ -208,6 +208,7 @@ type TransformResult struct {
 	Scripts              []HoistedScript         `js:"scripts"`
 	HydratedComponents   []HydratedComponent     `js:"hydratedComponents"`
 	ClientOnlyComponents []HydratedComponent     `js:"clientOnlyComponents"`
+	ServerComponents     []HydratedComponent     `js:"serverComponents"`
 	ContainsHead         bool                    `js:"containsHead"`
 	StyleError           []string                `js:"styleError"`
 	Propagation          bool                    `js:"propagation"`
