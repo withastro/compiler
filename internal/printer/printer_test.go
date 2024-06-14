@@ -3707,7 +3707,8 @@ const meta = { title: 'My App' };
 
 			s := snaps.WithConfig(
 				snaps.Filename(
-					strings.ReplaceAll(tt.name, " ", "_")),
+					strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
+						strings.ReplaceAll(tt.name, ")", "_"), "(", "_"), ":", "_"), " ", "_")),
 				snaps.Update(false),
 			)
 
