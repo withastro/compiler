@@ -1,5 +1,14 @@
 
 [TestPrinter/slot_with_fallback_II - 1]
+## Input
+
+```
+<slot name="test"><p>Hello world!</p></slot>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderSlot($$result,$$slots["test"],$$render`${$$maybeRenderHead($$result)}<p>Hello world!</p>`)}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

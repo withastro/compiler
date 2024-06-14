@@ -3715,7 +3715,9 @@ const meta = { title: 'My App' };
 				snaps.Update(false),
 			)
 
-			s.MatchSnapshot(t, test_utils.Dedent(output))
+			snapshot := fmt.Sprintf("%s%s%s%s%s%s%s%s", "## Input\n\n", "```\n", test_utils.Dedent(code), "\n```", "\n\n## Output\n\n", "```js\n", test_utils.Dedent(output), "\n```")
+
+			s.MatchSnapshot(t, snapshot)
 		})
 	}
 }

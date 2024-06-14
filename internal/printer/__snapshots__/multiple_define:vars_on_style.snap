@@ -1,5 +1,14 @@
 
 [TestPrinter/multiple_define:vars_on_style - 1]
+## Input
+
+```
+<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><style define:vars={{color:'red'}}>h2{color:var(--color)}</style><h1>foo</h1><h2>bar</h2>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ const $$definedVars = $$defineStyleVars([{color:'red'},{color:'green'}]);
 return $$render`${$$maybeRenderHead($$result)}<h1 class="astro-6oxbqcst"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6oxbqcst"${$$addAttribute($$definedVars, "style")}>bar</h2>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

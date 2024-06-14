@@ -1,5 +1,14 @@
 
 [TestPrinter/nested_template_literal_expression - 1]
+## Input
+
+```
+<div value={`${attr ? `a/b ${`c`}` : "d"} awesome`} />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,9 +41,24 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute(`${attr ? `a/b ${`c`}` : "d"} awesome`, "value")}></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---
 
 [TestPrinter/nested_template_literal_expression#01 - 1]
+## Input
+
+```
+<html lang="en">
+<body>
+{Object.keys(importedAuthors).map(author => <p><div>hello</div></p>)}
+{Object.keys(importedAuthors).map(author => <p><div>{author}</div></p>)}
+</body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -71,4 +95,5 @@ ${Object.keys(importedAuthors).map(author => $$render`<p></p><div>${author}</div
 </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

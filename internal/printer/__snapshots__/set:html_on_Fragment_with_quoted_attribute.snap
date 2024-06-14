@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_on_Fragment_with_quoted_attribute - 1]
+## Input
+
+```
+<Fragment set:html="<p>&#x3C;i>This should NOT be italic&#x3C;/i></p>" />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`${"<p><i>This should NOT be italic</i></p>"}`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

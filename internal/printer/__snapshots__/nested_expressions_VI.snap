@@ -1,5 +1,14 @@
 
 [TestPrinter/nested_expressions_VI - 1]
+## Input
+
+```
+<div>{()=>{ if (true) { return <hr />;} if (true) { return <img />;}}}</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div>${()=>{ if (true) { return $$render`<hr>`;} if (true) { return $$render`<img>`;}}}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

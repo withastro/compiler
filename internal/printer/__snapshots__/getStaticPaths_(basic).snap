@@ -1,5 +1,19 @@
 
 [TestPrinter/getStaticPaths_(basic) - 1]
+## Input
+
+```
+/-/-/-/
+export const getStaticPaths = async () => {
+    return { paths: [] }
+}
+/-/-/-/
+<div></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +49,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

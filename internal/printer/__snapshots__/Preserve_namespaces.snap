@@ -1,5 +1,14 @@
 
 [TestPrinter/Preserve_namespaces - 1]
+## Input
+
+```
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></svg>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></rect></svg>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

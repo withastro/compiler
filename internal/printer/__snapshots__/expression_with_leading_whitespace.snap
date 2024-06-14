@@ -1,5 +1,21 @@
 
 [TestPrinter/expression_with_leading_whitespace - 1]
+## Input
+
+```
+<section>
+<ul class="font-mono text-sm flex flex-col gap-0.5">
+    {
+        <li>Build: { new Date().toISOString() }</li>
+        <li>NODE_VERSION: { process.env.NODE_VERSION }</li>
+    }
+</ul>
+</section>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -39,4 +55,5 @@ return $$render`${$$maybeRenderHead($$result)}<section>
 </section>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

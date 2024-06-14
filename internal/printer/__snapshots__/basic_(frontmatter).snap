@@ -1,5 +1,17 @@
 
 [TestPrinter/basic_(frontmatter) - 1]
+## Input
+
+```
+/-/-/-/
+const href = '/about';
+/-/-/-/
+<a href={href}>About</a>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +46,5 @@ const href = '/about';
 return $$render`${$$maybeRenderHead($$result)}<a${$$addAttribute(href, "href")}>About</a>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

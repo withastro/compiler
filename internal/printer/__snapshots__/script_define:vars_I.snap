@@ -1,5 +1,14 @@
 
 [TestPrinter/script_define:vars_I - 1]
+## Input
+
+```
+<script define:vars={{ value: 0 }}>console.log(value);</script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<script>(function(){${$$defineScriptVars({ value: 0 })}console.log(value);})();</script>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

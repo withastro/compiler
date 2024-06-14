@@ -1,5 +1,17 @@
 
 [TestPrinter/svg_expressions - 1]
+## Input
+
+```
+/-/-/-/
+const title = 'icon';
+/-/-/-/
+<svg>{title ?? null}</svg>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +46,5 @@ const title = 'icon';
 return $$render`${$$maybeRenderHead($$result)}<svg>${title ?? null}</svg>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

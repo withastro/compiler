@@ -1,5 +1,21 @@
 
 [TestPrinter/slots_(no_comments) - 1]
+## Input
+
+```
+/-/-/-/
+import Component from 'test';
+/-/-/-/
+<Component>
+    <div>Default</div>
+    <!-- A comment! -->
+    <div slot="named">Named</div>
+</Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -39,4 +55,5 @@ return $$render`${$$renderComponent($$result,'Component',Component,{},{"default"
 `,"named": () => $$render`<div>Named</div>`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

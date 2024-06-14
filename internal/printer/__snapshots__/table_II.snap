@@ -1,5 +1,14 @@
 
 [TestPrinter/table_II - 1]
+## Input
+
+```
+<table><thead><tr>{['Hey','Ho'].map((item)=> <th scope="col">{item}</th>)}</tr></thead></table>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<table><thead><tr>${['Hey','Ho'].map((item)=> $$render`<th scope="col">${item}</th>`)}</tr></thead></table>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

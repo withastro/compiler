@@ -1,5 +1,14 @@
 
 [TestPrinter/noscript_styles - 1]
+## Input
+
+```
+<noscript><style>div { color: red; }</style></noscript>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<noscript><style>div { color: red; }</style></noscript>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

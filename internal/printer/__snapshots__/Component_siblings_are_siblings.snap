@@ -1,5 +1,14 @@
 
 [TestPrinter/Component_siblings_are_siblings - 1]
+## Input
+
+```
+<BaseHead></BaseHead><link href="test">
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

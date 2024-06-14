@@ -1,5 +1,14 @@
 
 [TestPrinter/conditional_iframe - 1]
+## Input
+
+```
+{bool && <iframe src="something">content</iframe>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${bool && $$render`${$$maybeRenderHead($$result)}<iframe src="something">content</iframe>`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

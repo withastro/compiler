@@ -1,5 +1,17 @@
 
 [TestPrinter/css_comment_doesn’t_produce_semicolon - 1]
+## Input
+
+```
+<style>/* comment */.container {
+    padding: 2rem;
+    }
+</style><div class="container">My Text</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +44,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div class="container astro-sj3wye6h">My Text</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

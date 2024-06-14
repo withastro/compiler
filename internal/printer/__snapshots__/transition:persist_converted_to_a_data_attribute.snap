@@ -1,5 +1,14 @@
 
 [TestPrinter/transition:persist_converted_to_a_data_attribute - 1]
+## Input
+
+```
+<div transition:persist></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute($$createTransitionScope($$result, "pflz5ime"), "data-astro-transition-persist")}></div>`;
 }, undefined, 'self');
 export default $$Component;
+```
 ---

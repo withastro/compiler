@@ -1,5 +1,17 @@
 
 [TestPrinter/custom_elements - 1]
+## Input
+
+```
+/-/-/-/
+import 'test';
+/-/-/-/
+<my-element></my-element>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +47,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'my-element','my-element',{})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

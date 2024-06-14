@@ -1,5 +1,14 @@
 
 [TestPrinter/comments_removed_from_attribute_list - 1]
+## Input
+
+```
+<div><h1 {/* comment 1 */} value="1" {/* comment 2 */}>Hello</h1><Component {/* comment 1 */} value="1" {/* comment 2 */} /></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div><h1 value="1">Hello</h1>${$$renderComponent($$result,'Component',Component,{"value":"1",})}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

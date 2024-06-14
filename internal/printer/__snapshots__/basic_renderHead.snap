@@ -1,5 +1,14 @@
 
 [TestPrinter/basic_renderHead - 1]
+## Input
+
+```
+<html><head><title>Ah</title></head></html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<html><head><title>Ah</title>${$$renderHead($$result)}</head></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

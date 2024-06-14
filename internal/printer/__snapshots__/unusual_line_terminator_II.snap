@@ -1,5 +1,14 @@
 
 [TestPrinter/unusual_line_terminator_II - 1]
+## Input
+
+```
+Pre-set & Time-limited  holiday campaigns
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`Pre-set & Time-limited  holiday campaigns`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

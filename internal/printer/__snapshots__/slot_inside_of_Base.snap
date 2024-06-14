@@ -1,5 +1,14 @@
 
 [TestPrinter/slot_inside_of_Base - 1]
+## Input
+
+```
+<Base title="Home"><div>Hello</div></Base>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Base',Base,{"title":"Home"},{"default": () => $$render`${$$maybeRenderHead($$result)}<div>Hello</div>`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

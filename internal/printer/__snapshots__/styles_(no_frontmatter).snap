@@ -1,5 +1,26 @@
 
 [TestPrinter/styles_(no_frontmatter) - 1]
+## Input
+
+```
+<style>
+          .title {
+            font-family: fantasy;
+            font-size: 28px;
+          }
+
+          .body {
+            font-size: 1em;
+          }
+        </style>
+
+        <h1 class="title">Page Title</h1>
+        <p class="body">I’m a page</p>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +56,5 @@ return $$render`
         <p class="body astro-dpohflym">I’m a page</p>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

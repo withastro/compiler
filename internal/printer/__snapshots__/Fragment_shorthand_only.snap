@@ -1,5 +1,14 @@
 
 [TestPrinter/Fragment_shorthand_only - 1]
+## Input
+
+```
+<>Hello</>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`Hello`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,19 @@
 
 [TestPrinter/Mixed_style_siblings - 1]
+## Input
+
+```
+<head>
+    <style is:global>div { color: red }</style>
+    <style is:scoped>div { color: green }</style>
+    <style>div { color: blue }</style>
+</head>
+<div />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -37,4 +51,5 @@ ${$$renderHead($$result)}</head>
 <div class="astro-lasntlja"></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/table_expression_with_trailing_div - 1]
+## Input
+
+```
+<table><tr><td>{title}</td></tr></table><div>Div</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<table><tr><td>${title}</td></tr></table><div>Div</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

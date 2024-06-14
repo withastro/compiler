@@ -1,5 +1,14 @@
 
 [TestPrinter/Fragment_slotted_with_name - 1]
+## Input
+
+```
+<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'Component',Component,{},{"named": () => $$render`${$$renderComponent($$result,'Fragment',Fragment,{"slot":"named"},{"default": () => $$render`<div>Default</div><div>Named</div>`,})}`,})}</body>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

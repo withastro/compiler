@@ -1,5 +1,18 @@
 
 [TestPrinter/Nested_HTML_in_expressions,_wrapped_in_parens - 1]
+## Input
+
+```
+/-/-/-/
+const image = './penguin.png';
+const canonicalURL = new URL('http://example.com');
+/-/-/-/
+{image && (<meta property="og:image" content={new URL(image, canonicalURL)}>)}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +48,5 @@ const canonicalURL = new URL('http://example.com');
 return $$render`${image && ($$render`<meta property="og:image"${$$addAttribute(new URL(image, canonicalURL), "content")}>`)}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

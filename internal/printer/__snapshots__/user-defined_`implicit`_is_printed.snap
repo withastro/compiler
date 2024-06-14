@@ -1,5 +1,14 @@
 
 [TestPrinter/user-defined_`implicit`_is_printed - 1]
+## Input
+
+```
+<html implicit></html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<html implicit></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

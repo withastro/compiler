@@ -1,5 +1,14 @@
 
 [TestPrinter/Self-closing_components_in_head_can_have_siblings - 1]
+## Input
+
+```
+<html><head><BaseHead /><link href="test"></head><html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">${$$renderHead($$result)}</head></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

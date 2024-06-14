@@ -1,5 +1,14 @@
 
 [TestPrinter/script_define:vars_II - 1]
+## Input
+
+```
+<script define:vars={{ "dash-case": true }}>console.log(dashCase);</script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<script>(function(){${$$defineScriptVars({ "dash-case": true })}console.log(dashCase);})();</script>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

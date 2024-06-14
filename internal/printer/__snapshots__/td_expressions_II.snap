@@ -1,5 +1,14 @@
 
 [TestPrinter/td_expressions_II - 1]
+## Input
+
+```
+<table>{data.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</table>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<table>${data.map(row => $$render`<tr>${row.map(cell => $$render`<td>${cell}</td>`)}</tr>`)}</table>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

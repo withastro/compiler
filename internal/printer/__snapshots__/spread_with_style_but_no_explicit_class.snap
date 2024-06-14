@@ -1,5 +1,14 @@
 
 [TestPrinter/spread_with_style_but_no_explicit_class - 1]
+## Input
+
+```
+<style>div { color: red; }</style><div {...Astro.props} />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,undefined,{"class":"astro-XXXX"})}></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

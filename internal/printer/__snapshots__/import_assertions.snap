@@ -1,5 +1,16 @@
 
 [TestPrinter/import_assertions - 1]
+## Input
+
+```
+/-/-/-/
+import data from "test" assert { type: 'json' };
+/-/-/-/
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +46,5 @@ Astro.self = $$Component;
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

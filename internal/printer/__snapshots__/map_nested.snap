@@ -1,5 +1,25 @@
 
 [TestPrinter/map_nested - 1]
+## Input
+
+```
+/-/-/-/
+const groups = [[0, 1, 2], [3, 4, 5]];
+/-/-/-/
+<div>
+    {groups.map(items => {
+        return <ul>{
+            items.map(item => {
+                return <li>{item}</li>;
+            })
+        }</ul>
+    })}
+</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -42,4 +62,5 @@ return $$render`${$$maybeRenderHead($$result)}<div>
 </div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

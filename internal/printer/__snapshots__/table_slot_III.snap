@@ -1,5 +1,14 @@
 
 [TestPrinter/table_slot_III - 1]
+## Input
+
+```
+<table><td><slot /></td></table>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<table><td>${$$renderSlot($$result,$$slots["default"])}</td></table>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

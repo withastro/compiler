@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_on_Component_with_template_literal_attribute_without_variable - 1]
+## Input
+
+```
+<Component set:html=`content` />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render`${`content`}`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

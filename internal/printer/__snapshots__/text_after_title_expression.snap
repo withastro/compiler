@@ -1,5 +1,14 @@
 
 [TestPrinter/text_after_title_expression - 1]
+## Input
+
+```
+<title>a {expr} b</title>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<title>a ${expr} b</title>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

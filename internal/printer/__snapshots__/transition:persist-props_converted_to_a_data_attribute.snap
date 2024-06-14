@@ -1,5 +1,14 @@
 
 [TestPrinter/transition:persist-props_converted_to_a_data_attribute - 1]
+## Input
+
+```
+<my-island transition:persist transition:persist-props="false"></my-island>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'my-island','my-island',{"data-astro-transition-persist-props":"false","data-astro-transition-persist":($$createTransitionScope($$result, "otghnj5u"))})}`;
 }, undefined, 'self');
 export default $$Component;
+```
 ---

@@ -1,5 +1,17 @@
 
 [TestPrinter/Preserve_slot_whitespace - 1]
+## Input
+
+```
+<Component>
+  <p>Paragraph 1</p>
+  <p>Paragraph 2</p>
+</Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +47,5 @@ return $$render`${$$renderComponent($$result,'Component',Component,{},{"default"
 `,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

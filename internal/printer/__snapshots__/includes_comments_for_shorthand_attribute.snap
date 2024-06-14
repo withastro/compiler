@@ -1,5 +1,14 @@
 
 [TestPrinter/includes_comments_for_shorthand_attribute - 1]
+## Input
+
+```
+<div><h1 {/* comment 1 */ id /* comment 2 */}>Hello</h1><Component {/* comment 1 */ id /* comment 2 */}/></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div><h1${$$addAttribute(/* comment 1 */ id /* comment 2 */, "id")}>Hello</h1>${$$renderComponent($$result,'Component',Component,{"id":(/* comment 1 */ id /* comment 2 */)})}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,16 @@
 
 [TestPrinter/slots_(expression) - 1]
+## Input
+
+```
+<Component {data}>
+    {items.map(item => <div>{item}</div>)}
+</Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +43,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{"data":(data)},{"default": () => $$render`${items.map(item => $$render`${$$maybeRenderHead($$result)}<div>${item}</div>`)}`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

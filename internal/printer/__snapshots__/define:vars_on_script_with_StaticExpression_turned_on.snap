@@ -1,5 +1,14 @@
 
 [TestPrinter/define:vars_on_script_with_StaticExpression_turned_on - 1]
+## Input
+
+```
+<script is:inline>var one = 'one';</script><script>var two = 'two';</script><script define:vars={{foo:'bar'}}>var three = foo;</script><script is:inline define:vars={{foo:'bar'}}>var four = foo;</script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<script>var one = 'one';</script><script>(function(){${$$defineScriptVars({foo:'bar'})}var three = foo;})();</script><script>(function(){${$$defineScriptVars({foo:'bar'})}var four = foo;})();</script>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

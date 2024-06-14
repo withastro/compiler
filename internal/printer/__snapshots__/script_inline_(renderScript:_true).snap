@@ -1,5 +1,14 @@
 
 [TestPrinter/script_inline_(renderScript:_true) - 1]
+## Input
+
+```
+<main><script is:inline type="module">console.log("Hello");</script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<main><script type="module">console.log("Hello");</script></main>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

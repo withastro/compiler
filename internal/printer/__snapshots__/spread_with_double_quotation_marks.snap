@@ -1,5 +1,14 @@
 
 [TestPrinter/spread_with_double_quotation_marks - 1]
+## Input
+
+```
+<div {...propsFn("string")}/>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div${$$spreadAttributes(propsFn("string"))}></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

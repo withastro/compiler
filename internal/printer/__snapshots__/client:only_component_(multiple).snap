@@ -1,5 +1,26 @@
 
 [TestPrinter/client:only_component_(multiple) - 1]
+## Input
+
+```
+/-/-/-/
+import Component from '../components';
+/-/-/-/
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component test="a" client:only />
+    <Component test="b" client:only />
+    <Component test="c" client:only />
+  </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -41,4 +62,5 @@ return $$render`<html>
   </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

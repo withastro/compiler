@@ -1,5 +1,14 @@
 
 [TestPrinter/orphan_slot - 1]
+## Input
+
+```
+<slot />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderSlot($$result,$$slots["default"])}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

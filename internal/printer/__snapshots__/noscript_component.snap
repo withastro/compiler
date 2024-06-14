@@ -1,5 +1,21 @@
 
 [TestPrinter/noscript_component - 1]
+## Input
+
+```
+<html>
+  <head></head>
+  <body>
+    <noscript>
+        <Component />
+    </noscript>
+  </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -38,4 +54,5 @@ return $$render`<html>
   </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

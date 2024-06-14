@@ -1,5 +1,14 @@
 
 [TestPrinter/simple_ternary - 1]
+## Input
+
+```
+<body>{link ? <a href="/">{link}</a> : <div>no link</div>}</body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<body>${link ? $$render`<a href="/">${link}</a>` : $$render`<div>no link</div>`}</body>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/map_without_component - 1]
+## Input
+
+```
+<header><nav>{menu.map((item) => <a href={item.href}>{item.title}</a>)}</nav></header>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<header><nav>${menu.map((item) => $$render`<a${$$addAttribute(item.href, "href")}>${item.title}</a>`)}</nav></header>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,26 @@
 
 [TestPrinter/head_expression_and_conditional_rendering_of_fragment - 1]
+## Input
+
+```
+/-/-/-/
+const testBool = true;
+/-/-/-/
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>{testBool ? "Hey" : "Bye"}</title>
+        {testBool && (<><meta name="description" content="test" /></>)}
+    </head>
+    <body>
+      <div></div>
+    </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -42,4 +63,5 @@ return $$render`<html>
     </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

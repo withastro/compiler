@@ -1,5 +1,14 @@
 
 [TestPrinter/Empty_attribute_expression - 1]
+## Input
+
+```
+<body attr={}></body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<body${$$addAttribute((void 0), "attr")}></body>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

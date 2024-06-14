@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_on_style_with_template_literal_attribute_without_variable - 1]
+## Input
+
+```
+<style set:html=`h1{color:green;}` />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<style>${`h1{color:green;}`}</style>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/attribute_with_template_literal_interpolation - 1]
+## Input
+
+```
+<a :href="`/${url}`">Home</a>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<a :href="\`/\${url}\`">Home</a>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

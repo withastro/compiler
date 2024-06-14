@@ -1,5 +1,22 @@
 
 [TestPrinter/Component_names_A-Z - 1]
+## Input
+
+```
+/-/-/-/
+import AComponent from '../components/AComponent.jsx';
+import ZComponent from '../components/ZComponent.jsx';
+/-/-/-/
+
+<body>
+  <AComponent />
+  <ZComponent />
+</body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -40,4 +57,5 @@ return $$render`${$$maybeRenderHead($$result)}<body>
 </body>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

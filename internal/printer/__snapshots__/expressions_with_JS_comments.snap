@@ -1,5 +1,25 @@
 
 [TestPrinter/expressions_with_JS_comments - 1]
+## Input
+
+```
+/-/-/-/
+const items = ['red', 'yellow', 'blue'];
+/-/-/-/
+<div>
+  {items.map((item) => (
+    // foo < > < }
+    <div id={color}>color</div>
+  ))}
+  {items.map((item) => (
+    /* foo < > < } */ <div id={color}>color</div>
+  ))}
+</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -42,4 +62,5 @@ return $$render`${$$maybeRenderHead($$result)}<div>
 </div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

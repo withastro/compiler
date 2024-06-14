@@ -1,5 +1,14 @@
 
 [TestPrinter/anchor_expressions - 1]
+## Input
+
+```
+<a>{expr}</a>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<a>${expr}</a>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

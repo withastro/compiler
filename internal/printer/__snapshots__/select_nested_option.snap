@@ -1,5 +1,17 @@
 
 [TestPrinter/select_nested_option - 1]
+## Input
+
+```
+/-/-/-/
+const value = 'test';
+/-/-/-/
+<select>{value && <option>{value}</option>}</select>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +46,5 @@ const value = 'test';
 return $$render`${$$maybeRenderHead($$result)}<select>${value && $$render`<option>${value}</option>`}</select>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

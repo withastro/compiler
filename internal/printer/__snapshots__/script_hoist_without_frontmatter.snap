@@ -1,5 +1,15 @@
 
 [TestPrinter/script_hoist_without_frontmatter - 1]
+## Input
+
+```
+<main>
+                                <script type="module" hoist>console.log("Hello");</script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +44,5 @@ return $$render`${$$maybeRenderHead($$result)}<main>
 </main>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

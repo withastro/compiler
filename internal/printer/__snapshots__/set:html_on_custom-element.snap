@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_on_custom-element - 1]
+## Input
+
+```
+<custom-element set:html={content} />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render`${$$unescapeHTML(content)}`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

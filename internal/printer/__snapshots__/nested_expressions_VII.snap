@@ -1,5 +1,14 @@
 
 [TestPrinter/nested_expressions_VII - 1]
+## Input
+
+```
+<div>{() => { if (value > 0.25) { return <br />;} else if (value > 0.5) { return <hr />;} else if (value > 0.75) { return <div />;} return <div>Yaaay</div>;}</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div>${() => { if (value > 0.25) { return $$render`<br>`;} else if (value > 0.5) { return $$render`<hr>`;} else if (value > 0.75) { return $$render`<div></div>`;} return $$render`<div>Yaaay</div>`;}}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

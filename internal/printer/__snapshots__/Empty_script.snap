@@ -1,5 +1,14 @@
 
 [TestPrinter/Empty_script - 1]
+## Input
+
+```
+<script hoist></script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

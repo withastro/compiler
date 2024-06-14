@@ -1,5 +1,14 @@
 
 [TestPrinter/noscript_only - 1]
+## Input
+
+```
+<noscript><h1>Hello world</h1></noscript>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<noscript><h1>Hello world</h1></noscript>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

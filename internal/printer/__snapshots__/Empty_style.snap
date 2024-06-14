@@ -1,5 +1,14 @@
 
 [TestPrinter/Empty_style - 1]
+## Input
+
+```
+<style define:vars={{ color: "Gainsboro" }}></style>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ const $$definedVars = $$defineStyleVars([{ color: "Gainsboro" }]);
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/component_with_quoted_attributes - 1]
+## Input
+
+```
+<Component is='"cool"' />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{"is":"\"cool\""})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

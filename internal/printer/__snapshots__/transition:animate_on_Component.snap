@@ -1,5 +1,14 @@
 
 [TestPrinter/transition:animate_on_Component - 1]
+## Input
+
+```
+<Component class="bar" transition:animate="morph"></Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ Astro.self = $$Page;
 return $$render`${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "wkm5vset", "morph", ""))})}`;
 }, '/projects/app/src/pages/page.astro', 'self');
 export default $$Page;
+```
 ---

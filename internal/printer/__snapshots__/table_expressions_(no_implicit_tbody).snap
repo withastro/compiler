@@ -1,5 +1,17 @@
 
 [TestPrinter/table_expressions_(no_implicit_tbody) - 1]
+## Input
+
+```
+/-/-/-/
+const items = ["Dog", "Cat", "Platipus"];
+/-/-/-/
+<table>{items.map(item => (<tr><td>{item}</td></tr>))}</table>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +46,5 @@ const items = ["Dog", "Cat", "Platipus"];
 return $$render`${$$maybeRenderHead($$result)}<table>${items.map(item => ($$render`<tr><td>${item}</td></tr>`))}</table>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

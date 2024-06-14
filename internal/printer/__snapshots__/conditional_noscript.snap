@@ -1,5 +1,14 @@
 
 [TestPrinter/conditional_noscript - 1]
+## Input
+
+```
+{mode === "production" && <noscript>Hello</noscript>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${mode === "production" && $$render`${$$maybeRenderHead($$result)}<noscript>Hello</noscript>`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

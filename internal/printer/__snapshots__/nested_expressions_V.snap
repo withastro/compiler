@@ -1,5 +1,14 @@
 
 [TestPrinter/nested_expressions_V - 1]
+## Input
+
+```
+<div><h1>title</h1>{list.map(group => <Fragment><h2>{group.label}</h2>{group.items.map(item => <span>{item}</span>)}</Fragment>)}</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div><h1>title</h1>${list.map(group => $$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`<h2>${group.label}</h2>${group.items.map(item => $$render`<span>${item}</span>`)}`,})}`)}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

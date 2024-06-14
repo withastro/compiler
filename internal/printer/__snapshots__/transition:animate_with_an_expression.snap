@@ -1,5 +1,14 @@
 
 [TestPrinter/transition:animate_with_an_expression - 1]
+## Input
+
+```
+<div transition:animate={slide({duration:15})}></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ Astro.self = $$Page;
 return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "ih7yuffh", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`;
 }, '/projects/app/src/pages/page.astro', 'self');
 export default $$Page;
+```
 ---

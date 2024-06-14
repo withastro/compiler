@@ -1,5 +1,16 @@
 
 [TestPrinter/script_hoist_with_frontmatter - 1]
+## Input
+
+```
+/-/-/-/
+/-/-/-/
+<script type="module" hoist>console.log("Hello");</script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +43,5 @@ Astro.self = $$Component;
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

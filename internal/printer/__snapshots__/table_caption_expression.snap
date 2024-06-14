@@ -1,5 +1,14 @@
 
 [TestPrinter/table_caption_expression - 1]
+## Input
+
+```
+<table><caption>{title}</caption><tr><td>Hello</td></tr></table>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<table><caption>${title}</caption><tr><td>Hello</td></tr></table>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

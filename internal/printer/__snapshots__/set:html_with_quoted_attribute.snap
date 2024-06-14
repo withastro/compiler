@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_with_quoted_attribute - 1]
+## Input
+
+```
+<article set:html="content" />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<article>${"content"}</article>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/expression_slot - 1]
+## Input
+
+```
+<Component>{true && <div slot="a">A</div>}{false && <div slot="b">B</div>}</Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{},{"a": () => $$render`${true && $$render`${$$maybeRenderHead($$result)}<div>A</div>`}`,"b": () => $$render`${false && $$render`<div>B</div>`}`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

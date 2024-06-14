@@ -1,5 +1,22 @@
 
 [TestPrinter/gets_all_potential_hydrated_components - 1]
+## Input
+
+```
+/-/-/-/
+import One from 'one';
+import Two from 'two';
+import 'custom-element';
+const name = 'world';
+/-/-/-/
+<One client:load />
+<Two client:load />
+<my-element client:load />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -43,4 +60,5 @@ ${$$renderComponent($$result,'Two',Two,{"client:load":true,"client:component-hyd
 ${$$renderComponent($$result,'my-element','my-element',{"client:load":true,"client:component-hydration":"load"})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

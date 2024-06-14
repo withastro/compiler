@@ -1,5 +1,14 @@
 
 [TestPrinter/#955_ternary_slot_with_elements - 1]
+## Input
+
+```
+<Component><div>{isLeaf ? <p>Leaf</p> : <p>Branch</p>}</div></Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render`${$$maybeRenderHead($$result)}<div>${isLeaf ? $$render`<p>Leaf</p>` : $$render`<p>Branch</p>`}</div>`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

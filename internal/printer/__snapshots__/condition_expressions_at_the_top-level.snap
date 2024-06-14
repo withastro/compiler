@@ -1,5 +1,14 @@
 
 [TestPrinter/condition_expressions_at_the_top-level - 1]
+## Input
+
+```
+{cond && <span></span>}{cond && <strong></strong>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${cond && $$render`${$$maybeRenderHead($$result)}<span></span>`}${cond && $$render`<strong></strong>`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

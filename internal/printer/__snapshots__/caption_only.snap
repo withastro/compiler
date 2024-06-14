@@ -1,5 +1,14 @@
 
 [TestPrinter/caption_only - 1]
+## Input
+
+```
+<caption>Hello world!</caption>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<caption>Hello world!</caption>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

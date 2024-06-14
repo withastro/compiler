@@ -1,5 +1,16 @@
 
 [TestPrinter/multibyte_characters - 1]
+## Input
+
+```
+/-/-/-/
+/-/-/-/
+<h1>こんにちは</h1>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +43,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<h1>こんにちは</h1>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

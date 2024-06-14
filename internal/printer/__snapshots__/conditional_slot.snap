@@ -1,5 +1,14 @@
 
 [TestPrinter/conditional_slot - 1]
+## Input
+
+```
+<Component>{value && <div slot="test">foo</div>}</Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{},{"test": () => $$render`${value && $$render`${$$maybeRenderHead($$result)}<div>foo</div>`}`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

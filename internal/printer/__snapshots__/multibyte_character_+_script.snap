@@ -1,5 +1,14 @@
 
 [TestPrinter/multibyte_character_+_script - 1]
+## Input
+
+```
+<script>console.log('foo')</script><a class="test">ツ</a>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<a class="test">ツ</a>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

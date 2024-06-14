@@ -1,5 +1,33 @@
 
 [TestPrinter/table_simple_case - 1]
+## Input
+
+```
+/-/-/-/
+const content = "lol";
+/-/-/-/
+
+<html>
+  <body>
+    <table>
+      <tr>
+        <td>{content}</td>
+      </tr>
+      {
+        (
+          <tr>
+            <td>1</td>
+          </tr>
+        )
+      }
+    </table>Hello
+  </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -48,4 +76,5 @@ return $$render`<html>
   </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

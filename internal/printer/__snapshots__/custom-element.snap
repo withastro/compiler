@@ -1,5 +1,14 @@
 
 [TestPrinter/custom-element - 1]
+## Input
+
+```
+{show && <client-only-element></client-only-element>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${show && $$render`${$$renderComponent($$result,'client-only-element','client-only-element',{})}`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

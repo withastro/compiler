@@ -1,5 +1,20 @@
 
 [TestPrinter/sibling_expressions - 1]
+## Input
+
+```
+<html><body>
+  <table>
+  {true ? (<tr><td>Row 1</td></tr>) : null}
+  {true ? (<tr><td>Row 2</td></tr>) : null}
+  {true ? (<tr><td>Row 3</td></tr>) : null}
+  </table>
+</body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -38,4 +53,5 @@ return $$render`<html>${$$maybeRenderHead($$result)}<body>
 </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

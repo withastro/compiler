@@ -1,5 +1,14 @@
 
 [TestPrinter/solidus_in_template_literal_expression - 1]
+## Input
+
+```
+<div value={`${attr ? `a/b` : "c"} awesome`} />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute(`${attr ? `a/b` : "c"} awesome`, "value")}></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

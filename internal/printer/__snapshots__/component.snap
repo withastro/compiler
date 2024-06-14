@@ -1,5 +1,24 @@
 
 [TestPrinter/component - 1]
+## Input
+
+```
+/-/-/-/
+import VueComponent from '../components/Vue.vue';
+/-/-/-/
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <VueComponent />
+  </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -41,4 +60,5 @@ return $$render`<html>
   </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

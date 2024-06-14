@@ -1,5 +1,14 @@
 
 [TestPrinter/define:vars_on_non-root_elements - 1]
+## Input
+
+```
+<style define:vars={{color:'green'}}>h1{color:var(--color)}</style>{true ? <h1>foo</h1> : <h1>bar</h1>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ const $$definedVars = $$defineStyleVars([{color:'green'}]);
 return $$render`${true ? $$render`${$$maybeRenderHead($$result)}<h1 class="astro-34ao5s3b"${$$addAttribute($$definedVars, "style")}>foo</h1>` : $$render`<h1 class="astro-34ao5s3b"${$$addAttribute($$definedVars, "style")}>bar</h1>`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

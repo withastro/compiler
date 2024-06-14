@@ -1,5 +1,14 @@
 
 [TestPrinter/XElement - 1]
+## Input
+
+```
+<XElement {...attrs}></XElement>{onLoadString ? <script data-something></script> : null }
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'XElement',XElement,{...(attrs)})}${onLoadString ? $$render`<script data-something></script>` : null }`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

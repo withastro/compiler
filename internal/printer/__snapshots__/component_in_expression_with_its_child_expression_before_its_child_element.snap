@@ -1,5 +1,14 @@
 
 [TestPrinter/component_in_expression_with_its_child_expression_before_its_child_element - 1]
+## Input
+
+```
+{list.map(() => (<Component>{name}<link rel="stylesheet" /></Component>))}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${list.map(() => ($$render`${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render`${name}<link rel="stylesheet">`,})}`))}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

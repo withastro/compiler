@@ -1,5 +1,14 @@
 
 [TestPrinter/nested_expressions_III - 1]
+## Input
+
+```
+<div>{x.map((x) => x ? <div>{true ? <span>{x}</span> : null}</div> : <div>{false ? null : <span>{x}</span>}</div>)}</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div>${x.map((x) => x ? $$render`<div>${true ? $$render`<span>${x}</span>` : null}</div>` : $$render`<div>${false ? null : $$render`<span>${x}</span>`}</div>`)}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/define:vars_on_a_module_script_with_imports - 1]
+## Input
+
+```
+<script type="module" define:vars={{foo:'bar'}}>import 'foo';\nvar three = foo;</script>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<script type="module">${$$defineScriptVars({foo:'bar'})}import 'foo';\\nvar three = foo;</script>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

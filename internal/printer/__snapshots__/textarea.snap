@@ -1,5 +1,17 @@
 
 [TestPrinter/textarea - 1]
+## Input
+
+```
+/-/-/-/
+const value = 'test';
+/-/-/-/
+<textarea>{value}</textarea>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +46,5 @@ const value = 'test';
 return $$render`${$$maybeRenderHead($$result)}<textarea>${value}</textarea>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

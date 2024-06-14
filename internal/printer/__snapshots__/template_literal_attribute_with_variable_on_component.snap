@@ -1,5 +1,14 @@
 
 [TestPrinter/template_literal_attribute_with_variable_on_component - 1]
+## Input
+
+```
+<Component class=`${color}` />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{"class":`${color}`})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

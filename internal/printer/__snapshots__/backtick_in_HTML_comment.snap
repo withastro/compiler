@@ -1,5 +1,14 @@
 
 [TestPrinter/backtick_in_HTML_comment - 1]
+## Input
+
+```
+<body><!-- `npm install astro` --></body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<body><!-- \`npm install astro\` --></body>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/is:raw - 1]
+## Input
+
+```
+<article is:raw><% awesome %></article>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<article><% awesome %></article>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/HTML_comment_in_component_inside_expression_I - 1]
+## Input
+
+```
+{(() => <Component><!--Hi--></Component>)}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${(() => $$render`${$$renderComponent($$result,'Component',Component,{},{})}`)}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

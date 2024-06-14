@@ -1,5 +1,21 @@
 
 [TestPrinter/script_in_<head> - 1]
+## Input
+
+```
+/-/-/-/
+import Widget from '../components/Widget.astro';
+import Widget2 from '../components/Widget2.astro';
+/-/-/-/
+<html lang="en">
+  <head>
+    <script type="module" src="/regular_script.js"></script>
+  </head>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -40,4 +56,5 @@ return $$render`<html lang="en">
   ${$$renderHead($$result)}</head></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

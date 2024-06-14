@@ -1,5 +1,21 @@
 
 [TestPrinter/function_expression_slots_I - 1]
+## Input
+
+```
+<Component>
+{() => { switch (value) {
+case 'a': return <div slot="a">A</div>
+case 'b': return <div slot="b">B</div>
+case 'c': return <div slot="c">C</div>
+}
+}}
+</Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -37,4 +53,5 @@ case 'c': return {"c": () => $$render`<div>C</div>`}
 }))}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

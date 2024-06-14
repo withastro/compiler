@@ -1,5 +1,14 @@
 
 [TestPrinter/ternary_slot - 1]
+## Input
+
+```
+<Component>{Math.random() > 0.5 ? <div slot="a">A</div> : <div slot="b">B</div>}</Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},Math.random() > 0.5 ? {"a": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`} : {"b": () => $$render`<div>B</div>`}))}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

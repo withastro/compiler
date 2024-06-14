@@ -1,5 +1,19 @@
 
 [TestPrinter/export_comments_I - 1]
+## Input
+
+```
+/-/-/-/
+// hmm
+export const foo = 0
+/*
+*/
+/-/-/-/
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -38,4 +52,5 @@ Astro.self = $$Component;
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

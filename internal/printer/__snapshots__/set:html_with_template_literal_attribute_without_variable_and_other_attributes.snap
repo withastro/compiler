@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_with_template_literal_attribute_without_variable_and_other_attributes - 1]
+## Input
+
+```
+<article set:html=`content` cool="true" />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<article cool="true">${`content`}</article>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

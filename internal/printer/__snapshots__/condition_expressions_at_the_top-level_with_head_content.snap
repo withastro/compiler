@@ -1,5 +1,14 @@
 
 [TestPrinter/condition_expressions_at_the_top-level_with_head_content - 1]
+## Input
+
+```
+{cond && <meta charset=utf8>}{cond && <title>My title</title>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${cond && $$render`<meta charset="utf8">`}${cond && $$render`<title>My title</title>`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

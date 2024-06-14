@@ -1,5 +1,14 @@
 
 [TestPrinter/define:vars_on_style_tag_with_style_expression_attribute_on_element - 1]
+## Input
+
+```
+<style define:vars={{color:'green'}}>h1{color:var(--color)}</style><h1 style={myStyles}>testing</h1>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +42,5 @@ const $$definedVars = $$defineStyleVars([{color:'green'}]);
 return $$render`${$$maybeRenderHead($$result)}<h1${$$addAttribute(`${myStyles}; ${$$definedVars}`, "style")} class="astro-zwheddu6">testing</h1>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

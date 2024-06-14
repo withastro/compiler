@@ -1,5 +1,21 @@
 
 [TestPrinter/getStaticPaths_(hoisted_II) - 1]
+## Input
+
+```
+/-/-/-/
+const a = 0;
+export async function getStaticPaths() {
+    return { paths: [] }
+}
+const b = 0;
+/-/-/-/
+<div></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -39,4 +55,5 @@ const b = 0;
 return $$render`${$$maybeRenderHead($$result)}<div></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

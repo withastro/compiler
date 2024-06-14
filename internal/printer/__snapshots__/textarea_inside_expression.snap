@@ -1,5 +1,14 @@
 
 [TestPrinter/textarea_inside_expression - 1]
+## Input
+
+```
+{bool && <textarea>{value}</textarea>} {!bool && <input>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${bool && $$render`${$$maybeRenderHead($$result)}<textarea>${value}</textarea>`} ${!bool && $$render`<input>`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

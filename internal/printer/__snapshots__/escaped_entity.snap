@@ -1,5 +1,14 @@
 
 [TestPrinter/escaped_entity - 1]
+## Input
+
+```
+<img alt="A person saying &#x22;hello&#x22;">
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<img alt="A person saying &quot;hello&quot;">`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,24 @@
 
 [TestPrinter/head_expression - 1]
+## Input
+
+```
+/-/-/-/
+const name = "world";
+/-/-/-/
+<html>
+  <head>
+    <title>Hello {name}</title>
+  </head>
+  <body>
+    <div></div>
+  </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -40,4 +59,5 @@ return $$render`<html>
   </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

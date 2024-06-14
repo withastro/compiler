@@ -1,5 +1,18 @@
 
 [TestPrinter/dynamic_import - 1]
+## Input
+
+```
+/-/-/-/
+const markdownDocs = await Astro.glob('../markdown/*.md')
+const article2 = await import('../markdown/article2.md')
+/-/-/-/
+<div />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +48,5 @@ const article2 = await import('../markdown/article2.md')
 return $$render`${$$maybeRenderHead($$result)}<div></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

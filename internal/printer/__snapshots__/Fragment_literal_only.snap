@@ -1,5 +1,14 @@
 
 [TestPrinter/Fragment_literal_only - 1]
+## Input
+
+```
+<Fragment>world</Fragment>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`world`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

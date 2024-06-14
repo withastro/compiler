@@ -1,5 +1,14 @@
 
 [TestPrinter/Fragment - 1]
+## Input
+
+```
+<body><Fragment><div>Default</div><div>Named</div></Fragment></body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`<div>Default</div><div>Named</div>`,})}</body>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

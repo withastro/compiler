@@ -1,5 +1,14 @@
 
 [TestPrinter/SVG_styles - 1]
+## Input
+
+```
+<svg><style>path { fill: red; }</style></svg>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<svg><style>path { fill: red; }</style></svg>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

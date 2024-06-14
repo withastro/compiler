@@ -1,5 +1,14 @@
 
 [TestPrinter/class_with_spread - 1]
+## Input
+
+```
+<div class="something" {...Astro.props} />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div class="something"${$$spreadAttributes(Astro.props)}></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

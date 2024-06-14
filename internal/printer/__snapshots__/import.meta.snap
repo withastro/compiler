@@ -1,5 +1,18 @@
 
 [TestPrinter/import.meta - 1]
+## Input
+
+```
+/-/-/-/
+const components = import.meta.glob("../components/*.astro", {
+  import: 'default'
+});
+/-/-/-/
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -36,4 +49,5 @@ const components = import.meta.glob("../components/*.astro", {
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

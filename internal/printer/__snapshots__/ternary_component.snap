@@ -1,5 +1,14 @@
 
 [TestPrinter/ternary_component - 1]
+## Input
+
+```
+{special ? <ChildDiv><p>Special</p></ChildDiv> : <p>Not special</p>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${special ? $$render`${$$renderComponent($$result,'ChildDiv',ChildDiv,{},{"default": () => $$render`${$$maybeRenderHead($$result)}<p>Special</p>`,})}` : $$render`<p>Not special</p>`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

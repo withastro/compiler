@@ -1,5 +1,16 @@
 
 [TestPrinter/css_imports_are_not_included_in_module_metadata - 1]
+## Input
+
+```
+/-/-/-/
+            import './styles.css';
+            ---
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -33,4 +44,5 @@ Astro.self = $$Component;
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

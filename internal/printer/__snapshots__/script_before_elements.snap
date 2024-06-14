@@ -1,5 +1,14 @@
 
 [TestPrinter/script_before_elements - 1]
+## Input
+
+```
+<script>Here</script><div></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

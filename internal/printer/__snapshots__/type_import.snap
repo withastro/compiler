@@ -1,5 +1,18 @@
 
 [TestPrinter/type_import - 1]
+## Input
+
+```
+/-/-/-/
+import type data from "test"
+/-/-/-/
+
+<div>{data}</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +47,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div>${data}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

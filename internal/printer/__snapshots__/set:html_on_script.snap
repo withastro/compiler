@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_on_script - 1]
+## Input
+
+```
+<script set:html={content} />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<script>${$$unescapeHTML(content)}</script>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

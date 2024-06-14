@@ -1,5 +1,14 @@
 
 [TestPrinter/multibyte_character_+_style - 1]
+## Input
+
+```
+<style>a { font-size: 16px; }</style><a class="test">ツ</a>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<a class="test astro-7vm74pjk">ツ</a>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

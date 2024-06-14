@@ -1,5 +1,17 @@
 
 [TestPrinter/tbody_expressions_2 - 1]
+## Input
+
+```
+/-/-/-/
+const items = ["Dog", "Cat", "Platipus"];
+/-/-/-/
+<table><tr><td>Name</td></tr>{items.map(item => (<tr><td>{item}</td><td>{item + 's'}</td></tr>))}</table>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +46,5 @@ const items = ["Dog", "Cat", "Platipus"];
 return $$render`${$$maybeRenderHead($$result)}<table><tr><td>Name</td></tr>${items.map(item => ($$render`<tr><td>${item}</td><td>${item + 's'}</td></tr>`))}</table>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

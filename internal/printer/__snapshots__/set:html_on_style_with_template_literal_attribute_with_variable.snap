@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_on_style_with_template_literal_attribute_with_variable - 1]
+## Input
+
+```
+<style set:html=`${content}` />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<style>${`${content}`}</style>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

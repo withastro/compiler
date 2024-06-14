@@ -1,5 +1,14 @@
 
 [TestPrinter/maybeRenderHead_not_printed_for_hoisted_scripts - 1]
+## Input
+
+```
+<script></script><Layout></Layout>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Page;
 return $$render`${$$renderComponent($$result,'Layout',Layout,{})}`;
 }, '/projects/app/src/pages/page.astro', undefined);
 export default $$Page;
+```
 ---

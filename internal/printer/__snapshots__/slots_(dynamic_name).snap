@@ -1,5 +1,20 @@
 
 [TestPrinter/slots_(dynamic_name) - 1]
+## Input
+
+```
+/-/-/-/
+import Component from 'test';
+const name = 'named';
+        ---
+        <Component>
+            <div slot={name}>Named</div>
+        </Component>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -38,4 +53,5 @@ const name = 'named';
 return $$render`${$$renderComponent($$result,'Component',Component,{},{[name]: () => $$render`${$$maybeRenderHead($$result)}<div>Named</div>`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

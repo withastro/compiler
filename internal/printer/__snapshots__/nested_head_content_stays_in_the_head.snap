@@ -1,5 +1,31 @@
 
 [TestPrinter/nested_head_content_stays_in_the_head - 1]
+## Input
+
+```
+/-/-/-/
+const meta = { title: 'My App' };
+/-/-/-/
+
+<html>
+    <head>
+        <meta charset="utf-8" />
+
+        {
+            meta && <title>{meta.title}</title>
+        }
+
+        <meta name="after">
+    </head>
+    <body>
+        <h1>My App</h1>
+    </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -46,4 +72,5 @@ return $$render`<html>
     </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

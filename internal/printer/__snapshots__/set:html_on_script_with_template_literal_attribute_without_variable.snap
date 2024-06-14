@@ -1,5 +1,14 @@
 
 [TestPrinter/set:html_on_script_with_template_literal_attribute_without_variable - 1]
+## Input
+
+```
+<script set:html=`alert(1)` />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<script>${`alert(1)`}</script>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

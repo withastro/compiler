@@ -1,5 +1,16 @@
 
 [TestPrinter/import_to_identifier_named_assert - 1]
+## Input
+
+```
+/-/-/-/
+import assert from 'test';
+/-/-/-/
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -35,4 +46,5 @@ Astro.self = $$Component;
 return $$render``;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

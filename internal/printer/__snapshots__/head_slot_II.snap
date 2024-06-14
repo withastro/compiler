@@ -1,5 +1,14 @@
 
 [TestPrinter/head_slot_II - 1]
+## Input
+
+```
+<html><head><slot /></head><body class="a"></body></html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<html><head>${$$renderSlot($$result,$$slots["default"])}${$$renderHead($$result)}</head><body class="a"></body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

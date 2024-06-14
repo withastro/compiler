@@ -1,5 +1,14 @@
 
 [TestPrinter/iframe - 1]
+## Input
+
+```
+<iframe src="something" />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<iframe src="something"></iframe>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

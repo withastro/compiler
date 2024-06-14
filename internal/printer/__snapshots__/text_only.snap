@@ -1,5 +1,14 @@
 
 [TestPrinter/text_only - 1]
+## Input
+
+```
+Foo
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,9 +41,19 @@ Astro.self = $$Component;
 return $$render`Foo`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---
 
 [TestPrinter/text_only#01 - 1]
+## Input
+
+```
+Hello!
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -67,4 +86,5 @@ Astro.self = $$Component;
 return $$render`Hello!`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

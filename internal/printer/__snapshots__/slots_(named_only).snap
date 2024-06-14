@@ -1,5 +1,18 @@
 
 [TestPrinter/slots_(named_only) - 1]
+## Input
+
+```
+<Slotted>
+      <span slot="a">A</span>
+      <span slot="b">B</span>
+      <span slot="c">C</span>
+    </Slotted>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +45,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Slotted',Slotted,{},{"a": () => $$render`${$$maybeRenderHead($$result)}<span>A</span>`,"b": () => $$render`<span>B</span>`,"c": () => $$render`<span>C</span>`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

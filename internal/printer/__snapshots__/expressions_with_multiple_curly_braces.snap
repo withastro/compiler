@@ -1,5 +1,24 @@
 
 [TestPrinter/expressions_with_multiple_curly_braces - 1]
+## Input
+
+```
+<div>
+{
+    () => {
+        let generate = (input) => {
+            let a = () => { return; };
+            let b = () => { return; };
+            let c = () => { return; };
+        };
+    }
+}
+</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -42,4 +61,5 @@ ${
 </div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

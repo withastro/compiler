@@ -1,5 +1,23 @@
 
 [TestPrinter/All_components - 1]
+## Input
+
+```
+/-/-/-/
+import { Container, Col, Row } from 'react-bootstrap';
+/-/-/-/
+<Container>
+    <Row>
+        <Col>
+            <h1>Hi!</h1>
+        </Col>
+    </Row>
+</Container>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -41,4 +59,5 @@ return $$render`${$$renderComponent($$result,'Container',Container,{},{"default"
 `,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

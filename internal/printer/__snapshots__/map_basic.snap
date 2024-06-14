@@ -1,5 +1,21 @@
 
 [TestPrinter/map_basic - 1]
+## Input
+
+```
+/-/-/-/
+const items = [0, 1, 2];
+/-/-/-/
+<ul>
+    {items.map(item => {
+        return <li>{item}</li>;
+    })}
+</ul>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -38,4 +54,5 @@ return $$render`${$$maybeRenderHead($$result)}<ul>
 </ul>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

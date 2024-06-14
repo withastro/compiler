@@ -1,5 +1,14 @@
 
 [TestPrinter/tbody_expressions_3 - 1]
+## Input
+
+```
+<table><tbody>{rows.map(row => (<tr><td><strong>{row}</strong></td></tr>))}</tbody></table>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<table><tbody>${rows.map(row => ($$render`<tr><td><strong>${row}</strong></td></tr>`))}</tbody></table>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

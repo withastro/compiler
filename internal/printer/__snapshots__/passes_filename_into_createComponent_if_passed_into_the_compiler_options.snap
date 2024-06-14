@@ -1,5 +1,14 @@
 
 [TestPrinter/passes_filename_into_createComponent_if_passed_into_the_compiler_options - 1]
+## Input
+
+```
+<div>test</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Page;
 return $$render`${$$maybeRenderHead($$result)}<div>test</div>`;
 }, '/projects/app/src/pages/page.astro', undefined);
 export default $$Page;
+```
 ---

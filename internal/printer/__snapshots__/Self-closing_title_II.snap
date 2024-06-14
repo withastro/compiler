@@ -1,5 +1,14 @@
 
 [TestPrinter/Self-closing_title_II - 1]
+## Input
+
+```
+<html><head><title /></head><body></body></html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<html><head><title></title>${$$renderHead($$result)}</head><body></body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/small_expression - 1]
+## Input
+
+```
+<div><small>{a}</small>{data.map(a => <Component value={a} />)}</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div><small>${a}</small>${data.map(a => $$render`${$$renderComponent($$result,'Component',Component,{"value":(a)})}`)}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,17 @@
 
 [TestPrinter/export_member_does_not_panic - 1]
+## Input
+
+```
+/-/-/-/
+mod.export();
+/-/-/-/
+<div />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -34,4 +46,5 @@ mod.export();
 return $$render`${$$maybeRenderHead($$result)}<div></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

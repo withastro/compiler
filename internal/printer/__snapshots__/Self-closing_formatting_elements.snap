@@ -1,5 +1,14 @@
 
 [TestPrinter/Self-closing_formatting_elements - 1]
+## Input
+
+```
+<div id="1"><div id="2"><div id="3"><i/><i/><i/></div></div></div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div id="1"><div id="2"><div id="3"><i></i><i></i><i></i></div></div></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

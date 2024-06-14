@@ -1,5 +1,14 @@
 
 [TestPrinter/ternary_layout - 1]
+## Input
+
+```
+{toggleError ? <BaseLayout><h1>SITE: {Astro.site}</h1></BaseLayout> : <><h1>SITE: {Astro.site}</h1></>}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${toggleError ? $$render`${$$renderComponent($$result,'BaseLayout',BaseLayout,{},{"default": () => $$render`${$$maybeRenderHead($$result)}<h1>SITE: ${Astro.site}</h1>`,})}` : $$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`<h1>SITE: ${Astro.site}</h1>`,})}`}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

@@ -1,5 +1,14 @@
 
 [TestPrinter/set:text_on_custom-element_with_template_literal_attribute_without_variable - 1]
+## Input
+
+```
+<custom-element set:text=`content` />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'custom-element','custom-element',{},{"default": () => $$render`${`content`}`,})}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

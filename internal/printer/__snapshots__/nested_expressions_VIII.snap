@@ -1,5 +1,14 @@
 
 [TestPrinter/nested_expressions_VIII - 1]
+## Input
+
+```
+<div>{ items.map(({ type, ...data }) => { switch (type) { case 'card': { return ( <Card {...data} /> ); } case 'paragraph': { return ( <p>{data.body}</p>);}}})}</div>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div>${ items.map(({ type, ...data }) => { switch (type) { case 'card': { return ( $$render`${$$renderComponent($$result,'Card',Card,{...(data)})}` ); } case 'paragraph': { return ( $$render`<p>${data.body}</p>`);}}})}</div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

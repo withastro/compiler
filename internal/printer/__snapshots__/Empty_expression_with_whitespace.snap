@@ -1,5 +1,14 @@
 
 [TestPrinter/Empty_expression_with_whitespace - 1]
+## Input
+
+```
+<body>({   })</body>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<body>(${(void 0)   })</body>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

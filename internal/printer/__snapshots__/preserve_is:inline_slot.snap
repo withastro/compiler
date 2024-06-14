@@ -1,5 +1,14 @@
 
 [TestPrinter/preserve_is:inline_slot - 1]
+## Input
+
+```
+<slot is:inline />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<slot></slot>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

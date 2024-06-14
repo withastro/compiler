@@ -1,5 +1,24 @@
 
 [TestPrinter/dot_component - 1]
+## Input
+
+```
+/-/-/-/
+import * as ns from '../components';
+/-/-/-/
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <ns.Component />
+  </body>
+</html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -41,4 +60,5 @@ return $$render`<html>
   </body></html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

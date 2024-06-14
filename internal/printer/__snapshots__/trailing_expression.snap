@@ -1,5 +1,14 @@
 
 [TestPrinter/trailing_expression - 1]
+## Input
+
+```
+<Component />{}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$renderComponent($$result,'Component',Component,{})}${(void 0)}`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

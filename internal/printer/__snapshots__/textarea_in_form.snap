@@ -1,5 +1,14 @@
 
 [TestPrinter/textarea_in_form - 1]
+## Input
+
+```
+<html><Component><form><textarea></textarea></form></Component></html>
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`<html>${$$renderComponent($$result,'Component',Component,{},{"default": () => $$render`${$$maybeRenderHead($$result)}<form><textarea></textarea></form>`,})}</html>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

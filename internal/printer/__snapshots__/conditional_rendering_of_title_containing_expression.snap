@@ -1,5 +1,22 @@
 
 [TestPrinter/conditional_rendering_of_title_containing_expression - 1]
+## Input
+
+```
+{
+  props.title && (
+    <>
+      <title>{props.title}</title>
+      <meta property="og:title" content={props.title} />
+      <meta name="twitter:title" content={props.title} />
+    </>
+  )
+}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -40,4 +57,5 @@ return $$render`${
 }`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

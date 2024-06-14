@@ -1,5 +1,14 @@
 
 [TestPrinter/class_and_class_list_object - 1]
+## Input
+
+```
+<div class="two three" class:list={['hello goodbye', { hello: true, world: true }]} />
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -32,4 +41,5 @@ Astro.self = $$Component;
 return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute(['two three', ['hello goodbye', { hello: true, world: true }]], "class:list")}></div>`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---

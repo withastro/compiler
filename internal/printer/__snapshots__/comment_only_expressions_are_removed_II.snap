@@ -1,5 +1,22 @@
 
 [TestPrinter/comment_only_expressions_are_removed_II - 1]
+## Input
+
+```
+{
+    list.map((i) => (
+        <Component>
+            {
+                // hello
+            }
+        </Component>
+    ))
+}
+```
+
+## Output
+
+```js
 import {
   Fragment,
   render as $$render,
@@ -36,4 +53,5 @@ return $$render`${
 }`;
 }, undefined, undefined);
 export default $$Component;
+```
 ---
