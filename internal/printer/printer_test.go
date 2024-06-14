@@ -3705,11 +3705,17 @@ const meta = { title: 'My App' };
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 
+			snapshotName := strings.ReplaceAll(tt.name, "#", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "<", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ">", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ")", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "(", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ":", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, " ", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "#", "_")
+
 			s := snaps.WithConfig(
-				snaps.Filename(
-					strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
-						strings.ReplaceAll(tt.name, ")", "_"), "(", "_"), ":", "_"), " ", "_")),
-				snaps.Update(false),
+				snaps.Filename(snapshotName),
 			)
 
 			snapshot := fmt.Sprintf("%s%s%s%s%s%s%s%s", "## Input\n\n", "```\n", test_utils.Dedent(code), "\n```", "\n\n## Output\n\n", "```js\n", test_utils.Dedent(output), "\n```")
