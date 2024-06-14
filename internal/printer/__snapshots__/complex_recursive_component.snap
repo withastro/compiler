@@ -34,7 +34,7 @@ export const $$metadata = $$createMetadata("/projects/app/src/components/RenderN
 
 const $$Astro = $$createAstro('https://astro.build');
 const Astro = $$Astro;
-const $$RenderNode = $$createComponent(async ($$result, $$props, $$slots) => {
+const $$RenderNode = $$createComponent(($$result, $$props, $$slots) => {
 const Astro = $$result.createAstro($$Astro, $$props, $$slots);
 Astro.self = $$RenderNode;
 

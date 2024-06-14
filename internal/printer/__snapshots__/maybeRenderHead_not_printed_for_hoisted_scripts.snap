@@ -32,11 +32,7 @@ import {
 
 export const $$metadata = $$createMetadata("/projects/app/src/pages/page.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
 
-const $$Astro = $$createAstro('https://astro.build');
-const Astro = $$Astro;
-const $$Page = $$createComponent(async ($$result, $$props, $$slots) => {
-const Astro = $$result.createAstro($$Astro, $$props, $$slots);
-Astro.self = $$Page;
+const $$Page = $$createComponent(($$result, $$props, $$slots) => {
 
 return $$render`${$$renderComponent($$result,'Layout',Layout,{})}`;
 }, '/projects/app/src/pages/page.astro', undefined);

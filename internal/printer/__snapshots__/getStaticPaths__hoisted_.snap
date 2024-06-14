@@ -38,14 +38,10 @@ import {
 
 export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
 
-const $$Astro = $$createAstro('https://astro.build');
-const Astro = $$Astro;
 export const getStaticPaths = async () => {
     return { paths: [] }
 }
-const $$Component = $$createComponent(async ($$result, $$props, $$slots) => {
-const Astro = $$result.createAstro($$Astro, $$props, $$slots);
-Astro.self = $$Component;
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
 const a = 0;
 

@@ -32,11 +32,7 @@ import {
 
 export const $$metadata = $$createMetadata("/src/pages/index.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [{ type: 'inline', value: `console.log("Hello");` }] });
 
-const $$Astro = $$createAstro('https://astro.build');
-const Astro = $$Astro;
-const $$Index = $$createComponent(async ($$result, $$props, $$slots) => {
-const Astro = $$result.createAstro($$Astro, $$props, $$slots);
-Astro.self = $$Index;
+const $$Index = $$createComponent(($$result, $$props, $$slots) => {
 
 return $$render`${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}</main>`;
 }, '/src/pages/index.astro', undefined);
