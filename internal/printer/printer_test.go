@@ -2,7 +2,6 @@ package printer
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
@@ -50,9 +49,6 @@ export default $$Component;`
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
-// SPECIAL TEST FIXTURES
-var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
-
 func suffixWithFilename(filename string, transitions bool) string {
 	propagationArg := "undefined"
 	if transitions {
@@ -97,8 +93,8 @@ type jsonTestcase struct {
 
 func TestPrinter(t *testing.T) {
 	longRandomString := ""
-	for i := 0; i < 4080; i++ {
-		longRandomString += string(NON_WHITESPACE_CHARS[rand.Intn(len(NON_WHITESPACE_CHARS))])
+	for i := 0; i < 40; i++ {
+		longRandomString += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?"
 	}
 
 	tests := []testcase{
