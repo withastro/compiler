@@ -2,12 +2,12 @@ package printer
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gkampitakis/go-snaps/snaps"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	types "github.com/withastro/compiler/internal/t"
@@ -48,9 +48,6 @@ var SUFFIX_EXP_TRANSITIONS = fmt.Sprintf("%s;", BACKTICK) + `
 export default $$Component;`
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
-
-// SPECIAL TEST FIXTURES
-var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
 
 func suffixWithFilename(filename string, transitions bool) string {
 	propagationArg := "undefined"
@@ -96,8 +93,8 @@ type jsonTestcase struct {
 
 func TestPrinter(t *testing.T) {
 	longRandomString := ""
-	for i := 0; i < 4080; i++ {
-		longRandomString += string(NON_WHITESPACE_CHARS[rand.Intn(len(NON_WHITESPACE_CHARS))])
+	for i := 0; i < 40; i++ {
+		longRandomString += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?"
 	}
 
 	tests := []testcase{
@@ -3707,6 +3704,23 @@ const meta = { title: 'My App' };
 			if diff := test_utils.ANSIDiff(test_utils.RemoveNewlines(test_utils.Dedent(toMatch)), test_utils.RemoveNewlines(test_utils.Dedent(output))); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+
+			snapshotName := strings.ReplaceAll(tt.name, "#", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "<", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ">", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ")", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "(", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ":", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, " ", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "#", "_")
+
+			s := snaps.WithConfig(
+				snaps.Filename(snapshotName),
+			)
+
+			snapshot := fmt.Sprintf("%s%s%s%s%s%s%s%s", "## Input\n\n", "```\n", test_utils.Dedent(code), "\n```", "\n\n## Output\n\n", "```js\n", test_utils.Dedent(output), "\n```")
+
+			s.MatchSnapshot(t, snapshot)
 		})
 	}
 }
