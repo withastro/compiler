@@ -76,7 +76,11 @@ go test -v ./internal/... -run TestPrintToJSON/Comment preserves whitespace
 
 Adding tests for the tokenizer, scanner, and printer can be found in `internal/token_test.go`, `internal/js_scanner_test.go`, and `internal/printer/printer_test.go`, respectively.
 
-### Update snapshot tests
+### Snapshot testing
+
+We use [go-snaps](https://github.com/gkampitakis/go-snaps) for snapshot testing. Visit their repository for more details on how to use it
+
+#### Update snapshots
 
 Some of our tests use snapshot tests. If some of you changes are expected to update some snapshot tests, you can use the environment variable `UPDATE_SNAPS` to do so:
 
