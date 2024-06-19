@@ -3,10 +3,11 @@ lockfileVersion: '6.0'
 importers:
 
   .:
-    devDependencies:
+    dependencies:
       '@biomejs/biome':
-        specifier: 1.8.1
+        specifier: ^1.8.1
         version: 1.8.1
+    devDependencies:
       '@changesets/cli':
         specifier: ^2.25.0
         version: 2.25.0
@@ -91,7 +92,7 @@ packages:
       '@biomejs/cli-linux-x64-musl': 1.8.1
       '@biomejs/cli-win32-arm64': 1.8.1
       '@biomejs/cli-win32-x64': 1.8.1
-    dev: true
+    dev: false
 
   /@biomejs/cli-darwin-arm64@1.8.1:
     resolution: {integrity: sha512-XLiB7Uu6GALIOBWzQ2aMD0ru4Ly5/qSeQF7kk3AabzJ/kwsEWSe33iVySBP/SS2qv25cgqNiLksjGcw2bHT3mw==}
@@ -99,7 +100,7 @@ packages:
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@biomejs/cli-darwin-x64@1.8.1:
@@ -108,7 +109,7 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@biomejs/cli-linux-arm64-musl@1.8.1:
@@ -117,7 +118,7 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@biomejs/cli-linux-arm64@1.8.1:
@@ -126,7 +127,7 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@biomejs/cli-linux-x64-musl@1.8.1:
@@ -135,7 +136,7 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@biomejs/cli-linux-x64@1.8.1:
@@ -144,7 +145,7 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@biomejs/cli-win32-arm64@1.8.1:
@@ -153,7 +154,7 @@ packages:
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@biomejs/cli-win32-x64@1.8.1:
@@ -162,7 +163,7 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
-    dev: true
+    dev: false
     optional: true
 
   /@changesets/apply-release-plan@6.1.1:
