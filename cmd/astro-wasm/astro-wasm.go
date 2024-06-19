@@ -359,6 +359,7 @@ func Transform() any {
 				scripts := []HoistedScript{}
 				hydratedComponents := []HydratedComponent{}
 				clientOnlyComponents := []HydratedComponent{}
+				serverComponents := []HydratedComponent{}
 				css_result := printer.PrintCSS(source, doc, transformOptions)
 				for _, bytes := range css_result.Output {
 					css = append(css, string(bytes))
@@ -439,6 +440,14 @@ func Transform() any {
 					})
 				}
 
+				for _, c := range doc.ServerComponents {
+					serverComponents = append(serverComponents, HydratedComponent{
+						ExportName:   c.ExportName,
+						Specifier:    c.Specifier,
+						ResolvedPath: c.ResolvedPath,
+					})
+				}
+
 				var value vert.Value
 				result := printer.PrintToJS(source, doc, len(css), transformOptions, h)
 				transformResult := &TransformResult{
@@ -447,6 +456,7 @@ func Transform() any {
 					Scripts:              scripts,
 					HydratedComponents:   hydratedComponents,
 					ClientOnlyComponents: clientOnlyComponents,
+					ServerComponents:     serverComponents,
 					ContainsHead:         doc.ContainsHead,
 					StyleError:           styleError,
 					Propagation:          doc.HeadPropagation,

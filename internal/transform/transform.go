@@ -535,7 +535,7 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 
 				match := matchNodeToImportStatement(doc, n)
 				if match != nil {
-					doc.HydratedComponents = append(doc.HydratedComponents, &astro.HydratedComponentMetadata{
+					doc.ServerComponents = append(doc.ServerComponents, &astro.HydratedComponentMetadata{
 						ExportName:   match.ExportName,
 						Specifier:    match.Specifier,
 						ResolvedPath: ResolveIdForMatch(match.Specifier, opts),
