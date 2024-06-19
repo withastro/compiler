@@ -1,0 +1,14 @@
+
+[TestScopeStyle/:root - 1]
+## Input
+
+```
+:root{}
+```
+
+## Output
+
+```css
+:root{}
+```
+---

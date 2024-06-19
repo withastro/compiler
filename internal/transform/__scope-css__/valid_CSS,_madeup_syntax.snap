@@ -1,0 +1,14 @@
+
+[TestScopeStyle/valid_CSS,_madeup_syntax - 1]
+## Input
+
+```
+@tailwind base;
+```
+
+## Output
+
+```css
+@tailwind base;
+```
+---

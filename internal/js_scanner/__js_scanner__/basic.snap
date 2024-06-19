@@ -1,0 +1,14 @@
+
+[TestGetObjectKeys/basic - 1]
+## Input
+
+```
+{ value }
+```
+
+## Output
+
+```js
+["value"]
+```
+---

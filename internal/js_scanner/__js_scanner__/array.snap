@@ -1,0 +1,14 @@
+
+[TestGetObjectKeys/array - 1]
+## Input
+
+```
+{ a: [0, 1, 2], b: ["one", "two", "three"], c: 0 }
+```
+
+## Output
+
+```js
+["a","b","c"]
+```
+---

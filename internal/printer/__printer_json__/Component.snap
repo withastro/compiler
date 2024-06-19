@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/Component - 1]
+## Input
+
+```
+<Component />
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"component","name":"Component","attributes":[],"children":[]}]}
+```
+---

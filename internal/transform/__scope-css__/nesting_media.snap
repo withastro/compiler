@@ -1,0 +1,14 @@
+
+[TestScopeStyle/nesting_media - 1]
+## Input
+
+```
+:global(html) { @media (min-width: 640px) { color: blue } }html { background-color: lime }
+```
+
+## Output
+
+```css
+html{@media (min-width: 640px){color:blue}}html{background-color:lime}
+```
+---

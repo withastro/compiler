@@ -1,0 +1,14 @@
+
+[TestScopeHTML/template_literal - 1]
+## Input
+
+```
+<div class=`${value}` />
+```
+
+## Output
+
+```js
+<div class=`${value} astro-xxxxxx`></div>
+```
+---

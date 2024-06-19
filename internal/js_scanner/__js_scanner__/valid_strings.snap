@@ -1,0 +1,14 @@
+
+[TestGetObjectKeys/valid_strings - 1]
+## Input
+
+```
+{ "lowercase": true, "camelCase": true, "PascalCase": true, "snake_case": true, "__private": true, ["computed"]: true, }
+```
+
+## Output
+
+```js
+["lowercase","camelCase","PascalCase","snake_case","__private","computed"]
+```
+---

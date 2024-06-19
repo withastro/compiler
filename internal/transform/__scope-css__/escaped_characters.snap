@@ -1,0 +1,14 @@
+
+[TestScopeStyle/escaped_characters - 1]
+## Input
+
+```
+.class\:class:focus{}
+```
+
+## Output
+
+```css
+.class\:class:where(.astro-xxxxxx):focus{}
+```
+---

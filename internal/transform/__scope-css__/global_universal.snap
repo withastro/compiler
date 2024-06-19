@@ -1,0 +1,14 @@
+
+[TestScopeStyle/global_universal - 1]
+## Input
+
+```
+.class :global(*){}
+```
+
+## Output
+
+```css
+.class:where(.astro-xxxxxx) *{}
+```
+---

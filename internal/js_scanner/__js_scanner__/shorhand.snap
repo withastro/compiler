@@ -1,0 +1,14 @@
+
+[TestGetObjectKeys/shorhand - 1]
+## Input
+
+```
+{ value, foo, bar, baz, bing }
+```
+
+## Output
+
+```js
+["value","foo","bar","baz","bing"]
+```
+---

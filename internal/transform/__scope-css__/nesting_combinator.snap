@@ -1,0 +1,14 @@
+
+[TestScopeStyle/nesting_combinator - 1]
+## Input
+
+```
+div { & span { color: blue } }
+```
+
+## Output
+
+```css
+div:where(.astro-xxxxxx){& span:where(.astro-xxxxxx){color:blue}}
+```
+---

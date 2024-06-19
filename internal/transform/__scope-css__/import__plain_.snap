@@ -1,0 +1,14 @@
+
+[TestScopeStyle/import_(plain) - 1]
+## Input
+
+```
+@import "./my-file.css";
+```
+
+## Output
+
+```css
+@import"./my-file.css";
+```
+---

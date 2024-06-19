@@ -1,0 +1,14 @@
+
+[TestScopeStyle/universal_pseudo_state - 1]
+## Input
+
+```
+*:hover{}
+```
+
+## Output
+
+```css
+:where(.astro-xxxxxx):hover{}
+```
+---

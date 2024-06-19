@@ -1,0 +1,14 @@
+
+[TestScopeStyle/class - 1]
+## Input
+
+```
+.class{}
+```
+
+## Output
+
+```css
+.class:where(.astro-xxxxxx){}
+```
+---

@@ -1,0 +1,14 @@
+
+[TestScopeStyle/keyframes - 1]
+## Input
+
+```
+@keyframes shuffle{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+```
+
+## Output
+
+```css
+@keyframes shuffle{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+```
+---

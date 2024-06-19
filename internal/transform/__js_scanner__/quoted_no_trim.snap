@@ -1,0 +1,14 @@
+
+[TestScopeHTML/quoted_no_trim - 1]
+## Input
+
+```
+<div class="test " />
+```
+
+## Output
+
+```js
+<div class="test  astro-xxxxxx"></div>
+```
+---

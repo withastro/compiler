@@ -1,0 +1,14 @@
+
+[TestScopeStyle/global_nested_parens_+_chained_class - 1]
+## Input
+
+```
+:global(body:not(.is-light)).is-dark,:global(body:not(.is-dark)).is-light{}
+```
+
+## Output
+
+```css
+body:not(.is-light).is-dark,body:not(.is-dark).is-light{}
+```
+---

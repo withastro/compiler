@@ -1,0 +1,14 @@
+
+[TestScopeStyle/global_chaining_global - 1]
+## Input
+
+```
+:global(.foo):global(.bar){}
+```
+
+## Output
+
+```css
+.foo.bar{}
+```
+---

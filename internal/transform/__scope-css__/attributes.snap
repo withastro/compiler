@@ -1,0 +1,14 @@
+
+[TestScopeStyle/attributes - 1]
+## Input
+
+```
+body{background-image:url('/assets/bg.jpg');clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%);}
+```
+
+## Output
+
+```css
+body{background-image:url(/assets/bg.jpg);clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%)}
+```
+---

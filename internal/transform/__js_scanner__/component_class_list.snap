@@ -1,0 +1,14 @@
+
+[TestScopeHTML/component_class:list - 1]
+## Input
+
+```
+<Component class:list={{ a: true }} />
+```
+
+## Output
+
+```js
+<Component class:list={[({ a: true }), "astro-xxxxxx"]}></Component>
+```
+---

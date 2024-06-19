@@ -108,6 +108,16 @@ func TestPrinterCSS(t *testing.T) {
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+
+			test_utils.MakeSnapshot(
+				&test_utils.SnapshotOptions{
+					Testing:      t,
+					TestCaseName: tt.name,
+					Input:        code,
+					Output:       output,
+					Kind:         test_utils.CssOutput,
+					FolderName:   "__printer_css__",
+				})
 		})
 	}
 }

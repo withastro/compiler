@@ -1,0 +1,14 @@
+
+[TestScopeStyle/grid-template-columns - 1]
+## Input
+
+```
+div{grid-template-columns: [content-start] 1fr [content-end];}
+```
+
+## Output
+
+```css
+div:where(.astro-xxxxxx){grid-template-columns:[content-start] 1fr [content-end]}
+```
+---

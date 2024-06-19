@@ -1,0 +1,14 @@
+
+[TestScopeStyle/html_and_body - 1]
+## Input
+
+```
+html,body{}
+```
+
+## Output
+
+```css
+html,body{}
+```
+---

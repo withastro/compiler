@@ -1,0 +1,14 @@
+
+[TestScopeHTML/none - 1]
+## Input
+
+```
+<div />
+```
+
+## Output
+
+```jsx
+<div class="astro-xxxxxx"></div>
+```
+---

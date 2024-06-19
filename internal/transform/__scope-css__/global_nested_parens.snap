@@ -1,0 +1,14 @@
+
+[TestScopeStyle/global_nested_parens - 1]
+## Input
+
+```
+.class :global(.nav:not(.is-active)){}
+```
+
+## Output
+
+```css
+.class:where(.astro-xxxxxx) .nav:not(.is-active){}
+```
+---
