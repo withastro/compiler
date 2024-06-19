@@ -1,0 +1,52 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.8.1/schema.json",
+  "files": {
+    "ignore": ["**/dist", "**/pnpm-lock.yaml"],
+    "include": ["packages/**"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 180
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "info",
+        "noConsoleLog": "info"
+      },
+      "style": {
+        "useTemplate": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "noUnusedTemplateLiteral": {
+          "level": "error",
+          "fix": "safe"
+        }
+      }
+    },
+    "ignore": ["wasm_exec.ts"]
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single"
+    }
+  },
+  "overrides": [
+    {
+      "include": ["package.json", "biome.jsonc"],
+      "json": {
+        "formatter": {
+          "lineWidth": 1
+        }
+      }
+    }
+  ]
+}

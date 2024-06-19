@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 ---
@@ -18,7 +18,7 @@ div {
 `.trim();
 
 function grabAstroScope(code: string) {
-  let match = /astro-[0-9A-Za-z]+/.exec(code);
+  const match = /astro-[0-9A-Za-z]+/.exec(code);
   if (match) {
     return match[0];
   }
@@ -29,14 +29,14 @@ test('Similar components have different scoped class names', async () => {
   let result = await transform(FIXTURE, {
     normalizedFilename: '/src/pages/index.astro',
   });
-  let scopeA = grabAstroScope(result.code);
+  const scopeA = grabAstroScope(result.code);
   assert.ok(scopeA);
 
   result = await transform(FIXTURE, {
     normalizedFilename: '/src/pages/two.astro',
   });
 
-  let scopeB = grabAstroScope(result.code);
+  const scopeB = grabAstroScope(result.code);
   assert.ok(scopeB);
 
   assert.ok(scopeA !== scopeB, 'The scopes should not match for different files');

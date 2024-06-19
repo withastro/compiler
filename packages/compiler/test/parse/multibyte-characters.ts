@@ -1,8 +1,8 @@
+import { parse } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { parse } from '@astrojs/compiler';
 
-const FIXTURE = `{foo}，`;
+const FIXTURE = '{foo}，';
 
 test('does not crash', async () => {
   const result = await parse(FIXTURE);

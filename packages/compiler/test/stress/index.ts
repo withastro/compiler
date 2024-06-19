@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { transform } from '@astrojs/compiler';
 
 async function run() {
@@ -192,7 +190,7 @@ import CartItems from './CartItems.astro';
 </section>`,
     {
       sourcemap: true,
-    }
+    },
   );
 }
 
@@ -202,7 +200,7 @@ const MAX_RENDERS = 1e4;
 async function test() {
   await run();
   const promises = [];
-  let tests = [];
+  const tests = [];
 
   for (let i = 0; i < MAX_RENDERS; i++) {
     tests.push(() => {
@@ -227,9 +225,9 @@ async function test() {
 
 // Throttle the rendering a paths to prevents creating too many Promises on the microtask queue.
 function* throttle(max, tests) {
-  let tmp = [];
+  const tmp = [];
   let i = 0;
-  for (let t of tests) {
+  for (const t of tests) {
     tmp.push(t);
     if (i === max) {
       yield tmp;

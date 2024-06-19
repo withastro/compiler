@@ -10,7 +10,7 @@ deprecated;
 const hello = "Astro"
 ---
 `;
-  const output = await testTSXSourcemap(input, `deprecated;`);
+  const output = await testTSXSourcemap(input, 'deprecated;');
 
   assert.equal(output, {
     line: 4,

@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 ---
@@ -15,7 +15,7 @@ const {isRequired, description, example} = Astro.props;
 {example && <Code code={example} lang='yaml' />}
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await transform(FIXTURE);
 });

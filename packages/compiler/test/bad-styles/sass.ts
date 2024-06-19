@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 <style lang="scss">
@@ -16,7 +16,7 @@ const FIXTURE = `
 `;
 
 test('it works', async () => {
-  let result = await transform(FIXTURE, {
+  const result = await transform(FIXTURE, {
     filename: '/users/astro/apps/pacman/src/pages/index.astro',
     async preprocessStyle() {
       return {

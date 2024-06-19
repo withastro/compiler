@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 async function minify(input: string) {
   const code = (await transform(input, { compact: true })).code;
@@ -8,20 +8,20 @@ async function minify(input: string) {
 }
 
 test('basic', async () => {
-  assert.match(await minify(`    <div>Hello {value}!</div>      `), '$$render`<div>Hello ${value}!</div>`');
-  assert.match(await minify(`    <div> Hello {value}! </div>      `), '$$render`<div> Hello ${value}! </div>`');
+  assert.match(await minify('    <div>Hello {value}!</div>      '), '$$render`<div>Hello ${value}!</div>`');
+  assert.match(await minify('    <div> Hello {value}! </div>      '), '$$render`<div> Hello ${value}! </div>`');
 });
 
 test('preservation', async () => {
-  assert.match(await minify(`<pre>  !  </pre>`), '$$render`<pre>  !  </pre>`');
-  assert.match(await minify(`<div is:raw>  !  </div>`), '$$render`<div>  !  </div>`');
-  assert.match(await minify(`<Markdown is:raw>  !  </Markdown>`), '$$render`  !  `');
+  assert.match(await minify('<pre>  !  </pre>'), '$$render`<pre>  !  </pre>`');
+  assert.match(await minify('<div is:raw>  !  </div>'), '$$render`<div>  !  </div>`');
+  assert.match(await minify('<Markdown is:raw>  !  </Markdown>'), '$$render`  !  `');
 });
 
 test('collapsing', async () => {
-  assert.match(await minify(`<span> inline </span>`), '$$render`<span> inline </span>`');
-  assert.match(await minify(`<span>\n inline \t{\t expression \t}</span>`), '$$render`<span>\ninline ${expression}</span>`');
-  assert.match(await minify(`<span> inline { expression }</span>`), '$$render`<span> inline ${expression}</span>`');
+  assert.match(await minify('<span> inline </span>'), '$$render`<span> inline </span>`');
+  assert.match(await minify('<span>\n inline \t{\t expression \t}</span>'), '$$render`<span>\ninline ${expression}</span>`');
+  assert.match(await minify('<span> inline { expression }</span>'), '$$render`<span> inline ${expression}</span>`');
 });
 
 test('space normalization between attributes', async () => {
@@ -96,7 +96,7 @@ test('space normalization around text', async () => {
       assert.match(await minify(`<div>foo${open} baz ${close}bar</div>`), `<div>foo${open} baz ${close}bar</div>`);
       assert.match(await minify(`<div>foo ${open} baz ${close}bar</div>`), `<div>foo ${open} baz ${close}bar</div>`);
       assert.match(await minify(`<div>foo${open} baz ${close} bar</div>`), `<div>foo${open} baz ${close} bar</div>`);
-    })
+    }),
   );
   // Don't trim whitespace around element, but do trim within
   await Promise.all(
@@ -118,7 +118,7 @@ test('space normalization around text', async () => {
       assert.match(await minify(`<div>foo${open} baz ${close}bar</div>`), `<div>foo${open} baz ${close}bar</div>`);
       assert.match(await minify(`<div>foo ${open} baz ${close}bar</div>`), `<div>foo ${open} baz ${close}bar</div>`);
       assert.match(await minify(`<div>foo${open} baz ${close} bar</div>`), `<div>foo${open} baz ${close} bar</div>`);
-    })
+    }),
   );
   await Promise.all(
     [
@@ -146,7 +146,7 @@ test('space normalization around text', async () => {
       ['a <nobr> b </nobr> c', 'a <nobr> b </nobr> c'],
     ].map(async ([input, output]) => {
       assert.match(await minify(input), output);
-    })
+    }),
   );
 });
 

@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `---
 ---
@@ -17,7 +17,7 @@ console.log("hello")
 </script>
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await transform(FIXTURE);
 });
@@ -28,7 +28,7 @@ test('trailing space', () => {
     result.code,
     `<span class="spoiler astro-bqati2k5">
     \${$$renderSlot($$result,$$slots["default"])}
-</span>\``
+</span>\``,
   );
 });
 

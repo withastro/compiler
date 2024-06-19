@@ -10,8 +10,9 @@
     "build": "make wasm",
     "build:compiler": "pnpm --filter @astrojs/compiler run build",
     "build:all": "pnpm run build && pnpm run build:compiler",
-    "lint": "eslint \"packages/**/src/**/*.{cjs,js,jsx,mjs,ts,tsx}\"",
-    "format": "prettier -w .",
+    "check": "biome check",
+    "ci": "biome ci --diagnostic-level=warn",
+    "check:write": "biome check --write",
     "prerelease": "pnpm run build:compiler",
     "release": "changeset publish",
     "test": "tsx node_modules/uvu/bin.js packages test -i utils -i stress",
@@ -25,12 +26,6 @@
   ],
   "devDependencies": {
     "@changesets/cli": "^2.25.0",
-    "@typescript-eslint/eslint-plugin": "^5.57.1",
-    "@typescript-eslint/parser": "^5.57.1",
-    "eslint": "^8.25.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.8.7",
     "sass": "^1.55.0",
     "tsx": "^3.10.1",
     "typescript": "~4.9.0",
@@ -38,5 +33,8 @@
   },
   "engines": {
     "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+  },
+  "dependencies": {
+    "@biomejs/biome": "^1.8.1"
   }
 }
