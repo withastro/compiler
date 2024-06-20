@@ -81,12 +81,18 @@ var outputKind = map[OutputKind]string{
 }
 
 type SnapshotOptions struct {
-	Testing      *testing.T
+	// The testing instances
+	Testing *testing.T
+	// The name of the test case
 	TestCaseName string
-	Input        string
-	Output       string
-	Kind         OutputKind
-	FolderName   string
+	// The initial source code that needs to be tested
+	Input string
+	// The final output
+	Output string
+	// The kind of **markdown block** that the output will be wrapped
+	Kind OutputKind
+	// The folder name that the snapshots will be stored
+	FolderName string
 }
 
 // It creates a snapshot for the given test case, the snapshot will include the input and the output of the test case
