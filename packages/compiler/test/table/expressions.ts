@@ -1,7 +1,7 @@
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
 import { transform } from '@astrojs/compiler';
 import { parse } from 'acorn';
+import { test } from 'uvu';
+import * as assert from 'uvu/assert';
 
 test('allows expressions in table', async () => {
   const input = `
@@ -36,7 +36,7 @@ test('allows expressions in table', async () => {
   } catch (e) {
     error = 1;
   }
-  assert.equal(error, 0, `compiler should generate valid code`);
+  assert.equal(error, 0, 'compiler should generate valid code');
 });
 
 test('allows many expressions in table', async () => {
@@ -87,5 +87,5 @@ test('allows many expressions in table', async () => {
   } catch (e) {
     error = 1;
   }
-  assert.equal(error, 0, `compiler should generate valid code`);
+  assert.equal(error, 0, 'compiler should generate valid code');
 });

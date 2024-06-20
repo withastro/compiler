@@ -3,7 +3,7 @@ import * as assert from 'uvu/assert';
 import { testTSXSourcemap } from '../utils';
 
 test('shorthand attribute', async () => {
-  const input = `<div {name} />`;
+  const input = '<div {name} />';
 
   const output = await testTSXSourcemap(input, 'name');
   assert.equal(output, {

@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 test('getStaticPaths with braces on newline', async () => {
   const FIXTURE = `---
@@ -103,7 +103,7 @@ export async function getStaticPaths({
 <div></div>
 `;
   const result = await transform(FIXTURE);
-  assert.match(result.code, `{\n  paginate: PaginateFunction;\n}) {`, 'Expected output to contain getStaticPaths output');
+  assert.match(result.code, '{\n  paginate: PaginateFunction;\n}) {', 'Expected output to contain getStaticPaths output');
 });
 
 test.run();

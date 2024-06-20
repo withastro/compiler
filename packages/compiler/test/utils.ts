@@ -52,7 +52,6 @@ export async function testTSXSourcemap(input: string, snippet: string) {
 
   const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });
   if (!generated || generated.line === null) {
-    // eslint-disable-next-line no-console
     console.log(code);
     throw new Error(`"${snippet}" position incorrectly mapped in generated output.`);
   }
@@ -70,7 +69,6 @@ export async function testJSSourcemap(input: string, snippet: string) {
 
   const generated = generatedPositionFor(tracer, { source: 'index.astro', line: snippetLoc.line, column: snippetLoc.column });
   if (!generated || generated.line === null) {
-    // eslint-disable-next-line no-console
     console.log(code);
     throw new Error(`"${snippet}" position incorrectly mapped in generated output.`);
   }

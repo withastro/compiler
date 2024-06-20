@@ -10,7 +10,7 @@ deprecated;
 const hello = "Astro"
 ---
 `;
-  const output = await testJSSourcemap(input, `deprecated;`);
+  const output = await testJSSourcemap(input, 'deprecated;');
 
   assert.equal(output, {
     line: 4,

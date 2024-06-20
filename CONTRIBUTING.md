@@ -32,14 +32,67 @@ When adding a new feature or debugging an issue, start at the tokenizer, then mo
 
 ## Tests
 
-### Running
+It's important to **run the test from the root of the project**. Doing so, `go` will load all the necessary global information needed to run the tests.
 
-- Run all tests: `go test -v ./internal/...`
-- Run a specific folder of tests: `go test -v ./internal/printer`
+### Run all tests
+
+```shell
+go test -v ./internal/...
+```
+### Run a specific test suite 
+
+```shell
+go test -v ./internal/printer
+```
+### Run a specific test case
+
+Many of your test cases are designed like this:
+
+```go
+func TestPrintToJSON(t *testing.T) {
+  tests := []jsonTestcase{
+  	{
+  	  name:   "basic",
+  	  source: `<h1>Hello world!</h1>`,
+  	  want:   []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}},
+  	},
+    {
+  	  name:   "Comment preserves whitespace",
+  	  source: `<!-- hello -->`,
+  	  want:   []ASTNode{{Type: "comment", Value: " hello "}},
+  	}
+  }
+}
+```
+
+In this particular instance, the test case is name of the function, a slash `/`, followed by the `name` field. If the test case has spaces, you can use them.
+
+```shell
+go test -v ./internal/... -run TestPrintToJSON/basic
+go test -v ./internal/... -run TestPrintToJSON/Comment preserves whitespace
+```
 
 ### Adding new tests
 
 Adding tests for the tokenizer, scanner, and printer can be found in `internal/token_test.go`, `internal/js_scanner_test.go`, and `internal/printer/printer_test.go`, respectively.
+
+### Snapshot testing
+
+We use [go-snaps](https://github.com/gkampitakis/go-snaps) for snapshot testing. Visit their repository for more details on how to use it
+
+#### Update snapshots
+
+Some of our tests use snapshot tests. If some of you changes are expected to update some snapshot tests, you can use the environment variable `UPDATE_SNAPS` to do so:
+
+```shell
+UPDATE_SNAPS=true go test -v ./internal/...
+```
+
+Instead, if there are some **obsolete snapshots**, you can `UPDATE_SNAPS=clean`:
+
+```shell
+UPDATE_SNAPS=clean go test -v ./internal/...
+```
 
 [homebrew]: https://brew.sh/
 [go]: https://golang.org/

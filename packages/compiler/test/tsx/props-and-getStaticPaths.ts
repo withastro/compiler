@@ -37,10 +37,7 @@ export function getStaticPaths() {
 ---
 
 <div></div>`;
-  const output =
-    TSXPrefix +
-    '\n' +
-    `interface Props {};
+  const output = `${TSXPrefix}\ninterface Props {};
 export function getStaticPaths() {
   return {};
 }
@@ -52,7 +49,7 @@ export default function __AstroComponent_(_props: Props): any {}
 ${getSuffix()}
 ${getPrefix({ props: 'Props' })}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
-  assert.snapshot(code, output, `expected code to match snapshot`);
+  assert.snapshot(code, output, 'expected code to match snapshot');
 });
 
 test('inferred props', async () => {
@@ -63,10 +60,7 @@ export function getStaticPaths() {
 ---
 
 <div></div>`;
-  const output =
-    TSXPrefix +
-    '\n' +
-    `export function getStaticPaths() {
+  const output = `${TSXPrefix}\nexport function getStaticPaths() {
   return {};
 }
 
@@ -77,7 +71,7 @@ export default function __AstroComponent_(_props: ASTRO__MergeUnion<ASTRO__Get<A
 ${getSuffix()}
 ${getPrefix()}`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
-  assert.snapshot(code, output, `expected code to match snapshot`);
+  assert.snapshot(code, output, 'expected code to match snapshot');
 });
 
 test.run();

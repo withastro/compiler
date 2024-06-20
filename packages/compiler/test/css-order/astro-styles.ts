@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 <style>
@@ -8,7 +8,7 @@ const FIXTURE = `
 </style>
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await transform(FIXTURE, {
     filename: 'test.astro',
@@ -16,7 +16,7 @@ test.before(async () => {
 });
 
 test('Astro style imports are included in the compiled JS', () => {
-  let idx = result.code.indexOf('test.astro?astro&type=style&index=0&lang.css');
+  const idx = result.code.indexOf('test.astro?astro&type=style&index=0&lang.css');
   assert.not.equal(idx, -1);
 });
 

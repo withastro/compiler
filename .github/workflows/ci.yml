@@ -79,10 +79,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-      - uses: actions/setup-node@v4
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
         with:
-          node-version: 16
-          cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm run lint
+          version: latest
+      - name: Run linting
+        run: biome ci --diagnostic-level=warn

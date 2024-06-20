@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 test('Can handle < inside JSX expression', async () => {
   const input = `<Layout>
@@ -32,7 +32,7 @@ test('Can handle < inside JSX expression', async () => {
           return 'HAAAA';
         }
       })`,
-    'Expected expression to be compiled properly'
+    'Expected expression to be compiled properly',
   );
   assert.equal(output.diagnostics.length, 0, 'Expected no diagnostics');
 });
