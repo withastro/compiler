@@ -166,6 +166,7 @@ type HoistedScript struct {
 
 type HydratedComponent struct {
 	ExportName   string `js:"exportName"`
+	LocalName    string `js:"localName"`
 	Specifier    string `js:"specifier"`
 	ResolvedPath string `js:"resolvedPath"`
 }
@@ -423,6 +424,7 @@ func Transform() any {
 				for _, c := range doc.ServerComponents {
 					serverComponents = append(serverComponents, HydratedComponent{
 						ExportName:   c.ExportName,
+						LocalName:    c.LocalName,
 						Specifier:    c.Specifier,
 						ResolvedPath: c.ResolvedPath,
 					})

@@ -80,6 +80,7 @@ export type HoistedScript = { type: string } & (
 
 export interface HydratedComponent {
   exportName: string;
+  localName: string;
   specifier: string;
   resolvedPath: string;
 }
