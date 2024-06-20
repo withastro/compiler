@@ -65,6 +65,7 @@ var scopeMarker = Node{Type: scopeMarkerNode}
 
 type HydratedComponentMetadata struct {
 	ExportName   string
+	LocalName    string
 	Specifier    string
 	ResolvedPath string
 }
