@@ -46,7 +46,7 @@ go test -v ./internal/printer
 ```
 ### Run a specific test case
 
-Many of your test cases are designed like this:
+Many of our test cases are designed like this:
 
 ```go
 func TestPrintToJSON(t *testing.T) {
@@ -72,11 +72,7 @@ go test -v ./internal/... -run TestPrintToJSON/basic
 go test -v ./internal/... -run TestPrintToJSON/Comment preserves whitespace
 ```
 
-### Adding new tests
-
-Adding tests for the tokenizer, scanner, and printer can be found in `internal/token_test.go`, `internal/js_scanner_test.go`, and `internal/printer/printer_test.go`, respectively.
-
-### Snapshot testing
+#### Snapshot testing
 
 We use [go-snaps](https://github.com/gkampitakis/go-snaps) for snapshot testing. Visit their repository for more details on how to use it
 
@@ -93,6 +89,11 @@ Instead, if there are some **obsolete snapshots**, you can `UPDATE_SNAPS=clean`:
 ```shell
 UPDATE_SNAPS=clean go test -v ./internal/...
 ```
+
+
+### Adding new tests
+
+Adding tests for the tokenizer, scanner, and printer can be found in `internal/token_test.go`, `internal/js_scanner_test.go`, and `internal/printer/printer_test.go`, respectively.
 
 [homebrew]: https://brew.sh/
 [go]: https://golang.org/
