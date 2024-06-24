@@ -2,4 +2,4 @@
 "@astrojs/compiler": patch
 ---
 
-Allow data-astro-reload to take a value
+Allow `data-astro-reload` to take a value
