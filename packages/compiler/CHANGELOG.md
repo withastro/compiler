@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.8.1
+
+### Patch Changes
+
+- 0bb2746: Allow `data-astro-reload` to take a value
+
 ## 2.8.0
 
 ### Minor Changes
@@ -139,8 +145,15 @@
   Results in:
 
   ```html
-  <div data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="1:1">
-    <span data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="2:2">hello world</span>
+  <div
+    data-astro-source-file="/Users/erika/Projects/..."
+    data-astro-source-loc="1:1"
+  >
+    <span
+      data-astro-source-file="/Users/erika/Projects/..."
+      data-astro-source-loc="2:2"
+      >hello world</span
+    >
   </div>
   ```
 
@@ -631,8 +644,11 @@
 - c770e7b: The compiler will now return `diagnostics` and unique error codes to be handled by the consumer. For example:
 
   ```js
-  import type { DiagnosticSeverity, DiagnosticCode } from '@astrojs/compiler/types';
-  import { transform } from '@astrojs/compiler';
+  import type {
+    DiagnosticSeverity,
+    DiagnosticCode,
+  } from "@astrojs/compiler/types";
+  import { transform } from "@astrojs/compiler";
 
   async function run() {
     const { diagnostics } = await transform(file, opts);
