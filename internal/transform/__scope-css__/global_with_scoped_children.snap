@@ -1,0 +1,14 @@
+
+[TestScopeStyle/global_with_scoped_children - 1]
+## Input
+
+```
+:global(section) .class{}
+```
+
+## Output
+
+```css
+section .class:where(.astro-xxxxxx){}
+```
+---

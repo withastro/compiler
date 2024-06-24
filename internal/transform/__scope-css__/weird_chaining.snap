@@ -1,0 +1,14 @@
+
+[TestScopeStyle/weird_chaining - 1]
+## Input
+
+```
+:hover.a:focus{}
+```
+
+## Output
+
+```css
+:hover.a:where(.astro-xxxxxx):focus{}
+```
+---

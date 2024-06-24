@@ -1,0 +1,14 @@
+
+[TestScopeHTML/fault_input_currently_accepted - 1]
+## Input
+
+```
+<A { 0>
+```
+
+## Output
+
+```jsx
+<A  0>={0>} class="astro-xxxxxx"></A>
+```
+---

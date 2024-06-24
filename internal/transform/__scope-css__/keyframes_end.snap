@@ -1,0 +1,14 @@
+
+[TestScopeStyle/keyframes_end - 1]
+## Input
+
+```
+h1{} h2{} @keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}
+```
+
+## Output
+
+```css
+h1:where(.astro-xxxxxx){}h2:where(.astro-xxxxxx){}@keyframes shuffle{0%{transform:rotate(0deg);color:blue}100%{transform:rotate(360deg)}}
+```
+---

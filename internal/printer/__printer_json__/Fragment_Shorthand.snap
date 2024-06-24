@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/Fragment_Shorthand - 1]
+## Input
+
+```
+<>Hello</>
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"fragment","name":"","attributes":[],"children":[{"type":"text","value":"Hello"}]}]}
+```
+---

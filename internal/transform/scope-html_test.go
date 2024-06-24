@@ -7,6 +7,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/test_utils"
 	"golang.org/x/net/html/atom"
 )
 
@@ -120,6 +121,15 @@ func TestScopeHTML(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
+			test_utils.MakeSnapshot(
+				&test_utils.SnapshotOptions{
+					Testing:      t,
+					TestCaseName: tt.name,
+					Input:        tt.source,
+					Output:       string(got),
+					Kind:         test_utils.JsxOutput,
+					FolderName:   "__scope_html__",
+				})
 			ScopeElement(nodes[0], TransformOptions{Scope: "xxxxxx"})
 			astro.PrintToSource(&b, nodes[0])
 		})

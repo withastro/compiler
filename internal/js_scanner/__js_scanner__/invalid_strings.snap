@@ -1,0 +1,14 @@
+
+[TestGetObjectKeys/invalid_strings - 1]
+## Input
+
+```
+{ "dash-case": true, "with.dot": true, "with space": true }
+```
+
+## Output
+
+```js
+["\"dash-case\": dashCase","\"with.dot\": withDot","\"with space\": withSpace"]
+```
+---

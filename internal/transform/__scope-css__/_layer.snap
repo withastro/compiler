@@ -1,0 +1,14 @@
+
+[TestScopeStyle/@layer - 1]
+## Input
+
+```
+@layer theme, layout, utilities; @layer special { .item { color: rebeccapurple; }}
+```
+
+## Output
+
+```css
+@layer theme,layout,utilities;@layer special{.item:where(.astro-xxxxxx){color:rebeccapurple}}
+```
+---

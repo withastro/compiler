@@ -1,0 +1,14 @@
+
+[TestScopeStyle/attr_universal_implied - 1]
+## Input
+
+```
+[aria-visible],[aria-hidden]{}
+```
+
+## Output
+
+```css
+:where(.astro-xxxxxx)[aria-visible],:where(.astro-xxxxxx)[aria-hidden]{}
+```
+---

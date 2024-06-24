@@ -1,0 +1,14 @@
+
+[TestGetObjectKeys/regexp - 1]
+## Input
+
+```
+{ a: /hello/g, b: 0 }
+```
+
+## Output
+
+```js
+["a","b"]
+```
+---

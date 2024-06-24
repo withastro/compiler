@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/Doctype - 1]
+## Input
+
+```
+<!DOCTYPE html />
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"doctype","value":"html"}]}
+```
+---

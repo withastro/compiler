@@ -1,0 +1,14 @@
+
+[TestScopeHTML/component_className_not_scoped - 1]
+## Input
+
+```
+<Component className="test" />
+```
+
+## Output
+
+```jsx
+<Component className="test astro-xxxxxx"></Component>
+```
+---

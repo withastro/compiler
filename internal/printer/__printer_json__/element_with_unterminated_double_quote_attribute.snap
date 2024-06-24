@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/element_with_unterminated_double_quote_attribute - 1]
+## Input
+
+```
+<main id="gotcha />
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"element","name":"main","attributes":[{"type":"attribute","kind":"quoted","name":"id","value":"gotcha","raw":"\"gotcha"}],"children":[]}]}
+```
+---

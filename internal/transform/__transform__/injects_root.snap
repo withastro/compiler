@@ -1,0 +1,14 @@
+
+[TestAnnotation/injects_root - 1]
+## Input
+
+```
+<html></html>
+```
+
+## Output
+
+```jsx
+<html></html>
+```
+---

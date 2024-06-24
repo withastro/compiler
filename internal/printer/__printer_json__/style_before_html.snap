@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/style_before_html - 1]
+## Input
+
+```
+<style></style><html><body><h1>Hello world!</h1></body></html>
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"element","name":"style","attributes":[],"children":[]},{"type":"element","name":"html","attributes":[],"children":[{"type":"element","name":"body","attributes":[],"children":[{"type":"element","name":"h1","attributes":[],"children":[{"type":"text","value":"Hello world!"}]}]}]}]}
+```
+---

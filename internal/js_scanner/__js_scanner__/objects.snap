@@ -1,0 +1,14 @@
+
+[TestGetObjectKeys/objects - 1]
+## Input
+
+```
+{ a: { a1: 0 }, b: { b1: { b2: 0 }}, c: { c1: { c2: { c3: 0 }}}  }
+```
+
+## Output
+
+```js
+["a","b","c"]
+```
+---

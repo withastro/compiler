@@ -1,0 +1,14 @@
+
+[TestAnnotation/basic - 1]
+## Input
+
+```
+<div>Hello world!</div>
+```
+
+## Output
+
+```jsx
+<div data-astro-source-file="/src/pages/index.astro">Hello world!</div>
+```
+---

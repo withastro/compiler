@@ -1,0 +1,19 @@
+
+[TestPrintToJSON/JSON_escape - 1]
+## Input
+
+```
+/-/-/-/
+const a = "\n"
+const b = "\""
+const c = '\''
+/-/-/-/
+{a + b + c}
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"frontmatter","value":"\nconst a = \"\\n\"\nconst b = \"\\\"\"\nconst c = '\\''\n"},{"type":"expression","children":[{"type":"text","value":"a + b + c"}]}]}
+```
+---

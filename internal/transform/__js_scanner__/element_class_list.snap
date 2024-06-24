@@ -1,0 +1,14 @@
+
+[TestScopeHTML/element_class:list - 1]
+## Input
+
+```
+<div class:list={{ a: true }} />
+```
+
+## Output
+
+```js
+<div class:list={[({ a: true }), "astro-xxxxxx"]}></div>
+```
+---

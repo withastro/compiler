@@ -1,0 +1,14 @@
+
+[TestScopeHTML/expression_function - 1]
+## Input
+
+```
+<div class={clsx({ [test]: true })} />
+```
+
+## Output
+
+```js
+<div class={(clsx({ [test]: true })) + " astro-xxxxxx"}></div>
+```
+---

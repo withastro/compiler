@@ -1,0 +1,14 @@
+
+[TestScopeHTML/component_className_shorthand - 1]
+## Input
+
+```
+<Component {className} />
+```
+
+## Output
+
+```js
+<Component className={className + " astro-xxxxxx"}></Component>
+```
+---

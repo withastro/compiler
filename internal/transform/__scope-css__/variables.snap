@@ -1,0 +1,14 @@
+
+[TestScopeStyle/variables - 1]
+## Input
+
+```
+body{--bg:red;background:var(--bg);color:black;}
+```
+
+## Output
+
+```css
+body{--bg:red;background:var(--bg);color:black}
+```
+---

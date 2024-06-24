@@ -1,0 +1,14 @@
+
+[TestScopeStyle/import_(url) - 1]
+## Input
+
+```
+@import url("./my-file.css");
+```
+
+## Output
+
+```css
+@import"./my-file.css";
+```
+---

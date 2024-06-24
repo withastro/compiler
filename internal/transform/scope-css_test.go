@@ -290,6 +290,14 @@ func TestScopeStyle(t *testing.T) {
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
+			test_utils.MakeSnapshot(&test_utils.SnapshotOptions{
+				Testing:      t,
+				TestCaseName: tt.name,
+				Input:        tt.source,
+				Output:       got,
+				Kind:         test_utils.CssOutput,
+				FolderName:   "__scope-css__",
+			})
 		})
 	}
 }

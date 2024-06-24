@@ -1,0 +1,18 @@
+
+[TestScopeStyle/@container - 1]
+## Input
+
+```
+@container (min-width: 200px) and (min-height: 200px) {
+        h1 {
+          font-size: 30px;
+        }
+      }
+```
+
+## Output
+
+```css
+@container (min-width: 200px) and (min-height: 200px){h1:where(.astro-xxxxxx){font-size:30px}}
+```
+---

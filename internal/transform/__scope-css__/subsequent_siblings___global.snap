@@ -1,0 +1,14 @@
+
+[TestScopeStyle/subsequent_siblings_+_global - 1]
+## Input
+
+```
+.class~:global(a){}
+```
+
+## Output
+
+```css
+.class:where(.astro-xxxxxx)~a{}
+```
+---

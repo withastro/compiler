@@ -1,0 +1,14 @@
+
+[TestScopeHTML/expression_dynamic - 1]
+## Input
+
+```
+<div class={condition ? 'a' : 'b'} />
+```
+
+## Output
+
+```jsx
+<div class={(condition ? 'a' : 'b') + " astro-xxxxxx"}></div>
+```
+---

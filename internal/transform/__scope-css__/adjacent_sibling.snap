@@ -1,0 +1,14 @@
+
+[TestScopeStyle/adjacent_sibling - 1]
+## Input
+
+```
+.class+.class{}
+```
+
+## Output
+
+```css
+.class:where(.astro-xxxxxx)+.class:where(.astro-xxxxxx){}
+```
+---

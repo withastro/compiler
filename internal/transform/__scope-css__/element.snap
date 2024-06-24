@@ -1,0 +1,14 @@
+
+[TestScopeStyle/element - 1]
+## Input
+
+```
+h1{}
+```
+
+## Output
+
+```css
+h1:where(.astro-xxxxxx){}
+```
+---

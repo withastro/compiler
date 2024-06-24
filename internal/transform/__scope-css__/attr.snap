@@ -1,0 +1,14 @@
+
+[TestScopeStyle/attr - 1]
+## Input
+
+```
+a[aria-current=page]{}
+```
+
+## Output
+
+```css
+a:where(.astro-xxxxxx)[aria-current=page]{}
+```
+---

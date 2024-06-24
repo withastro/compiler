@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gkampitakis/go-snaps/snaps"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	types "github.com/withastro/compiler/internal/t"
@@ -3704,23 +3703,16 @@ const meta = { title: 'My App' };
 			if diff := test_utils.ANSIDiff(test_utils.RemoveNewlines(test_utils.Dedent(toMatch)), test_utils.RemoveNewlines(test_utils.Dedent(output))); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+			test_utils.MakeSnapshot(
+				&test_utils.SnapshotOptions{
+					Testing:      t,
+					TestCaseName: tt.name,
+					Input:        code,
+					Output:       output,
+					Kind:         test_utils.JsOutput,
+					FolderName:   "__printer_js__",
+				})
 
-			snapshotName := strings.ReplaceAll(tt.name, "#", "_")
-			snapshotName = strings.ReplaceAll(snapshotName, "<", "_")
-			snapshotName = strings.ReplaceAll(snapshotName, ">", "_")
-			snapshotName = strings.ReplaceAll(snapshotName, ")", "_")
-			snapshotName = strings.ReplaceAll(snapshotName, "(", "_")
-			snapshotName = strings.ReplaceAll(snapshotName, ":", "_")
-			snapshotName = strings.ReplaceAll(snapshotName, " ", "_")
-			snapshotName = strings.ReplaceAll(snapshotName, "#", "_")
-
-			s := snaps.WithConfig(
-				snaps.Filename(snapshotName),
-			)
-
-			snapshot := fmt.Sprintf("%s%s%s%s%s%s%s%s", "## Input\n\n", "```\n", test_utils.Dedent(code), "\n```", "\n\n## Output\n\n", "```js\n", test_utils.Dedent(output), "\n```")
-
-			s.MatchSnapshot(t, snapshot)
 		})
 	}
 }
@@ -3851,6 +3843,16 @@ const c = '\''
 			if diff := test_utils.ANSIDiff(test_utils.Dedent(string(toMatch)), test_utils.Dedent(string(result.Output))); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+
+			test_utils.MakeSnapshot(
+				&test_utils.SnapshotOptions{
+					Testing:      t,
+					TestCaseName: tt.name,
+					Input:        code,
+					Output:       string(result.Output),
+					Kind:         test_utils.JsonOutput,
+					FolderName:   "__printer_json__",
+				})
 		})
 	}
 }

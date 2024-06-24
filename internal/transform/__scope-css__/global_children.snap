@@ -1,0 +1,14 @@
+
+[TestScopeStyle/global_children - 1]
+## Input
+
+```
+.class :global(ul li){}
+```
+
+## Output
+
+```css
+.class:where(.astro-xxxxxx) ul li{}
+```
+---

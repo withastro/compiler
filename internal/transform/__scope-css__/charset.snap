@@ -1,0 +1,14 @@
+
+[TestScopeStyle/charset - 1]
+## Input
+
+```
+@charset "utf-8";
+```
+
+## Output
+
+```css
+@charset "utf-8";
+```
+---
