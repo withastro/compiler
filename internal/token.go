@@ -1248,13 +1248,14 @@ func (z *Tokenizer) readUnclosedTag() bool {
 	var close int
 	if z.fm == FrontmatterOpen {
 		close = strings.Index(string(buf), "---")
-		if close != -1 {
+		if close != -1 && len(buf) < close {
 			buf = buf[0:close]
 		}
-	}
-	close = bytes.Index(buf, []byte{'>'})
-	if close != -1 {
-		buf = buf[0:close]
+	} else {
+		close = bytes.Index(buf, []byte{'>'})
+		if close != -1 && len(buf) < close {
+			buf = buf[0:close]
+		}
 	}
 	if close == -1 {
 		// We can't find a closing tag...
@@ -1912,6 +1913,14 @@ frontmatter_loop:
 			return z.tt
 		}
 
+		// handle string
+		if c == '\'' || c == '"' || c == '`' {
+			z.readString(c)
+			z.tt = TextToken
+			z.data.End = z.raw.End
+			return z.tt
+		}
+
 		s := z.buf[z.raw.Start : z.raw.Start+1][0]
 
 		if s == '<' || s == '{' || s == '}' || c == '<' || c == '{' || c == '}' {
@@ -1923,14 +1932,6 @@ frontmatter_loop:
 				z.raw.End--
 				goto loop
 			}
-		}
-
-		// handle string
-		if c == '\'' || c == '"' || c == '`' {
-			z.readString(c)
-			z.tt = TextToken
-			z.data.End = z.raw.End
-			return z.tt
 		}
 
 		z.dashCount = 0
