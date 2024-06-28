@@ -1,7 +1,7 @@
+import { fileURLToPath } from 'node:url';
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
-import { fileURLToPath } from 'node:url';
 
 const FIXTURE = `
 ---
@@ -17,9 +17,9 @@ let result: Awaited<ReturnType<typeof transform>>;
 test.before(async () => {
   result = await transform(FIXTURE, {
     resolvePath: async (s: string) => {
-      let out = new URL(s, import.meta.url);
+      const out = new URL(s, import.meta.url);
       return fileURLToPath(out);
-    }
+    },
   });
 });
 
@@ -28,7 +28,7 @@ test('component metadata added', () => {
 });
 
 test('path resolved to the filename', () => {
-  let m = result.serverComponents[0];
+  const m = result.serverComponents[0];
   assert.ok(m.specifier !== m.resolvedPath);
 });
 
