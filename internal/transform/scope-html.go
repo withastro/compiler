@@ -147,7 +147,7 @@ func injectScopedClass(n *astro.Node, opts TransformOptions) {
 					return
 				case astro.ExpressionAttribute:
 					// as an expression
-					attr.Val = fmt.Sprintf(`(%s) + " %s"`, attr.Val, scopedClass)
+					attr.Val = fmt.Sprintf(`((%s) ?? "") + " %s"`, attr.Val, scopedClass)
 					n.Attr[i] = attr
 					return
 				}

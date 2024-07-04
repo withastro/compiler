@@ -38,17 +38,17 @@ func tests() []struct {
 		{
 			name:   "expression string",
 			source: `<div class={"test"} />`,
-			want:   `<div class={("test") + " astro-xxxxxx"}></div>`,
+			want:   `<div class={(("test") ?? "") + " astro-xxxxxx"}></div>`,
 		},
 		{
 			name:   "expression function",
 			source: `<div class={clsx({ [test]: true })} />`,
-			want:   `<div class={(clsx({ [test]: true })) + " astro-xxxxxx"}></div>`,
+			want:   `<div class={((clsx({ [test]: true })) ?? "") + " astro-xxxxxx"}></div>`,
 		},
 		{
 			name:   "expression dynamic",
 			source: "<div class={condition ? 'a' : 'b'} />",
-			want:   `<div class={(condition ? 'a' : 'b') + " astro-xxxxxx"}></div>`,
+			want:   `<div class={((condition ? 'a' : 'b') ?? "") + " astro-xxxxxx"}></div>`,
 		},
 		{
 			name:   "empty",
@@ -68,7 +68,7 @@ func tests() []struct {
 		{
 			name:   "component className expression",
 			source: `<Component className={"test"} />`,
-			want:   `<Component className={("test") + " astro-xxxxxx"}></Component>`,
+			want:   `<Component className={(("test") ?? "") + " astro-xxxxxx"}></Component>`,
 		},
 		{
 			name:   "component className shorthand",
