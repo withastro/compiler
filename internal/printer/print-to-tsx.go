@@ -63,7 +63,8 @@ func isValidTSXAttribute(a Attribute) bool {
 		if i == 0 && !isValidFirstRune(ch) {
 			return false
 		}
-		// See https://mathiasbynens.be/notes/javascript-identifiers
+
+		// See https://tc39.es/ecma262/#prod-IdentifierName
 		if i != 0 && !(isValidFirstRune(ch) ||
 			unicode.In(ch, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)) &&
 			// : is allowed inside TSX attributes, for namespaces purpose
