@@ -1,0 +1,44 @@
+
+[TestPrinter/css_comment_doesn’t_produce_semicolon - 1]
+## Input
+
+```
+<style>/* comment */.container {
+    padding: 2rem;
+    }
+</style><div class="container">My Text</div>
+```
+
+## Output
+
+```js
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+
+export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+
+return $$render`${$$maybeRenderHead($$result)}<div class="container astro-sj3wye6h">My Text</div>`;
+}, undefined, undefined);
+export default $$Component;
+```
+---

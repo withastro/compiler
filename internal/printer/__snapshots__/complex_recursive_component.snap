@@ -1,0 +1,45 @@
+
+[TestPrinter/complex_recursive_component - 1]
+## Input
+
+```
+{(<Fragment><Fragment set:html={`<${Node.tag} ${stringifyAttributes(Node.attributes)}>`} />{Node.children.map((child) => (<Astro.self node={child} />))}<Fragment set:html={`</${Node.tag}>`} /></Fragment>)}
+```
+
+## Output
+
+```js
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+
+export const $$metadata = $$createMetadata("/projects/app/src/components/RenderNode.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+
+const $$Astro = $$createAstro('https://astro.build');
+const Astro = $$Astro;
+const $$RenderNode = $$createComponent(($$result, $$props, $$slots) => {
+const Astro = $$result.createAstro($$Astro, $$props, $$slots);
+Astro.self = $$RenderNode;
+
+return $$render`${($$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`${$$unescapeHTML(`<${Node.tag} ${stringifyAttributes(Node.attributes)}>`)}`,})}${Node.children.map((child) => ($$render`${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}`))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`${$$unescapeHTML(`</${Node.tag}>`)}`,})}`,})}`)}`;
+}, '/projects/app/src/components/RenderNode.astro', undefined);
+export default $$RenderNode;
+```
+---

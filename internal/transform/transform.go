@@ -16,6 +16,8 @@ import (
 const TRANSITION_ANIMATE = "transition:animate"
 const TRANSITION_NAME = "transition:name"
 const TRANSITION_PERSIST = "transition:persist"
+const DATA_ASTRO_RELOAD = "data-astro-reload"
+const TRANSITION_PERSIST_PROPS = "transition:persist-props"
 
 type TransformOptions struct {
 	Scope                   string
@@ -41,6 +43,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	i := 0
 	walk(doc, func(n *astro.Node) {
 		i++
+		WarnAboutRerunOnExternalESMs(n, h)
+		WarnAboutMisplacedReload(n, h)
+		HintAboutImplicitInlineDirective(n, h)
 		ExtractScript(doc, n, &opts, h)
 		AddComponentProps(doc, n, &opts)
 		if shouldScope {
@@ -352,6 +357,46 @@ func collapseWhitespace(doc *astro.Node) {
 	})
 }
 
+func WarnAboutMisplacedReload(n *astro.Node, h *handler.Handler) {
+	if HasAttr(n, DATA_ASTRO_RELOAD) {
+		attr := &n.Attr[AttrIndex(n, DATA_ASTRO_RELOAD)]
+
+		/*
+		 * When set on <a>, <form> or <area>,
+		 * the data-astro-reload attribute replaces view transitions between pages with a full page loads.
+		 */
+
+		if n.Type != astro.ElementNode || n.Data != "a" && n.Data != "area" && n.Data != "form" {
+			h.AppendWarning(&loc.ErrorWithRange{
+				Code:  loc.WARNING,
+				Text:  "The data-astro-reload attribute is only supported on <a>, <form> and <area> elements.",
+				Range: loc.Range{Loc: attr.KeyLoc, Len: len(attr.Key)},
+			})
+		}
+	}
+}
+
+func WarnAboutRerunOnExternalESMs(n *astro.Node, h *handler.Handler) {
+	if n.Data == "script" && HasAttr(n, "src") && HasAttr(n, "type") && HasAttr(n, "data-astro-rerun") {
+
+		/*
+		 * The browser caches external ECMAScript Modules. Even if such a script is included several times on a page,
+		 * it will only run once. This means that the data-astro-rerun attribute will not have any effect.
+		 */
+		src := &n.Attr[AttrIndex(n, "src")]
+		typ := &n.Attr[AttrIndex(n, "type")]
+		rerun := &n.Attr[AttrIndex(n, "data-astro-rerun")]
+		if typ.Val == "module" && src.Val != "" {
+			h.AppendWarning(&loc.ErrorWithRange{
+				Code:  loc.WARNING_CANNOT_RERUN,
+				Text:  "The data-astro-rerun attribute is not supported on an external module <script>",
+				Hint:  "Two out of three is OK: type=\"module\", src=\"...\", or data-astro-rerun",
+				Range: loc.Range{Loc: rerun.KeyLoc, Len: len(rerun.Key)},
+			})
+		}
+	}
+}
+
 func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *handler.Handler) {
 	if n.Type == astro.ElementNode && n.DataAtom == a.Script {
 		if HasSetDirective(n) || HasInlineDirective(n) {
@@ -405,6 +450,19 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 				}
 			}
 		}
+	}
+}
+
+func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
+	if n.Type == astro.ElementNode && n.DataAtom == a.Script && len(n.Attr) > 0 && !HasInlineDirective(n) {
+		if len(n.Attr) == 1 && n.Attr[0].Key == "src" {
+			return
+		}
+		h.AppendHint(&loc.ErrorWithRange{
+			Code:  loc.HINT,
+			Text:  "This script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.\n\nSee docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.\n\nAdd the `is:inline` directive explicitly to silence this hint.",
+			Range: loc.Range{Loc: n.Attr[0].KeyLoc, Len: len(n.Attr[0].Key)},
+		})
 	}
 }
 

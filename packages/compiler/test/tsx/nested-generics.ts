@@ -1,6 +1,6 @@
+import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
 
 test('handles plain aliases', async () => {
   const input = `---

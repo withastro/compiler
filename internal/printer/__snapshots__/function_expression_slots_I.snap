@@ -1,0 +1,53 @@
+
+[TestPrinter/function_expression_slots_I - 1]
+## Input
+
+```
+<Component>
+{() => { switch (value) {
+case 'a': return <div slot="a">A</div>
+case 'b': return <div slot="b">B</div>
+case 'c': return <div slot="c">C</div>
+}
+}}
+</Component>
+```
+
+## Output
+
+```js
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+
+export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+
+return $$render`${$$renderComponent($$result,'Component',Component,{},$$mergeSlots({},() => { switch (value) {
+case 'a': return {"a": () => $$render`${$$maybeRenderHead($$result)}<div>A</div>`}
+case 'b': return {"b": () => $$render`<div>B</div>`}
+case 'c': return {"c": () => $$render`<div>C</div>`}
+}
+}))}`;
+}, undefined, undefined);
+export default $$Component;
+```
+---

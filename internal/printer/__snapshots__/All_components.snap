@@ -1,0 +1,59 @@
+
+[TestPrinter/All_components - 1]
+## Input
+
+```
+/-/-/-/
+import { Container, Col, Row } from 'react-bootstrap';
+/-/-/-/
+<Container>
+    <Row>
+        <Col>
+            <h1>Hi!</h1>
+        </Col>
+    </Row>
+</Container>
+```
+
+## Output
+
+```js
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+import { Container, Col, Row } from 'react-bootstrap';
+
+import * as $$module1 from 'react-bootstrap';
+
+export const $$metadata = $$createMetadata(import.meta.url, { modules: [{ module: $$module1, specifier: 'react-bootstrap', assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+
+return $$render`${$$renderComponent($$result,'Container',Container,{},{"default": () => $$render`
+    ${$$renderComponent($$result,'Row',Row,{},{"default": () => $$render`
+        ${$$renderComponent($$result,'Col',Col,{},{"default": () => $$render`
+            ${$$maybeRenderHead($$result)}<h1>Hi!</h1>
+        `,})}
+    `,})}
+`,})}`;
+}, undefined, undefined);
+export default $$Component;
+```
+---

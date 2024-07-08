@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `---
 import { Markdown } from 'astro/components';
@@ -21,7 +21,7 @@ import Layout from '../layouts/content.astro';
   </div>
 </Layout>`; // NOTE: the lack of trailing space is important to this test!
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await transform(FIXTURE);
 });

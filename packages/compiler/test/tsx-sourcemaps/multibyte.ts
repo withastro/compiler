@@ -3,7 +3,7 @@ import * as assert from 'uvu/assert';
 import { testTSXSourcemap } from '../utils';
 
 test('multibyte content', async () => {
-  const input = `<h1>ツ</h1>`;
+  const input = '<h1>ツ</h1>';
 
   const output = await testTSXSourcemap(input, 'ツ');
   assert.equal(output, {
@@ -15,7 +15,7 @@ test('multibyte content', async () => {
 });
 
 test('content after multibyte character', async () => {
-  const input = `<h1>ツ</h1><p>foobar</p>`;
+  const input = '<h1>ツ</h1><p>foobar</p>';
 
   const output = await testTSXSourcemap(input, 'foobar');
   assert.equal(output, {
@@ -27,7 +27,7 @@ test('content after multibyte character', async () => {
 });
 
 test('many characters', async () => {
-  const input = `<h1>こんにちは</h1>`;
+  const input = '<h1>こんにちは</h1>';
 
   const output = await testTSXSourcemap(input, 'ん');
   assert.equal(output, {
@@ -39,7 +39,7 @@ test('many characters', async () => {
 });
 
 test('many characters', async () => {
-  const input = `<h1>こんにちは</h1>`;
+  const input = '<h1>こんにちは</h1>';
 
   const output = await testTSXSourcemap(input, 'に');
   assert.equal(output, {

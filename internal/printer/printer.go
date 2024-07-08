@@ -264,17 +264,26 @@ func (p *printer) printDefineVarsClose(n *astro.Node) {
 	}
 }
 
-func (p *printer) printFuncPrelude(opts transform.TransformOptions) {
+func (p *printer) printFuncPrelude(opts transform.TransformOptions, printAstroGlobal bool) {
 	if p.hasFuncPrelude {
 		return
 	}
 	componentName := getComponentName(opts.Filename)
+
+	// Decide whether to print `async` if top-level await is used. Use a loose check for now.
+	funcPrefix := ""
+	if strings.Contains(p.sourcetext, "await") {
+		funcPrefix = "async "
+	}
+
 	p.addNilSourceMapping()
-	p.println(fmt.Sprintf("const %s = %s(async (%s, $$props, %s) => {", componentName, CREATE_COMPONENT, RESULT, SLOTS))
-	p.addNilSourceMapping()
-	p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
-	p.addNilSourceMapping()
-	p.println(fmt.Sprintf("Astro.self = %s;", componentName))
+	p.println(fmt.Sprintf("const %s = %s(%s(%s, $$props, %s) => {", componentName, CREATE_COMPONENT, funcPrefix, RESULT, SLOTS))
+	if printAstroGlobal {
+		p.addNilSourceMapping()
+		p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
+		p.addNilSourceMapping()
+		p.println(fmt.Sprintf("Astro.self = %s;", componentName))
+	}
 	p.hasFuncPrelude = true
 }
 
@@ -513,6 +522,12 @@ func maybeConvertTransition(n *astro.Node) {
 				Val:  fmt.Sprintf(`%s(%s, "%s")`, CREATE_TRANSITION_SCOPE, RESULT, n.TransitionScope),
 				Type: astro.ExpressionAttribute,
 			})
+		}
+
+		// Do a simple rename for `transition:persist-props`
+		transitionPersistPropsIndex := transform.AttrIndex(n, transform.TRANSITION_PERSIST_PROPS)
+		if transitionPersistPropsIndex != -1 {
+			n.Attr[transitionPersistPropsIndex].Key = "data-astro-transition-persist-props"
 		}
 	}
 }

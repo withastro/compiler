@@ -2,12 +2,12 @@ package printer
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gkampitakis/go-snaps/snaps"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	types "github.com/withastro/compiler/internal/t"
@@ -35,9 +35,10 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 	"renderScript as " + RENDER_SCRIPT,
 	"createMetadata as " + CREATE_METADATA,
 }, ",\n  "), "http://localhost:3000/")
-var PRELUDE = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {
-const Astro = $$result.createAstro($$Astro, $$props, %s);
-Astro.self = $$Component;%s`, CREATE_COMPONENT, SLOTS, SLOTS, "\n\n")
+var PRELUDE = fmt.Sprintf(`const $$Component = %s(($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
+var PRELUDE_WITH_ASYNC = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
+var PRELUDE_ASTRO_GLOBAL = fmt.Sprintf(`const Astro = $$result.createAstro($$Astro, $$props, %s);
+Astro.self = $$Component;`, SLOTS)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
 }, undefined, undefined);
@@ -47,9 +48,6 @@ var SUFFIX_EXP_TRANSITIONS = fmt.Sprintf("%s;", BACKTICK) + `
 export default $$Component;`
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
-
-// SPECIAL TEST FIXTURES
-var NON_WHITESPACE_CHARS = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?")
 
 func suffixWithFilename(filename string, transitions bool) string {
 	propagationArg := "undefined"
@@ -95,8 +93,8 @@ type jsonTestcase struct {
 
 func TestPrinter(t *testing.T) {
 	longRandomString := ""
-	for i := 0; i < 4080; i++ {
-		longRandomString += string(NON_WHITESPACE_CHARS[rand.Intn(len(NON_WHITESPACE_CHARS))])
+	for i := 0; i < 40; i++ {
+		longRandomString += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[];:'\",.?"
 	}
 
 	tests := []testcase{
@@ -551,6 +549,7 @@ import type data from "test"
 		}
 	</main>
 </Layout>`,
+
 			want: want{
 				code: `${$$renderComponent($$result,'Layout',Layout,{"title":"Welcome to Astro."},{"default": () => $$render` + BACKTICK + `
 	${$$maybeRenderHead($$result)}<main>
@@ -569,8 +568,8 @@ import type data from "test"
 					</div>
 					<p>
 						</p><h2>p+h2 ${dummyKey}</h2>
-					` + BACKTICK + `	
-			);
+					` + BACKTICK + `
+				);
 			})
 		}
 	</main>
@@ -3491,10 +3490,43 @@ const items = ["Dog", "Cat", "Platipus"];
 			},
 		},
 		{
+			name:        "transition:persist-props converted to a data attribute",
+			source:      `<my-island transition:persist transition:persist-props="false"></my-island>`,
+			transitions: true,
+			want: want{
+				code: `${$$renderComponent($$result,'my-island','my-island',{"data-astro-transition-persist-props":"false","data-astro-transition-persist":($$createTransitionScope($$result, "otghnj5u"))})}`,
+			},
+		},
+		{
 			name:   "trailing expression",
 			source: `<Component />{}`,
 			want: want{
 				code: `${$$renderComponent($$result,'Component',Component,{})}${(void 0)}`,
+			},
+		},
+		{
+			name: "nested head content stays in the head",
+			source: `---
+const meta = { title: 'My App' };
+---
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+
+		{
+			meta && <title>{meta.title}</title>
+		}
+
+		<meta name="after">
+	</head>
+	<body>
+		<h1>My App</h1>
+	</body>
+</html>`,
+			want: want{
+				frontmatter: []string{"", `const meta = { title: 'My App' };`},
+				code:        `<html>	<head>		<meta charset="utf-8">		${			meta && $$render` + BACKTICK + `<title>${meta.title}</title>` + BACKTICK + `		}		<meta name="after">	${$$renderHead($$result)}</head>	<body>		<h1>My App</h1>	</body></html>`,
 			},
 		},
 	}
@@ -3527,6 +3559,7 @@ const items = ["Dog", "Cat", "Platipus"];
 				RenderScript: tt.transformOptions.RenderScript,
 			}
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
 				Scope:                   "XXXX",
 				InternalURL:             "http://localhost:3000/",
@@ -3536,6 +3569,8 @@ const items = ["Dog", "Cat", "Platipus"];
 			}, h)
 			output := string(result.Output)
 
+			// The compiler prints Astro global code only if it's loosely used
+			printAstroGlobal := strings.Contains(tt.source, "Astro")
 			toMatch := INTERNAL_IMPORTS
 			if strings.Count(tt.source, "transition:") > 0 {
 				toMatch += `import "transitions.css";`
@@ -3619,11 +3654,21 @@ const items = ["Dog", "Cat", "Platipus"];
 				patharg = fmt.Sprintf("\"%s\"", escapedFilename)
 			}
 			toMatch += "\n\n" + fmt.Sprintf("export const %s = %s(%s, %s);\n\n", METADATA, CREATE_METADATA, patharg, metadata)
-			toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n"
+			if printAstroGlobal {
+				toMatch += test_utils.Dedent(CREATE_ASTRO_CALL) + "\n"
+			}
 			if len(tt.want.getStaticPaths) > 0 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.getStaticPaths)) + "\n\n"
 			}
-			toMatch += test_utils.Dedent(PRELUDE) + "\n"
+			if strings.Contains(tt.source, "await") {
+				toMatch += test_utils.Dedent(PRELUDE_WITH_ASYNC)
+			} else {
+				toMatch += test_utils.Dedent(PRELUDE)
+			}
+			if printAstroGlobal {
+				toMatch += test_utils.Dedent(PRELUDE_ASTRO_GLOBAL)
+			}
+			toMatch += "\n"
 			if len(tt.want.frontmatter) > 1 {
 				toMatch += strings.TrimSpace(test_utils.Dedent(tt.want.frontmatter[1]))
 			}
@@ -3659,6 +3704,23 @@ const items = ["Dog", "Cat", "Platipus"];
 			if diff := test_utils.ANSIDiff(test_utils.RemoveNewlines(test_utils.Dedent(toMatch)), test_utils.RemoveNewlines(test_utils.Dedent(output))); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+
+			snapshotName := strings.ReplaceAll(tt.name, "#", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "<", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ">", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ")", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "(", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, ":", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, " ", "_")
+			snapshotName = strings.ReplaceAll(snapshotName, "#", "_")
+
+			s := snaps.WithConfig(
+				snaps.Filename(snapshotName),
+			)
+
+			snapshot := fmt.Sprintf("%s%s%s%s%s%s%s%s", "## Input\n\n", "```\n", test_utils.Dedent(code), "\n```", "\n\n## Output\n\n", "```js\n", test_utils.Dedent(output), "\n```")
+
+			s.MatchSnapshot(t, snapshot)
 		})
 	}
 }

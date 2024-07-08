@@ -1,6 +1,6 @@
+import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
 
 const input = `---
 // TODO: Due to this issue: https://github.com/withastro/astro/issues/1438, this route can't be in the same folder
@@ -39,7 +39,7 @@ test('does not panic on complex generics', async () => {
   } catch (e) {
     error = 1;
   }
-  assert.equal(error, 0, `compiler should not have panicked`);
+  assert.equal(error, 0, 'compiler should not have panicked');
 });
 
 test.run();

@@ -1,4 +1,3 @@
-/* eslint-disable */
 // @ts-nocheck
 // Copyright 2018 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -165,7 +164,7 @@ export default class Go {
 
     const timeOrigin = Date.now() - performance.now();
     this.importObject = {
-      go: {
+      gojs: {
         // Go's SP does not change as long as no Go code is running. Some operations (e.g. calls, getters and setters)
         // may synchronously trigger a Go event handler. This makes Go code get executed in the middle of the imported
         // function. A goroutine can switch to a new stack if the current stack is too small (see morestack function).
@@ -230,8 +229,8 @@ export default class Go {
                   this._resume();
                 }
               },
-              getInt64(sp + 8) + 1 // setTimeout has been seen to fire up to 1 millisecond early
-            )
+              getInt64(sp + 8) + 1, // setTimeout has been seen to fire up to 1 millisecond early
+            ),
           );
           this.mem.setInt32(sp + 16, id, true);
         },
@@ -356,7 +355,7 @@ export default class Go {
         // func valueLength(v ref) int
         'syscall/js.valueLength': (sp) => {
           sp >>>= 0;
-          setInt64(sp + 16, parseInt(loadValue(sp + 8).length));
+          setInt64(sp + 16, Number.parseInt(loadValue(sp + 8).length));
         },
 
         // valuePrepareString(v ref) (ref, int)
@@ -425,7 +424,7 @@ export default class Go {
     this.mem = new DataView(this._inst.exports.mem.buffer);
     this._values = [
       // JS values that Go currently has references to, indexed by reference id
-      NaN,
+      Number.NaN,
       0,
       null,
       true,
@@ -433,7 +432,7 @@ export default class Go {
       globalThis,
       this,
     ];
-    this._goRefCounts = new Array(this._values.length).fill(Infinity); // number of references that Go has to a JS value, indexed by reference id
+    this._goRefCounts = new Array(this._values.length).fill(Number.POSITIVE_INFINITY); // number of references that Go has to a JS value, indexed by reference id
     this._ids = new Map([
       // mapping from JS values to reference ids
       [0, 1],
@@ -451,7 +450,7 @@ export default class Go {
 
     const strPtr = (str) => {
       const ptr = offset;
-      const bytes = encoder.encode(str + '\0');
+      const bytes = encoder.encode(`${str}\0`);
       new Uint8Array(this.mem.buffer, offset, bytes.length).set(bytes);
       offset += bytes.length;
       if (offset % 8 !== 0) {

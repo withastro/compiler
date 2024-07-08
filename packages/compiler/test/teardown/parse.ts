@@ -1,8 +1,8 @@
+import { parse, teardown } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { parse, teardown } from '@astrojs/compiler';
 
-const FIXTURE = `<div>hello</div>`;
+const FIXTURE = '<div>hello</div>';
 
 test('parse still works after teardown', async () => {
   const ast1 = await parse(FIXTURE);

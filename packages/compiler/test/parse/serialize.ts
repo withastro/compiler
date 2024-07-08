@@ -1,7 +1,7 @@
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
 import { parse } from '@astrojs/compiler';
 import { serialize } from '@astrojs/compiler/utils';
+import { test } from 'uvu';
+import * as assert from 'uvu/assert';
 
 const FIXTURE = `---
 let value = 'world';
@@ -25,7 +25,7 @@ let content = "Testing 123";
 </Markdown>
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   const { ast } = await parse(FIXTURE);
   try {
@@ -38,7 +38,7 @@ test.before(async () => {
 
 test('serialize', () => {
   assert.type(result, 'string', `Expected "serialize" to return an object!`);
-  assert.equal(result, FIXTURE, `Expected serialized output to equal input`);
+  assert.equal(result, FIXTURE, 'Expected serialized output to equal input');
 });
 
 test('self-close elements', async () => {
@@ -46,7 +46,7 @@ test('self-close elements', async () => {
   const { ast } = await parse(input);
   const output = serialize(ast, { selfClose: false });
   const selfClosedOutput = serialize(ast);
-  assert.equal(output, '<div></div>', `Expected serialized output to equal <div></div>`);
+  assert.equal(output, '<div></div>', 'Expected serialized output to equal <div></div>');
   assert.equal(selfClosedOutput, input, `Expected serialized output to equal ${input}`);
 });
 

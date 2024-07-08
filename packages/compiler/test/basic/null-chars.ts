@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 <div xmlns:happy="https://example.com/schemas/happy">
@@ -8,7 +8,7 @@ const FIXTURE = `
 </div>
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await transform(FIXTURE, {
     filename: '/Users/matthew/dev/astro/packages/astro/test/fixtures/astro-attrs/src/pages/namespaced.astro',

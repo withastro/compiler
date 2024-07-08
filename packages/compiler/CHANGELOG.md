@@ -1,5 +1,50 @@
 # @astrojs/compiler
 
+## 2.8.1
+
+### Patch Changes
+
+- 0bb2746: Allow `data-astro-reload` to take a value
+
+## 2.8.0
+
+### Minor Changes
+
+- 17f8932: The WASM binaries for the compiler are now built using Go 1.22.
+
+### Patch Changes
+
+- e8b6cdf: Skips printing `createAstro` code if the `Astro` global is not referenced
+- ecd7e90: Skips printing `async` for component functions if `await` is not used
+
+## 2.7.1
+
+### Patch Changes
+
+- 5467f40: Fix issue with head content being pushed into body
+- d587ca6: Adds warnings indicating that the `data-astro-rerun` attribute can not be used on an external module `<script>` and that `data-astro-reload` is only supported on `<a>`, `<area>` and `<form>` elements.
+
+## 2.7.0
+
+### Minor Changes
+
+- 50fc0a9: Implement the `transition:persist-props` transformation
+
+### Patch Changes
+
+- f45dbfd: Updates deprecated Node.js 16 github actions.
+
+## 2.6.0
+
+### Minor Changes
+
+- a90d99e: Adds a new `renderScript` option to render non-inline script tags using a `renderScript` function from `internalURL`, instead of stripping the script entirely
+
+### Patch Changes
+
+- 6ffa54b: Fix TSX output prefixing output with unnecessary jsdoc comment
+- 86221d6: Adds a lint rule to display a message when attributes are added to a script tag, explaining that the script will be treated as `is:inline`.
+
 ## 2.5.3
 
 ### Patch Changes
@@ -100,8 +145,15 @@
   Results in:
 
   ```html
-  <div data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="1:1">
-    <span data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="2:2">hello world</span>
+  <div
+    data-astro-source-file="/Users/erika/Projects/..."
+    data-astro-source-loc="1:1"
+  >
+    <span
+      data-astro-source-file="/Users/erika/Projects/..."
+      data-astro-source-loc="2:2"
+      >hello world</span
+    >
   </div>
   ```
 
@@ -592,8 +644,11 @@
 - c770e7b: The compiler will now return `diagnostics` and unique error codes to be handled by the consumer. For example:
 
   ```js
-  import type { DiagnosticSeverity, DiagnosticCode } from '@astrojs/compiler/types';
-  import { transform } from '@astrojs/compiler';
+  import type {
+    DiagnosticSeverity,
+    DiagnosticCode,
+  } from "@astrojs/compiler/types";
+  import { transform } from "@astrojs/compiler";
 
   async function run() {
     const { diagnostics } = await transform(file, opts);

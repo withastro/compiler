@@ -1,7 +1,7 @@
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
 import { transform } from '@astrojs/compiler';
 import { parse } from 'acorn';
+import { test } from 'uvu';
+import * as assert from 'uvu/assert';
 
 test('does not panic on table in expression', async () => {
   const input = `
@@ -38,7 +38,7 @@ test('does not panic on table in expression', async () => {
   } catch (e) {
     error = 1;
   }
-  assert.equal(error, 0, `compiler should generate valid code`);
+  assert.equal(error, 0, 'compiler should generate valid code');
 });
 
 test('does not generate invalid markup on table in expression', async () => {
@@ -64,7 +64,7 @@ test('does not generate invalid markup on table in expression', async () => {
   } catch (e) {
     error = 1;
   }
-  assert.equal(error, 0, `compiler should generate valid code`);
+  assert.equal(error, 0, 'compiler should generate valid code');
 });
 
 test('does not generate invalid markup on multiple tables', async () => {
@@ -90,5 +90,5 @@ test('does not generate invalid markup on multiple tables', async () => {
   } catch (e) {
     error = 1;
   }
-  assert.equal(error, 0, `compiler should generate valid code`);
+  assert.equal(error, 0, 'compiler should generate valid code');
 });
