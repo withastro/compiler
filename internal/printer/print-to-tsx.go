@@ -67,8 +67,9 @@ func isValidTSXAttribute(a Attribute) bool {
 		if i != 0 && !(isValidFirstRune(ch) ||
 			unicode.In(ch, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)) &&
 			// : is allowed inside TSX attributes, for namespaces purpose
+			// - is allowed inside TSX attributes, for custom attributes
 			// See https://facebook.github.io/jsx/#prod-JSXNamespacedName
-			ch != ':' {
+			ch != ':' && ch != '-' {
 			return false
 		}
 	}
@@ -489,7 +490,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.addSourceMapping(loc.Loc{Start: endLoc})
 				endLoc++
 				break
-			} else if unicode.IsSpace(rune(c)) {
+			} else if unicode.IsSpace(rune(c)) || (c == '\\' && p.sourcetext[endLoc+1:][0] == 'n') {
 				hasLeadingSpace = true
 				leadingSpaceLoc = endLoc
 				endLoc++
