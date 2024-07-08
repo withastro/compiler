@@ -67,8 +67,9 @@ func isValidTSXAttribute(a Attribute) bool {
 		if i != 0 && !(isValidFirstRune(ch) ||
 			unicode.In(ch, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)) &&
 			// : is allowed inside TSX attributes, for namespaces purpose
-			// - is allowed inside TSX attributes, for custom attributes
 			// See https://facebook.github.io/jsx/#prod-JSXNamespacedName
+			// - is allowed inside TSX attributes, for custom attributes
+			// See https://facebook.github.io/jsx/#prod-JSXIdentifier
 			ch != ':' && ch != '-' {
 			return false
 		}
@@ -77,7 +78,7 @@ func isValidTSXAttribute(a Attribute) bool {
 	return true
 }
 
-// See https://mathiasbynens.be/notes/javascript-identifiers
+// See https://tc39.es/ecma262/#prod-IdentifierStartChar
 func isValidFirstRune(r rune) bool {
 	return r == '$' || r == '_' || unicode.In(r,
 		unicode.Lu,
