@@ -118,9 +118,9 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 });
 
 test("Don't move attributes to spread unnecessarily", async () => {
-  const input = `<div 丽dfds_fsfdsfs name="value"></div>`;
+  const input = `<div 丽dfds_fsfdsfs aria-blarg name="value"></div>`;
   const output = `${TSXPrefix}<Fragment>
-<div 丽dfds_fsfdsfs name="value"></div>
+<div 丽dfds_fsfdsfs aria-blarg name="value"></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
   const { code } = await convertToTSX(input, { sourcemap: 'external' });
@@ -237,6 +237,17 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 
 test('preserves spaces in tag', async () => {
   const input = '<Button      >';
+  const output = `${TSXPrefix}<Fragment>
+<Button ></Button>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
+  const { code } = await convertToTSX(input, { sourcemap: 'external' });
+  assert.snapshot(code, output, 'expected code to match snapshot');
+});
+
+test('preserves line returns in tag by transforming to space', async () => {
+  const input = `<Button
+	>`;
   const output = `${TSXPrefix}<Fragment>
 <Button ></Button>
 </Fragment>
