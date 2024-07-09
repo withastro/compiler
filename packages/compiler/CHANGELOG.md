@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.8.2
+
+### Patch Changes
+
+- 6b7c12f: Avoids stringifying `undefined` in scoped class attributes
+- 8803da6: Fixes newlines in opening tag generating buggy code in TSX
+
 ## 2.8.1
 
 ### Patch Changes
