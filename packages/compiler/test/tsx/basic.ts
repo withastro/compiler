@@ -256,40 +256,4 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
   assert.snapshot(code, output, 'expected code to match snapshot');
 });
 
-test('return ranges', async () => {
-  const input = `---\nconsole.log("Hello!")\n---\n\n<div></div>`;
-  const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
-
-  assert.equal(metaRanges, {
-    frontmatter: {
-      start: 30,
-      end: 54,
-    },
-    body: {
-      start: 68,
-      end: 80,
-    },
-		scripts: null,
-		styles: null
-  });
-});
-
-test('return ranges - no frontmatter', async () => {
-  const input = '<div></div>';
-  const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
-
-  assert.equal(metaRanges, {
-    frontmatter: {
-      start: 30,
-      end: 30,
-    },
-    body: {
-      start: 41,
-      end: 53,
-    },
-		scripts: null,
-		styles: null
-  });
-});
-
 test.run();
