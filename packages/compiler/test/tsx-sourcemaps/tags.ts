@@ -19,7 +19,7 @@ test('tag close', async () => {
 test('tag with spaces', async () => {
 	const input = '<Button      ></Button>';
 	const { map } = await convertToTSX(input, { sourcemap: 'both', filename: 'index.astro' });
-	const tracer = new TraceMap(map);
+	const tracer = new TraceMap(map as any);
 
 	const generated = generatedPositionFor(tracer, { source: 'index.astro', line: 1, column: 14 });
 

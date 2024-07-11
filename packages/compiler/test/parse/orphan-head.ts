@@ -1,4 +1,4 @@
-import { parse } from '@astrojs/compiler';
+import { type ParseResult, parse } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -18,7 +18,7 @@ const FIXTURE = `
 </html>
 `;
 
-let result: TransformResult;
+let result: ParseResult;
 test.before(async () => {
 	result = await parse(FIXTURE);
 });
