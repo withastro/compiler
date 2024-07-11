@@ -149,14 +149,14 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 }
 
 func makeTSXOptions(options js.Value) printer.TSXOptions {
-	includeScripts := false
-	if jsBool(options.Get("includeScripts")) {
-		includeScripts = true
+	includeScripts := true
+	if !jsBool(options.Get("includeScripts")) {
+		includeScripts = false
 	}
 
-	includeStyles := false
-	if jsBool(options.Get("includeStyles")) {
-		includeStyles = true
+	includeStyles := true
+	if !jsBool(options.Get("includeStyles")) {
+		includeStyles = false
 	}
 
 	return printer.TSXOptions{
