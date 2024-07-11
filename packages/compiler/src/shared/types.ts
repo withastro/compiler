@@ -71,7 +71,14 @@ export type ConvertToTSXOptions = Pick<
   TransformOptions,
   "filename" | "normalizedFilename"
 > & {
-  /** If set to true, script tags content will be included in the generated TSX  */ includeScripts?: boolean;
+  /** If set to true, script tags content will be included in the generated TSX
+   * Scripts will be wrapped in an arrow function to be compatible with JSX's spec
+   */
+  includeScripts?: boolean;
+  /** If set to true, style tags content will be included in the generated TSX
+   * Styles will be wrapped in a template literal to be compatible with JSX's spec
+   */
+  includeStyles?: boolean;
 };
 
 export type HoistedScript = { type: string } & (

@@ -154,8 +154,14 @@ func makeTSXOptions(options js.Value) printer.TSXOptions {
 		includeScripts = true
 	}
 
+	includeStyles := false
+	if jsBool(options.Get("includeStyles")) {
+		includeStyles = true
+	}
+
 	return printer.TSXOptions{
 		IncludeScripts: includeScripts,
+		IncludeStyles:  includeStyles,
 	}
 }
 

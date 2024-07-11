@@ -22,6 +22,7 @@ func getTSXPrefix() string {
 
 type TSXOptions struct {
 	IncludeScripts bool
+	IncludeStyles  bool
 }
 
 func PrintToTSX(sourcetext string, n *Node, opts TSXOptions, transformOpts transform.TransformOptions, h *handler.Handler) PrintResult {
@@ -231,6 +232,7 @@ type TextType uint32
 const (
 	RawText TextType = iota
 	ScriptText
+	StyleText
 )
 
 func getTextType(n *astro.Node) TextType {
@@ -239,6 +241,9 @@ func getTextType(n *astro.Node) TextType {
 		if attr == nil || (attr != nil && ScriptMimeTypes[strings.ToLower(attr.Val)]) {
 			return ScriptText
 		}
+	}
+	if style := n.Closest(isStyle); style != nil {
+		return StyleText
 	}
 	return RawText
 }
@@ -366,6 +371,16 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.printTextWithSourcemap(n.Data, n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("}}\n")
+			}
+			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
+			return
+		} else if getTextType(n) == StyleText {
+			p.addNilSourceMapping()
+			if o.IncludeStyles {
+				p.print("{`")
+				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
+				p.addNilSourceMapping()
+				p.print("`}")
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 			return
