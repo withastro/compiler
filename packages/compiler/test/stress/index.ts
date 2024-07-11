@@ -1,4 +1,4 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
+import { transform } from '@astrojs/compiler';
 
 async function run() {
 	await transform(
