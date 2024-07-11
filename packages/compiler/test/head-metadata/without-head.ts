@@ -8,13 +8,13 @@ const FIXTURE = `
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    filename: 'test.astro',
-  });
+	result = await transform(FIXTURE, {
+		filename: 'test.astro',
+	});
 });
 
 test('containsHead is false', () => {
-  assert.equal(result.containsHead, false);
+	assert.equal(result.containsHead, false);
 });
 
 test.run();

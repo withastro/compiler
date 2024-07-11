@@ -14,19 +14,23 @@ const FIXTURE = `
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('extracts styles', () => {
-  assert.equal(result.css.length, 1, `Incorrect CSS returned. Expected a length of 1 and got ${result.css.length}`);
+	assert.equal(
+		result.css.length,
+		1,
+		`Incorrect CSS returned. Expected a length of 1 and got ${result.css.length}`
+	);
 });
 
 test('escape url with space', () => {
-  assert.match(result.css[0], 'background:url(/white\\ space.png)');
+	assert.match(result.css[0], 'background:url(/white\\ space.png)');
 });
 
 test('escape css syntax', () => {
-  assert.match(result.css[0], ':not(#\\#)');
+	assert.match(result.css[0], ':not(#\\#)');
 });
 
 test.run();

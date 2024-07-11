@@ -22,11 +22,15 @@ const isProd = true;
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('has body in output', () => {
-  assert.match(result.code, '<body style="color: red;">', 'Expected output to contain body element!');
+	assert.match(
+		result.code,
+		'<body style="color: red;">',
+		'Expected output to contain body element!'
+	);
 });
 
 test.run();

@@ -30,11 +30,11 @@ const internal = [];
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('top-level expressions', () => {
-  assert.ok(result.code, 'Can compile top-level expressions');
+	assert.ok(result.code, 'Can compile top-level expressions');
 });
 
 test.run();

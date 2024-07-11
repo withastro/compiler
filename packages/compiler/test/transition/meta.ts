@@ -8,13 +8,13 @@ const FIXTURE = `
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    resolvePath: async (s) => s,
-  });
+	result = await transform(FIXTURE, {
+		resolvePath: async (s) => s,
+	});
 });
 
 test('tagged with propagation metadata', () => {
-  assert.equal(result.propagation, true);
+	assert.equal(result.propagation, true);
 });
 
 test.run();

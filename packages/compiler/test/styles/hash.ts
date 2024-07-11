@@ -33,18 +33,20 @@ const FIXTURE_D = `
 
 const scopes: string[] = [];
 test.before(async () => {
-  const [{ scope: a }, { scope: b }, { scope: c }, { scope: d }] = await Promise.all([FIXTURE_A, FIXTURE_B, FIXTURE_C, FIXTURE_D].map((source) => transform(source)));
-  scopes.push(a, b, c, d);
+	const [{ scope: a }, { scope: b }, { scope: c }, { scope: d }] = await Promise.all(
+		[FIXTURE_A, FIXTURE_B, FIXTURE_C, FIXTURE_D].map((source) => transform(source))
+	);
+	scopes.push(a, b, c, d);
 });
 
 test('hash changes when content outside of style change', () => {
-  const [, b, c] = scopes;
-  assert.not.equal(b, c, 'Expected scopes to not be equal');
+	const [, b, c] = scopes;
+	assert.not.equal(b, c, 'Expected scopes to not be equal');
 });
 
 test('hash changes when scripts change', () => {
-  const [, , c, d] = scopes;
-  assert.not.equal(c, d, 'Expected scopes to not be equal');
+	const [, , c, d] = scopes;
+	assert.not.equal(c, d, 'Expected scopes to not be equal');
 });
 
 test.run();

@@ -3,41 +3,41 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 test('does not panic on unfinished template literal attribute', async () => {
-  const input = `<div class=\`></div>
+	const input = `<div class=\`></div>
   `;
-  let error = 0;
-  try {
-    const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-    assert.match(output.code, 'class={``}');
-  } catch (e) {
-    error = 1;
-  }
+	let error = 0;
+	try {
+		const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+		assert.match(output.code, 'class={``}');
+	} catch (e) {
+		error = 1;
+	}
 
-  assert.equal(error, 0, 'compiler should not have panicked');
+	assert.equal(error, 0, 'compiler should not have panicked');
 });
 
 test('does not panic on unfinished double quoted attribute', async () => {
-  const input = `<main id="gotcha />`;
-  let error = 0;
-  try {
-    const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-    assert.match(output.code, `id="gotcha"`);
-  } catch (e) {
-    error = 1;
-  }
+	const input = `<main id="gotcha />`;
+	let error = 0;
+	try {
+		const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+		assert.match(output.code, `id="gotcha"`);
+	} catch (e) {
+		error = 1;
+	}
 
-  assert.equal(error, 0, 'compiler should not have panicked');
+	assert.equal(error, 0, 'compiler should not have panicked');
 });
 
 test('does not panic on unfinished single quoted attribute', async () => {
-  const input = `<main id='gotcha/>`;
-  let error = 0;
-  try {
-    const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-    assert.match(output.code, `id="gotcha"`);
-  } catch (e) {
-    error = 1;
-  }
+	const input = `<main id='gotcha/>`;
+	let error = 0;
+	try {
+		const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+		assert.match(output.code, `id="gotcha"`);
+	} catch (e) {
+		error = 1;
+	}
 
-  assert.equal(error, 0, 'compiler should not have panicked');
+	assert.equal(error, 0, 'compiler should not have panicked');
 });

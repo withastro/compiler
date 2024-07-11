@@ -33,13 +33,13 @@ const { article } = Astro.props;
 <ArticleLayout article={article} />`;
 
 test('does not panic on complex generics', async () => {
-  let error = 0;
-  try {
-    await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-  } catch (e) {
-    error = 1;
-  }
-  assert.equal(error, 0, 'compiler should not have panicked');
+	let error = 0;
+	try {
+		await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+	} catch (e) {
+		error = 1;
+	}
+	assert.equal(error, 0, 'compiler should not have panicked');
 });
 
 test.run();
