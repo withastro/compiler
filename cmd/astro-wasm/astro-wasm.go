@@ -37,6 +37,13 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
+func jsBoolOptional(j js.Value, defaultValue bool) bool {
+	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
+		return defaultValue
+	}
+	return j.Bool()
+}
+
 func jsBool(j js.Value) bool {
 	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
 		return false
@@ -149,15 +156,8 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 }
 
 func makeTSXOptions(options js.Value) printer.TSXOptions {
-	includeScripts := true
-	if !jsBool(options.Get("includeScripts")) {
-		includeScripts = false
-	}
-
-	includeStyles := true
-	if !jsBool(options.Get("includeStyles")) {
-		includeStyles = false
-	}
+	includeScripts := jsBoolOptional(options.Get("includeScripts"), true)
+	includeStyles := jsBoolOptional(options.Get("includeStyles"), true)
 
 	return printer.TSXOptions{
 		IncludeScripts: includeScripts,

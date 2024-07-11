@@ -269,6 +269,8 @@ test('return ranges', async () => {
       start: 68,
       end: 80,
     },
+		scripts: null,
+		styles: null
   });
 });
 
@@ -285,6 +287,8 @@ test('return ranges - no frontmatter', async () => {
       start: 41,
       end: 53,
     },
+		scripts: null,
+		styles: null
   });
 });
 
