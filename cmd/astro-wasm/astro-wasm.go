@@ -148,6 +148,17 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	}
 }
 
+func makeTSXOptions(options js.Value) printer.TSXOptions {
+	includeScripts := false
+	if jsBool(options.Get("includeScripts")) {
+		includeScripts = true
+	}
+
+	return printer.TSXOptions{
+		IncludeScripts: includeScripts,
+	}
+}
+
 type RawSourceMap struct {
 	File           string   `js:"file"`
 	Mappings       string   `js:"mappings"`
@@ -260,7 +271,10 @@ func ConvertToTSX() any {
 		if err != nil {
 			h.AppendError(err)
 		}
-		result := printer.PrintToTSX(source, doc, transformOptions, h)
+
+		tsxOptions := makeTSXOptions(js.Value(args[1]))
+
+		result := printer.PrintToTSX(source, doc, tsxOptions, transformOptions, h)
 
 		// AFTER printing, exec transformations to pickup any errors/warnings
 		transform.Transform(doc, transformOptions, h)

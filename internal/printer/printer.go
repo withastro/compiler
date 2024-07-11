@@ -82,6 +82,28 @@ func (p *printer) setTSXBodyRange(componentRange loc.TSXRange) {
 	p.ranges.Body = componentRange
 }
 
+func (p *printer) addTSXScript(start int, end int, content string, scriptType string) {
+	p.ranges.Scripts = append(p.ranges.Scripts, TSXExtractedTag{
+		Loc: loc.TSXRange{
+			Start: start,
+			End:   end,
+		},
+		Content: content,
+		Type:    scriptType,
+	})
+}
+
+func (p *printer) addTSXStyle(start int, end int, content string, styleType string) {
+	p.ranges.Styles = append(p.ranges.Styles, TSXExtractedTag{
+		Loc: loc.TSXRange{
+			Start: start,
+			End:   end,
+		},
+		Content: content,
+		Type:    styleType,
+	})
+}
+
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
 	for pos, c := range text {

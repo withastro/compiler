@@ -1,6 +1,6 @@
-import type { RootNode } from './ast';
-import type { DiagnosticCode } from './diagnostics';
-export type * from './ast';
+import type { RootNode } from "./ast";
+import type { DiagnosticCode } from "./diagnostics";
+export type * from "./ast";
 
 export interface PreprocessorResult {
   code: string;
@@ -43,18 +43,21 @@ export interface TransformOptions {
   internalURL?: string;
   filename?: string;
   normalizedFilename?: string;
-  sourcemap?: boolean | 'inline' | 'external' | 'both';
+  sourcemap?: boolean | "inline" | "external" | "both";
   astroGlobalArgs?: string;
   compact?: boolean;
   resultScopedSlot?: boolean;
-  scopedStyleStrategy?: 'where' | 'class' | 'attribute';
+  scopedStyleStrategy?: "where" | "class" | "attribute";
   /**
    * @deprecated "as" has been removed and no longer has any effect!
    */
-  as?: 'document' | 'fragment';
+  as?: "document" | "fragment";
   transitionsAnimationURL?: string;
   resolvePath?: (specifier: string) => Promise<string>;
-  preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
+  preprocessStyle?: (
+    content: string,
+    attrs: Record<string, string>
+  ) => null | Promise<PreprocessorResult | PreprocessorError>;
   annotateSourceFile?: boolean;
   /**
    * Render script tags to be processed (e.g. script tags that have no attributes or only a `src` attribute)
@@ -64,15 +67,20 @@ export interface TransformOptions {
   renderScript?: boolean;
 }
 
-export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename'>;
+export type ConvertToTSXOptions = Pick<
+  TransformOptions,
+  "filename" | "normalizedFilename"
+> & {
+  /** If set to true, script tags content will be included in the generated TSX  */ includeScripts?: boolean;
+};
 
 export type HoistedScript = { type: string } & (
   | {
-      type: 'external';
+      type: "external";
       src: string;
     }
   | {
-      type: 'inline';
+      type: "inline";
       code: string;
       map: string;
     }
@@ -107,19 +115,39 @@ export interface SourceMap {
   version: number;
 }
 
+export interface TSXLocation {
+  start: number;
+  end: number;
+}
+
+export interface TSXExtractedTag {
+  position: TSXLocation;
+  content: string;
+}
+
+export interface TSXExtractedScript extends TSXExtractedTag {
+  type:
+    | "processed-module"
+    | "module"
+    | "inline"
+    | "event-attribute"
+    | "json"
+    | "unknown";
+}
+
+export interface TSXExtractedStyle extends TSXExtractedTag {
+  type: "tag" | "style-attribute";
+}
+
 export interface TSXResult {
   code: string;
   map: SourceMap;
   diagnostics: DiagnosticMessage[];
   metaRanges: {
-    frontmatter: {
-      start: number;
-      end: number;
-    };
-    body: {
-      start: number;
-      end: number;
-    };
+    frontmatter: TSXLocation;
+    body: TSXLocation;
+    scripts?: TSXExtractedScript[];
+    styles?: TSXExtractedStyle[];
   };
 }
 
@@ -135,11 +163,20 @@ export interface ParseResult {
 //
 // Works in node: yes
 // Works in browser: yes
-export declare function transform(input: string, options?: TransformOptions): Promise<TransformResult>;
+export declare function transform(
+  input: string,
+  options?: TransformOptions
+): Promise<TransformResult>;
 
-export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
+export declare function parse(
+  input: string,
+  options?: ParseOptions
+): Promise<ParseResult>;
 
-export declare function convertToTSX(input: string, options?: ConvertToTSXOptions): Promise<TSXResult>;
+export declare function convertToTSX(
+  input: string,
+  options?: ConvertToTSXOptions
+): Promise<TSXResult>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before
