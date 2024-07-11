@@ -1,5 +1,29 @@
 # @astrojs/compiler
 
+## 2.8.2
+
+### Patch Changes
+
+- 6b7c12f: Avoids stringifying `undefined` in scoped class attributes
+- 8803da6: Fixes newlines in opening tag generating buggy code in TSX
+
+## 2.8.1
+
+### Patch Changes
+
+- 0bb2746: Allow `data-astro-reload` to take a value
+
+## 2.8.0
+
+### Minor Changes
+
+- 17f8932: The WASM binaries for the compiler are now built using Go 1.22.
+
+### Patch Changes
+
+- e8b6cdf: Skips printing `createAstro` code if the `Astro` global is not referenced
+- ecd7e90: Skips printing `async` for component functions if `await` is not used
+
 ## 2.7.1
 
 ### Patch Changes
@@ -128,8 +152,15 @@
   Results in:
 
   ```html
-  <div data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="1:1">
-    <span data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="2:2">hello world</span>
+  <div
+    data-astro-source-file="/Users/erika/Projects/..."
+    data-astro-source-loc="1:1"
+  >
+    <span
+      data-astro-source-file="/Users/erika/Projects/..."
+      data-astro-source-loc="2:2"
+      >hello world</span
+    >
   </div>
   ```
 
@@ -620,8 +651,11 @@
 - c770e7b: The compiler will now return `diagnostics` and unique error codes to be handled by the consumer. For example:
 
   ```js
-  import type { DiagnosticSeverity, DiagnosticCode } from '@astrojs/compiler/types';
-  import { transform } from '@astrojs/compiler';
+  import type {
+    DiagnosticSeverity,
+    DiagnosticCode,
+  } from "@astrojs/compiler/types";
+  import { transform } from "@astrojs/compiler";
 
   async function run() {
     const { diagnostics } = await transform(file, opts);

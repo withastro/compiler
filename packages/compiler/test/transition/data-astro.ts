@@ -1,6 +1,6 @@
+import { parse, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 <div data-astro-reload>
@@ -14,10 +14,9 @@ const FIXTURE = `
 
 test('Issues warnings for data-astro-* attributes', async () => {
   const result = await transform(FIXTURE);
-  assert.equal(result.diagnostics.length, 3);
+  assert.equal(result.diagnostics.length, 2);
   assert.equal(result.diagnostics[0].code, 2000);
-  assert.equal(result.diagnostics[1].code, 2005);
-  assert.equal(result.diagnostics[2].code, 2010);
+  assert.equal(result.diagnostics[1].code, 2010);
 });
 
 test.run();

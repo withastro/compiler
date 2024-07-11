@@ -1,11 +1,11 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { generatedPositionFor, TraceMap } from '@jridgewell/trace-mapping';
+import { TraceMap, generatedPositionFor } from '@jridgewell/trace-mapping';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 import { testTSXSourcemap } from '../utils';
 
 test('tag close', async () => {
-  const input = `<Hello></Hello>`;
+  const input = '<Hello></Hello>';
   const output = await testTSXSourcemap(input, '>');
 
   assert.equal(output, {
@@ -17,7 +17,7 @@ test('tag close', async () => {
 });
 
 test('tag with spaces', async () => {
-  const input = `<Button      ></Button>`;
+  const input = '<Button      ></Button>';
   const { map } = await convertToTSX(input, { sourcemap: 'both', filename: 'index.astro' });
   const tracer = new TraceMap(map);
 

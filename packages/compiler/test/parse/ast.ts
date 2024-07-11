@@ -1,6 +1,6 @@
+import { parse } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { parse } from '@astrojs/compiler';
 
 const FIXTURE = `
 ---
@@ -11,7 +11,7 @@ let value = 'world';
 <div></div>
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await parse(FIXTURE);
 });

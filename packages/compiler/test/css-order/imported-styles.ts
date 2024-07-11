@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 ---
@@ -11,7 +11,7 @@ import '../styles/global.css';
 </style>
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await transform(FIXTURE, {
     filename: 'test.astro',
@@ -19,8 +19,8 @@ test.before(async () => {
 });
 
 test('Astro style imports placed after frontmatter imports', () => {
-  let idx1 = result.code.indexOf('../styles/global.css');
-  let idx2 = result.code.indexOf('test.astro?astro&type=style&index=0&lang.css');
+  const idx1 = result.code.indexOf('../styles/global.css');
+  const idx2 = result.code.indexOf('test.astro?astro&type=style&index=0&lang.css');
   assert.ok(idx2 > idx1);
 });
 

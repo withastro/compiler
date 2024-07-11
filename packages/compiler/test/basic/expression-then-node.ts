@@ -1,6 +1,6 @@
+import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { transform } from '@astrojs/compiler';
 
 const FIXTURE = `
 ---
@@ -28,7 +28,7 @@ const { each } = Astro.props;
 </Show>
 `;
 
-let result;
+let result: unknown;
 test.before(async () => {
   result = await transform(FIXTURE);
 });
@@ -39,7 +39,7 @@ test('expression followed by node', () => {
     `yield '
 ';
 		}`,
-    'Expected output to properly handle expression!'
+    'Expected output to properly handle expression!',
   );
 });
 

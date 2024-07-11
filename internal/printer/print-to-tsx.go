@@ -63,12 +63,15 @@ func isValidTSXAttribute(a Attribute) bool {
 		if i == 0 && !isValidFirstRune(ch) {
 			return false
 		}
-		// See https://mathiasbynens.be/notes/javascript-identifiers
+
+		// See https://tc39.es/ecma262/#prod-IdentifierName
 		if i != 0 && !(isValidFirstRune(ch) ||
 			unicode.In(ch, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)) &&
 			// : is allowed inside TSX attributes, for namespaces purpose
 			// See https://facebook.github.io/jsx/#prod-JSXNamespacedName
-			ch != ':' {
+			// - is allowed inside TSX attributes, for custom attributes
+			// See https://facebook.github.io/jsx/#prod-JSXIdentifier
+			ch != ':' && ch != '-' {
 			return false
 		}
 	}
@@ -76,7 +79,7 @@ func isValidTSXAttribute(a Attribute) bool {
 	return true
 }
 
-// See https://mathiasbynens.be/notes/javascript-identifiers
+// See https://tc39.es/ecma262/#prod-IdentifierStartChar
 func isValidFirstRune(r rune) bool {
 	return r == '$' || r == '_' || unicode.In(r,
 		unicode.Lu,
@@ -489,7 +492,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.addSourceMapping(loc.Loc{Start: endLoc})
 				endLoc++
 				break
-			} else if unicode.IsSpace(rune(c)) {
+			} else if unicode.IsSpace(rune(c)) || (c == '\\' && p.sourcetext[endLoc+1:][0] == 'n') {
 				hasLeadingSpace = true
 				leadingSpaceLoc = endLoc
 				endLoc++

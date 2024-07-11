@@ -364,7 +364,6 @@ func WarnAboutMisplacedReload(n *astro.Node, h *handler.Handler) {
 		/*
 		 * When set on <a>, <form> or <area>,
 		 * the data-astro-reload attribute replaces view transitions between pages with a full page loads.
-		 * The data-astro-reload attribute is not supported for other elements. It does not accept a value.
 		 */
 
 		if n.Type != astro.ElementNode || n.Data != "a" && n.Data != "area" && n.Data != "form" {
@@ -373,14 +372,6 @@ func WarnAboutMisplacedReload(n *astro.Node, h *handler.Handler) {
 				Text:  "The data-astro-reload attribute is only supported on <a>, <form> and <area> elements.",
 				Range: loc.Range{Loc: attr.KeyLoc, Len: len(attr.Key)},
 			})
-		}
-		if attr.Val != "" {
-			h.AppendWarning(&loc.ErrorWithRange{
-				Code:  loc.WARNING_UNSUPPORTED_EXPRESSION,
-				Text:  "The data-astro-reload attribute does not accept a value",
-				Range: loc.Range{Loc: attr.ValLoc, Len: len(attr.Val)},
-			})
-			return
 		}
 	}
 }

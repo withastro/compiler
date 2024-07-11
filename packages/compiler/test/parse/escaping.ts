@@ -1,8 +1,8 @@
+import { parse } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { parse } from '@astrojs/compiler';
 
-const STYLE = `div { & span { color: red; }}`;
+const STYLE = 'div { & span { color: red; }}';
 const FIXTURE = `<style>${STYLE}</style>`;
 
 test('ampersand', async () => {
@@ -13,7 +13,7 @@ test('ampersand', async () => {
       children: [{ value: output }],
     },
   ] = result.ast.children;
-  assert.equal(output, STYLE, `Expected AST style to equal input`);
+  assert.equal(output, STYLE, 'Expected AST style to equal input');
 });
 
 test.run();

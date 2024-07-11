@@ -15,9 +15,7 @@ import type {
   TextNode,
 } from '../shared/ast';
 
-export interface Visitor {
-  (node: Node, parent?: ParentNode, index?: number): void | Promise<void>;
-}
+export type Visitor = (node: Node, parent?: ParentNode, index?: number) => void | Promise<void>;
 
 function guard<Type extends Node>(type: string) {
   return (node: Node): node is Type => node.type === type;
@@ -53,7 +51,7 @@ class Walker {
   async visit(node: Node, parent?: ParentNode, index?: number): Promise<void> {
     await this.callback(node, parent, index);
     if (is.parent(node)) {
-      let promises = [];
+      const promises = [];
       for (let i = 0; i < node.children.length; i++) {
         const child = node.children[i];
         promises.push(this.callback(child, node as ParentNode, i));
@@ -112,25 +110,31 @@ export function serialize(root: Node, opts: SerializeOptions = { selfClose: true
   let output = '';
   function visitor(node: Node) {
     if (is.root(node)) {
-      node.children.forEach((child) => visitor(child));
+      for (const child of node.children) {
+        visitor(child);
+      }
     } else if (is.frontmatter(node)) {
       output += `---${node.value}---\n\n`;
     } else if (is.comment(node)) {
       output += `<!--${node.value}-->`;
     } else if (is.expression(node)) {
-      output += `{`;
-      node.children.forEach((child) => visitor(child));
-      output += `}`;
+      output += '{';
+      for (const child of node.children) {
+        visitor(child);
+      }
+      output += '}';
     } else if (is.literal(node)) {
       output += node.value;
     } else if (is.tag(node)) {
       output += `<${node.name}`;
       output += serializeAttributes(node);
-      if (node.children.length == 0 && opts.selfClose) {
-        output += ` />`;
+      if (node.children.length === 0 && opts.selfClose) {
+        output += ' />';
       } else {
         output += '>';
-        node.children.forEach((child) => visitor(child));
+        for (const child of node.children) {
+          visitor(child);
+        }
         output += `</${node.name}>`;
       }
     }

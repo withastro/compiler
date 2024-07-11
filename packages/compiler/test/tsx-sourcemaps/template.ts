@@ -3,7 +3,7 @@ import * as assert from 'uvu/assert';
 import { testTSXSourcemap } from '../utils';
 
 test('template expression basic', async () => {
-  const input = `<div>{nonexistent}</div>`;
+  const input = '<div>{nonexistent}</div>';
 
   const output = await testTSXSourcemap(input, 'nonexistent');
   assert.equal(output, {
@@ -15,7 +15,7 @@ test('template expression basic', async () => {
 });
 
 test('template expression has dot', async () => {
-  const input = `<div>{console.log(hey)}</div>`;
+  const input = '<div>{console.log(hey)}</div>';
   const output = await testTSXSourcemap(input, 'log');
   assert.equal(output, {
     source: 'index.astro',

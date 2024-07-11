@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-shadow
-export const enum DiagnosticCode {
+export enum DiagnosticCode {
   ERROR = 1000,
   ERROR_UNTERMINATED_JS_COMMENT = 1001,
   ERROR_FRAGMENT_SHORTHAND_ATTRS = 1002,

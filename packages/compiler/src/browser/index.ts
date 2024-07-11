@@ -43,7 +43,7 @@ export const initialize: typeof types.initialize = async (options) => {
   longLivedService = longLivedService || (await initializePromise);
 };
 
-let ensureServiceIsRunning = (): Service => {
+const ensureServiceIsRunning = (): Service => {
   if (!initializePromise) throw new Error('You need to call "initialize" before calling this');
   if (!longLivedService) throw new Error('You need to wait for the promise returned from "initialize" to be resolved before calling this');
   return longLivedService;

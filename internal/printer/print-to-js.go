@@ -148,6 +148,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		return
 	}
 
+	// Decide whether to print code for `Astro` global variable. Use a loose check for now.
+	printAstroGlobal := strings.Contains(p.sourcetext, "Astro")
+
 	// Render frontmatter (will be the first node, if it exists)
 	if n.Type == FrontmatterNode {
 		if n.FirstChild == nil {
@@ -179,9 +182,11 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				// 1. Component imports, if any exist.
 				p.addNilSourceMapping()
 				p.printComponentMetadata(n.Parent, opts.opts, []byte(p.sourcetext))
-				// 2. Top-level Astro global.
 
-				p.printTopLevelAstro(opts.opts)
+				// 2. Top-level Astro global.
+				if printAstroGlobal {
+					p.printTopLevelAstro(opts.opts)
+				}
 
 				exports := make([][]byte, 0)
 				exportLocs := make([]loc.Loc, 0)
@@ -228,7 +233,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 					}
 				}
 
-				p.printFuncPrelude(opts.opts)
+				p.printFuncPrelude(opts.opts, printAstroGlobal)
 				// PRINT BODY
 				if len(bodies) > 0 {
 					for i, body := range bodies {
@@ -267,10 +272,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		return
 	} else if !p.hasFuncPrelude {
 		p.printComponentMetadata(n.Parent, opts.opts, []byte{})
-		p.printTopLevelAstro(opts.opts)
+		if printAstroGlobal {
+			p.printTopLevelAstro(opts.opts)
+		}
 
 		// Render func prelude. Will only run for the first non-frontmatter node
-		p.printFuncPrelude(opts.opts)
+		p.printFuncPrelude(opts.opts, printAstroGlobal)
 		// This just ensures a newline
 		p.println("")
 

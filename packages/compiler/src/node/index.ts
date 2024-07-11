@@ -34,7 +34,7 @@ export const teardown: typeof types.teardown = () => {
   (globalThis as any)['@astrojs/compiler'] = undefined;
 };
 
-let getService = (): Promise<Service> => {
+const getService = (): Promise<Service> => {
   if (!longLivedService) {
     longLivedService = startRunningService().catch((err) => {
       // Let the caller try again if this fails.

@@ -1,10 +1,10 @@
+import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { convertToTSX } from '@astrojs/compiler';
 import { testTSXSourcemap } from '../utils';
 
 test('template expression basic', async () => {
-  const input = `<div>{\r\nnonexistent\r\n}</div>`;
+  const input = '<div>{\r\nnonexistent\r\n}</div>';
 
   const output = await testTSXSourcemap(input, 'nonexistent');
   assert.equal(output, {
@@ -16,7 +16,7 @@ test('template expression basic', async () => {
 });
 
 test('template expression has dot', async () => {
-  const input = `<div>{\nconsole.log(hey)\n}</div>`;
+  const input = '<div>{\nconsole.log(hey)\n}</div>';
   const output = await testTSXSourcemap(input, 'log');
   assert.equal(output, {
     source: 'index.astro',
@@ -27,7 +27,7 @@ test('template expression has dot', async () => {
 });
 
 test('template expression has dot', async () => {
-  const input = `<div>{\r\nconsole.log(hey)\r\n}</div>`;
+  const input = '<div>{\r\nconsole.log(hey)\r\n}</div>';
   const output = await testTSXSourcemap(input, 'log');
   assert.equal(output, {
     source: 'index.astro',
