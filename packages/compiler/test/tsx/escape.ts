@@ -1,7 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { TSXPrefix } from '../utils';
+import { TSXPrefix } from '../utils.js';
 
 test('escapes braces in comment', async () => {
 	const input = '<!-- {<div>Not JSX!<div/>}-->';

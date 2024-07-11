@@ -4,7 +4,7 @@ import * as assert from 'uvu/assert';
 
 const FIXTURE = '<>Hello</><Fragment>World</Fragment>';
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await parse(FIXTURE);
 });

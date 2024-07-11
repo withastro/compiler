@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testJSSourcemap } from '../utils';
+import { testJSSourcemap } from '../utils.js';
 
 const input = `---
 // TODO: Due to this issue: https://github.com/withastro/astro/issues/1438, this route can't be in the same folder

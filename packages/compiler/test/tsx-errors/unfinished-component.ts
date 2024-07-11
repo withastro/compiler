@@ -4,7 +4,7 @@ import * as assert from 'uvu/assert';
 
 const FIXTURE = '<div class={';
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await convertToTSX(FIXTURE, {
 		filename: '/src/components/unfinished.astro',

@@ -1,10 +1,11 @@
-import { parse } from '@astrojs/compiler';
+import { type ParseResult, parse } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 test('can compile unfinished style', async () => {
 	let error = 0;
-	let result: unknown;
+	let result: ParseResult;
+
 	try {
 		result = await parse('<style>');
 	} catch (e) {

@@ -1,6 +1,6 @@
-import type { RootNode } from './ast';
-import type { DiagnosticCode } from './diagnostics';
-export type * from './ast';
+import type { RootNode } from './ast.js';
+import type { DiagnosticCode } from './diagnostics.js';
+export type * from './ast.js';
 
 export interface PreprocessorResult {
 	code: string;
@@ -67,7 +67,10 @@ export interface TransformOptions {
 	renderScript?: boolean;
 }
 
-export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename'>;
+export type ConvertToTSXOptions = Pick<
+	TransformOptions,
+	'filename' | 'normalizedFilename' | 'sourcemap'
+>;
 
 export type HoistedScript = { type: string } & (
 	| {

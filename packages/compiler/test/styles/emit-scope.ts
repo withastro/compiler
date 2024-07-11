@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -12,7 +12,7 @@ let value = 'world';
 <div>Hello world!</div>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await transform(FIXTURE, {
 		sourcemap: true,

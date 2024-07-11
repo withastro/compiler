@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { parse } from 'acorn';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
@@ -44,7 +44,7 @@ test('does not panic on table in expression', async () => {
 test('does not generate invalid markup on table in expression', async () => {
 	const input = `
 <ul>
-    {Astro.props.page.data.map(page => 
+    {Astro.props.page.data.map(page =>
         <li>
             <table>
             <tr><td>{page.frontmatter.title}</td></tr>

@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { parse } from 'acorn';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import type * as types from '../shared/types';
+import type * as types from '../shared/types.js';
 import Go from './wasm_exec.js';
 
 type UnwrappedPromise<T> = T extends (...params: any) => Promise<infer Return>

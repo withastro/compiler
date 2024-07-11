@@ -2,7 +2,7 @@ import { convertToTSX } from '@astrojs/compiler';
 import { TraceMap, generatedPositionFor } from '@jridgewell/trace-mapping';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testTSXSourcemap } from '../utils.js';
 
 test('tag close', async () => {
 	const input = '<Hello></Hello>';

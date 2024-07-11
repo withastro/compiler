@@ -18,7 +18,7 @@ const FIXTURE = `
 </html>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await parse(FIXTURE);
 });

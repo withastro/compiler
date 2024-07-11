@@ -20,12 +20,12 @@ The Astro compiler can convert `.astro` syntax to a TypeScript Module whose defa
 - `.astro` files rely on a server implementation exposed as `astro/runtime/server/index.js` in the Node ecosystem. Other runtimes currently need to bring their own rendering implementation and reference it via `internalURL`. This is a pain point we're looking into fixing.
 
 ```js
-import { transform } from '@astrojs/compiler';
+import { transform, type TransformResult } from "@astrojs/compiler";
 
 const result = await transform(source, {
-  filename: '/Users/astro/Code/project/src/pages/index.astro',
-  sourcemap: 'both',
-  internalURL: 'astro/runtime/server/index.js',
+  filename: "/Users/astro/Code/project/src/pages/index.astro",
+  sourcemap: "both",
+  internalURL: "astro/runtime/server/index.js",
 });
 ```
 
@@ -40,8 +40,8 @@ The Astro compiler can emit an AST using the `parse` method.
 - The `@astrojs/compiler/utils` entrypoint exposes a `walk` function that can be used to traverse the AST. It also exposes the `is` helper which can be used as guards to derive the proper types for each `node`.
 
 ```js
-import { parse } from '@astrojs/compiler';
-import { walk, is } from '@astrojs/compiler/utils';
+import { parse } from "@astrojs/compiler";
+import { walk, is } from "@astrojs/compiler/utils";
 
 const result = await parse(source, {
   position: false, // defaults to `true`

@@ -11,7 +11,7 @@ let value = 'world';
 <div></div>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await parse(FIXTURE);
 });
