@@ -32,11 +32,14 @@ html {
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('includes html element', () => {
-  assert.ok(result.code.includes('<html lang="de">'), 'Expected compile result to include html element!');
+	assert.ok(
+		result.code.includes('<html lang="de">'),
+		'Expected compile result to include html element!'
+	);
 });
 
 test.run();

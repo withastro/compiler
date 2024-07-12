@@ -14,13 +14,13 @@ let value = 'world';
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    sourcemap: true,
-  });
+	result = await transform(FIXTURE, {
+		sourcemap: true,
+	});
 });
 
 test('emits a scope', () => {
-  assert.ok(result.scope, 'Expected to return a scope');
+	assert.ok(result.scope, 'Expected to return a scope');
 });
 
 test.run();

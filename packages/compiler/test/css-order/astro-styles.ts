@@ -10,14 +10,14 @@ const FIXTURE = `
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    filename: 'test.astro',
-  });
+	result = await transform(FIXTURE, {
+		filename: 'test.astro',
+	});
 });
 
 test('Astro style imports are included in the compiled JS', () => {
-  const idx = result.code.indexOf('test.astro?astro&type=style&index=0&lang.css');
-  assert.not.equal(idx, -1);
+	const idx = result.code.indexOf('test.astro?astro&type=style&index=0&lang.css');
+	assert.not.equal(idx, -1);
 });
 
 test.run();

@@ -1,8 +1,8 @@
 import { transform } from '@astrojs/compiler';
 
 async function run() {
-  await transform(
-    `---
+	await transform(
+		`---
 import CartItems from './CartItems.astro';
 ---
 
@@ -188,62 +188,62 @@ import CartItems from './CartItems.astro';
     </div>
   </template>
 </section>`,
-    {
-      sourcemap: true,
-    },
-  );
+		{
+			sourcemap: true,
+		}
+	);
 }
 
 const MAX_CONCURRENT_RENDERS = 25;
 const MAX_RENDERS = 1e4;
 
 async function test() {
-  await run();
-  const promises = [];
-  const tests = [];
+	await run();
+	const promises = [];
+	const tests = [];
 
-  for (let i = 0; i < MAX_RENDERS; i++) {
-    tests.push(() => {
-      if (i % 1000 === 0) {
-        console.log(`Test ${i}`);
-      }
-      return run();
-    });
-  }
+	for (let i = 0; i < MAX_RENDERS; i++) {
+		tests.push(() => {
+			if (i % 1000 === 0) {
+				console.log(`Test ${i}`);
+			}
+			return run();
+		});
+	}
 
-  // Throttle the paths to avoid overloading the CPU with too many tasks.
-  for (const ts of throttle(MAX_CONCURRENT_RENDERS, tests)) {
-    for (const t of ts) {
-      promises.push(t());
-    }
-    // This blocks generating more paths until these 10 complete.
-    await Promise.all(promises);
-    // This empties the array without allocating a new one.
-    promises.length = 0;
-  }
+	// Throttle the paths to avoid overloading the CPU with too many tasks.
+	for (const ts of throttle(MAX_CONCURRENT_RENDERS, tests)) {
+		for (const t of ts) {
+			promises.push(t());
+		}
+		// This blocks generating more paths until these 10 complete.
+		await Promise.all(promises);
+		// This empties the array without allocating a new one.
+		promises.length = 0;
+	}
 }
 
 // Throttle the rendering a paths to prevents creating too many Promises on the microtask queue.
 function* throttle(max, tests) {
-  const tmp = [];
-  let i = 0;
-  for (const t of tests) {
-    tmp.push(t);
-    if (i === max) {
-      yield tmp;
-      // Empties the array, to avoid allocating a new one.
-      tmp.length = 0;
-      i = 0;
-    } else {
-      i++;
-    }
-  }
+	const tmp = [];
+	let i = 0;
+	for (const t of tests) {
+		tmp.push(t);
+		if (i === max) {
+			yield tmp;
+			// Empties the array, to avoid allocating a new one.
+			tmp.length = 0;
+			i = 0;
+		} else {
+			i++;
+		}
+	}
 
-  // If tmp has items in it, that means there were less than {max} paths remaining
-  // at the end, so we need to yield these too.
-  if (tmp.length) {
-    yield tmp;
-  }
+	// If tmp has items in it, that means there were less than {max} paths remaining
+	// at the end, so we need to yield these too.
+	if (tmp.length) {
+		yield tmp;
+	}
 }
 
 test();

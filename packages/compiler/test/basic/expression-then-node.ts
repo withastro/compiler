@@ -30,17 +30,17 @@ const { each } = Astro.props;
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('expression followed by node', () => {
-  assert.match(
-    result.code,
-    `yield '
+	assert.match(
+		result.code,
+		`yield '
 ';
 		}`,
-    'Expected output to properly handle expression!',
-  );
+		'Expected output to properly handle expression!'
+	);
 });
 
 test.run();

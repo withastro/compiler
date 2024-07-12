@@ -17,8 +17,8 @@ const FIXTURE = `{
 `;
 
 test('unfound client component', async () => {
-  const result = await parse(FIXTURE);
-  assert.ok(result.ast, 'Expected an AST to be generated');
+	const result = await parse(FIXTURE);
+	assert.ok(result.ast, 'Expected an AST to be generated');
 });
 
 test.run();
