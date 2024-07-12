@@ -1,76 +1,70 @@
-import type { RootNode } from "./ast";
-import type { DiagnosticCode } from "./diagnostics";
-export type * from "./ast";
+import type { RootNode } from './ast';
+import type { DiagnosticCode } from './diagnostics';
+export type * from './ast';
 
 export interface PreprocessorResult {
-	code: string;
-	map?: string;
+  code: string;
+  map?: string;
 }
 
 export interface PreprocessorError {
-	error: string;
+  error: string;
 }
 
 export interface ParseOptions {
-	position?: boolean;
+  position?: boolean;
 }
 
 export enum DiagnosticSeverity {
-	Error = 1,
-	Warning = 2,
-	Information = 3,
-	Hint = 4,
+  Error = 1,
+  Warning = 2,
+  Information = 3,
+  Hint = 4,
 }
 
 export interface DiagnosticMessage {
-	severity: DiagnosticSeverity;
-	code: DiagnosticCode;
-	location: DiagnosticLocation;
-	hint?: string;
-	text: string;
+  severity: DiagnosticSeverity;
+  code: DiagnosticCode;
+  location: DiagnosticLocation;
+  hint?: string;
+  text: string;
 }
 
 export interface DiagnosticLocation {
-	file: string;
-	// 1-based
-	line: number;
-	// 1-based
-	column: number;
-	length: number;
+  file: string;
+  // 1-based
+  line: number;
+  // 1-based
+  column: number;
+  length: number;
 }
 
 export interface TransformOptions {
-	internalURL?: string;
-	filename?: string;
-	normalizedFilename?: string;
-	sourcemap?: boolean | 'inline' | 'external' | 'both';
-	astroGlobalArgs?: string;
-	compact?: boolean;
-	resultScopedSlot?: boolean;
-	scopedStyleStrategy?: 'where' | 'class' | 'attribute';
-	/**
-	 * @deprecated "as" has been removed and no longer has any effect!
-	 */
-	as?: 'document' | 'fragment';
-	transitionsAnimationURL?: string;
-	resolvePath?: (specifier: string) => Promise<string>;
-	preprocessStyle?: (
-		content: string,
-		attrs: Record<string, string>
-	) => null | Promise<PreprocessorResult | PreprocessorError>;
-	annotateSourceFile?: boolean;
-	/**
-	 * Render script tags to be processed (e.g. script tags that have no attributes or only a `src` attribute)
-	 * using a `renderScript` function from `internalURL`, instead of stripping the script entirely.
-	 * @experimental
-	 */
-	renderScript?: boolean;
+  internalURL?: string;
+  filename?: string;
+  normalizedFilename?: string;
+  sourcemap?: boolean | 'inline' | 'external' | 'both';
+  astroGlobalArgs?: string;
+  compact?: boolean;
+  resultScopedSlot?: boolean;
+  scopedStyleStrategy?: 'where' | 'class' | 'attribute';
+  /**
+   * @deprecated "as" has been removed and no longer has any effect!
+   */
+  as?: 'document' | 'fragment';
+  transitionsAnimationURL?: string;
+  resolvePath?: (specifier: string) => Promise<string>;
+  preprocessStyle?: (content: string, attrs: Record<string, string>) => null | Promise<PreprocessorResult | PreprocessorError>;
+  annotateSourceFile?: boolean;
+  /**
+   * Render script tags to be processed (e.g. script tags that have no attributes or only a `src` attribute)
+   * using a `renderScript` function from `internalURL`, instead of stripping the script entirely.
+   * @experimental
+   */
+  renderScript?: boolean;
 }
 
-export type ConvertToTSXOptions = Pick<
-  TransformOptions,
-  "filename" | "normalizedFilename"
-> & {
+export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename'> & {
   /** If set to true, script tags content will be included in the generated TSX
    * Scripts will be wrapped in an arrow function to be compatible with JSX's spec
    */
@@ -82,44 +76,44 @@ export type ConvertToTSXOptions = Pick<
 };
 
 export type HoistedScript = { type: string } & (
-	| {
-			type: 'external';
-			src: string;
-	  }
-	| {
-			type: 'inline';
-			code: string;
-			map: string;
-	  }
+  | {
+      type: 'external';
+      src: string;
+    }
+  | {
+      type: 'inline';
+      code: string;
+      map: string;
+    }
 );
 
 export interface HydratedComponent {
-	exportName: string;
-	specifier: string;
-	resolvedPath: string;
+  exportName: string;
+  specifier: string;
+  resolvedPath: string;
 }
 
 export interface TransformResult {
-	code: string;
-	map: string;
-	scope: string;
-	styleError: string[];
-	diagnostics: DiagnosticMessage[];
-	css: string[];
-	scripts: HoistedScript[];
-	hydratedComponents: HydratedComponent[];
-	clientOnlyComponents: HydratedComponent[];
-	containsHead: boolean;
-	propagation: boolean;
+  code: string;
+  map: string;
+  scope: string;
+  styleError: string[];
+  diagnostics: DiagnosticMessage[];
+  css: string[];
+  scripts: HoistedScript[];
+  hydratedComponents: HydratedComponent[];
+  clientOnlyComponents: HydratedComponent[];
+  containsHead: boolean;
+  propagation: boolean;
 }
 
 export interface SourceMap {
-	file: string;
-	mappings: string;
-	names: string[];
-	sources: string[];
-	sourcesContent: string[];
-	version: number;
+  file: string;
+  mappings: string;
+  names: string[];
+  sources: string[];
+  sourcesContent: string[];
+  version: number;
 }
 
 export interface TSXLocation {
@@ -133,17 +127,11 @@ export interface TSXExtractedTag {
 }
 
 export interface TSXExtractedScript extends TSXExtractedTag {
-  type:
-    | "processed-module"
-    | "module"
-    | "inline"
-    | "event-attribute"
-    | "json"
-    | "unknown";
+  type: 'processed-module' | 'module' | 'inline' | 'event-attribute' | 'json' | 'unknown';
 }
 
 export interface TSXExtractedStyle extends TSXExtractedTag {
-  type: "tag" | "style-attribute";
+  type: 'tag' | 'style-attribute';
 }
 
 export interface TSXResult {
@@ -159,8 +147,8 @@ export interface TSXResult {
 }
 
 export interface ParseResult {
-	ast: RootNode;
-	diagnostics: DiagnosticMessage[];
+  ast: RootNode;
+  diagnostics: DiagnosticMessage[];
 }
 
 // This function transforms a single JavaScript file. It can be used to minify
@@ -170,17 +158,11 @@ export interface ParseResult {
 //
 // Works in node: yes
 // Works in browser: yes
-export declare function transform(
-	input: string,
-	options?: TransformOptions
-): Promise<TransformResult>;
+export declare function transform(input: string, options?: TransformOptions): Promise<TransformResult>;
 
 export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
 
-export declare function convertToTSX(
-	input: string,
-	options?: ConvertToTSXOptions
-): Promise<TSXResult>;
+export declare function convertToTSX(input: string, options?: ConvertToTSXOptions): Promise<TSXResult>;
 
 // This configures the browser-based version of astro. It is necessary to
 // call this first and wait for the returned promise to be resolved before
@@ -203,7 +185,7 @@ export declare function initialize(options: InitializeOptions): Promise<void>;
 export declare function teardown(): void;
 
 export interface InitializeOptions {
-	// The URL of the "astro.wasm" file. This must be provided when running
-	// astro in the browser.
-	wasmURL?: string;
+  // The URL of the "astro.wasm" file. This must be provided when running
+  // astro in the browser.
+  wasmURL?: string;
 }
