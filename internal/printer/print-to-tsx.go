@@ -395,23 +395,15 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.print("}}\n")
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
-			return
-		} else if textType == StyleText || textType == JsonScriptText {
+		} else if textType == StyleText || textType == JsonScriptText || textType == RawText {
 			p.addNilSourceMapping()
-			if (textType == StyleText && o.IncludeStyles) || textType == JsonScriptText {
+			if (textType == StyleText && o.IncludeStyles) || textType == JsonScriptText || textType == RawText {
 				p.print("{`")
 				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("`}")
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
-			return
-		} else if textType == RawText {
-			p.addNilSourceMapping()
-			p.print("{`")
-			p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
-			p.addNilSourceMapping()
-			p.print("`}")
 		} else {
 			p.printEscapedJSXTextWithSourcemap(n.Data, n.Loc[0])
 		}
