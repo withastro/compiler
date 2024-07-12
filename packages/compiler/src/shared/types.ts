@@ -53,7 +53,7 @@ export interface TransformOptions {
 	 */
 	as?: 'document' | 'fragment';
 	transitionsAnimationURL?: string;
-	resolvePath?: (specifier: string) => Promise<string>;
+	resolvePath?: (specifier: string) => Promise<string> | string;
 	preprocessStyle?: (
 		content: string,
 		attrs: Record<string, string>
