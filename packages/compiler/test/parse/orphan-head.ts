@@ -20,16 +20,16 @@ const FIXTURE = `
 
 let result: unknown;
 test.before(async () => {
-  result = await parse(FIXTURE);
+	result = await parse(FIXTURE);
 });
 
 test('orphan head', () => {
-  assert.ok(result, 'able to parse');
+	assert.ok(result, 'able to parse');
 
-  const [doctype, html, ...others] = result.ast.children;
-  assert.equal(others.length, 1, 'Expected only three child nodes!');
-  assert.equal(doctype.type, 'doctype', `Expected first child node to be of type "doctype"`);
-  assert.equal(html.type, 'element', `Expected first child node to be of type "element"`);
+	const [doctype, html, ...others] = result.ast.children;
+	assert.equal(others.length, 1, 'Expected only three child nodes!');
+	assert.equal(doctype.type, 'doctype', `Expected first child node to be of type "doctype"`);
+	assert.equal(html.type, 'element', `Expected first child node to be of type "element"`);
 });
 
 test.run();
