@@ -13,18 +13,24 @@ const FIXTURE = `<html>
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    filename: '/src/components/fragment.astro',
-  });
+	result = await transform(FIXTURE, {
+		filename: '/src/components/fragment.astro',
+	});
 });
 
 test('got a tokenizer error', () => {
-  assert.ok(Array.isArray(result.diagnostics));
-  assert.is(result.diagnostics.length, 1);
-  assert.is(result.diagnostics[0].text, 'Unable to assign attributes when using <> Fragment shorthand syntax!');
-  const loc = result.diagnostics[0].location;
-  assert.is(FIXTURE.split('\n')[loc.line - 1], `    < data-test="hello"><div></div></>`);
-  assert.is(FIXTURE.split('\n')[loc.line - 1].slice(loc.column - 1, loc.column - 1 + loc.length), `< data-test="hello">`);
+	assert.ok(Array.isArray(result.diagnostics));
+	assert.is(result.diagnostics.length, 1);
+	assert.is(
+		result.diagnostics[0].text,
+		'Unable to assign attributes when using <> Fragment shorthand syntax!'
+	);
+	const loc = result.diagnostics[0].location;
+	assert.is(FIXTURE.split('\n')[loc.line - 1], `    < data-test="hello"><div></div></>`);
+	assert.is(
+		FIXTURE.split('\n')[loc.line - 1].slice(loc.column - 1, loc.column - 1 + loc.length),
+		`< data-test="hello">`
+	);
 });
 
 test.run();

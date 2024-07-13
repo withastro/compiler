@@ -6,11 +6,11 @@ const FIXTURE = `<script src={Astro.resolve("../scripts/no_hoist_nonmodule.js")}
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('script fragment', () => {
-  assert.ok(result.code, 'Can compile script fragment');
+	assert.ok(result.code, 'Can compile script fragment');
 });
 
 test.run();

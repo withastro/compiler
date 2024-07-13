@@ -35,13 +35,13 @@ const featuredProject = projects[0];
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('< and > as raw text', () => {
-  assert.ok(result.code, 'Expected to compile');
-  assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
-  assert.match(result.code, '< header >', 'Expected output to contain < header >');
+	assert.ok(result.code, 'Expected to compile');
+	assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
+	assert.match(result.code, '< header >', 'Expected output to contain < header >');
 });
 
 test.run();

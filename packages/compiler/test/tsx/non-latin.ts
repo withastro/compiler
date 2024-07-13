@@ -49,14 +49,14 @@ var Ⅴ = 5;
 var Hͫ̆̒̐ͣ̊̄ͯ͗͏̵̗̻̰̠̬͝ͅE̴̷̬͎̱̘͇͍̾ͦ͊͒͊̓̓̐_̫̠̱̩̭̤͈̑̎̋ͮͩ̒͑̾͋͘Ç̳͕̯̭̱̲̣̠̜͋̍O̴̦̗̯̹̼ͭ̐ͨ̊̈͘͠M̶̝̠̭̭̤̻͓͑̓̊ͣͤ̎͟͠E̢̞̮̹͍̞̳̣ͣͪ͐̈T̡̯̳̭̜̠͕͌̈́̽̿ͤ̿̅̑Ḧ̱̱̺̰̳̹̘̰́̏ͪ̂̽͂̀͠ = 'Zalgo';`;
 
 test('non-latin characters', async () => {
-  const input = `
+	const input = `
 ---
 ${value}
 ---
 
 <div></div>
 `;
-  const output = `${TSXPrefix}
+	const output = `${TSXPrefix}
 ${value}
 
 <Fragment>
@@ -64,8 +64,8 @@ ${value}
 
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
-  const { code } = await convertToTSX(input, { sourcemap: 'external' });
-  assert.snapshot(code, output, 'expected code to match snapshot');
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.snapshot(code, output, 'expected code to match snapshot');
 });
 
 test.run();

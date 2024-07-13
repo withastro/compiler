@@ -4,7 +4,7 @@ import * as assert from 'uvu/assert';
 import { preprocessStyle } from '../utils';
 
 test('does not include define:vars in generated markup', async () => {
-  const input = `
+	const input = `
 ---
 let color = 'red';
 ---
@@ -19,15 +19,15 @@ let color = 'red';
 
 <div>Ahhh</div>
 `;
-  const result = await transform(input, {
-    preprocessStyle,
-  });
-  assert.ok(!result.code.includes('STYLES'));
-  assert.equal(result.css.length, 1);
+	const result = await transform(input, {
+		preprocessStyle,
+	});
+	assert.ok(!result.code.includes('STYLES'));
+	assert.equal(result.css.length, 1);
 });
 
 test('handles style object and define:vars', async () => {
-  const input = `
+	const input = `
 ---
 let color = 'red';
 ---
@@ -36,8 +36,8 @@ let color = 'red';
 
 <style define:vars={{ color }}></style>
 `;
-  const result = await transform(input);
-  assert.match(result.code, `$$addAttribute([{ color: 'var(--color)' },$$definedVars], "style")`);
+	const result = await transform(input);
+	assert.match(result.code, `$$addAttribute([{ color: 'var(--color)' },$$definedVars], "style")`);
 });
 
 test.run();
