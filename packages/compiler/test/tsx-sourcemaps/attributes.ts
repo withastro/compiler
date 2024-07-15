@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testTSXSourcemap } from '../utils.js';
 
 test('shorthand attribute', async () => {
 	const input = '<div {name} />';

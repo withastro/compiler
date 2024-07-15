@@ -1,7 +1,7 @@
 import { transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { preprocessStyle } from '../utils';
+import { preprocessStyle } from '../utils.js';
 
 test('does not include define:vars in generated markup', async () => {
 	const input = `

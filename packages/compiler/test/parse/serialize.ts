@@ -25,7 +25,7 @@ let content = "Testing 123";
 </Markdown>
 `;
 
-let result: unknown;
+let result: string;
 test.before(async () => {
 	const { ast } = await parse(FIXTURE);
 	try {

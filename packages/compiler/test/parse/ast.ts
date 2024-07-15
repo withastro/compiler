@@ -1,6 +1,7 @@
-import { parse } from '@astrojs/compiler';
+import { type ParseResult, parse } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import type { ElementNode } from '../../types.js';
 
 const FIXTURE = `
 ---
@@ -11,7 +12,7 @@ let value = 'world';
 <div></div>
 `;
 
-let result: unknown;
+let result: ParseResult;
 test.before(async () => {
 	result = await parse(FIXTURE);
 });
@@ -36,12 +37,12 @@ test('element', () => {
 });
 
 test('element with no attributes', () => {
-	const [, , , element] = result.ast.children;
+	const [, , , element] = result.ast.children as ElementNode[];
 	assert.equal(element.attributes, [], `Expected the "attributes" property to be an empty array`);
 });
 
 test('element with no children', () => {
-	const [, , , element] = result.ast.children;
+	const [, , , element] = result.ast.children as ElementNode[];
 	assert.equal(element.children, [], `Expected the "children" property to be an empty array`);
 });
 

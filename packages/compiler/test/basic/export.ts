@@ -22,7 +22,7 @@ test('exported type', async () => {
 	const FIXTURE = `---
 // this is fine
 export type NumberType = number;
-// astro hangs because of this typedef. 
+// astro hangs because of this typedef.
 // comment it out and astro will work fine.
 export type FuncType = (x: number) => number;
 ---

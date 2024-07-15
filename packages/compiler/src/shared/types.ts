@@ -1,6 +1,6 @@
-import type { RootNode } from './ast';
-import type { DiagnosticCode } from './diagnostics';
-export type * from './ast';
+import type { RootNode } from './ast.js';
+import type { DiagnosticCode } from './diagnostics.js';
+export type * from './ast.js';
 
 export interface PreprocessorResult {
 	code: string;
@@ -53,7 +53,7 @@ export interface TransformOptions {
 	 */
 	as?: 'document' | 'fragment';
 	transitionsAnimationURL?: string;
-	resolvePath?: (specifier: string) => Promise<string>;
+	resolvePath?: (specifier: string) => Promise<string> | string;
 	preprocessStyle?: (
 		content: string,
 		attrs: Record<string, string>
@@ -67,7 +67,10 @@ export interface TransformOptions {
 	renderScript?: boolean;
 }
 
-export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename'>;
+export type ConvertToTSXOptions = Pick<
+	TransformOptions,
+	'filename' | 'normalizedFilename' | 'sourcemap'
+>;
 
 export type HoistedScript = { type: string } & (
 	| {

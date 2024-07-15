@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -13,7 +13,7 @@ const props = { ...Astro.props } as Props;
   <slot></slot>
 </body>`;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await transform(FIXTURE);
 });

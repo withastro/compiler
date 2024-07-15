@@ -224,7 +224,7 @@ async function test() {
 }
 
 // Throttle the rendering a paths to prevents creating too many Promises on the microtask queue.
-function* throttle(max, tests) {
+function* throttle(max: number, tests: any) {
 	const tmp = [];
 	let i = 0;
 	for (const t of tests) {

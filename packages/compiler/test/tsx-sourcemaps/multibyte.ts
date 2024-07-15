@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testTSXSourcemap } from '../utils.js';
 
 test('multibyte content', async () => {
 	const input = '<h1>ツ</h1>';
