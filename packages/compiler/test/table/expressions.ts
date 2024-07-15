@@ -4,7 +4,7 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 test('allows expressions in table', async () => {
-  const input = `
+	const input = `
 ---
 ---
 
@@ -28,19 +28,19 @@ test('allows expressions in table', async () => {
 </html>
 `;
 
-  let error = 0;
-  try {
-    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
-    parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
-    assert.match(code, '<tr>${num}</tr>');
-  } catch (e) {
-    error = 1;
-  }
-  assert.equal(error, 0, 'compiler should generate valid code');
+	let error = 0;
+	try {
+		const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
+		parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
+		assert.match(code, '<tr>${num}</tr>');
+	} catch (e) {
+		error = 1;
+	}
+	assert.equal(error, 0, 'compiler should generate valid code');
 });
 
 test('allows many expressions in table', async () => {
-  const input = `
+	const input = `
 ---
 ---
 
@@ -79,13 +79,13 @@ test('allows many expressions in table', async () => {
 </html>
 `;
 
-  let error = 0;
-  try {
-    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
-    parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
-    assert.match(code, '<tr>${num}</tr>');
-  } catch (e) {
-    error = 1;
-  }
-  assert.equal(error, 0, 'compiler should generate valid code');
+	let error = 0;
+	try {
+		const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
+		parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
+		assert.match(code, '<tr>${num}</tr>');
+	} catch (e) {
+		error = 1;
+	}
+	assert.equal(error, 0, 'compiler should generate valid code');
 });

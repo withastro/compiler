@@ -19,11 +19,11 @@ const slugs = ['one', 'two', 'three'];
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('can compiler body expression', () => {
-  assert.ok(result.code, 'Expected to compiler body expression!');
+	assert.ok(result.code, 'Expected to compiler body expression!');
 });
 
 test.run();

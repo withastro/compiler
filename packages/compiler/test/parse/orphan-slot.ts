@@ -17,11 +17,11 @@ const {isRequired, description, example} = Astro.props;
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('orphan slot', () => {
-  assert.ok(result.code, 'able to parse');
+	assert.ok(result.code, 'able to parse');
 });
 
 test.run();

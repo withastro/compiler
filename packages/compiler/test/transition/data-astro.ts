@@ -13,10 +13,10 @@ const FIXTURE = `
 </div>`;
 
 test('Issues warnings for data-astro-* attributes', async () => {
-  const result = await transform(FIXTURE);
-  assert.equal(result.diagnostics.length, 2);
-  assert.equal(result.diagnostics[0].code, 2000);
-  assert.equal(result.diagnostics[1].code, 2010);
+	const result = await transform(FIXTURE);
+	assert.equal(result.diagnostics.length, 2);
+	assert.equal(result.diagnostics[0].code, 2000);
+	assert.equal(result.diagnostics[1].code, 2010);
 });
 
 test.run();

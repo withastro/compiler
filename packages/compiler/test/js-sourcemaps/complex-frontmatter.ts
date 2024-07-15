@@ -36,11 +36,11 @@ const { article } = Astro.props;
 <ArticleLayout article={article} />`;
 
 test('tracks getStaticPaths', async () => {
-  const loc = await testJSSourcemap(input, 'getStaticPaths');
-  assert.equal(loc, { source: 'index.astro', line: 13, column: 14, name: null });
+	const loc = await testJSSourcemap(input, 'getStaticPaths');
+	assert.equal(loc, { source: 'index.astro', line: 13, column: 14, name: null });
 });
 
 test('tracks foobar', async () => {
-  const loc = await testJSSourcemap(input, 'foobar');
-  assert.equal(loc, { source: 'index.astro', line: 6, column: 7, name: null });
+	const loc = await testJSSourcemap(input, 'foobar');
+	assert.equal(loc, { source: 'index.astro', line: 6, column: 7, name: null });
 });

@@ -17,14 +17,14 @@ let value = 'world';
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    sourcemap: true,
-    preprocessStyle,
-  });
+	result = await transform(FIXTURE, {
+		sourcemap: true,
+		preprocessStyle,
+	});
 });
 
 test('can compile empty style', () => {
-  assert.ok(result.code, 'Expected to compile with empty style.');
+	assert.ok(result.code, 'Expected to compile with empty style.');
 });
 
 test.run();

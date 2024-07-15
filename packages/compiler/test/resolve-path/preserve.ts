@@ -15,21 +15,21 @@ import { name } './foo.module.css'
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    resolvePath: async (s) => s,
-  });
+	result = await transform(FIXTURE, {
+		resolvePath: async (s) => s,
+	});
 });
 
 test('preserve path', () => {
-  assert.match(result.code, /"client:load":true.*"client:component-path":\("\.\/Foo\.jsx"\)/);
-  assert.match(result.code, /"client:only":"react".*"client:component-path":\("\.\/Foo\.jsx"\)/);
+	assert.match(result.code, /"client:load":true.*"client:component-path":\("\.\/Foo\.jsx"\)/);
+	assert.match(result.code, /"client:only":"react".*"client:component-path":\("\.\/Foo\.jsx"\)/);
 });
 
 test('no metadata', () => {
-  assert.not.match(result.code, /\$\$metadata/);
-  assert.not.match(result.code, /\$\$createMetadata/);
-  assert.not.match(result.code, /createMetadata as \$\$createMetadata/);
-  assert.not.match(result.code, /import \* as \$\$module\d/);
+	assert.not.match(result.code, /\$\$metadata/);
+	assert.not.match(result.code, /\$\$createMetadata/);
+	assert.not.match(result.code, /createMetadata as \$\$createMetadata/);
+	assert.not.match(result.code, /import \* as \$\$module\d/);
 });
 
 test.run();

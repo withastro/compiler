@@ -16,16 +16,16 @@ const FIXTURE = `
 `;
 
 test('it works', async () => {
-  const result = await transform(FIXTURE, {
-    filename: '/users/astro/apps/pacman/src/pages/index.astro',
-    async preprocessStyle() {
-      return {
-        error: new Error('Unable to convert').message,
-      };
-    },
-  });
-  assert.equal(result.styleError.length, 2);
-  assert.equal(result.styleError[0], 'Unable to convert');
+	const result = await transform(FIXTURE, {
+		filename: '/users/astro/apps/pacman/src/pages/index.astro',
+		async preprocessStyle() {
+			return {
+				error: new Error('Unable to convert').message,
+			};
+		},
+	});
+	assert.equal(result.styleError.length, 2);
+	assert.equal(result.styleError[0], 'Unable to convert');
 });
 
 test.run();

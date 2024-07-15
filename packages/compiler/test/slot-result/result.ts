@@ -13,14 +13,14 @@ import Parent from './Parent.astro';
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    resolvePath: async (s) => s,
-    resultScopedSlot: true,
-  });
+	result = await transform(FIXTURE, {
+		resolvePath: async (s) => s,
+		resultScopedSlot: true,
+	});
 });
 
 test('resultScopedSlot: includes the result object in the call to the slot', () => {
-  assert.match(result.code, /\(\$\$result\) =>/);
+	assert.match(result.code, /\(\$\$result\) =>/);
 });
 
 test.run();

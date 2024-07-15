@@ -23,12 +23,12 @@ import Layout from '../layouts/content.astro';
 
 let result: unknown;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('trailing space', () => {
-  assert.ok(result.code, 'Expected to compiler');
-  assert.not.match(result.code, 'html', 'Expected output to not contain <html>');
+	assert.ok(result.code, 'Expected to compiler');
+	assert.not.match(result.code, 'html', 'Expected output to not contain <html>');
 });
 
 test.run();

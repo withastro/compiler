@@ -3,28 +3,28 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 test('handles plain aliases', async () => {
-  const input = `---
+	const input = `---
 interface LocalImageProps {}
 type Props = LocalImageProps;
 ---`;
-  const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-  assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
+	const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+	assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
 });
 
 test('handles aliases with nested generics', async () => {
-  const input = `---
+	const input = `---
 interface LocalImageProps {
   src: Promise<{ default: string }>;
 }
 
 type Props = LocalImageProps;
 ---`;
-  const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-  assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
+	const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+	assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
 });
 
 test('gracefully handles Image props', async () => {
-  const input = `---
+	const input = `---
 interface LocalImageProps
 	extends Omit<HTMLAttributes, 'src' | 'width' | 'height'>,
 		Omit<TransformOptions, 'src'>,
@@ -51,8 +51,8 @@ interface RemoteImageProps
 }
 export type Props = LocalImageProps | RemoteImageProps;
 ---`;
-  const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-  assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
+	const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
+	assert.ok(output.code.includes('(_props: Props)'), 'Includes aliased Props as correct props');
 });
 
 test.run();

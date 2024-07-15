@@ -250,7 +250,7 @@ const (
 func getTextType(n *astro.Node) TextType {
 	if script := n.Closest(isScript); script != nil {
 		attr := astro.GetAttribute(script, "type")
-		if attr == nil || (attr != nil && ScriptMimeTypes[strings.ToLower(attr.Val)]) {
+		if attr == nil || ScriptMimeTypes[strings.ToLower(attr.Val)] {
 			return ScriptText
 		}
 
@@ -527,10 +527,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				endLoc = a.ValLoc.Start
 			}
 			if _, ok := htmlEvents[a.Key]; ok {
-				p.addTSXScript(a.ValLoc.Start, endLoc, a.Val, "event-attribute")
+				p.addTSXScript(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "event-attribute")
 			}
 			if a.Key == "style" {
-				p.addTSXStyle(a.ValLoc.Start, endLoc, a.Val, "style-attribute")
+				p.addTSXStyle(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "style-attribute")
 			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
@@ -693,7 +693,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 	}
 	p.print(">")
 
-	startTagEnd := endLoc
+	startTagEnd := endLoc - p.bytesToSkip
 
 	// Render any child nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -707,10 +707,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	if n.FirstChild != nil && (n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
 		if n.DataAtom == atom.Script {
-			p.addTSXScript(startTagEnd, endLoc, n.FirstChild.Data, getScriptTypeForNode(*n))
+			p.addTSXScript(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, getScriptTypeForNode(*n))
 		}
 		if n.DataAtom == atom.Style {
-			p.addTSXStyle(startTagEnd, endLoc, n.FirstChild.Data, "tag")
+			p.addTSXStyle(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, "tag")
 		}
 	}
 

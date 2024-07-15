@@ -3,7 +3,7 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 test('getStaticPaths with braces on newline', async () => {
-  const FIXTURE = `---
+	const FIXTURE = `---
 import A from './A.astro';
 export async function getStaticPaths()
 {
@@ -17,12 +17,16 @@ export async function getStaticPaths()
 
 <div></div>
 `;
-  const result = await transform(FIXTURE);
-  assert.match(result.code, 'export async function getStaticPaths()\n{', 'Expected output to contain getStaticPaths output');
+	const result = await transform(FIXTURE);
+	assert.match(
+		result.code,
+		'export async function getStaticPaths()\n{',
+		'Expected output to contain getStaticPaths output'
+	);
 });
 
 test('getStaticPaths as const without braces', async () => {
-  const FIXTURE = `---
+	const FIXTURE = `---
 import A from './A.astro';
 export const getStaticPaths = () => ([
   { params: { id: '1' } },
@@ -33,12 +37,16 @@ export const getStaticPaths = () => ([
 
 <div></div>
 `;
-  const result = await transform(FIXTURE);
-  assert.match(result.code, 'export const getStaticPaths = () => ([', 'Expected output to contain getStaticPaths output');
+	const result = await transform(FIXTURE);
+	assert.match(
+		result.code,
+		'export const getStaticPaths = () => ([',
+		'Expected output to contain getStaticPaths output'
+	);
 });
 
 test('getStaticPaths as const with braces on newline', async () => {
-  const FIXTURE = `---
+	const FIXTURE = `---
 import A from './A.astro';
 export const getStaticPaths = () =>
 {
@@ -52,12 +60,16 @@ export const getStaticPaths = () =>
 
 <div></div>
 `;
-  const result = await transform(FIXTURE);
-  assert.match(result.code, 'export const getStaticPaths = () =>\n{', 'Expected output to contain getStaticPaths output');
+	const result = await transform(FIXTURE);
+	assert.match(
+		result.code,
+		'export const getStaticPaths = () =>\n{',
+		'Expected output to contain getStaticPaths output'
+	);
 });
 
 test('getStaticPaths with whitespace', async () => {
-  const FIXTURE = `---
+	const FIXTURE = `---
 export const getStaticPaths = async () => {
 	const content = await Astro.glob('../content/*.mdx');
 
@@ -80,12 +92,16 @@ const { MdxContent, frontmatter, url, file } = Astro.props;
 ---
 <div></div>
 `;
-  const result = await transform(FIXTURE);
-  assert.match(result.code, '\nconst $$stdin = ', 'Expected getStaticPaths hoisting to maintain newlines');
+	const result = await transform(FIXTURE);
+	assert.match(
+		result.code,
+		'\nconst $$stdin = ',
+		'Expected getStaticPaths hoisting to maintain newlines'
+	);
 });
 
 test('getStaticPaths with types', async () => {
-  const FIXTURE = `---
+	const FIXTURE = `---
 export async function getStaticPaths({
   paginate,
 }: {
@@ -102,8 +118,12 @@ export async function getStaticPaths({
 
 <div></div>
 `;
-  const result = await transform(FIXTURE);
-  assert.match(result.code, '{\n  paginate: PaginateFunction;\n}) {', 'Expected output to contain getStaticPaths output');
+	const result = await transform(FIXTURE);
+	assert.match(
+		result.code,
+		'{\n  paginate: PaginateFunction;\n}) {',
+		'Expected output to contain getStaticPaths output'
+	);
 });
 
 test.run();
