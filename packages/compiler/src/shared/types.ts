@@ -67,7 +67,10 @@ export interface TransformOptions {
 	renderScript?: boolean;
 }
 
-export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename' | 'sourcemap'> & {
+export type ConvertToTSXOptions = Pick<
+	TransformOptions,
+	'filename' | 'normalizedFilename' | 'sourcemap'
+> & {
 	/** If set to true, script tags content will be included in the generated TSX
 	 * Scripts will be wrapped in an arrow function to be compatible with JSX's spec
 	 */
