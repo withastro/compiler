@@ -149,6 +149,9 @@ func (p *printer) printEscapedJSXTextWithSourcemap(text string, l loc.Loc) {
 		}
 
 		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
+		if nextCharByteSize > 1 {
+			p.bytesToSkip += nextCharByteSize - 1
+		}
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
 		start += nextCharByteSize
