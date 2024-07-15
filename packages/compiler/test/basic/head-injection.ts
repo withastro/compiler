@@ -1,10 +1,10 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 const FIXTURE = '<html><head><title>Ah</title></head></html>';
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await transform(FIXTURE);
 });

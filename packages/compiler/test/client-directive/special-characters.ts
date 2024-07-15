@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -26,7 +26,7 @@ import RemoteComponent from 'https://test.com/components/with-[wacky-brackets}()
 </html>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await transform(FIXTURE, { filename: '/users/astro/apps/pacman/src/pages/index.astro' });
 });

@@ -1,6 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
+import type { TSXResult } from '../../types.js';
 
 const FIXTURE = `<html>
   <head>
@@ -11,7 +12,7 @@ const FIXTURE = `<html>
   </body>
 </html>`;
 
-let result: unknown;
+let result: TSXResult;
 test.before(async () => {
 	result = await convertToTSX(FIXTURE, {
 		filename: '/src/components/fragment.astro',

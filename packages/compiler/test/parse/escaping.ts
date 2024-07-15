@@ -12,7 +12,7 @@ test('ampersand', async () => {
 		{
 			children: [{ value: output }],
 		},
-	] = result.ast.children;
+	] = result.ast.children as any;
 	assert.equal(output, STYLE, 'Expected AST style to equal input');
 });
 

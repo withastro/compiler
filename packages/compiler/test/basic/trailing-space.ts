@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -21,7 +21,7 @@ import Layout from '../layouts/content.astro';
   </div>
 </Layout>`; // NOTE: the lack of trailing space is important to this test!
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
 	result = await transform(FIXTURE);
 });

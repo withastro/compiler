@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testJSSourcemap } from '../utils';
+import { testJSSourcemap } from '../utils.js';
 
 test('script is:inline', async () => {
 	const input = `<script is:inline>

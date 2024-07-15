@@ -2,7 +2,7 @@ import { convertToTSX, transform } from '@astrojs/compiler';
 import { TraceMap, generatedPositionFor, originalPositionFor } from '@jridgewell/trace-mapping';
 import sass from 'sass';
 
-export async function preprocessStyle(value, attrs): Promise<any> {
+export async function preprocessStyle(value: any, attrs: any): Promise<any> {
 	if (!attrs.lang) {
 		return null;
 	}
@@ -48,7 +48,7 @@ export async function testTSXSourcemap(input: string, snippet: string) {
 	if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
 
 	const { code, map } = await convertToTSX(input, { sourcemap: 'both', filename: 'index.astro' });
-	const tracer = new TraceMap(map);
+	const tracer = new TraceMap(map as any);
 
 	const generated = generatedPositionFor(tracer, {
 		source: 'index.astro',

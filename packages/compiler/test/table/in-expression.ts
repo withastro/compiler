@@ -44,7 +44,7 @@ test('does not panic on table in expression', async () => {
 test('does not generate invalid markup on table in expression', async () => {
 	const input = `
 <ul>
-    {Astro.props.page.data.map(page => 
+    {Astro.props.page.data.map(page =>
         <li>
             <table>
             <tr><td>{page.frontmatter.title}</td></tr>

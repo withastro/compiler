@@ -5,10 +5,10 @@ export type {
 	PreprocessorResult,
 	TransformOptions,
 	TransformResult,
-} from '../shared/types';
+} from '../shared/types.js';
 import { promises as fs } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import type * as types from '../shared/types';
+import type * as types from '../shared/types.js';
 import Go from './wasm_exec.js';
 
 export const transform: typeof types.transform = async (input, options) => {
