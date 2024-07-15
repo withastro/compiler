@@ -127,6 +127,34 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	}
 }
 
+func (p *printer) printEscapedJSXTextWithSourcemap(text string, l loc.Loc) {
+	start := l.Start
+	for pos, c := range text {
+		// Handle Windows-specific "\r\n" newlines
+		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
+			// tiny optimization: avoid calling `utf8.DecodeRuneInString`
+			// if we know the next char is `\n`
+			start++
+			continue
+		}
+
+		// If we encounter characters invalid in JSX, escape them by putting them in a JS expression
+		// No need to map, since it's just text. We also don't need to handle tags, since this is only for text nodes.
+		if c == '>' || c == '}' {
+			p.print("{`")
+			p.print(string(c))
+			p.print("`}")
+			start++
+			continue
+		}
+
+		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
+		p.addSourceMapping(loc.Loc{Start: start})
+		p.print(string(c))
+		start += nextCharByteSize
+	}
+}
+
 func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptions) {
 	if p.hasInternalImports {
 		return

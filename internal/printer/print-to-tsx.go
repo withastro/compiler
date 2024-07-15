@@ -173,6 +173,16 @@ func isStyle(p *astro.Node) bool {
 	return p.DataAtom == atom.Style
 }
 
+// Has is:raw attribute
+func isRawText(p *astro.Node) bool {
+	for _, a := range p.Attr {
+		if a.Key == "is:raw" {
+			return true
+		}
+	}
+	return false
+}
+
 var ScriptMimeTypes map[string]bool = map[string]bool{
 	"module":                 true,
 	"text/typescript":        true,
@@ -231,7 +241,9 @@ type TextType uint32
 
 const (
 	RawText TextType = iota
+	Text
 	ScriptText
+	JsonScriptText
 	StyleText
 )
 
@@ -241,11 +253,20 @@ func getTextType(n *astro.Node) TextType {
 		if attr == nil || ScriptMimeTypes[strings.ToLower(attr.Val)] {
 			return ScriptText
 		}
+
+		if attr != nil && ScriptJSONMimeTypes[strings.ToLower(attr.Val)] {
+			return JsonScriptText
+		}
 	}
 	if style := n.Closest(isStyle); style != nil {
 		return StyleText
 	}
-	return RawText
+
+	if n.Closest(isRawText) != nil {
+		return RawText
+	}
+
+	return Text
 }
 
 func renderTsx(p *printer, n *Node, o *TSXOptions) {
@@ -364,7 +385,8 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	switch n.Type {
 	case TextNode:
-		if getTextType(n) == ScriptText {
+		textType := getTextType(n)
+		if textType == ScriptText {
 			p.addNilSourceMapping()
 			if o.IncludeScripts {
 				p.print("\n{() => {")
@@ -373,25 +395,17 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.print("}}\n")
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
-			return
-		} else if getTextType(n) == StyleText {
+		} else if textType == StyleText || textType == JsonScriptText || textType == RawText {
 			p.addNilSourceMapping()
-			if o.IncludeStyles {
+			if (textType == StyleText && o.IncludeStyles) || textType == JsonScriptText || textType == RawText {
 				p.print("{`")
 				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("`}")
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
-			return
-		} else if strings.ContainsAny(n.Data, "{}<>'\"") && n.Data[0] != '<' {
-			p.addNilSourceMapping()
-			p.print("{`")
-			p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
-			p.addNilSourceMapping()
-			p.print("`}")
 		} else {
-			p.printTextWithSourcemap(n.Data, n.Loc[0])
+			p.printEscapedJSXTextWithSourcemap(n.Data, n.Loc[0])
 		}
 		return
 	case ElementNode:
