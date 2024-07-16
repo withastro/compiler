@@ -1,4 +1,4 @@
-import type * as types from '../shared/types';
+import type * as types from '../shared/types.js';
 import Go from './wasm_exec.js';
 
 export const transform: typeof types.transform = (input, options) => {

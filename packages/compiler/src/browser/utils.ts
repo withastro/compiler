@@ -13,7 +13,7 @@ import type {
 	RootNode,
 	TagLikeNode,
 	TextNode,
-} from '../shared/ast';
+} from '../shared/ast.js';
 
 export type Visitor = (node: Node, parent?: ParentNode, index?: number) => void | Promise<void>;
 

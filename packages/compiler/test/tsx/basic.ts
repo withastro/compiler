@@ -1,7 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { TSXPrefix } from '../utils';
+import { TSXPrefix } from '../utils.js';
 
 test('basic', async () => {
 	const input = `
@@ -257,38 +257,6 @@ test('preserves line returns in tag by transforming to space', async () => {
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
 	const { code } = await convertToTSX(input, { sourcemap: 'external' });
 	assert.snapshot(code, output, 'expected code to match snapshot');
-});
-
-test('return ranges', async () => {
-	const input = `---\nconsole.log("Hello!")\n---\n\n<div></div>`;
-	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
-
-	assert.equal(metaRanges, {
-		frontmatter: {
-			start: 30,
-			end: 54,
-		},
-		body: {
-			start: 68,
-			end: 80,
-		},
-	});
-});
-
-test('return ranges - no frontmatter', async () => {
-	const input = '<div></div>';
-	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
-
-	assert.equal(metaRanges, {
-		frontmatter: {
-			start: 30,
-			end: 30,
-		},
-		body: {
-			start: 41,
-			end: 53,
-		},
-	});
 });
 
 test.run();

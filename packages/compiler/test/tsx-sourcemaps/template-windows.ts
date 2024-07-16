@@ -1,7 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testTSXSourcemap } from '../utils.js';
 
 test('template expression basic', async () => {
 	const input = '<div>{\r\nnonexistent\r\n}</div>';

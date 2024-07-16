@@ -1,6 +1,6 @@
-import type { RootNode } from './ast';
-import type { DiagnosticCode } from './diagnostics';
-export type * from './ast';
+import type { RootNode } from './ast.js';
+import type { DiagnosticCode } from './diagnostics.js';
+export type * from './ast.js';
 
 export interface PreprocessorResult {
 	code: string;
@@ -53,7 +53,7 @@ export interface TransformOptions {
 	 */
 	as?: 'document' | 'fragment';
 	transitionsAnimationURL?: string;
-	resolvePath?: (specifier: string) => Promise<string>;
+	resolvePath?: (specifier: string) => Promise<string> | string;
 	preprocessStyle?: (
 		content: string,
 		attrs: Record<string, string>
@@ -67,7 +67,19 @@ export interface TransformOptions {
 	renderScript?: boolean;
 }
 
-export type ConvertToTSXOptions = Pick<TransformOptions, 'filename' | 'normalizedFilename'>;
+export type ConvertToTSXOptions = Pick<
+	TransformOptions,
+	'filename' | 'normalizedFilename' | 'sourcemap'
+> & {
+	/** If set to true, script tags content will be included in the generated TSX
+	 * Scripts will be wrapped in an arrow function to be compatible with JSX's spec
+	 */
+	includeScripts?: boolean;
+	/** If set to true, style tags content will be included in the generated TSX
+	 * Styles will be wrapped in a template literal to be compatible with JSX's spec
+	 */
+	includeStyles?: boolean;
+};
 
 export type HoistedScript = { type: string } & (
 	| {
@@ -110,19 +122,33 @@ export interface SourceMap {
 	version: number;
 }
 
+export interface TSXLocation {
+	start: number;
+	end: number;
+}
+
+export interface TSXExtractedTag {
+	position: TSXLocation;
+	content: string;
+}
+
+export interface TSXExtractedScript extends TSXExtractedTag {
+	type: 'processed-module' | 'module' | 'inline' | 'event-attribute' | 'json' | 'unknown';
+}
+
+export interface TSXExtractedStyle extends TSXExtractedTag {
+	type: 'tag' | 'style-attribute';
+}
+
 export interface TSXResult {
 	code: string;
 	map: SourceMap;
 	diagnostics: DiagnosticMessage[];
 	metaRanges: {
-		frontmatter: {
-			start: number;
-			end: number;
-		};
-		body: {
-			start: number;
-			end: number;
-		};
+		frontmatter: TSXLocation;
+		body: TSXLocation;
+		scripts?: TSXExtractedScript[];
+		styles?: TSXExtractedStyle[];
 	};
 }
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.8.1/schema.json",
   "files": {
-    "ignore": ["**/dist", "**/pnpm-lock.yaml", "wasm_exec.ts"],
+    "ignore": ["**/dist/**", "**/pnpm-lock.yaml", "wasm_exec.ts"],
     "include": ["packages/**"]
   },
   "formatter": {
@@ -31,8 +31,7 @@
           "fix": "safe"
         }
       }
-    },
-    "ignore": ["wasm_exec.ts"]
+    }
   },
   "javascript": {
     "formatter": {
@@ -52,6 +51,16 @@
     }
   },
   "overrides": [
+    {
+      "include": ["**/stress/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsoleLog": "off"
+          }
+        }
+      }
+    },
     {
       "include": ["package.json"],
       "json": {
