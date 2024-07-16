@@ -95,6 +95,7 @@ export type HoistedScript = { type: string } & (
 
 export interface HydratedComponent {
 	exportName: string;
+	localName: string;
 	specifier: string;
 	resolvedPath: string;
 }
@@ -109,6 +110,7 @@ export interface TransformResult {
 	scripts: HoistedScript[];
 	hydratedComponents: HydratedComponent[];
 	clientOnlyComponents: HydratedComponent[];
+	serverComponents: HydratedComponent[];
 	containsHead: boolean;
 	propagation: boolean;
 }
