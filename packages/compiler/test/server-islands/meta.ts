@@ -15,31 +15,31 @@ import {Other} from './Other.astro';
 
 let result: Awaited<ReturnType<typeof transform>>;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    resolvePath: async (s: string) => {
-      const out = new URL(s, import.meta.url);
-      return fileURLToPath(out);
-    },
-  });
+	result = await transform(FIXTURE, {
+		resolvePath: async (s: string) => {
+			const out = new URL(s, import.meta.url);
+			return fileURLToPath(out);
+		},
+	});
 });
 
 test('component metadata added', () => {
-  assert.equal(result.serverComponents.length, 2);
+	assert.equal(result.serverComponents.length, 2);
 });
 
 test('path resolved to the filename', () => {
-  const m = result.serverComponents[0];
-  assert.ok(m.specifier !== m.resolvedPath);
+	const m = result.serverComponents[0];
+	assert.ok(m.specifier !== m.resolvedPath);
 });
 
 test('localName is the name used in the template', () => {
-  assert.equal(result.serverComponents[0].localName, 'Avatar');
-  assert.equal(result.serverComponents[1].localName, 'Other');
+	assert.equal(result.serverComponents[0].localName, 'Avatar');
+	assert.equal(result.serverComponents[1].localName, 'Other');
 });
 
 test('exportName is the export name of the imported module', () => {
-  assert.equal(result.serverComponents[0].exportName, 'default');
-  assert.equal(result.serverComponents[1].exportName, 'Other');
+	assert.equal(result.serverComponents[0].exportName, 'default');
+	assert.equal(result.serverComponents[1].exportName, 'Other');
 });
 
 test.run();
