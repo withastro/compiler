@@ -37,6 +37,13 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
+func jsBoolOptional(j js.Value, defaultValue bool) bool {
+	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
+		return defaultValue
+	}
+	return j.Bool()
+}
+
 func jsBool(j js.Value) bool {
 	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
 		return false
@@ -145,6 +152,16 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		TransitionsAnimationURL: transitionsAnimationURL,
 		AnnotateSourceFile:      annotateSourceFile,
 		RenderScript:            renderScript,
+	}
+}
+
+func makeTSXOptions(options js.Value) printer.TSXOptions {
+	includeScripts := jsBoolOptional(options.Get("includeScripts"), true)
+	includeStyles := jsBoolOptional(options.Get("includeStyles"), true)
+
+	return printer.TSXOptions{
+		IncludeScripts: includeScripts,
+		IncludeStyles:  includeStyles,
 	}
 }
 
@@ -260,7 +277,10 @@ func ConvertToTSX() any {
 		if err != nil {
 			h.AppendError(err)
 		}
-		result := printer.PrintToTSX(source, doc, transformOptions, h)
+
+		tsxOptions := makeTSXOptions(js.Value(args[1]))
+
+		result := printer.PrintToTSX(source, doc, tsxOptions, transformOptions, h)
 
 		// AFTER printing, exec transformations to pickup any errors/warnings
 		transform.Transform(doc, transformOptions, h)

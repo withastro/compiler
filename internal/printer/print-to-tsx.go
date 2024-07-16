@@ -20,14 +20,20 @@ func getTSXPrefix() string {
 	return "/* @jsxImportSource astro */\n\n"
 }
 
-func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *handler.Handler) PrintResult {
+type TSXOptions struct {
+	IncludeScripts bool
+	IncludeStyles  bool
+}
+
+func PrintToTSX(sourcetext string, n *Node, opts TSXOptions, transformOpts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
-		opts:       opts,
+		opts:       transformOpts,
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
 	p.print(getTSXPrefix())
-	renderTsx(p, n)
+	renderTsx(p, n, &opts)
+
 	return PrintResult{
 		Output:         p.output,
 		SourceMapChunk: p.builder.GenerateChunk(p.output),
@@ -36,12 +42,145 @@ func PrintToTSX(sourcetext string, n *Node, opts transform.TransformOptions, h *
 }
 
 type TSXRanges struct {
-	Frontmatter loc.TSXRange `js:"frontmatter"`
-	Body        loc.TSXRange `js:"body"`
+	Frontmatter loc.TSXRange      `js:"frontmatter"`
+	Body        loc.TSXRange      `js:"body"`
+	Scripts     []TSXExtractedTag `js:"scripts"`
+	Styles      []TSXExtractedTag `js:"styles"`
+}
+
+var htmlEvents = map[string]bool{
+	"onabort":                   true,
+	"onafterprint":              true,
+	"onauxclick":                true,
+	"onbeforematch":             true,
+	"onbeforeprint":             true,
+	"onbeforeunload":            true,
+	"onblur":                    true,
+	"oncancel":                  true,
+	"oncanplay":                 true,
+	"oncanplaythrough":          true,
+	"onchange":                  true,
+	"onclick":                   true,
+	"onclose":                   true,
+	"oncontextlost":             true,
+	"oncontextmenu":             true,
+	"oncontextrestored":         true,
+	"oncopy":                    true,
+	"oncuechange":               true,
+	"oncut":                     true,
+	"ondblclick":                true,
+	"ondrag":                    true,
+	"ondragend":                 true,
+	"ondragenter":               true,
+	"ondragleave":               true,
+	"ondragover":                true,
+	"ondragstart":               true,
+	"ondrop":                    true,
+	"ondurationchange":          true,
+	"onemptied":                 true,
+	"onended":                   true,
+	"onerror":                   true,
+	"onfocus":                   true,
+	"onformdata":                true,
+	"onhashchange":              true,
+	"oninput":                   true,
+	"oninvalid":                 true,
+	"onkeydown":                 true,
+	"onkeypress":                true,
+	"onkeyup":                   true,
+	"onlanguagechange":          true,
+	"onload":                    true,
+	"onloadeddata":              true,
+	"onloadedmetadata":          true,
+	"onloadstart":               true,
+	"onmessage":                 true,
+	"onmessageerror":            true,
+	"onmousedown":               true,
+	"onmouseenter":              true,
+	"onmouseleave":              true,
+	"onmousemove":               true,
+	"onmouseout":                true,
+	"onmouseover":               true,
+	"onmouseup":                 true,
+	"onoffline":                 true,
+	"ononline":                  true,
+	"onpagehide":                true,
+	"onpageshow":                true,
+	"onpaste":                   true,
+	"onpause":                   true,
+	"onplay":                    true,
+	"onplaying":                 true,
+	"onpopstate":                true,
+	"onprogress":                true,
+	"onratechange":              true,
+	"onrejectionhandled":        true,
+	"onreset":                   true,
+	"onresize":                  true,
+	"onscroll":                  true,
+	"onscrollend":               true,
+	"onsecuritypolicyviolation": true,
+	"onseeked":                  true,
+	"onseeking":                 true,
+	"onselect":                  true,
+	"onslotchange":              true,
+	"onstalled":                 true,
+	"onstorage":                 true,
+	"onsubmit":                  true,
+	"onsuspend":                 true,
+	"ontimeupdate":              true,
+	"ontoggle":                  true,
+	"onunhandledrejection":      true,
+	"onunload":                  true,
+	"onvolumechange":            true,
+	"onwaiting":                 true,
+	"onwheel":                   true,
+}
+
+func getScriptTypeForNode(n Node) string {
+	if n.Attr == nil || len(n.Attr) == 0 {
+		return "processed-module"
+	}
+
+	// If the script tag has `type="module"`, it's not processed, but it's still a module
+	for _, attr := range n.Attr {
+		if attr.Key == "type" {
+			if strings.Contains(attr.Val, "module") {
+				return "module"
+			}
+
+			if ScriptJSONMimeTypes[strings.ToLower(attr.Val)] {
+				return "json"
+			}
+		}
+
+	}
+
+	// Otherwise, it's an inline script
+	return "inline"
+}
+
+type TSXExtractedTag struct {
+	Loc     loc.TSXRange `js:"position"`
+	Type    string       `js:"type"`
+	Content string       `js:"content"`
 }
 
 func isScript(p *astro.Node) bool {
 	return p.DataAtom == atom.Script
+}
+
+func isStyle(p *astro.Node) bool {
+	return p.DataAtom == atom.Style
+}
+
+// Has is:raw attribute
+func isRawText(p *astro.Node) bool {
+	for _, a := range p.Attr {
+		if a.Key == "is:raw" {
+			return true
+		}
+	}
+	return false
 }
 
 var ScriptMimeTypes map[string]bool = map[string]bool{
@@ -50,6 +189,13 @@ var ScriptMimeTypes map[string]bool = map[string]bool{
 	"application/javascript": true,
 	"text/partytown":         true,
 	"application/node":       true,
+}
+
+var ScriptJSONMimeTypes map[string]bool = map[string]bool{
+	"application/json":    true,
+	"application/ld+json": true,
+	"importmap":           true,
+	"speculationrules":    true,
 }
 
 // This is not perfect (as in, you wouldn't use this to make a spec compliant parser), but it's good enough
@@ -95,20 +241,35 @@ type TextType uint32
 
 const (
 	RawText TextType = iota
+	Text
 	ScriptText
+	JsonScriptText
+	StyleText
 )
 
 func getTextType(n *astro.Node) TextType {
 	if script := n.Closest(isScript); script != nil {
 		attr := astro.GetAttribute(script, "type")
-		if attr == nil || (attr != nil && ScriptMimeTypes[strings.ToLower(attr.Val)]) {
+		if attr == nil || ScriptMimeTypes[strings.ToLower(attr.Val)] {
 			return ScriptText
 		}
+
+		if attr != nil && ScriptJSONMimeTypes[strings.ToLower(attr.Val)] {
+			return JsonScriptText
+		}
 	}
-	return RawText
+	if style := n.Closest(isStyle); style != nil {
+		return StyleText
+	}
+
+	if n.Closest(isRawText) != nil {
+		return RawText
+	}
+
+	return Text
 }
 
-func renderTsx(p *printer, n *Node) {
+func renderTsx(p *printer, n *Node, o *TSXOptions) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
 		source := []byte(p.sourcetext)
@@ -147,7 +308,7 @@ func renderTsx(p *printer, n *Node) {
 
 				hasChildren = true
 			}
-			renderTsx(p, c)
+			renderTsx(p, c, o)
 		}
 		p.addSourceMapping(loc.Loc{Start: len(p.sourcetext)})
 		p.print("\n")
@@ -206,7 +367,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				}
 				p.printTextWithSourcemap(c.Data, c.Loc[0])
 			} else {
-				renderTsx(p, c)
+				renderTsx(p, c, o)
 			}
 		}
 		if n.FirstChild != nil {
@@ -224,22 +385,27 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	switch n.Type {
 	case TextNode:
-		if getTextType(n) == ScriptText {
+		textType := getTextType(n)
+		if textType == ScriptText {
 			p.addNilSourceMapping()
-			p.print("\n{() => {")
-			p.printTextWithSourcemap(n.Data, n.Loc[0])
-			p.addNilSourceMapping()
-			p.print("}}\n")
+			if o.IncludeScripts {
+				p.print("\n{() => {")
+				p.printTextWithSourcemap(n.Data, n.Loc[0])
+				p.addNilSourceMapping()
+				p.print("}}\n")
+			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
-			return
-		} else if strings.ContainsAny(n.Data, "{}<>'\"") && n.Data[0] != '<' {
+		} else if textType == StyleText || textType == JsonScriptText || textType == RawText {
 			p.addNilSourceMapping()
-			p.print("{`")
-			p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
-			p.addNilSourceMapping()
-			p.print("`}")
+			if (textType == StyleText && o.IncludeStyles) || textType == JsonScriptText || textType == RawText {
+				p.print("{`")
+				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
+				p.addNilSourceMapping()
+				p.print("`}")
+			}
+			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else {
-			p.printTextWithSourcemap(n.Data, n.Loc[0])
+			p.printEscapedJSXTextWithSourcemap(n.Data, n.Loc[0])
 		}
 		return
 	case ElementNode:
@@ -284,7 +450,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.addNilSourceMapping()
 				p.print(`<Fragment>`)
 			}
-			renderTsx(p, c)
+			renderTsx(p, c, o)
 			if c.NextSibling == nil || c.NextSibling.Type == TextNode {
 				p.addNilSourceMapping()
 				p.print(`</Fragment>`)
@@ -310,7 +476,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 	if isImplicit {
 		// Render any child nodes
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			renderTsx(p, c)
+			renderTsx(p, c, o)
 		}
 		return
 	}
@@ -359,6 +525,12 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.addSourceMapping(loc.Loc{Start: a.ValLoc.Start})
 				p.print(`"`)
 				endLoc = a.ValLoc.Start
+			}
+			if _, ok := htmlEvents[a.Key]; ok {
+				p.addTSXScript(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "event-attribute")
+			}
+			if a.Key == "style" {
+				p.addTSXStyle(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "style-attribute")
 			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
@@ -521,15 +693,27 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 	}
 	p.print(">")
 
+	startTagEnd := endLoc - p.bytesToSkip
+
 	// Render any child nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		renderTsx(p, c)
+		renderTsx(p, c, o)
 		if len(c.Loc) > 1 {
 			endLoc = c.Loc[1].Start + len(c.Data) + 1
 		} else if len(c.Loc) == 1 {
 			endLoc = c.Loc[0].Start + len(c.Data)
 		}
 	}
+
+	if n.FirstChild != nil && (n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
+		if n.DataAtom == atom.Script {
+			p.addTSXScript(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, getScriptTypeForNode(*n))
+		}
+		if n.DataAtom == atom.Style {
+			p.addTSXStyle(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, "tag")
+		}
+	}
+
 	// Special case because of trailing expression close in scripts
 	if n.DataAtom == atom.Script {
 		p.printf("</%s>", n.Data)
