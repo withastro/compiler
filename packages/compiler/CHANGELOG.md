@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.9.1
+
+### Patch Changes
+
+- 9549bb7: Fixes style and script tags sometimes being forcefully put into the body / head tags in the AST
+
 ## 2.9.0
 
 ### Minor Changes
