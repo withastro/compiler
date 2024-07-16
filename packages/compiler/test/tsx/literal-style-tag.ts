@@ -1,7 +1,7 @@
 import { convertToTSX } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { TSXPrefix } from '../utils';
+import { TSXPrefix } from '../utils.js';
 
 test('preserve style tag position I', async () => {
 	const input = `<html><body><h1>Hello world!</h1></body></html>
