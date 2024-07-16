@@ -1,5 +1,17 @@
 # @astrojs/compiler
 
+## 2.9.0
+
+### Minor Changes
+
+- 3e25858: Adds two new options to `convertToTSX`: `includeScripts` and `includeStyles`. These options allow you to optionally remove scripts and styles from the output TSX file.
+
+  Additionally this PR makes it so scripts and styles metadata are now included in the `metaRanges` property of the result of `convertToTSX`. This is notably useful in order to extract scripts and styles from the output TSX file into separate files for language servers.
+
+- 9fb8d5d: Adds `serverComponents` metadata
+
+  This adds a change necessary to support server islands. During transformation the compiler discovers `server:defer` directives and appends them to the `serverComponents` array. This is exported along with the other metadata so that it can be used inside of Astro.
+
 ## 2.8.2
 
 ### Patch Changes
