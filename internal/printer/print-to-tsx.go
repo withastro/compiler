@@ -2,6 +2,7 @@ package printer
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -361,11 +362,31 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		p.addSourceMapping(loc.Loc{Start: 0})
 		frontmatterStart := len(p.output)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			topLevelReturn := js_scanner.FindTopLevelReturns([]byte(c.Data))
 			if c.Type == TextNode {
 				if len(c.Loc) > 0 {
 					p.addSourceMapping(c.Loc[0])
 				}
-				p.printTextWithSourcemap(c.Data, c.Loc[0])
+				// Remplace all the top level returns with a `throw`
+				if topLevelReturn != nil {
+					// Loop over the characters and replace the top level returns with a `throw`
+					newString := ""
+
+					i := 0
+					for i < len(c.Data) {
+						if slices.Contains(topLevelReturn, i) {
+							newString += "throw "
+							i += 6
+						} else {
+							newString += string(c.Data[i])
+							i++
+						}
+					}
+
+					p.printTextWithSourcemap(newString, c.Loc[0])
+				} else {
+					p.printTextWithSourcemap(c.Data, c.Loc[0])
+				}
 			} else {
 				renderTsx(p, c, o)
 			}
