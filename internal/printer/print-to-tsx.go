@@ -402,7 +402,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else if textType == StyleText || textType == JsonScriptText || textType == RawText || textType == UnknownScriptText {
 			p.addNilSourceMapping()
-			if (textType == StyleText && o.IncludeStyles) || ((textType == JsonScriptText || textType == RawText || textType == UnknownScriptText) && o.IncludeScripts) {
+			if (textType == StyleText && o.IncludeStyles) || ((textType == JsonScriptText || textType == UnknownScriptText) && o.IncludeScripts) || textType == RawText {
 				p.print("{`")
 				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 				p.addNilSourceMapping()
