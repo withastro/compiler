@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.9.2
+
+### Patch Changes
+
+- a765f47: Escape script tags with unknown types
+
 ## 2.9.1
 
 ### Patch Changes

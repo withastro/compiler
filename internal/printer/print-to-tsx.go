@@ -245,6 +245,7 @@ const (
 	Text
 	ScriptText
 	JsonScriptText
+	UnknownScriptText
 	StyleText
 )
 
@@ -255,9 +256,13 @@ func getTextType(n *astro.Node) TextType {
 			return ScriptText
 		}
 
-		if attr != nil && ScriptJSONMimeTypes[strings.ToLower(attr.Val)] {
+		// There's no difference between JSON and unknown script types in the result JSX at this time
+		// however, we might want to add some special handling in the future, so we keep them separate
+		if ScriptJSONMimeTypes[strings.ToLower(attr.Val)] {
 			return JsonScriptText
 		}
+
+		return UnknownScriptText
 	}
 	if style := n.Closest(isStyle); style != nil {
 		return StyleText
@@ -416,9 +421,9 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.print("}}\n")
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
-		} else if textType == StyleText || textType == JsonScriptText || textType == RawText {
+		} else if textType == StyleText || textType == JsonScriptText || textType == RawText || textType == UnknownScriptText {
 			p.addNilSourceMapping()
-			if (textType == StyleText && o.IncludeStyles) || textType == JsonScriptText || textType == RawText {
+			if (textType == StyleText && o.IncludeStyles) || ((textType == JsonScriptText || textType == UnknownScriptText) && o.IncludeScripts) || textType == RawText {
 				p.print("{`")
 				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 				p.addNilSourceMapping()
