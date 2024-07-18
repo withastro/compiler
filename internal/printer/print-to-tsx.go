@@ -368,22 +368,22 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 					p.addSourceMapping(c.Loc[0])
 				}
 				// Remplace all the top level returns with a `throw`
-				if topLevelReturn != nil {
+				if len(topLevelReturn) > 0 {
 					// Loop over the characters and replace the top level returns with a `throw`
-					newString := ""
+					newString := []byte{}
 
 					i := 0
 					for i < len(c.Data) {
 						if slices.Contains(topLevelReturn, i) {
-							newString += "throw "
+							newString = append(newString, []byte("throw ")...)
 							i += 6
 						} else {
-							newString += string(c.Data[i])
+							newString = append(newString, c.Data[i])
 							i++
 						}
 					}
 
-					p.printTextWithSourcemap(newString, c.Loc[0])
+					p.printTextWithSourcemap(string(newString), c.Loc[0])
 				} else {
 					p.printTextWithSourcemap(c.Data, c.Loc[0])
 				}
