@@ -376,7 +376,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 					for i < len(c.Data) {
 						if slices.Contains(topLevelReturn, i) {
 							newString = append(newString, []byte("throw ")...)
-							i += 6
+							i += len("return")
 						} else {
 							newString = append(newString, c.Data[i])
 							i++
