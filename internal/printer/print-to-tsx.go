@@ -137,21 +137,57 @@ var htmlEvents = map[string]bool{
 	"onwheel":                   true,
 }
 
-func getScriptTypeForNode(n Node) string {
-	if n.Attr == nil || len(n.Attr) == 0 {
+func getStyleLangFromAttrs(attrs []astro.Attribute) string {
+	if len(attrs) == 0 {
+		return "css"
+	}
+
+	for _, attr := range attrs {
+		if attr.Key == "lang" {
+			if attr.Type == astro.QuotedAttribute {
+				return strings.TrimSpace(strings.ToLower(attr.Val))
+			} else {
+				// If the lang attribute exists, but is not quoted, we can't tell what's inside of it
+				// So we'll just return "unknown" and let the downstream client decide what to do with it
+				return "unknown"
+			}
+		}
+	}
+
+	return "css"
+}
+
+func getScriptTypeFromAttrs(attrs []astro.Attribute) string {
+	if len(attrs) == 0 {
 		return "processed-module"
 	}
 
-	// If the script tag has `type="module"`, it's not processed, but it's still a module
-	for _, attr := range n.Attr {
+	for _, attr := range attrs {
+		// If the script tag has `is:raw`, we can't tell what's inside of it
+		// so the downstream client will decide what to do with it (e.g. ignore it, treat as inline, try to guess the type, etc.)
+		if attr.Key == "is:raw" {
+			return "raw"
+		}
+
 		if attr.Key == "type" {
-			if strings.Contains(attr.Val, "module") {
-				return "module"
+			if attr.Type == astro.QuotedAttribute {
+				normalizedType := strings.TrimSpace(strings.ToLower(attr.Val))
+				// If the script tag has `type="module"`, it's not processed, but it's still a module
+				if normalizedType == "module" {
+					return "module"
+				}
+
+				if ScriptJSONMimeTypes[normalizedType] {
+					return "json"
+				}
+
+				if ScriptMimeTypes[normalizedType] {
+					return "inline"
+				}
 			}
 
-			if ScriptJSONMimeTypes[strings.ToLower(attr.Val)] {
-				return "json"
-			}
+			// If the type is not recognized, leave it as unknown
+			return "unknown"
 		}
 
 	}
@@ -164,6 +200,7 @@ type TSXExtractedTag struct {
 	Loc     loc.TSXRange `js:"position"`
 	Type    string       `js:"type"`
 	Content string       `js:"content"`
+	Lang    string       `js:"lang"`
 }
 
 func isScript(p *astro.Node) bool {
@@ -556,7 +593,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.addTSXScript(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "event-attribute")
 			}
 			if a.Key == "style" {
-				p.addTSXStyle(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "style-attribute")
+				p.addTSXStyle(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "style-attribute", "css")
 			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
@@ -733,10 +770,10 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	if n.FirstChild != nil && (n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
 		if n.DataAtom == atom.Script {
-			p.addTSXScript(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, getScriptTypeForNode(*n))
+			p.addTSXScript(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, getScriptTypeFromAttrs(n.Attr))
 		}
 		if n.DataAtom == atom.Style {
-			p.addTSXStyle(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, "tag")
+			p.addTSXStyle(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, "tag", getStyleLangFromAttrs(n.Attr))
 		}
 	}
 

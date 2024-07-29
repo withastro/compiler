@@ -39,7 +39,7 @@ test('return ranges - no frontmatter', async () => {
 });
 
 test('extract scripts', async () => {
-	const input = `<script type="module">console.log({ test: \`literal\` })</script><script type="text/partytown">console.log({ test: \`literal\` })</script><script type="application/ld+json">{"a":"b"}</script><script is:inline>console.log("hello")</script><div onload="console.log('hey')"></div>`;
+	const input = `<script type="module">console.log({ test: \`literal\` })</script><script type="text/partytown">console.log({ test: \`literal\` })</script><script type="application/ld+json">{"a":"b"}</script><script is:inline>console.log("hello")</script><div onload="console.log('hey')"></div><script>console.log({ test: \`literal\` })</script><script is:raw>something;</script>`;
 
 	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
 	assert.equal(
@@ -52,6 +52,7 @@ test('extract scripts', async () => {
 				},
 				type: 'module',
 				content: 'console.log({ test: `literal` })',
+				lang: '',
 			},
 			{
 				position: {
@@ -60,6 +61,7 @@ test('extract scripts', async () => {
 				},
 				type: 'inline',
 				content: 'console.log({ test: `literal` })',
+				lang: '',
 			},
 			{
 				position: {
@@ -68,6 +70,7 @@ test('extract scripts', async () => {
 				},
 				type: 'json',
 				content: '{"a":"b"}',
+				lang: '',
 			},
 			{
 				position: {
@@ -76,6 +79,7 @@ test('extract scripts', async () => {
 				},
 				type: 'inline',
 				content: 'console.log("hello")',
+				lang: '',
 			},
 			{
 				position: {
@@ -84,6 +88,25 @@ test('extract scripts', async () => {
 				},
 				type: 'event-attribute',
 				content: "console.log('hey')",
+				lang: '',
+			},
+			{
+				position: {
+					start: 281,
+					end: 346,
+				},
+				type: 'processed-module',
+				content: 'console.log({ test: `literal` })',
+				lang: '',
+			},
+			{
+				position: {
+					start: 337,
+					end: 358,
+				},
+				type: 'raw',
+				content: 'something;',
+				lang: '',
 			},
 		],
 		'expected metaRanges.scripts to match snapshot'
@@ -91,7 +114,7 @@ test('extract scripts', async () => {
 });
 
 test('extract styles', async () => {
-	const input = `<style>body { color: red; }</style><div style="color: blue;"></div>`;
+	const input = `<style>body { color: red; }</style><div style="color: blue;"></div><style lang="scss">body { color: red; }</style><style lang="pcss">body { color: red; }</style>`;
 
 	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
 	assert.equal(
@@ -104,6 +127,7 @@ test('extract styles', async () => {
 				},
 				type: 'tag',
 				content: 'body { color: red; }',
+				lang: 'css',
 			},
 			{
 				position: {
@@ -112,6 +136,25 @@ test('extract styles', async () => {
 				},
 				type: 'style-attribute',
 				content: 'color: blue;',
+				lang: 'css',
+			},
+			{
+				position: {
+					start: 86,
+					end: 127,
+				},
+				type: 'tag',
+				content: 'body { color: red; }',
+				lang: 'scss',
+			},
+			{
+				position: {
+					start: 133,
+					end: 174,
+				},
+				type: 'tag',
+				content: 'body { color: red; }',
+				lang: 'pcss',
 			},
 		],
 		'expected metaRanges.styles to match snapshot'

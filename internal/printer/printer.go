@@ -96,7 +96,7 @@ func (p *printer) addTSXScript(start int, end int, content string, scriptType st
 	})
 }
 
-func (p *printer) addTSXStyle(start int, end int, content string, styleType string) {
+func (p *printer) addTSXStyle(start int, end int, content string, styleType string, styleLang string) {
 	p.ranges.Styles = append(p.ranges.Styles, TSXExtractedTag{
 		Loc: loc.TSXRange{
 			Start: start,
@@ -104,6 +104,7 @@ func (p *printer) addTSXStyle(start int, end int, content string, styleType stri
 		},
 		Content: content,
 		Type:    styleType,
+		Lang:    styleLang,
 	})
 }
 
