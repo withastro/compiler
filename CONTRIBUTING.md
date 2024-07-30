@@ -91,9 +91,37 @@ UPDATE_SNAPS=clean go test -v ./internal/...
 ```
 
 
-### Adding new tests
+### Adding new test cases
 
-Adding tests for the tokenizer, scanner, and printer can be found in `internal/token_test.go`, `internal/js_scanner_test.go`, and `internal/printer/printer_test.go`, respectively.
+The printer tests emit only snapshots. Go to `printer_test.go` and add a new test case:
+
+```go
+{
+	name: "New name for this test"
+	code: "<div></div>"
+}
+```
+
+Then run the below command, and a new snapshot named `new_name_for_this_test.snap` should appear in the snapshot folder.
+
+```shell
+go test -v ./internal/printer/printer_test.go
+```
+
+Other tests, like tokenizer and scanner be found in `internal/token_test.go`, `internal/js_scanner_test.go` and respectively.
+
+Those tests don't emit any snapshot, and you'll have to add a `want` field:
+
+```go
+{
+	name: "New name for this test"
+	code: "<div></div>",
+	want: want{
+		code: "<div></div>"
+	}
+}
+```
+
 
 [homebrew]: https://brew.sh/
 [go]: https://golang.org/
