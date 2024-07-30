@@ -13,7 +13,6 @@ import (
 type testcase_css struct {
 	name                string
 	source              string
-	want                string
 	scopedStyleStrategy string
 }
 
@@ -34,7 +33,6 @@ func TestPrinterCSS(t *testing.T) {
 
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
-			want: ".title:where(.astro-dpohflym){font-family:fantasy;font-size:28px}.body:where(.astro-dpohflym){font-size:1em}",
 		},
 		{
 			name: "scopedStyleStrategy: 'class'",
@@ -52,7 +50,6 @@ func TestPrinterCSS(t *testing.T) {
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			scopedStyleStrategy: "class",
-			want:                ".title.astro-dpohflym{font-family:fantasy;font-size:28px}.body.astro-dpohflym{font-size:1em}",
 		},
 		{
 			name: "scopedStyleStrategy: 'attribute'",
@@ -70,7 +67,6 @@ func TestPrinterCSS(t *testing.T) {
 		<h1 class="title">Page Title</h1>
 		<p class="body">I’m a page</p>`,
 			scopedStyleStrategy: "attribute",
-			want:                ".title[data-astro-cid-dpohflym]{font-family:fantasy;font-size:28px}.body[data-astro-cid-dpohflym]{font-size:1em}",
 		},
 	}
 
@@ -102,12 +98,15 @@ func TestPrinterCSS(t *testing.T) {
 				output += string(bytes)
 			}
 
-			toMatch := tt.want
-
-			// compare to expected string, show diff if mismatch
-			if diff := test_utils.ANSIDiff(test_utils.Dedent(toMatch), test_utils.Dedent(output)); diff != "" {
-				t.Errorf("mismatch (-want +got):\n%s", diff)
-			}
+			test_utils.MakeSnapshot(
+				&test_utils.SnapshotOptions{
+					Testing:      t,
+					TestCaseName: tt.name,
+					Input:        code,
+					Output:       output,
+					Kind:         test_utils.CssOutput,
+					FolderName:   "__printer_css__",
+				})
 		})
 	}
 }

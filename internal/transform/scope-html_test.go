@@ -120,6 +120,7 @@ func TestScopeHTML(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
+
 			ScopeElement(nodes[0], TransformOptions{Scope: "xxxxxx"})
 			astro.PrintToSource(&b, nodes[0])
 		})

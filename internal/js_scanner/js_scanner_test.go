@@ -661,6 +661,7 @@ func TestGetObjectKeys(t *testing.T) {
 			if diff := test_utils.ANSIDiff(string(want), string(got)); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+
 		})
 	}
 }

@@ -3,7 +3,9 @@ package test_utils
 import (
 	"fmt"
 	"strings"
+	"testing"
 
+	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/google/go-cmp/cmp"
 	"github.com/lithammer/dedent"
 )
@@ -40,4 +42,85 @@ func ANSIDiff(x, y interface{}, opts ...cmp.Option) string {
 		}
 	}
 	return strings.Join(ss, "\n")
+}
+
+// Removes unsupported characters from the test case name, because it will be used as name for the snapshot
+func RedactTestName(testCaseName string) string {
+	snapshotName := strings.ReplaceAll(testCaseName, "#", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "<", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, ">", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, ")", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "(", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, ":", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, " ", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "#", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "'", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "\"", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "@", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "`", "_")
+	snapshotName = strings.ReplaceAll(snapshotName, "+", "_")
+	return snapshotName
+}
+
+type OutputKind int
+
+const (
+	JsOutput = iota
+	JsonOutput
+	CssOutput
+	HtmlOutput
+	JsxOutput
+)
+
+var outputKind = map[OutputKind]string{
+	JsOutput:   "js",
+	JsonOutput: "json",
+	CssOutput:  "css",
+	HtmlOutput: "html",
+	JsxOutput:  "jsx",
+}
+
+type SnapshotOptions struct {
+	// The testing instances
+	Testing *testing.T
+	// The name of the test case
+	TestCaseName string
+	// The initial source code that needs to be tested
+	Input string
+	// The final output
+	Output string
+	// The kind of **markdown block** that the output will be wrapped
+	Kind OutputKind
+	// The folder name that the snapshots will be stored
+	FolderName string
+}
+
+// It creates a snapshot for the given test case, the snapshot will include the input and the output of the test case
+func MakeSnapshot(options *SnapshotOptions) {
+	t := options.Testing
+	testCaseName := options.TestCaseName
+	input := options.Input
+	output := options.Output
+	kind := options.Kind
+
+	folderName := "__snapshots__"
+	if options.FolderName != "" {
+		folderName = options.FolderName
+	}
+	snapshotName := RedactTestName(testCaseName)
+
+	s := snaps.WithConfig(
+		snaps.Filename(snapshotName),
+		snaps.Dir(folderName),
+	)
+
+	snapshot := "## Input\n\n```\n"
+	snapshot += Dedent(input)
+	snapshot += "\n```\n\n## Output\n\n"
+	snapshot += "```" + outputKind[kind] + "\n"
+	snapshot += Dedent(output)
+	snapshot += "\n```"
+
+	s.MatchSnapshot(t, snapshot)
+
 }

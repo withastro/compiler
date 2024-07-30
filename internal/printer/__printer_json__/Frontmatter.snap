@@ -1,0 +1,17 @@
+
+[TestPrintToJSON/Frontmatter - 1]
+## Input
+
+```
+/-/-/-/
+const a = "hey"
+/-/-/-/
+<div>{a}</div>
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"frontmatter","value":"\nconst a = \"hey\"\n"},{"type":"element","name":"div","attributes":[],"children":[{"type":"expression","children":[{"type":"text","value":"a"}]}]}]}
+```
+---

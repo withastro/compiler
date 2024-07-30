@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/expression - 1]
+## Input
+
+```
+<h1>Hello {world}</h1>
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"element","name":"h1","attributes":[],"children":[{"type":"text","value":"Hello "},{"type":"expression","children":[{"type":"text","value":"world"}]}]}]}
+```
+---

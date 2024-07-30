@@ -46,7 +46,7 @@ go test -v ./internal/printer
 ```
 ### Run a specific test case
 
-Many of your test cases are designed like this:
+Many of our test cases are designed like this:
 
 ```go
 func TestPrintToJSON(t *testing.T) {
@@ -72,11 +72,7 @@ go test -v ./internal/... -run TestPrintToJSON/basic
 go test -v ./internal/... -run TestPrintToJSON/Comment preserves whitespace
 ```
 
-### Adding new tests
-
-Adding tests for the tokenizer, scanner, and printer can be found in `internal/token_test.go`, `internal/js_scanner_test.go`, and `internal/printer/printer_test.go`, respectively.
-
-### Snapshot testing
+#### Snapshot testing
 
 We use [go-snaps](https://github.com/gkampitakis/go-snaps) for snapshot testing. Visit their repository for more details on how to use it
 
@@ -93,6 +89,39 @@ Instead, if there are some **obsolete snapshots**, you can `UPDATE_SNAPS=clean`:
 ```shell
 UPDATE_SNAPS=clean go test -v ./internal/...
 ```
+
+
+### Adding new test cases
+
+The printer tests emit only snapshots. Go to `printer_test.go` and add a new test case:
+
+```go
+{
+	name: "New name for this test"
+	code: "<div></div>"
+}
+```
+
+Then run the below command, and a new snapshot named `new_name_for_this_test.snap` should appear in the snapshot folder.
+
+```shell
+go test -v ./internal/printer/printer_test.go
+```
+
+Other tests, like tokenizer and scanner be found in `internal/token_test.go`, `internal/js_scanner_test.go` and respectively.
+
+Those tests don't emit any snapshot, and you'll have to add a `want` field:
+
+```go
+{
+	name: "New name for this test"
+	code: "<div></div>",
+	want: want{
+		code: "<div></div>"
+	}
+}
+```
+
 
 [homebrew]: https://brew.sh/
 [go]: https://golang.org/

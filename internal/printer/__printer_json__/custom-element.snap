@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/custom-element - 1]
+## Input
+
+```
+<custom-element />
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"custom-element","name":"custom-element","attributes":[],"children":[]}]}
+```
+---
