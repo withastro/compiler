@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 2.10.0
+
+### Minor Changes
+
+- 1d684b1: Adds detected language to extracted style tags in TSX
+
+### Patch Changes
+
+- 7fa6577: Transform top level returns into throws in the TSX output
+
 ## 2.9.2
 
 ### Patch Changes
