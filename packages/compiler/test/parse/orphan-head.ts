@@ -1,4 +1,4 @@
-import { parse } from '@astrojs/compiler';
+import { type ParseResult, parse } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -18,18 +18,18 @@ const FIXTURE = `
 </html>
 `;
 
-let result: unknown;
+let result: ParseResult;
 test.before(async () => {
-  result = await parse(FIXTURE);
+	result = await parse(FIXTURE);
 });
 
 test('orphan head', () => {
-  assert.ok(result, 'able to parse');
+	assert.ok(result, 'able to parse');
 
-  const [doctype, html, ...others] = result.ast.children;
-  assert.equal(others.length, 1, 'Expected only three child nodes!');
-  assert.equal(doctype.type, 'doctype', `Expected first child node to be of type "doctype"`);
-  assert.equal(html.type, 'element', `Expected first child node to be of type "element"`);
+	const [doctype, html, ...others] = result.ast.children;
+	assert.equal(others.length, 1, 'Expected only three child nodes!');
+	assert.equal(doctype.type, 'doctype', `Expected first child node to be of type "doctype"`);
+	assert.equal(html.type, 'element', `Expected first child node to be of type "element"`);
 });
 
 test.run();

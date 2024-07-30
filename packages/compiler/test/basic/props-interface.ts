@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -13,15 +13,15 @@ const props = { ...Astro.props } as Props;
   <slot></slot>
 </body>`;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('retains newlines around comment', () => {
-  assert.ok(result.code, 'Expected to compile');
-  assert.match(result.code, /\/\/ eslint-disable-next-line no-undef\n/g);
-  assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
+	assert.ok(result.code, 'Expected to compile');
+	assert.match(result.code, /\/\/ eslint-disable-next-line no-undef\n/g);
+	assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
 });
 
 test.run();

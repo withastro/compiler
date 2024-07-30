@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -12,14 +12,18 @@ import ThemeToggleButton from './ThemeToggleButton.tsx';
 <body><div>Hello!</div></body>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('can compile fragment', () => {
-  assert.not.match(result.code, '<head>', 'Expected output not to contain <head>');
-  assert.match(result.code, '<body><div>Hello!</div></body>', 'Expected output to contain <body><div>Hello!</div></body>');
+	assert.not.match(result.code, '<head>', 'Expected output not to contain <head>');
+	assert.match(
+		result.code,
+		'<body><div>Hello!</div></body>',
+		'Expected output to contain <body><div>Hello!</div></body>'
+	);
 });
 
 test.run();

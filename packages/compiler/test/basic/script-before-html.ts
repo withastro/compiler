@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -30,13 +30,16 @@ html {
 </style>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('includes html element', () => {
-  assert.ok(result.code.includes('<html lang="de">'), 'Expected compile result to include html element!');
+	assert.ok(
+		result.code.includes('<html lang="de">'),
+		'Expected compile result to include html element!'
+	);
 });
 
 test.run();

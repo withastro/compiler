@@ -1,7 +1,7 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { preprocessStyle } from '../utils';
+import { preprocessStyle } from '../utils.js';
 
 const FIXTURE = `
 ---
@@ -15,16 +15,16 @@ let value = 'world';
 <div>Ahhh</div>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    sourcemap: true,
-    preprocessStyle,
-  });
+	result = await transform(FIXTURE, {
+		sourcemap: true,
+		preprocessStyle,
+	});
 });
 
 test('can compile empty style', () => {
-  assert.ok(result.code, 'Expected to compile with empty style.');
+	assert.ok(result.code, 'Expected to compile with empty style.');
 });
 
 test.run();

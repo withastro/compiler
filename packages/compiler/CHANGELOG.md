@@ -1,5 +1,42 @@
 # @astrojs/compiler
 
+## 2.9.2
+
+### Patch Changes
+
+- a765f47: Escape script tags with unknown types
+
+## 2.9.1
+
+### Patch Changes
+
+- 9549bb7: Fixes style and script tags sometimes being forcefully put into the body / head tags in the AST
+
+## 2.9.0
+
+### Minor Changes
+
+- 3e25858: Adds two new options to `convertToTSX`: `includeScripts` and `includeStyles`. These options allow you to optionally remove scripts and styles from the output TSX file.
+
+  Additionally this PR makes it so scripts and styles metadata are now included in the `metaRanges` property of the result of `convertToTSX`. This is notably useful in order to extract scripts and styles from the output TSX file into separate files for language servers.
+
+- 9fb8d5d: Adds `serverComponents` metadata
+
+  This adds a change necessary to support server islands. During transformation the compiler discovers `server:defer` directives and appends them to the `serverComponents` array. This is exported along with the other metadata so that it can be used inside of Astro.
+
+## 2.8.2
+
+### Patch Changes
+
+- 6b7c12f: Avoids stringifying `undefined` in scoped class attributes
+- 8803da6: Fixes newlines in opening tag generating buggy code in TSX
+
+## 2.8.1
+
+### Patch Changes
+
+- 0bb2746: Allow `data-astro-reload` to take a value
+
 ## 2.8.0
 
 ### Minor Changes
@@ -139,8 +176,15 @@
   Results in:
 
   ```html
-  <div data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="1:1">
-    <span data-astro-source-file="/Users/erika/Projects/..." data-astro-source-loc="2:2">hello world</span>
+  <div
+    data-astro-source-file="/Users/erika/Projects/..."
+    data-astro-source-loc="1:1"
+  >
+    <span
+      data-astro-source-file="/Users/erika/Projects/..."
+      data-astro-source-loc="2:2"
+      >hello world</span
+    >
   </div>
   ```
 
@@ -631,8 +675,11 @@
 - c770e7b: The compiler will now return `diagnostics` and unique error codes to be handled by the consumer. For example:
 
   ```js
-  import type { DiagnosticSeverity, DiagnosticCode } from '@astrojs/compiler/types';
-  import { transform } from '@astrojs/compiler';
+  import type {
+    DiagnosticSeverity,
+    DiagnosticCode,
+  } from "@astrojs/compiler/types";
+  import { transform } from "@astrojs/compiler";
 
   async function run() {
     const { diagnostics } = await transform(file, opts);

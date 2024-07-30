@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -28,19 +28,19 @@ const { each } = Astro.props;
 </Show>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('expression followed by node', () => {
-  assert.match(
-    result.code,
-    `yield '
+	assert.match(
+		result.code,
+		`yield '
 ';
 		}`,
-    'Expected output to properly handle expression!',
-  );
+		'Expected output to properly handle expression!'
+	);
 });
 
 test.run();

@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -9,13 +9,13 @@ const url = 'foo';
 <script type="module" hoist src={url}></script>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('logs warning with hoisted expression', () => {
-  assert.ok(result.code);
+	assert.ok(result.code);
 });
 
 test.run();

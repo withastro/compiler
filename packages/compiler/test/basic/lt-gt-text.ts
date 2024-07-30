@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -23,7 +23,7 @@ const featuredProject = projects[0];
 			title="Jeanine White: Personal Site"
 			description="Jeanine White: Developer, Speaker, and Writer..."
 		/>
-		
+
 	</head>
 	<body>
 	    <Nav />
@@ -33,15 +33,15 @@ const featuredProject = projects[0];
 </html>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('< and > as raw text', () => {
-  assert.ok(result.code, 'Expected to compile');
-  assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
-  assert.match(result.code, '< header >', 'Expected output to contain < header >');
+	assert.ok(result.code, 'Expected to compile');
+	assert.equal(result.diagnostics.length, 0, 'Expected no diagnostics');
+	assert.match(result.code, '< header >', 'Expected output to contain < header >');
 });
 
 test.run();

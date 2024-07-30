@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -21,13 +21,17 @@ const FIXTURE = `{
 }
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('does not add trailing newline to rendered output', () => {
-  assert.match(result.code, `}\`;\n}, '<stdin>', undefined);`, 'Does not include a trailing newline in the render function');
+	assert.match(
+		result.code,
+		`}\`;\n}, '<stdin>', undefined);`,
+		'Does not include a trailing newline in the render function'
+	);
 });
 
 test.run();

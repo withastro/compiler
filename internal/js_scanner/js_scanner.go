@@ -12,6 +12,60 @@ import (
 	"github.com/withastro/compiler/internal/loc"
 )
 
+func FindTopLevelReturns(source []byte) []int {
+	l := js.NewLexer(parse.NewInputBytes(source))
+	i := 0
+	returns := make([]int, 0)
+	pairs := make(map[byte]int)
+	inFunction := false
+
+	for {
+		token, value := l.Next()
+
+		if token == js.DivToken || token == js.DivEqToken {
+			lns := bytes.Split(source[i+1:], []byte{'\n'})
+			if bytes.Contains(lns[0], []byte{'/'}) {
+				token, value = l.RegExp()
+			}
+		}
+
+		if token == js.ErrorToken {
+			if l.Err() != io.EOF {
+				return returns
+			}
+			break
+		}
+
+		if js.IsPunctuator(token) {
+			if value[0] == '{' {
+				pairs[value[0]]++
+				i += len(value)
+				continue
+			} else if value[0] == '}' {
+				pairs['{']--
+			}
+		}
+
+		// Track function declarations
+		if token == js.FunctionToken {
+			inFunction = true
+		}
+
+		// Track end of function declarations
+		if inFunction && token == js.CloseBraceToken && pairs['{'] == 1 {
+			inFunction = false
+		}
+
+		if token == js.ReturnToken && !inFunction {
+			returns = append(returns, i)
+		}
+
+		i += len(value)
+	}
+
+	return returns
+}
+
 type HoistedScripts struct {
 	Hoisted     [][]byte
 	HoistedLocs []loc.Loc

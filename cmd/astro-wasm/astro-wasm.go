@@ -37,6 +37,13 @@ func jsString(j js.Value) string {
 	return j.String()
 }
 
+func jsBoolOptional(j js.Value, defaultValue bool) bool {
+	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
+		return defaultValue
+	}
+	return j.Bool()
+}
+
 func jsBool(j js.Value) bool {
 	if j.Equal(js.Undefined()) || j.Equal(js.Null()) {
 		return false
@@ -148,6 +155,16 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 	}
 }
 
+func makeTSXOptions(options js.Value) printer.TSXOptions {
+	includeScripts := jsBoolOptional(options.Get("includeScripts"), true)
+	includeStyles := jsBoolOptional(options.Get("includeStyles"), true)
+
+	return printer.TSXOptions{
+		IncludeScripts: includeScripts,
+		IncludeStyles:  includeStyles,
+	}
+}
+
 type RawSourceMap struct {
 	File           string   `js:"file"`
 	Mappings       string   `js:"mappings"`
@@ -166,6 +183,7 @@ type HoistedScript struct {
 
 type HydratedComponent struct {
 	ExportName   string `js:"exportName"`
+	LocalName    string `js:"localName"`
 	Specifier    string `js:"specifier"`
 	ResolvedPath string `js:"resolvedPath"`
 }
@@ -191,6 +209,7 @@ type TransformResult struct {
 	Scripts              []HoistedScript         `js:"scripts"`
 	HydratedComponents   []HydratedComponent     `js:"hydratedComponents"`
 	ClientOnlyComponents []HydratedComponent     `js:"clientOnlyComponents"`
+	ServerComponents     []HydratedComponent     `js:"serverComponents"`
 	ContainsHead         bool                    `js:"containsHead"`
 	StyleError           []string                `js:"styleError"`
 	Propagation          bool                    `js:"propagation"`
@@ -260,7 +279,10 @@ func ConvertToTSX() any {
 		if err != nil {
 			h.AppendError(err)
 		}
-		result := printer.PrintToTSX(source, doc, transformOptions, h)
+
+		tsxOptions := makeTSXOptions(js.Value(args[1]))
+
+		result := printer.PrintToTSX(source, doc, tsxOptions, transformOptions, h)
 
 		// AFTER printing, exec transformations to pickup any errors/warnings
 		transform.Transform(doc, transformOptions, h)
@@ -338,6 +360,7 @@ func Transform() any {
 				scripts := []HoistedScript{}
 				hydratedComponents := []HydratedComponent{}
 				clientOnlyComponents := []HydratedComponent{}
+				serverComponents := []HydratedComponent{}
 				css_result := printer.PrintCSS(source, doc, transformOptions)
 				for _, bytes := range css_result.Output {
 					css = append(css, string(bytes))
@@ -418,6 +441,15 @@ func Transform() any {
 					})
 				}
 
+				for _, c := range doc.ServerComponents {
+					serverComponents = append(serverComponents, HydratedComponent{
+						ExportName:   c.ExportName,
+						LocalName:    c.LocalName,
+						Specifier:    c.Specifier,
+						ResolvedPath: c.ResolvedPath,
+					})
+				}
+
 				var value vert.Value
 				result := printer.PrintToJS(source, doc, len(css), transformOptions, h)
 				transformResult := &TransformResult{
@@ -426,6 +458,7 @@ func Transform() any {
 					Scripts:              scripts,
 					HydratedComponents:   hydratedComponents,
 					ClientOnlyComponents: clientOnlyComponents,
+					ServerComponents:     serverComponents,
 					ContainsHead:         doc.ContainsHead,
 					StyleError:           styleError,
 					Propagation:          doc.HeadPropagation,

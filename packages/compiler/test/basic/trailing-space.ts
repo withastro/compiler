@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -21,14 +21,14 @@ import Layout from '../layouts/content.astro';
   </div>
 </Layout>`; // NOTE: the lack of trailing space is important to this test!
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE);
+	result = await transform(FIXTURE);
 });
 
 test('trailing space', () => {
-  assert.ok(result.code, 'Expected to compiler');
-  assert.not.match(result.code, 'html', 'Expected output to not contain <html>');
+	assert.ok(result.code, 'Expected to compiler');
+	assert.not.match(result.code, 'html', 'Expected output to not contain <html>');
 });
 
 test.run();

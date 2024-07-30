@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -11,16 +11,16 @@ import Parent from './Parent.astro';
 </Parent>
 `;
 
-let result: unknown;
+let result: TransformResult;
 test.before(async () => {
-  result = await transform(FIXTURE, {
-    resolvePath: async (s) => s,
-    resultScopedSlot: true,
-  });
+	result = await transform(FIXTURE, {
+		resolvePath: async (s) => s,
+		resultScopedSlot: true,
+	});
 });
 
 test('resultScopedSlot: includes the result object in the call to the slot', () => {
-  assert.match(result.code, /\(\$\$result\) =>/);
+	assert.match(result.code, /\(\$\$result\) =>/);
 });
 
 test.run();

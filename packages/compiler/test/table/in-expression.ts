@@ -4,7 +4,7 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 test('does not panic on table in expression', async () => {
-  const input = `
+	const input = `
 <section>
     {course.reviews && course.reviews.length &&
         <>
@@ -31,20 +31,20 @@ test('does not panic on table in expression', async () => {
 </section>
 `;
 
-  let error = 0;
-  try {
-    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
-    parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
-  } catch (e) {
-    error = 1;
-  }
-  assert.equal(error, 0, 'compiler should generate valid code');
+	let error = 0;
+	try {
+		const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
+		parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
+	} catch (e) {
+		error = 1;
+	}
+	assert.equal(error, 0, 'compiler should generate valid code');
 });
 
 test('does not generate invalid markup on table in expression', async () => {
-  const input = `
+	const input = `
 <ul>
-    {Astro.props.page.data.map(page => 
+    {Astro.props.page.data.map(page =>
         <li>
             <table>
             <tr><td>{page.frontmatter.title}</td></tr>
@@ -57,18 +57,18 @@ test('does not generate invalid markup on table in expression', async () => {
 </ul>
 `;
 
-  let error = 0;
-  try {
-    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
-    parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
-  } catch (e) {
-    error = 1;
-  }
-  assert.equal(error, 0, 'compiler should generate valid code');
+	let error = 0;
+	try {
+		const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
+		parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
+	} catch (e) {
+		error = 1;
+	}
+	assert.equal(error, 0, 'compiler should generate valid code');
 });
 
 test('does not generate invalid markup on multiple tables', async () => {
-  const input = `
+	const input = `
 <section>
   {["a", "b", "c"].map(char=> {
     <table>
@@ -83,12 +83,12 @@ test('does not generate invalid markup on multiple tables', async () => {
 <section></section>
 `;
 
-  let error = 0;
-  try {
-    const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
-    parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
-  } catch (e) {
-    error = 1;
-  }
-  assert.equal(error, 0, 'compiler should generate valid code');
+	let error = 0;
+	try {
+		const { code } = await transform(input, { filename: 'index.astro', sourcemap: 'inline' });
+		parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
+	} catch (e) {
+		error = 1;
+	}
+	assert.equal(error, 0, 'compiler should generate valid code');
 });

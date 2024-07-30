@@ -84,6 +84,7 @@ type testcase struct {
 type jsonTestcase struct {
 	name   string
 	source string
+	only   bool
 }
 
 func TestPrinter(t *testing.T) {
@@ -2163,6 +2164,26 @@ const c = '\''
 			source: `<html><body><h1>Hello world!</h1></body></html><style></style>`,
 		},
 		{
+			name:   "style after empty html",
+			source: `<html></html><style></style>`,
+			want:   []ASTNode{{Type: "element", Name: "html"}, {Type: "element", Name: "style"}},
+		},
+		{
+			name:   "style after html with component in head",
+			source: `<html lang="en"><head><BaseHead /></head></html><style>@use "../styles/global.scss";</style>`,
+			want:   []ASTNode{{Type: "element", Name: "html", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "lang", Value: "en", Raw: "\"en\""}}, Children: []ASTNode{{Type: "element", Name: "head", Children: []ASTNode{{Type: "component", Name: "BaseHead"}}}}}, {Type: "element", Name: "style", Children: []ASTNode{{Type: "text", Value: "@use \"../styles/global.scss\";"}}}},
+		},
+		{
+			name:   "style after html with component in head and body",
+			source: `<html lang="en"><head><BaseHead /></head><body><Header /></body></html><style>@use "../styles/global.scss";</style>`,
+			want:   []ASTNode{{Type: "element", Name: "html", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "lang", Value: "en", Raw: "\"en\""}}, Children: []ASTNode{{Type: "element", Name: "head", Children: []ASTNode{{Type: "component", Name: "BaseHead"}}}, {Type: "element", Name: "body", Children: []ASTNode{{Type: "component", Name: "Header"}}}}}, {Type: "element", Name: "style", Children: []ASTNode{{Type: "text", Value: "@use \"../styles/global.scss\";"}}}},
+		},
+		{
+			name:   "style after body with component in head and body",
+			source: `<html lang="en"><head><BaseHead /></head><body><Header /></body><style>@use "../styles/global.scss";</style></html>`,
+			want:   []ASTNode{{Type: "element", Name: "html", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "lang", Value: "en", Raw: "\"en\""}}, Children: []ASTNode{{Type: "element", Name: "head", Children: []ASTNode{{Type: "component", Name: "BaseHead"}}}, {Type: "element", Name: "body", Children: []ASTNode{{Type: "component", Name: "Header"}}}, {Type: "element", Name: "style", Children: []ASTNode{{Type: "text", Value: "@use \"../styles/global.scss\";"}}}}}},
+		},
+		{
 			name:   "style in html",
 			source: `<html><body><h1>Hello world!</h1></body><style></style></html>`,
 		},
@@ -2182,6 +2203,14 @@ const c = '\''
 			name:   "element with unterminated template literal attribute",
 			source: `<main id=` + BACKTICK + `gotcha />`,
 		},
+	}
+
+	for _, tt := range tests {
+		if tt.only {
+			tests = make([]jsonTestcase, 0)
+			tests = append(tests, tt)
+			break
+		}
 	}
 
 	for _, tt := range tests {

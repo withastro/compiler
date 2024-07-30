@@ -1,9 +1,9 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { testTSXSourcemap } from '../utils';
+import { testTSXSourcemap } from '../utils.js';
 
 test('script is:inline', async () => {
-  const input = `---
+	const input = `---
   // valid
   import { foo } from './script.js';
     import ComponentAstro from './astro.astro';
@@ -14,14 +14,14 @@ test('script is:inline', async () => {
   foo;baz;ComponentAstro;ComponentSvelte;ComponentVue;
 ---
 `;
-  const output = await testTSXSourcemap(input, `'./script'`);
+	const output = await testTSXSourcemap(input, `'./script'`);
 
-  assert.equal(output, {
-    line: 8,
-    column: 23,
-    source: 'index.astro',
-    name: null,
-  });
+	assert.equal(output, {
+		line: 8,
+		column: 23,
+		source: 'index.astro',
+		name: null,
+	});
 });
 
 test.run();

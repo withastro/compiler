@@ -6,14 +6,14 @@ const STYLE = 'div { & span { color: red; }}';
 const FIXTURE = `<style>${STYLE}</style>`;
 
 test('ampersand', async () => {
-  const result = await parse(FIXTURE);
-  assert.ok(result.ast, 'Expected an AST to be generated');
-  const [
-    {
-      children: [{ value: output }],
-    },
-  ] = result.ast.children;
-  assert.equal(output, STYLE, 'Expected AST style to equal input');
+	const result = await parse(FIXTURE);
+	assert.ok(result.ast, 'Expected an AST to be generated');
+	const [
+		{
+			children: [{ value: output }],
+		},
+	] = result.ast.children as any;
+	assert.equal(output, STYLE, 'Expected AST style to equal input');
 });
 
 test.run();

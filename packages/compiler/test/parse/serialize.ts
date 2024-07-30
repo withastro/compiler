@@ -25,36 +25,36 @@ let content = "Testing 123";
 </Markdown>
 `;
 
-let result: unknown;
+let result: string;
 test.before(async () => {
-  const { ast } = await parse(FIXTURE);
-  try {
-    result = serialize(ast);
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.log(e);
-  }
+	const { ast } = await parse(FIXTURE);
+	try {
+		result = serialize(ast);
+	} catch (e) {
+		// eslint-disable-next-line no-console
+		console.log(e);
+	}
 });
 
 test('serialize', () => {
-  assert.type(result, 'string', `Expected "serialize" to return an object!`);
-  assert.equal(result, FIXTURE, 'Expected serialized output to equal input');
+	assert.type(result, 'string', `Expected "serialize" to return an object!`);
+	assert.equal(result, FIXTURE, 'Expected serialized output to equal input');
 });
 
 test('self-close elements', async () => {
-  const input = '<div />';
-  const { ast } = await parse(input);
-  const output = serialize(ast, { selfClose: false });
-  const selfClosedOutput = serialize(ast);
-  assert.equal(output, '<div></div>', 'Expected serialized output to equal <div></div>');
-  assert.equal(selfClosedOutput, input, `Expected serialized output to equal ${input}`);
+	const input = '<div />';
+	const { ast } = await parse(input);
+	const output = serialize(ast, { selfClose: false });
+	const selfClosedOutput = serialize(ast);
+	assert.equal(output, '<div></div>', 'Expected serialized output to equal <div></div>');
+	assert.equal(selfClosedOutput, input, `Expected serialized output to equal ${input}`);
 });
 
 test('raw attributes', async () => {
-  const input = `<div name="value" single='quote' un=quote />`;
-  const { ast } = await parse(input);
-  const output = serialize(ast);
-  assert.equal(output, input, `Expected serialized output to equal ${input}`);
+	const input = `<div name="value" single='quote' un=quote />`;
+	const { ast } = await parse(input);
+	const output = serialize(ast);
+	assert.equal(output, input, `Expected serialized output to equal ${input}`);
 });
 
 test.run();

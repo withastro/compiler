@@ -36,6 +36,9 @@ type printer struct {
 
 	// Optional, used only for TSX output
 	ranges TSXRanges
+	// Keep track of how many multi-byte characters we've printed so that they can be skipped whenever we need a character-based index
+	// This could be directly in the token / node information, however this would require a fairly large refactor
+	bytesToSkip int
 }
 
 var TEMPLATE_TAG = "$$render"
@@ -82,6 +85,28 @@ func (p *printer) setTSXBodyRange(componentRange loc.TSXRange) {
 	p.ranges.Body = componentRange
 }
 
+func (p *printer) addTSXScript(start int, end int, content string, scriptType string) {
+	p.ranges.Scripts = append(p.ranges.Scripts, TSXExtractedTag{
+		Loc: loc.TSXRange{
+			Start: start,
+			End:   end,
+		},
+		Content: content,
+		Type:    scriptType,
+	})
+}
+
+func (p *printer) addTSXStyle(start int, end int, content string, styleType string) {
+	p.ranges.Styles = append(p.ranges.Styles, TSXExtractedTag{
+		Loc: loc.TSXRange{
+			Start: start,
+			End:   end,
+		},
+		Content: content,
+		Type:    styleType,
+	})
+}
+
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
 	for pos, c := range text {
@@ -93,6 +118,40 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 			continue
 		}
 		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
+		if nextCharByteSize > 1 {
+			p.bytesToSkip += nextCharByteSize - 1
+		}
+		p.addSourceMapping(loc.Loc{Start: start})
+		p.print(string(c))
+		start += nextCharByteSize
+	}
+}
+
+func (p *printer) printEscapedJSXTextWithSourcemap(text string, l loc.Loc) {
+	start := l.Start
+	for pos, c := range text {
+		// Handle Windows-specific "\r\n" newlines
+		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
+			// tiny optimization: avoid calling `utf8.DecodeRuneInString`
+			// if we know the next char is `\n`
+			start++
+			continue
+		}
+
+		// If we encounter characters invalid in JSX, escape them by putting them in a JS expression
+		// No need to map, since it's just text. We also don't need to handle tags, since this is only for text nodes.
+		if c == '>' || c == '}' {
+			p.print("{`")
+			p.print(string(c))
+			p.print("`}")
+			start++
+			continue
+		}
+
+		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
+		if nextCharByteSize > 1 {
+			p.bytesToSkip += nextCharByteSize - 1
+		}
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
 		start += nextCharByteSize
