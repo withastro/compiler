@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/style_after_empty_html - 1]
+## Input
+
+```
+<html></html><style></style>
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"element","name":"html","attributes":[],"children":[]},{"type":"element","name":"style","attributes":[],"children":[]}]}
+```
+---

@@ -1,0 +1,14 @@
+
+[TestPrintToJSON/style_after_body_with_component_in_head_and_body - 1]
+## Input
+
+```
+<html lang="en"><head><BaseHead /></head><body><Header /></body><style>@use "../styles/global.scss";</style></html>
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"element","name":"html","attributes":[{"type":"attribute","kind":"quoted","name":"lang","value":"en","raw":"\"en\""}],"children":[{"type":"element","name":"head","attributes":[],"children":[{"type":"component","name":"BaseHead","attributes":[],"children":[]}]},{"type":"element","name":"body","attributes":[],"children":[{"type":"component","name":"Header","attributes":[],"children":[]}]},{"type":"element","name":"style","attributes":[],"children":[{"type":"text","value":"@use \"../styles/global.scss\";"}]}]}]}
+```
+---
