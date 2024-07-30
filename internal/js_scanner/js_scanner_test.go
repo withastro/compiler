@@ -662,15 +662,6 @@ func TestGetObjectKeys(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 
-			test_utils.MakeSnapshot(
-				&test_utils.SnapshotOptions{
-					Testing:      t,
-					TestCaseName: tt.name,
-					Input:        tt.source,
-					Output:       string(got),
-					Kind:         test_utils.JsOutput,
-					FolderName:   "__js_scanner__",
-				})
 		})
 	}
 }

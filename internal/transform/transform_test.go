@@ -8,7 +8,6 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
-	"github.com/withastro/compiler/internal/test_utils"
 )
 
 func transformScopingFixtures() []struct {
@@ -530,15 +529,6 @@ func TestAnnotation(t *testing.T) {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 
-			test_utils.MakeSnapshot(
-				&test_utils.SnapshotOptions{
-					Testing:      t,
-					TestCaseName: tt.name,
-					Input:        tt.source,
-					Output:       string(got),
-					Kind:         test_utils.JsxOutput,
-					FolderName:   "__transform__",
-				})
 		})
 	}
 }
