@@ -135,11 +135,22 @@ export interface TSXExtractedTag {
 }
 
 export interface TSXExtractedScript extends TSXExtractedTag {
-	type: 'processed-module' | 'module' | 'inline' | 'event-attribute' | 'json' | 'unknown';
+	type: 'processed-module' | 'module' | 'inline' | 'event-attribute' | 'json' | 'raw' | 'unknown';
 }
 
 export interface TSXExtractedStyle extends TSXExtractedTag {
 	type: 'tag' | 'style-attribute';
+	lang:
+		| 'css'
+		| 'scss'
+		| 'sass'
+		| 'less'
+		| 'stylus'
+		| 'styl'
+		| 'postcss'
+		| 'pcss'
+		| 'unknown'
+		| (string & {});
 }
 
 export interface TSXResult {
