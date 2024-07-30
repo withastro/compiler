@@ -84,7 +84,6 @@ type testcase struct {
 type jsonTestcase struct {
 	name   string
 	source string
-	want   []ASTNode
 }
 
 func TestPrinter(t *testing.T) {
@@ -2106,7 +2105,6 @@ func TestPrintToJSON(t *testing.T) {
 		{
 			name:   "expression",
 			source: `<h1>Hello {world}</h1>`,
-			want:   []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello "}, {Type: "expression", Children: []ASTNode{{Type: "text", Value: "world"}}}}}},
 		},
 		{
 			name:   "Component",
@@ -2142,7 +2140,6 @@ func TestPrintToJSON(t *testing.T) {
 const a = "hey"
 ---
 <div>{a}</div>`,
-			want: []ASTNode{{Type: "frontmatter", Value: "\nconst a = \"hey\"\n"}, {Type: "element", Name: "div", Children: []ASTNode{{Type: "expression", Children: []ASTNode{{Type: "text", Value: "a"}}}}}},
 		},
 		{
 			name: "JSON escape",
@@ -2152,47 +2149,38 @@ const b = "\""
 const c = '\''
 ---
 {a + b + c}`,
-			want: []ASTNode{{Type: "frontmatter", Value: "\nconst a = \"\\n\"\nconst b = \"\\\"\"\nconst c = '\\''\n"}, {Type: "expression", Children: []ASTNode{{Type: "text", Value: "a + b + c"}}}},
 		},
 		{
 			name:   "Preserve namespaces",
 			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href="#id"></svg>`,
-			want:   []ASTNode{{Type: "element", Name: "svg", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "xmlns", Value: "http://www.w3.org/2000/svg", Raw: `"http://www.w3.org/2000/svg"`}, {Type: "attribute", Kind: "quoted", Name: "xmlns:xlink", Value: "http://www.w3.org/1999/xlink", Raw: `"http://www.w3.org/1999/xlink"`}}, Children: []ASTNode{{Type: "element", Name: "rect", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "xlink:href", Value: "#id", Raw: `"#id"`}}}}}},
 		},
 		{
 			name:   "style before html",
 			source: `<style></style><html><body><h1>Hello world!</h1></body></html>`,
-			want:   []ASTNode{{Type: "element", Name: "style"}, {Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}},
 		},
 		{
 			name:   "style after html",
 			source: `<html><body><h1>Hello world!</h1></body></html><style></style>`,
-			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}}}, {Type: "element", Name: "style"}},
 		},
 		{
 			name:   "style in html",
 			source: `<html><body><h1>Hello world!</h1></body><style></style></html>`,
-			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}}}, {Type: "element", Name: "style"}}}},
 		},
 		{
 			name:   "style in body",
 			source: `<html><body><h1>Hello world!</h1><style></style></body></html>`,
-			want:   []ASTNode{{Type: "element", Name: "html", Children: []ASTNode{{Type: "element", Name: "body", Children: []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}, {Type: "element", Name: "style"}}}}}},
 		},
 		{
 			name:   "element with unterminated double quote attribute",
 			source: `<main id="gotcha />`,
-			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "gotcha", Raw: "\"gotcha"}}}},
 		},
 		{
 			name:   "element with unterminated single quote attribute",
 			source: `<main id='gotcha />`,
-			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "quoted", Name: "id", Value: "gotcha", Raw: "'gotcha"}}}},
 		},
 		{
 			name:   "element with unterminated template literal attribute",
 			source: `<main id=` + BACKTICK + `gotcha />`,
-			want:   []ASTNode{{Type: "element", Name: "main", Attributes: []ASTNode{{Type: "attribute", Kind: "template-literal", Name: "id", Value: "gotcha", Raw: "`gotcha"}}}},
 		},
 	}
 
@@ -2207,14 +2195,7 @@ const c = '\''
 				t.Error(err)
 			}
 
-			root := ASTNode{Type: "root", Children: tt.want}
-			toMatch := root.String()
-
 			result := PrintToJSON(code, doc, types.ParseOptions{Position: false})
-
-			if diff := test_utils.ANSIDiff(test_utils.Dedent(string(toMatch)), test_utils.Dedent(string(result.Output))); diff != "" {
-				t.Errorf("mismatch (-want +got):\n%s", diff)
-			}
 
 			test_utils.MakeSnapshot(
 				&test_utils.SnapshotOptions{
