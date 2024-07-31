@@ -159,6 +159,16 @@ func (p *printer) printEscapedJSXTextWithSourcemap(text string, l loc.Loc) {
 	}
 }
 
+// We normally collect multi-byte characters while printing, but this method can be used for skipped text
+func (p *printer) collectMultiByteCharacters(text string) {
+	for pos := range text {
+		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
+		if nextCharByteSize > 1 {
+			p.bytesToSkip += nextCharByteSize - 1
+		}
+	}
+}
+
 func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptions) {
 	if p.hasInternalImports {
 		return

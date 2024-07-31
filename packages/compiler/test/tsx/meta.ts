@@ -48,7 +48,7 @@ test('extract scripts', async () => {
 			{
 				position: {
 					start: 22,
-					end: 87,
+					end: 54,
 				},
 				type: 'module',
 				content: 'console.log({ test: `literal` })',
@@ -57,7 +57,7 @@ test('extract scripts', async () => {
 			{
 				position: {
 					start: 93,
-					end: 158,
+					end: 125,
 				},
 				type: 'inline',
 				content: 'console.log({ test: `literal` })',
@@ -66,7 +66,7 @@ test('extract scripts', async () => {
 			{
 				position: {
 					start: 169,
-					end: 188,
+					end: 178,
 				},
 				type: 'json',
 				content: '{"a":"b"}',
@@ -75,7 +75,7 @@ test('extract scripts', async () => {
 			{
 				position: {
 					start: 205,
-					end: 246,
+					end: 225,
 				},
 				type: 'inline',
 				content: 'console.log("hello")',
@@ -93,7 +93,7 @@ test('extract scripts', async () => {
 			{
 				position: {
 					start: 281,
-					end: 346,
+					end: 313,
 				},
 				type: 'processed-module',
 				content: 'console.log({ test: `literal` })',
@@ -102,7 +102,7 @@ test('extract scripts', async () => {
 			{
 				position: {
 					start: 337,
-					end: 358,
+					end: 347,
 				},
 				type: 'raw',
 				content: 'something;',
@@ -123,7 +123,7 @@ test('extract styles', async () => {
 			{
 				position: {
 					start: 7,
-					end: 48,
+					end: 27,
 				},
 				type: 'tag',
 				content: 'body { color: red; }',
@@ -141,7 +141,7 @@ test('extract styles', async () => {
 			{
 				position: {
 					start: 86,
-					end: 127,
+					end: 106,
 				},
 				type: 'tag',
 				content: 'body { color: red; }',
@@ -150,11 +150,69 @@ test('extract styles', async () => {
 			{
 				position: {
 					start: 133,
-					end: 174,
+					end: 153,
 				},
 				type: 'tag',
 				content: 'body { color: red; }',
 				lang: 'pcss',
+			},
+		],
+		'expected metaRanges.styles to match snapshot'
+	);
+});
+
+test('extract scripts and styles with multibyte characters', async () => {
+	const scripts = "<script>console.log('🦄')</script><script>console.log('Hey');</script>";
+	const styles =
+		"<style>body { background: url('🦄.png'); }</style><style>body { background: url('Hey');";
+
+	const input = `${scripts}${styles}`;
+	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
+
+	assert.equal(
+		metaRanges.scripts,
+		[
+			{
+				position: {
+					start: 8,
+					end: 24,
+				},
+				type: 'processed-module',
+				content: "console.log('🦄')",
+				lang: '',
+			},
+			{
+				position: {
+					start: 41,
+					end: 60,
+				},
+				type: 'processed-module',
+				content: "console.log('Hey');",
+				lang: '',
+			},
+		],
+		'expected metaRanges.scripts to match snapshot'
+	);
+	assert.equal(
+		metaRanges.styles,
+		[
+			{
+				position: {
+					start: 76,
+					end: 110,
+				},
+				type: 'tag',
+				content: "body { background: url('🦄.png'); }",
+				lang: 'css',
+			},
+			{
+				position: {
+					start: 125,
+					end: 186,
+				},
+				type: 'tag',
+				content: "body { background: url('Hey');",
+				lang: 'css',
 			},
 		],
 		'expected metaRanges.styles to match snapshot'
