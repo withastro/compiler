@@ -456,6 +456,8 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.printTextWithSourcemap(n.Data, n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("}}\n")
+			} else {
+				p.collectMultiByteCharacters(n.Data)
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else if textType == StyleText || textType == JsonScriptText || textType == RawText || textType == UnknownScriptText {
@@ -465,6 +467,8 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("`}")
+			} else {
+				p.collectMultiByteCharacters(n.Data)
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else {
@@ -768,6 +772,14 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		}
 	}
 
+	if len(n.Loc) > 1 {
+		endLoc = n.Loc[1].Start - 2
+	} else if n.LastChild != nil && n.LastChild.Expression {
+		if len(n.LastChild.Loc) > 1 {
+			endLoc = n.LastChild.Loc[1].Start + 1
+		}
+	}
+
 	if n.FirstChild != nil && (n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
 		if n.DataAtom == atom.Script {
 			p.addTSXScript(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, getScriptTypeFromAttrs(n.Attr))
@@ -783,13 +795,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		return
 	}
 
-	if len(n.Loc) > 1 {
-		endLoc = n.Loc[1].Start - 2
-	} else if n.LastChild != nil && n.LastChild.Expression {
-		if len(n.LastChild.Loc) > 1 {
-			endLoc = n.LastChild.Loc[1].Start + 1
-		}
-	}
 	p.addSourceMapping(loc.Loc{Start: endLoc})
 	p.print("</")
 	if !isSelfClosing {
