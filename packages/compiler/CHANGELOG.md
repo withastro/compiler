@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.10.1
+
+### Patch Changes
+
+- 21b7b95: Revert the transformation of top-level returns into throws in TSX as it was buggy in numerous situations
+- af471f5: Fixes positions for extracted tags being wrong when using IncludeStyles and IncludeScripts set to false
+
 ## 2.10.0
 
 ### Minor Changes
