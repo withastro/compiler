@@ -625,21 +625,35 @@ func walk(doc *astro.Node, cb func(*astro.Node)) {
 func mergeClassList(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	var classListAttrValue string
 	var classListAttrIndex int = -1
+
+	var classAttrType astro.AttributeType
 	var classAttrValue string
 	var classAttrIndex int = -1
-	for i, a := range n.Attr {
-		if a.Key == "class:list" {
-			classListAttrValue = a.Val
+
+	for i, attr := range n.Attr {
+		if attr.Key == "class:list" {
+			classListAttrValue = attr.Val
 			classListAttrIndex = i
 		}
-		if a.Key == "class" {
-			classAttrValue = a.Val
+		if attr.Key == "class" {
+			classAttrType = attr.Type
+			classAttrValue = attr.Val
 			classAttrIndex = i
 		}
 	}
+
+	// Check if both `class:list` and `class` attributes are present
 	if classListAttrIndex >= 0 && classAttrIndex >= 0 {
-		// we append the prepend the value of class to class:list
-		n.Attr[classListAttrIndex].Val = fmt.Sprintf("['%s', %s]", classAttrValue, classListAttrValue)
+		// Merge the `class` attribute value into `class:list`
+		if classAttrType == astro.ExpressionAttribute {
+			// If the `class` attribute is an expression, include it directly without surrounding quotes.
+			// This respects the fact that expressions are evaluated dynamically and should not be treated as strings.
+			n.Attr[classListAttrIndex].Val = fmt.Sprintf("[%s, %s]", classAttrValue, classListAttrValue)
+		} else {
+			// If the `class` attribute is a static string, wrap it in quotes.
+			// This ensures that static class names are treated as string values within the list.
+			n.Attr[classListAttrIndex].Val = fmt.Sprintf("['%s', %s]", classAttrValue, classListAttrValue)
+		}
 		// Now that the value of `class` is carried by `class:list`, we can remove the `class` node from the AST.
 		// Doing so will allow us to generate valid HTML at runtime
 		n.Attr = remove(n.Attr, classAttrIndex)

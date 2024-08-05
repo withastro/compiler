@@ -234,22 +234,19 @@ func TestFullTransform(t *testing.T) {
 		want   string
 	}{
 		{
-			name: "top-level component with leading style",
-			source: `<style>:root{}</style><Component><h1>Hello world</h1></Component>
-			`,
-			want: `<Component><h1>Hello world</h1></Component>`,
+			name:   "top-level component with leading style",
+			source: `<style>:root{}</style><Component><h1>Hello world</h1></Component>`,
+			want:   `<Component><h1>Hello world</h1></Component>`,
 		},
 		{
-			name: "top-level component with leading style body",
-			source: `<style>:root{}</style><Component><div><h1>Hello world</h1></div></Component>
-			`,
-			want: `<Component><div><h1>Hello world</h1></div></Component>`,
+			name:   "top-level component with leading style body",
+			source: `<style>:root{}</style><Component><div><h1>Hello world</h1></div></Component>`,
+			want:   `<Component><div><h1>Hello world</h1></div></Component>`,
 		},
 		{
-			name: "top-level component with trailing style",
-			source: `<Component><h1>Hello world</h1></Component><style>:root{}</style>
-			`,
-			want: `<Component><h1>Hello world</h1></Component>`,
+			name:   "top-level component with trailing style",
+			source: `<Component><h1>Hello world</h1></Component><style>:root{}</style>`,
+			want:   `<Component><h1>Hello world</h1></Component>`,
 		},
 		{
 			name:   "Component before html I",
@@ -287,15 +284,9 @@ func TestFullTransform(t *testing.T) {
 			want:   `<A><div><B></B></div></A>`,
 		},
 		{
-			name: "does not remove trailing siblings",
-			source: `<title>Title</title>
-<span />
-<Component />
-<span />`,
-			want: `<title>Title</title>
-<span></span>
-<Component></Component>
-<span></span>`,
+			name:   "does not remove trailing siblings",
+			source: `<title>Title</title><span /><Component /><span />`,
+			want:   `<title>Title</title><span></span><Component></Component><span></span>`,
 		},
 	}
 	var b strings.Builder
@@ -529,6 +520,72 @@ func TestAnnotation(t *testing.T) {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
 
+		})
+	}
+}
+
+func TestClassAndClassListMerging(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "Single class attribute",
+			source: `<div class="astro-xxxxxx" />`,
+			want:   `<div class="astro-xxxxxx"></div>`,
+		},
+		{
+			name:   "Class attribute with parameter",
+			source: "<div class={`astro-xxxxxx ${astro}`} />",
+			want:   "<div class={`astro-xxxxxx ${astro}`}></div>",
+		},
+		{
+			name:   "Single class:list attribute",
+			source: `<div class:list={"astro-xxxxxx"} />`,
+			want:   `<div class:list={"astro-xxxxxx"}></div>`,
+		},
+		{
+			name:   "Merge class with empty class:list (double quotes)",
+			source: `<div class="astro-xxxxxx" class:list={} />`,
+			want:   `<div class:list={['astro-xxxxxx', ]}></div>`,
+		},
+		{
+			name:   "Merge class with empty class:list (single quotes)",
+			source: `<div class='astro-xxxxxx' class:list={} />`,
+			want:   `<div class:list={['astro-xxxxxx', ]}></div>`,
+		},
+		{
+			name:   "Merge class and class:list attributes (string)",
+			source: `<div class="astro-xxxxxx" class:list={"astro-yyyyyy"} />`,
+			want:   `<div class:list={['astro-xxxxxx', "astro-yyyyyy"]}></div>`,
+		},
+		{
+			name:   "Merge class and class:list attributes (expression)",
+			source: `<div class={"astro-xxxxxx"} class:list={"astro-yyyyyy"} />`,
+			want:   `<div class:list={["astro-xxxxxx", "astro-yyyyyy"]}></div>`,
+		},
+		{
+			name:   "Merge Class and Class List Attributes (concatenation)",
+			source: `<div class={"astro-xxxxxx" + name} class:list={"astro-yyyyyy"} />`,
+			want:   `<div class:list={["astro-xxxxxx" + name, "astro-yyyyyy"]}></div>`,
+		},
+	}
+
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
+			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+			got := b.String()
+			if tt.want != got {
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
+			}
 		})
 	}
 }
