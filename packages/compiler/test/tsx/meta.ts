@@ -38,6 +38,24 @@ test('return ranges - no frontmatter', async () => {
 	});
 });
 
+test('return proper ranges with multibyte characters', async () => {
+	const input = '---\n🦄\n---\n\n<div></div>';
+	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
+
+	assert.equal(metaRanges, {
+		frontmatter: {
+			start: 30,
+			end: 35,
+		},
+		body: {
+			start: 49,
+			end: 61,
+		},
+		scripts: null,
+		styles: null,
+	});
+});
+
 test('extract scripts', async () => {
 	const input = `<script type="module">console.log({ test: \`literal\` })</script><script type="text/partytown">console.log({ test: \`literal\` })</script><script type="application/ld+json">{"a":"b"}</script><script is:inline>console.log("hello")</script><div onload="console.log('hey')"></div><script>console.log({ test: \`literal\` })</script><script is:raw>something;</script>`;
 
@@ -164,7 +182,7 @@ test('extract styles', async () => {
 test('extract scripts and styles with multibyte characters', async () => {
 	const scripts = "<script>console.log('🦄')</script><script>console.log('Hey');</script>";
 	const styles =
-		"<style>body { background: url('🦄.png'); }</style><style>body { background: url('Hey');";
+		"<style>body { background: url('🦄.png'); }</style><style>body { background: url('Hey'); }</style>";
 
 	const input = `${scripts}${styles}`;
 	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
@@ -175,7 +193,7 @@ test('extract scripts and styles with multibyte characters', async () => {
 			{
 				position: {
 					start: 8,
-					end: 24,
+					end: 25,
 				},
 				type: 'processed-module',
 				content: "console.log('🦄')",
@@ -183,8 +201,8 @@ test('extract scripts and styles with multibyte characters', async () => {
 			},
 			{
 				position: {
-					start: 41,
-					end: 60,
+					start: 42,
+					end: 61,
 				},
 				type: 'processed-module',
 				content: "console.log('Hey');",
@@ -198,8 +216,8 @@ test('extract scripts and styles with multibyte characters', async () => {
 		[
 			{
 				position: {
-					start: 76,
-					end: 110,
+					start: 77,
+					end: 112,
 				},
 				type: 'tag',
 				content: "body { background: url('🦄.png'); }",
@@ -207,15 +225,49 @@ test('extract scripts and styles with multibyte characters', async () => {
 			},
 			{
 				position: {
-					start: 125,
-					end: 186,
+					start: 127,
+					end: 159,
 				},
 				type: 'tag',
-				content: "body { background: url('Hey');",
+				content: "body { background: url('Hey'); }",
 				lang: 'css',
 			},
 		],
 		'expected metaRanges.styles to match snapshot'
+	);
+});
+
+test('extract scripts with multibyte characters II', async () => {
+	// Emojis with various byte lengths (in order, 4, 3, 8, 28) and newlines, a complicated case, if you will
+	const input = `🀄✂🇸🇪👩🏻‍❤️‍👩🏽<script>
+	console.log("🀄✂🇸🇪👩🏻‍❤️‍👩🏽");
+</script>🀄✂🇸🇪👩🏻‍❤️‍👩🏽<div onload="console.log('🀄✂🇸🇪👩🏻‍❤️‍👩🏽')"></div>`;
+
+	const { metaRanges } = await convertToTSX(input, { sourcemap: 'external' });
+
+	assert.equal(
+		metaRanges.scripts,
+		[
+			{
+				position: {
+					start: 27,
+					end: 65,
+				},
+				type: 'processed-module',
+				content: '\n\tconsole.log("🀄✂🇸🇪👩🏻‍❤️‍👩🏽");\n',
+				lang: '',
+			},
+			{
+				position: {
+					start: 106,
+					end: 141,
+				},
+				type: 'event-attribute',
+				content: "console.log('🀄✂🇸🇪👩🏻‍❤️‍👩🏽')",
+				lang: '',
+			},
+		],
+		'expected metaRanges.scripts to match snapshot'
 	);
 });
 

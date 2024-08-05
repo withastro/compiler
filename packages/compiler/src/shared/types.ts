@@ -124,6 +124,10 @@ export interface SourceMap {
 	version: number;
 }
 
+/**
+ * Represents a location in a TSX file.
+ * Both the `start` and `end` properties are 0-based, and are based off utf-16 code units. (i.e. JavaScript's `String.prototype.length`)
+ */
 export interface TSXLocation {
 	start: number;
 	end: number;

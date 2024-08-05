@@ -13,6 +13,7 @@ import (
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
 	"github.com/withastro/compiler/internal/transform"
+	esbuild "github.com/withastro/compiler/lib/esbuild/helpers"
 	"golang.org/x/net/html/atom"
 )
 
@@ -39,6 +40,11 @@ func PrintToTSX(sourcetext string, n *Node, opts TSXOptions, transformOpts trans
 		SourceMapChunk: p.builder.GenerateChunk(p.output),
 		TSXRanges:      p.ranges,
 	}
+}
+
+func getUTF16Length(s string) int {
+	// Go has a built-in module for utf16, but esbuild's is faster and slightly more friendly
+	return len(esbuild.StringToUTF16(s))
 }
 
 type TSXRanges struct {
@@ -318,7 +324,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 		props := js_scanner.GetPropsType(source)
 		hasGetStaticPaths := js_scanner.HasGetStaticPaths(source)
 		hasChildren := false
-		startLoc := len(p.output)
+		startLoc := getUTF16Length(string(p.output))
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
@@ -338,7 +344,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 				p.print("<Fragment>\n")
 
 				// Update the start location of the body to the start of the first child
-				startLoc = len(p.output)
+				startLoc = getUTF16Length(string(p.output))
 
 				hasChildren = true
 			}
@@ -346,7 +352,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 				p.addNilSourceMapping()
 				p.print("<Fragment>\n")
 
-				startLoc = len(p.output)
+				startLoc = getUTF16Length(string(p.output))
 
 				hasChildren = true
 			}
@@ -358,7 +364,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 		p.addNilSourceMapping()
 		p.setTSXBodyRange(loc.TSXRange{
 			Start: startLoc,
-			End:   len(p.output),
+			End:   getUTF16Length(string(p.output)),
 		})
 
 		// Only close the body with `</Fragment>` if we printed a body
@@ -401,7 +407,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	if n.Type == FrontmatterNode {
 		p.addSourceMapping(loc.Loc{Start: 0})
-		frontmatterStart := len(p.output)
+		frontmatterStart := getUTF16Length(string(p.output))
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == TextNode {
 				if len(c.Loc) > 0 {
@@ -420,7 +426,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		}
 		p.setTSXFrontmatterRange(loc.TSXRange{
 			Start: frontmatterStart,
-			End:   len(p.output),
+			End:   getUTF16Length(string(p.output)),
 		})
 		return
 	}
@@ -435,8 +441,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.printTextWithSourcemap(n.Data, n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("}}\n")
-			} else {
-				p.collectMultiByteCharacters(n.Data)
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else if textType == StyleText || textType == JsonScriptText || textType == RawText || textType == UnknownScriptText {
@@ -446,8 +450,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("`}")
-			} else {
-				p.collectMultiByteCharacters(n.Data)
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else {
@@ -572,11 +574,14 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.print(`"`)
 				endLoc = a.ValLoc.Start
 			}
+			contentToValStart := p.sourcetext[:a.ValLoc.Start]
+			contentToValEnd := p.sourcetext[:endLoc]
+
 			if _, ok := htmlEvents[a.Key]; ok {
-				p.addTSXScript(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "event-attribute")
+				p.addTSXScript(getUTF16Length(contentToValStart), getUTF16Length(contentToValEnd), a.Val, "event-attribute")
 			}
 			if a.Key == "style" {
-				p.addTSXStyle(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "style-attribute", "css")
+				p.addTSXStyle(getUTF16Length(contentToValStart), getUTF16Length(contentToValEnd), a.Val, "style-attribute", "css")
 			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
@@ -739,7 +744,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 	}
 	p.print(">")
 
-	startTagEnd := endLoc - p.bytesToSkip
+	contentToStartTagEnd := p.sourcetext[:endLoc]
 
 	// Render any child nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -760,11 +765,16 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 	}
 
 	if n.FirstChild != nil && (n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
+		maxLength := endLoc
+		if endLoc > len(p.sourcetext) { // Sometimes, when tags are not closed properly and stuff, endLoc can be greater than the length of the source text, wonky stuff
+			maxLength = len(p.sourcetext)
+		}
+		contentToContentEnd := p.sourcetext[:maxLength]
 		if n.DataAtom == atom.Script {
-			p.addTSXScript(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, getScriptTypeFromAttrs(n.Attr))
+			p.addTSXScript(getUTF16Length(contentToStartTagEnd), getUTF16Length(contentToContentEnd), n.FirstChild.Data, getScriptTypeFromAttrs(n.Attr))
 		}
 		if n.DataAtom == atom.Style {
-			p.addTSXStyle(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, "tag", getStyleLangFromAttrs(n.Attr))
+			p.addTSXStyle(getUTF16Length(contentToStartTagEnd), getUTF16Length(contentToContentEnd), n.FirstChild.Data, "tag", getStyleLangFromAttrs(n.Attr))
 		}
 	}
 
