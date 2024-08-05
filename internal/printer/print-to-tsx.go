@@ -574,14 +574,12 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.print(`"`)
 				endLoc = a.ValLoc.Start
 			}
-			contentToValStart := p.sourcetext[:a.ValLoc.Start]
-			contentToValEnd := p.sourcetext[:endLoc]
 
 			if _, ok := htmlEvents[a.Key]; ok {
-				p.addTSXScript(getUTF16Length(contentToValStart), getUTF16Length(contentToValEnd), a.Val, "event-attribute")
+				p.addTSXScript(getUTF16Length(p.sourcetext[:a.ValLoc.Start]), getUTF16Length(p.sourcetext[:endLoc]), a.Val, "event-attribute")
 			}
 			if a.Key == "style" {
-				p.addTSXStyle(getUTF16Length(contentToValStart), getUTF16Length(contentToValEnd), a.Val, "style-attribute", "css")
+				p.addTSXStyle(getUTF16Length(p.sourcetext[:a.ValLoc.Start]), getUTF16Length(p.sourcetext[:endLoc]), a.Val, "style-attribute", "css")
 			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
@@ -766,7 +764,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 
 	if n.FirstChild != nil && (n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
 		maxLength := endLoc
-		if endLoc > len(p.sourcetext) { // Sometimes, when tags are not closed properly and stuff, endLoc can be greater than the length of the source text, wonky stuff
+		if endLoc > len(p.sourcetext) { // Sometimes, when tags are not closed properly, endLoc can be greater than the length of the source text, wonky stuff
 			maxLength = len(p.sourcetext)
 		}
 		contentToContentEnd := p.sourcetext[:maxLength]
