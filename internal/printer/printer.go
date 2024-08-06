@@ -36,9 +36,6 @@ type printer struct {
 
 	// Optional, used only for TSX output
 	ranges TSXRanges
-	// Keep track of how many multi-byte characters we've printed so that they can be skipped whenever we need a character-based index
-	// This could be directly in the token / node information, however this would require a fairly large refactor
-	bytesToSkip int
 }
 
 var TEMPLATE_TAG = "$$render"
@@ -119,9 +116,6 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 			continue
 		}
 		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
-		if nextCharByteSize > 1 {
-			p.bytesToSkip += nextCharByteSize - 1
-		}
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
 		start += nextCharByteSize
@@ -150,22 +144,9 @@ func (p *printer) printEscapedJSXTextWithSourcemap(text string, l loc.Loc) {
 		}
 
 		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
-		if nextCharByteSize > 1 {
-			p.bytesToSkip += nextCharByteSize - 1
-		}
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
 		start += nextCharByteSize
-	}
-}
-
-// We normally collect multi-byte characters while printing, but this method can be used for skipped text
-func (p *printer) collectMultiByteCharacters(text string) {
-	for pos := range text {
-		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
-		if nextCharByteSize > 1 {
-			p.bytesToSkip += nextCharByteSize - 1
-		}
 	}
 }
 

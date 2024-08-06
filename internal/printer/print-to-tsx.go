@@ -37,7 +37,25 @@ func PrintToTSX(sourcetext string, n *Node, opts TSXOptions, transformOpts trans
 	return PrintResult{
 		Output:         p.output,
 		SourceMapChunk: p.builder.GenerateChunk(p.output),
-		TSXRanges:      p.ranges,
+		TSXRanges:      finalizeRanges(string(p.output), p.ranges),
+	}
+}
+
+func finalizeRanges(content string, ranges TSXRanges) TSXRanges {
+	chunkBuilder := sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(content, len(strings.Split(content, "\n"))))
+
+	return TSXRanges{
+		Frontmatter: loc.TSXRange{
+			Start: chunkBuilder.OffsetAt(loc.Loc{Start: ranges.Frontmatter.Start}),
+			End:   chunkBuilder.OffsetAt(loc.Loc{Start: ranges.Frontmatter.End}),
+		},
+		Body: loc.TSXRange{
+			Start: chunkBuilder.OffsetAt(loc.Loc{Start: ranges.Body.Start}),
+			End:   chunkBuilder.OffsetAt(loc.Loc{Start: ranges.Body.End}),
+		},
+		// Scripts and styles are already using the proper positions
+		Scripts: ranges.Scripts,
+		Styles:  ranges.Styles,
 	}
 }
 
@@ -318,7 +336,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 		props := js_scanner.GetPropsType(source)
 		hasGetStaticPaths := js_scanner.HasGetStaticPaths(source)
 		hasChildren := false
-		startLoc := len(p.output)
+		startLen := len(p.output)
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
@@ -338,7 +356,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 				p.print("<Fragment>\n")
 
 				// Update the start location of the body to the start of the first child
-				startLoc = len(p.output)
+				startLen = len(p.output)
 
 				hasChildren = true
 			}
@@ -346,7 +364,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 				p.addNilSourceMapping()
 				p.print("<Fragment>\n")
 
-				startLoc = len(p.output)
+				startLen = len(p.output)
 
 				hasChildren = true
 			}
@@ -357,7 +375,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 
 		p.addNilSourceMapping()
 		p.setTSXBodyRange(loc.TSXRange{
-			Start: startLoc,
+			Start: startLen,
 			End:   len(p.output),
 		})
 
@@ -435,8 +453,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.printTextWithSourcemap(n.Data, n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("}}\n")
-			} else {
-				p.collectMultiByteCharacters(n.Data)
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else if textType == StyleText || textType == JsonScriptText || textType == RawText || textType == UnknownScriptText {
@@ -446,8 +462,6 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.printTextWithSourcemap(escapeText(n.Data), n.Loc[0])
 				p.addNilSourceMapping()
 				p.print("`}")
-			} else {
-				p.collectMultiByteCharacters(n.Data)
 			}
 			p.addSourceMapping(loc.Loc{Start: n.Loc[0].Start + len(n.Data)})
 		} else {
@@ -572,11 +586,12 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				p.print(`"`)
 				endLoc = a.ValLoc.Start
 			}
+
 			if _, ok := htmlEvents[a.Key]; ok {
-				p.addTSXScript(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "event-attribute")
+				p.addTSXScript(p.builder.OffsetAt(a.ValLoc), p.builder.OffsetAt(loc.Loc{Start: endLoc}), a.Val, "event-attribute")
 			}
 			if a.Key == "style" {
-				p.addTSXStyle(a.ValLoc.Start-p.bytesToSkip, endLoc-p.bytesToSkip, a.Val, "style-attribute", "css")
+				p.addTSXStyle(p.builder.OffsetAt(a.ValLoc), p.builder.OffsetAt(loc.Loc{Start: endLoc}), a.Val, "style-attribute", "css")
 			}
 		case astro.EmptyAttribute:
 			p.print(a.Key)
@@ -739,7 +754,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 	}
 	p.print(">")
 
-	startTagEnd := endLoc - p.bytesToSkip
+	startTagEndLoc := loc.Loc{Start: endLoc}
 
 	// Render any child nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -760,11 +775,15 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 	}
 
 	if n.FirstChild != nil && (n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
+		tagContentEndLoc := loc.Loc{Start: endLoc}
+		if endLoc > len(p.sourcetext) { // Sometimes, when tags are not closed properly, endLoc can be greater than the length of the source text, wonky stuff
+			tagContentEndLoc.Start = len(p.sourcetext)
+		}
 		if n.DataAtom == atom.Script {
-			p.addTSXScript(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, getScriptTypeFromAttrs(n.Attr))
+			p.addTSXScript(p.builder.OffsetAt(startTagEndLoc), p.builder.OffsetAt(tagContentEndLoc), n.FirstChild.Data, getScriptTypeFromAttrs(n.Attr))
 		}
 		if n.DataAtom == atom.Style {
-			p.addTSXStyle(startTagEnd, endLoc-p.bytesToSkip, n.FirstChild.Data, "tag", getStyleLangFromAttrs(n.Attr))
+			p.addTSXStyle(p.builder.OffsetAt(startTagEndLoc), p.builder.OffsetAt(tagContentEndLoc), n.FirstChild.Data, "tag", getStyleLangFromAttrs(n.Attr))
 		}
 	}
 

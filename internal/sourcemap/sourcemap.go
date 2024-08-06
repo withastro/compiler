@@ -468,6 +468,7 @@ type LineOffsetTable struct {
 	// as an optimization.
 	byteOffsetToFirstNonASCII int
 	columnsForNonASCII        []int
+	utf16LineLength           int
 }
 
 func GenerateLineOffsetTables(contents string, approximateLineCount int) []LineOffsetTable {
@@ -508,10 +509,17 @@ func GenerateLineOffsetTables(contents string, approximateLineCount int) []LineO
 				continue
 			}
 
+			if c <= 0xFFFF {
+				column++
+			} else {
+				column += 2
+			}
+
 			lineOffsetTables = append(lineOffsetTables, LineOffsetTable{
 				byteOffsetToStartOfLine:   int(lineByteOffset),
 				byteOffsetToFirstNonASCII: ByteOffsetToFirstNonASCII,
 				columnsForNonASCII:        ColumnsForNonASCII,
+				utf16LineLength:           column,
 			})
 			columnByteOffset = 0
 			ByteOffsetToFirstNonASCII = 0
@@ -544,6 +552,7 @@ func GenerateLineOffsetTables(contents string, approximateLineCount int) []LineO
 		byteOffsetToStartOfLine:   int(lineByteOffset),
 		byteOffsetToFirstNonASCII: ByteOffsetToFirstNonASCII,
 		columnsForNonASCII:        ColumnsForNonASCII,
+		utf16LineLength:           column,
 	})
 	return lineOffsetTables
 }
@@ -637,6 +646,22 @@ func (b *ChunkBuilder) GetLineAndColumnForLocation(location loc.Loc) []int {
 
 	// 1-based line, 1-based column
 	return []int{originalLine + 1, originalColumn + 1}
+}
+
+func (b *ChunkBuilder) OffsetAt(location loc.Loc) int {
+	lineAndColumn := b.GetLineAndColumnForLocation(location)
+	line := lineAndColumn[0] - 1
+	column := lineAndColumn[1] - 1
+
+	// Collect the length of every line before this one
+	offset := 0
+	for i := 0; i < line; i++ {
+		currentLine := b.lineOffsetTables[i]
+		offset += currentLine.utf16LineLength
+	}
+
+	// Add the column within this line
+	return offset + column
 }
 
 func (b *ChunkBuilder) AddSourceMapping(location loc.Loc, output []byte) {
