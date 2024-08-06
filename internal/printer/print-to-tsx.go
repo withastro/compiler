@@ -393,7 +393,9 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 			}
 		}
 
-		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics))
+		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics, ` & {
+  [key in keyof (Omit<import("astro").AstroBuiltinProps, "server:defer"> & import("astro").AstroClientDirectives)]: never;
+}`))
 		if hasGetStaticPaths {
 			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 type ASTRO__Flattened<T> = T extends Array<infer U> ? ASTRO__Flattened<U> : T;
