@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.10.2
+
+### Patch Changes
+
+- f05a7cc: Adjust TSX output to return ranges using UTF-16 code units, as it would in JavaScript
+
 ## 2.10.1
 
 ### Patch Changes
