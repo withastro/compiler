@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.10.3
+
+### Patch Changes
+
+- f55a2af: Resolves an issue where the `class:list` directive was not correctly merging with the class attribute.
+
 ## 2.10.2
 
 ### Patch Changes
