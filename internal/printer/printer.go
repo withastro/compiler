@@ -107,14 +107,22 @@ func (p *printer) addTSXStyle(start int, end int, content string, styleType stri
 
 func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
+	skipNext := false
 	for pos, c := range text {
-		// Handle Windows-specific "\r\n" newlines
-		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
-			// tiny optimization: avoid calling `utf8.DecodeRuneInString`
-			// if we know the next char is `\n`
-			start++
+		if skipNext {
+			skipNext = false
 			continue
 		}
+
+		// If we encounter a CRLF, map both characters to the same location
+		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
+			p.addSourceMapping(loc.Loc{Start: start})
+			p.print("\r\n")
+			start += 2
+			skipNext = true
+			continue
+		}
+
 		_, nextCharByteSize := utf8.DecodeRuneInString(text[pos:])
 		p.addSourceMapping(loc.Loc{Start: start})
 		p.print(string(c))
@@ -124,12 +132,19 @@ func (p *printer) printTextWithSourcemap(text string, l loc.Loc) {
 
 func (p *printer) printEscapedJSXTextWithSourcemap(text string, l loc.Loc) {
 	start := l.Start
+	skipNext := false
 	for pos, c := range text {
-		// Handle Windows-specific "\r\n" newlines
+		if skipNext {
+			skipNext = false
+			continue
+		}
+
+		// If we encounter a CRLF, map both characters to the same location
 		if c == '\r' && len(text[pos:]) > 1 && text[pos+1] == '\n' {
-			// tiny optimization: avoid calling `utf8.DecodeRuneInString`
-			// if we know the next char is `\n`
-			start++
+			p.addSourceMapping(loc.Loc{Start: start})
+			p.print("\r\n")
+			start += 2
+			skipNext = true
 			continue
 		}
 
