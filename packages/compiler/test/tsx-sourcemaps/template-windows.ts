@@ -3,6 +3,17 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 import { testTSXSourcemap } from '../utils.js';
 
+test('last character does not end up in middle of CRLF', async () => {
+	const input = "---\r\nimport { Meta } from '$lib/components/Meta.astro';\r\n---\r\n";
+	const output = await testTSXSourcemap(input, ';');
+	assert.equal(output, {
+		source: 'index.astro',
+		line: 2,
+		column: 50,
+		name: null,
+	});
+});
+
 test('template expression basic', async () => {
 	const input = '<div>{\r\nnonexistent\r\n}</div>';
 
