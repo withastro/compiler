@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.10.3
+
+### Patch Changes
+
+- 5d0023d: Fixes sourcemapping for CRLF line endings wrongfully including the last character
+- f55a2af: Resolves an issue where the `class:list` directive was not correctly merging with the class attribute.
+
 ## 2.10.2
 
 ### Patch Changes
