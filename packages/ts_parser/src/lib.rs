@@ -22,7 +22,7 @@ pub unsafe extern "C" fn _print_ast(ptr: u32, len: u32) -> u64 {
     // we didn't call forget, the caller would read back a corrupt value. Since
     // we call forget, the caller must deallocate externally to prevent leaks.
     std::mem::forget(g);
-    return ((ptr as u64) << 32) | len as u64;
+    ((ptr as u64) << 32) | len as u64
 }
 
 /// Returns a string from WebAssembly compatible numeric types representing
@@ -30,7 +30,7 @@ pub unsafe extern "C" fn _print_ast(ptr: u32, len: u32) -> u64 {
 unsafe fn ptr_to_string(ptr: u32, len: u32) -> String {
     let slice = slice::from_raw_parts_mut(ptr as *mut u8, len as usize);
     let utf8 = std::str::from_utf8_unchecked_mut(slice);
-    return String::from(utf8);
+    String::from(utf8)
 }
 
 /// Returns a pointer and size pair for the given string in a way compatible
@@ -38,8 +38,8 @@ unsafe fn ptr_to_string(ptr: u32, len: u32) -> String {
 ///
 /// Note: This doesn't change the ownership of the String. To intentionally
 /// leak it, use [`std::mem::forget`] on the input after calling this.
-unsafe fn string_to_ptr(s: &String) -> (u32, u32) {
-    return (s.as_ptr() as u32, s.len() as u32);
+unsafe fn string_to_ptr(s: &str) -> (u32, u32) {
+    (s.as_ptr() as u32, s.len() as u32)
 }
 
 /// Set the global allocator to the WebAssembly optimized one.

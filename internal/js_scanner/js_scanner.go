@@ -24,9 +24,11 @@ func isKeyword(value []byte) bool {
 	return js.Keywords[string(value)] != 0
 }
 
-type importItems []ts_parser.BodyItem
-type exportItems []ts_parser.BodyItem
-type otherItems []ts_parser.BodyItem
+type (
+	importItems []ts_parser.BodyItem
+	exportItems []ts_parser.BodyItem
+	otherItems  []ts_parser.BodyItem
+)
 
 func CollectImportsAndExports(source []byte) (importItems, exportItems, otherItems) {
 	tsParser, _ := ts_parser.GetParser()
@@ -387,19 +389,19 @@ func GetObjectKeys(source []byte) [][]byte {
 }
 
 type Import struct {
-	IsType     bool
 	ExportName string
 	LocalName  string
 	Assertions string
+	IsType     bool
 }
 
 type ImportStatement struct {
-	Span       loc.Span
-	Value      []byte
-	IsType     bool
-	Imports    []Import
 	Specifier  string
 	Assertions string
+	Value      []byte
+	Imports    []Import
+	Span       loc.Span
+	IsType     bool
 }
 
 type ImportState uint32

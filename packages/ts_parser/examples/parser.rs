@@ -1,4 +1,3 @@
-use project_root;
 use std::path::Path;
 use ts_parser::parser::print_ast;
 
@@ -14,5 +13,6 @@ fn main() {
     let source_text =
         std::fs::read_to_string(file_path).unwrap_or_else(|_| panic!("{file_name} not found"));
 
-    print_ast(&source_text);
+    let ast_text = print_ast(&source_text);
+    print!("ast: {}", ast_text)
 }
