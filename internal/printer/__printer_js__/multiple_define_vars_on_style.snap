@@ -34,7 +34,7 @@ export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydra
 
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-const $$definedVars = $$defineStyleVars([{color:'red'},{color:'green'}]);
+const $$definedVars = $$defineStyleVars([{color:'green'},{color:'red'}]);
 return $$render`${$$maybeRenderHead($$result)}<h1 class="astro-6oxbqcst"${$$addAttribute($$definedVars, "style")}>foo</h1><h2 class="astro-6oxbqcst"${$$addAttribute($$definedVars, "style")}>bar</h2>`;
 }, undefined, undefined);
 export default $$Component;
