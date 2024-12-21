@@ -126,7 +126,7 @@ func ExtractStyles(doc *astro.Node) {
 				return
 			}
 			// prepend node to maintain authored order
-			doc.Styles = append([]*astro.Node{n}, doc.Styles...)
+			doc.Styles = append(doc.Styles, n)
 		}
 	})
 	// Important! Remove styles from original location *after* walking the doc
@@ -436,7 +436,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 
 			// prepend node to maintain authored order
 			if shouldAdd {
-				doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
+				doc.Scripts = append(doc.Scripts, n)
 				n.HandledScript = true
 			}
 		} else {
