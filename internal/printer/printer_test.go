@@ -2108,7 +2108,6 @@ const meta = { title: 'My App' };
 					Kind:         test_utils.JsOutput,
 					FolderName:   "__printer_js__",
 				})
-
 		})
 	}
 }
@@ -2231,7 +2230,6 @@ const c = '\''
 			code := test_utils.Dedent(tt.source)
 
 			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionEnableLiteral(true), astro.ParseOptionWithHandler(&handler.Handler{}))
-
 			if err != nil {
 				t.Error(err)
 			}
