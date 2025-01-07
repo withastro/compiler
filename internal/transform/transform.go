@@ -403,6 +403,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			return
 		}
 		// Ignore scripts in svg/noscript/etc
+		// In expressions ignore scripts, unless `RenderScript` is true
 		if !IsHoistable(n, opts.RenderScript) {
 			return
 		}
