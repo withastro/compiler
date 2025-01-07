@@ -895,6 +895,22 @@ import Widget2 from '../components/Widget2.astro';
 			filename: "/src/pages/index.astro",
 		},
 		{
+			name:   "script external in expression (renderScript: true)",
+			source: `<main>{<script src="./hello.js"></script>}`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+		},
+		{
+			// maintain the original behavior, though it may be
+			// unneeded as renderScript is now on by default
+			name:   "script external in expression (renderScript: false)",
+			source: `<main>{<script src="./hello.js"></script>}`,
+			filename: "/src/pages/index.astro",
+		},
+
+		{
 			name:   "script inline (renderScript: true)",
 			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
 			transformOptions: transform.TransformOptions{
