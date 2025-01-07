@@ -909,7 +909,19 @@ import Widget2 from '../components/Widget2.astro';
 			source: `<main>{<script src="./hello.js"></script>}`,
 			filename: "/src/pages/index.astro",
 		},
-
+		{
+			name:   "script in expression (renderScript: true)",
+			source: `<main>{true && <script>console.log("hello")</script>}`,
+			transformOptions: transform.TransformOptions{
+				RenderScript: true,
+			},
+			filename: "/src/pages/index.astro",
+		},
+		{
+			name:     "script in expression (renderScript: false)",
+			source:   `<main>{false && <script>console.log("hello")</script>}`,
+			filename: "/src/pages/index.astro",
+		},
 		{
 			name:   "script inline (renderScript: true)",
 			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
