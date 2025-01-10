@@ -125,7 +125,7 @@ func ExtractStyles(doc *astro.Node) {
 			if !IsHoistable(n) {
 				return
 			}
-			// prepend node to maintain authored order
+			// append node to maintain authored order
 			doc.Styles = append(doc.Styles, n)
 		}
 	})
@@ -434,7 +434,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 				}
 			}
 
-			// prepend node to maintain authored order
+			// append node to maintain authored order
 			if shouldAdd {
 				doc.Scripts = append(doc.Scripts, n)
 				n.HandledScript = true
