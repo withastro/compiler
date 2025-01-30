@@ -1,0 +1,41 @@
+
+[TestPrinter/script_in_expression_(renderScript:_true) - 1]
+## Input
+
+```
+<main>{true && <script>console.log("hello")</script>}
+```
+
+## Output
+
+```js
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+
+export const $$metadata = $$createMetadata("/src/pages/index.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [{ type: 'inline', value: `console.log("hello")` }] });
+
+const $$Index = $$createComponent(($$result, $$props, $$slots) => {
+
+return $$render`${$$maybeRenderHead($$result)}<main>${true && $$render`${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}`}</main>`;
+}, '/src/pages/index.astro', undefined);
+export default $$Index;
+```
+---

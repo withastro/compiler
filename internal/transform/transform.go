@@ -122,7 +122,7 @@ func ExtractStyles(doc *astro.Node) {
 				return
 			}
 			// Ignore styles in svg/noscript/etc
-			if !IsHoistable(n) {
+			if !IsHoistable(n, false) {
 				return
 			}
 			// prepend node to maintain authored order
@@ -403,7 +403,8 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			return
 		}
 		// Ignore scripts in svg/noscript/etc
-		if !IsHoistable(n) {
+		// In expressions ignore scripts, unless `RenderScript` is true
+		if !IsHoistable(n, opts.RenderScript) {
 			return
 		}
 

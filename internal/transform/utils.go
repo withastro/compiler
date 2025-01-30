@@ -47,10 +47,15 @@ func GetAttr(n *astro.Node, key string) *astro.Attribute {
 	return nil
 }
 
-func IsHoistable(n *astro.Node) bool {
+func IsHoistable(n *astro.Node, renderScriptEnabled bool) bool {
 	parent := n.Closest(func(p *astro.Node) bool {
 		return p.DataAtom == atom.Svg || p.DataAtom == atom.Noscript || p.DataAtom == atom.Template
 	})
+
+	if renderScriptEnabled && parent != nil && parent.Expression {
+		return true
+	}
+
 	return parent == nil
 }
 
