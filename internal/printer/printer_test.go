@@ -905,8 +905,8 @@ import Widget2 from '../components/Widget2.astro';
 		{
 			// maintain the original behavior, though it may be
 			// unneeded as renderScript is now on by default
-			name:   "script external in expression (renderScript: false)",
-			source: `<main>{<script src="./hello.js"></script>}`,
+			name:     "script external in expression (renderScript: false)",
+			source:   `<main>{<script src="./hello.js"></script>}`,
 			filename: "/src/pages/index.astro",
 		},
 		{
@@ -2071,6 +2071,10 @@ const meta = { title: 'My App' };
 		<h1>My App</h1>
 	</body>
 </html>`,
+		},
+		{
+			name:   "namespace is preserved when inside an expression",
+			source: `<svg>{<image />}</svg>`,
 		},
 	}
 	for _, tt := range tests {
