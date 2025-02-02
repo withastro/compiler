@@ -391,6 +391,7 @@ func (p *parser) addExpression() {
 		CustomElement: false,
 		HandledScript: false,
 		Loc:           p.generateLoc(),
+		Namespace:     p.top().Namespace,
 	})
 
 }
