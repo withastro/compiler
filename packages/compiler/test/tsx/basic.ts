@@ -259,4 +259,15 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 	assert.snapshot(code, output, 'expected code to match snapshot');
 });
 
+test('fragment with leading linebreak', async () => {
+	const input = `
+<>Test123</>`;
+	const output = `${TSXPrefix}<Fragment>
+<>Test123</>
+</Fragment>
+export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.snapshot(code, output, 'expected code to match snapshot');
+});
+
 test.run();
