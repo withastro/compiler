@@ -706,10 +706,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 		}
 	}
 	if len(n.Attr) == 0 {
-		endLoc = n.Loc[0].Start + len(n.Data) - 1
-	}
-	if endLoc == -1 {
-		endLoc = 0
+		endLoc = n.Loc[0].Start + len(n.Data)
 	}
 	isSelfClosing := false
 	hasLeadingSpace := false
