@@ -2,4 +2,4 @@
 "@astrojs/compiler": patch
 ---
 
-Fix extra space in fragment tag in TSX output
+Fixes a bug caused by having an extra space in the fragment tag in the TSX output
