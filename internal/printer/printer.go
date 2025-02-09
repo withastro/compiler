@@ -284,6 +284,9 @@ func (p *printer) printDefineVarsOpen(n *astro.Node) {
 	if !(n.DataAtom == atom.Script || n.DataAtom == atom.Style) {
 		return
 	}
+	if n.DataAtom == atom.Style && transform.HasAttr(n, "is:inline") {
+		return
+	}
 	if !transform.HasAttr(n, "define:vars") {
 		return
 	}
