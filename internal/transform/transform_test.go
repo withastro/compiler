@@ -182,7 +182,6 @@ func TestTransformScoping(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			ExtractStyles(doc)
 			var scopeStyle string
 			if tt.scopeStyle == "attribute" {
 				scopeStyle = "attribute"
@@ -191,7 +190,9 @@ func TestTransformScoping(t *testing.T) {
 			} else {
 				scopeStyle = "where"
 			}
-			Transform(doc, TransformOptions{Scope: "xxxxxx", ScopedStyleStrategy: scopeStyle}, handler.NewHandler(tt.source, "/test.astro"))
+			transformOptions := TransformOptions{Scope: "xxxxxx", ScopedStyleStrategy: scopeStyle}
+			ExtractStyles(doc, &transformOptions)
+			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()
 			if tt.want != got {
@@ -211,8 +212,9 @@ func FuzzTransformScoping(f *testing.F) {
 		if err != nil {
 			t.Skip("Invalid parse, skipping rest of fuzz test")
 		}
-		ExtractStyles(doc)
-		Transform(doc, TransformOptions{Scope: "xxxxxx"}, handler.NewHandler(source, "/test.astro"))
+		transformOptions := TransformOptions{Scope: "xxxxxx"}
+		ExtractStyles(doc, &transformOptions)
+		Transform(doc, transformOptions, handler.NewHandler(source, "/test.astro"))
 		var b strings.Builder
 		astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 		got := b.String()
@@ -297,10 +299,11 @@ func TestFullTransform(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			ExtractStyles(doc)
+			transformOptions := TransformOptions{}
+			ExtractStyles(doc, &transformOptions)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
+			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {
@@ -345,10 +348,11 @@ func TestTransformTrailingSpace(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			ExtractStyles(doc)
+			transformOptions := TransformOptions{}
+			ExtractStyles(doc, &transformOptions)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
+			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := b.String()
 			if tt.want != got {
@@ -463,12 +467,13 @@ func TestCompactTransform(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			ExtractStyles(doc)
+			transformOptions := TransformOptions{
+				Compact: true,
+			}
+			ExtractStyles(doc, &transformOptions)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, TransformOptions{
-				Compact: true,
-			}, &handler.Handler{})
+			Transform(doc, transformOptions, &handler.Handler{})
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {
