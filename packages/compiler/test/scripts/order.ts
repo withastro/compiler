@@ -3,9 +3,14 @@ import { test } from 'uvu';
 import * as assert from 'uvu/assert';
 
 test('outputs scripts in expected order', async () => {
-	const result = await transform(`
+	const result = await transform(
+		`
     <script>console.log(1)</script>
-    <script>console.log(2)</script>`);
+    <script>console.log(2)</script>`,
+		{
+			experimentalScriptOrder: true,
+		}
+	);
 
 	const scripts = result.scripts;
 
