@@ -138,6 +138,11 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		renderScript = true
 	}
 
+	experimentalScriptOrder := false
+	if jsBool(options.Get("experimentalScriptOrder")) {
+		experimentalScriptOrder = true
+	}
+
 	return transform.TransformOptions{
 		Filename:                filename,
 		NormalizedFilename:      normalizedFilename,
@@ -152,6 +157,7 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		TransitionsAnimationURL: transitionsAnimationURL,
 		AnnotateSourceFile:      annotateSourceFile,
 		RenderScript:            renderScript,
+		ExperimentalScriptOrder: experimentalScriptOrder,
 	}
 }
 
@@ -336,7 +342,7 @@ func Transform() any {
 				}
 
 				// Hoist styles and scripts to the top-level
-				transform.ExtractStyles(doc)
+				transform.ExtractStyles(doc, &transformOptions)
 
 				// Pre-process styles
 				// Important! These goroutines need to be spawned from this file or they don't work
