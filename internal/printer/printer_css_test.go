@@ -87,8 +87,9 @@ func TestPrinterCSS(t *testing.T) {
 			}
 
 			hash := astro.HashString(code)
-			transform.ExtractStyles(doc)
-			transform.Transform(doc, transform.TransformOptions{Scope: hash, ScopedStyleStrategy: scopedStyleStrategy}, handler.NewHandler(code, "/test.astro")) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+			opts := transform.TransformOptions{Scope: hash, ScopedStyleStrategy: scopedStyleStrategy, ExperimentalScriptOrder: true}
+			transform.ExtractStyles(doc, &opts)
+			transform.Transform(doc, opts, handler.NewHandler(code, "/test.astro")) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintCSS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",
 				InternalURL: "http://localhost:3000/",
