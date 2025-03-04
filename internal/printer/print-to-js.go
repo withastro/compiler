@@ -706,9 +706,9 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 						// If selected, pass through result object on the Astro side
 						if opts.opts.ResultScopedSlot {
-							p.print(fmt.Sprintf(`%s: ($$result) => `, slotProp))
+							p.print(fmt.Sprintf(`%s: %s($$result) => `, slotProp, p.getAsyncFuncPrefix()))
 						} else {
-							p.print(fmt.Sprintf(`%s: () => `, slotProp))
+							p.print(fmt.Sprintf(`%s: %s() => `, slotProp, p.getAsyncFuncPrefix()))
 						}
 
 						p.printTemplateLiteralOpen()
