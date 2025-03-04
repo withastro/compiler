@@ -1234,6 +1234,10 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 		},
 		{
+			name:  "Fragment with await",
+			source: `<body><Fragment> { await Promise.resolve("Awaited") } </Fragment></body>`,
+		},
+		{
 			name:   "Preserve slots inside custom-element",
 			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
 		},
