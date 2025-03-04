@@ -1246,6 +1246,10 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<head><Fragment><link rel="preload" href={(await import('../fonts/some-font.woff2')).default} as="font" crossorigin /></Fragment></head>`,
 		},
 		{
+			name:  "Component with await",
+			source: `<body><Component> { await Promise.resolve("Awaited") } </Component></body>`,
+		},
+		{
 			name:   "Preserve slots inside custom-element",
 			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
 		},
