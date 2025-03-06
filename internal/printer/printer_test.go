@@ -1234,6 +1234,22 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 		},
 		{
+			name:  "Fragment with await",
+			source: `<body><Fragment> { await Promise.resolve("Awaited") } </Fragment></body>`,
+		},
+		{
+			name:  "Fragment shorthand with await",
+			source: `<body><> { await Promise.resolve("Awaited") } </></body>`,
+		},
+		{
+			name:  "Fragment wrapping link with awaited href",
+			source: `<head><Fragment><link rel="preload" href={(await import('../fonts/some-font.woff2')).default} as="font" crossorigin /></Fragment></head>`,
+		},
+		{
+			name:  "Component with await",
+			source: `<body><Component> { await Promise.resolve("Awaited") } </Component></body>`,
+		},
+		{
 			name:   "Preserve slots inside custom-element",
 			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
 		},
