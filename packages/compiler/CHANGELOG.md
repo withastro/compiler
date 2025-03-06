@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 2.11.0
+
+### Minor Changes
+
+- 0399d55: Add an experimental flag `experimentalScriptOrder` that corrects the order styles & scripts are rendered within a component. When enabled, the order styles & scripts are rendered will be consistent with the order they are defined.
+
+### Patch Changes
+
+- c758d7e: Add async properly when await used inside fragment
+
 ## 2.10.4
 
 ### Patch Changes
