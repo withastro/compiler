@@ -318,7 +318,7 @@ func (p *printer) printDefineVarsOpen(n *astro.Node) {
 			p.addNilSourceMapping()
 			p.print(fmt.Sprintf("${%s(", defineCall))
 			p.addSourceMapping(attr.ValLoc)
-			p.printf(value)
+			p.print(value)
 			p.addNilSourceMapping()
 			p.print(")}")
 			return

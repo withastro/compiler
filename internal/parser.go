@@ -393,7 +393,6 @@ func (p *parser) addExpression() {
 		Loc:           p.generateLoc(),
 		Namespace:     p.top().Namespace,
 	})
-
 }
 
 func isFragment(data string) bool {

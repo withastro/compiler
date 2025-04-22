@@ -621,7 +621,7 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				return
 			}
 			p.addSourceMapping(a.KeyLoc)
-			p.printf(a.Key)
+			p.print(a.Key)
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start - 1})
 			p.printf("={")
 			p.addSourceMapping(loc.Loc{Start: a.KeyLoc.Start})

@@ -3,11 +3,18 @@ package js_scanner
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 
 	"github.com/withastro/compiler/internal/test_utils"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/ast"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/core"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/parser"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/scanner"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/tspath"
 )
 
 type testcase struct {
@@ -61,14 +68,16 @@ d,
 			source: `// comment
 import { fn } from "package";
 const b = await fetch();`,
-			want: `import { fn } from "package";`,
+			want: `// comment
+import { fn } from "package";`,
 		},
 		{
 			name: "import assertion",
 			source: `// comment
 import { fn } from "package" assert { it: 'works' };
 const b = await fetch();`,
-			want: `import { fn } from "package" assert { it: 'works' };`,
+			want: `// comment
+import { fn } from "package" assert { it: 'works' };`,
 		},
 		{
 			name: "import assertion 2",
@@ -80,7 +89,8 @@ fn
 it: 'works'
 };
 const b = await fetch();`,
-			want: `import {
+			want: `// comment
+import {
 fn
 } from
 "package" assert {
@@ -161,7 +171,8 @@ const value = 1 / 2;
 // comment
 import { b } from "b";
 const { a } = Astro.props;`,
-			want: `import { b } from "b";`,
+			want: `// comment
+import { b } from "b";`,
 		},
 		{
 			name: "getStaticPaths with regex and following content",
@@ -171,7 +182,8 @@ const value = /2/g;
 // comment
 import { b } from "b";
 const { a } = Astro.props;`,
-			want: `import { b } from "b";`,
+			want: `// comment
+import { b } from "b";`,
 		},
 		{
 			name: "multiple imports",
@@ -185,7 +197,9 @@ const d = await fetch()
 import { d } from "d";`,
 			want: `import { a } from "a";
 import { b } from "b";
+// comment
 import { c } from "c";
+// comment
 import { d } from "d";
 `,
 		},
@@ -229,6 +243,112 @@ func TestHoistImport(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmptySuited(t *testing.T) {
+	// TODO: Collect `Props` type imports
+	// Props type imports can be any kind of import
+	// even dynamic maybe? Not sure about the dynamic ones
+	// TS snippet with multiple import and export styles
+	src := `
+		// ------------------------------------INCLUDED------------------------------------
+    import foo from "./foo";
+    import { namedImport1, namedImport2 } from "./named";
+    import * as namespace from "./namespace";
+    import "./side-effect";
+    import type { TypeImport } from "./types";
+		import { default as DefaultImport } from "./default";
+		import { default as DefaultImport } from "./default" with { assert: { type: "json" } };
+
+
+    export const y: string = "hello";
+		export { namedExport1, namedExport2 } from "./named";
+		export * as namespace from "./namespace";
+		export type { TypeExport } from "./types";
+		export default function() {};
+		export { default as DefaultExport } from "./default";
+
+		// import equals declarations with export modifier
+		export import type B = require("B");
+		export import C = require("B");
+
+		// namespace alias with export modifier
+		export import a = foo.a
+
+		// ------------------------------------EXCLUDED------------------------------------
+		import("dynamic").then((dynamicImport) => {});
+		const dynamicImport = await import("./dynamic");
+
+		// export assignment, d.ts specific I believe
+		export = 1;
+
+		// import equals declarations
+		import type A = require("A");
+		import B = require("A");
+
+		// namespace alias
+		import a = foo.a
+`
+	// use an absolute‐style path for parser
+	fileName := "/test.ts"
+
+	start := time.Now()
+	path := tspath.Path(fileName)
+	// parse with ESNext + full JSDoc mode
+	sf := parser.ParseSourceFile(fileName, path, src, core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
+	node := sf.AsNode()
+	imports := make([]*ast.Node, 0)
+	exports := make([]*ast.Node, 0)
+
+	var visitor ast.Visitor
+	visitor = func(node *ast.Node) bool {
+		// if the node is nil, stop traversing
+		if node == nil {
+			return true
+		}
+
+		fmt.Printf("Node type: %s\n", node.Kind)
+
+		// Check for imports
+		isImport := ast.IsImportDeclaration(node)
+
+		if isImport {
+			imports = append(imports, node)
+			// get to the next node
+			return false
+		}
+
+		// Check for exports (existing logic)
+		isExport := ast.IsExportDeclaration(node) || ast.HasSyntacticModifier(node, ast.ModifierFlagsExport)
+
+		if isExport {
+			exports = append(exports, node)
+			// get to the next node
+			return false
+		}
+
+		// Continue traversing
+		return node.ForEachChild(visitor)
+	}
+
+	node.ForEachChild(visitor)
+	elapsed := time.Since(start)
+
+	fmt.Println("Imports found:", len(imports))
+	for i, imp := range imports {
+		text := src[imp.Pos():imp.End()]
+		fmt.Printf("Import %d\nText: `%s`\nPos: %d\n\n", i+1, text, imp.Pos())
+	}
+
+	fmt.Println("\n------------------")
+
+	fmt.Println("\nExports found:", len(exports))
+	for i, exp := range exports {
+		text := src[exp.Pos():exp.End()]
+		fmt.Printf("Export %d\nText: `%s`\nPos: %d\n\n", i+1, text, exp.Pos())
+	}
+
+	fmt.Printf("\nParsing took %s\n", elapsed)
 }
 
 func FuzzHoistImport(f *testing.F) {
@@ -292,7 +412,8 @@ export async function getStaticPaths() {
   const pattern = /\.md$/g.test('value');
 }
 import a from "a";`,
-			want: `export async function getStaticPaths() {
+			want: `// cool
+export async function getStaticPaths() {
   const pattern = /\.md$/g.test('value');
 }`,
 		},
@@ -325,7 +446,8 @@ export async function getStaticPaths() {
 }
 import { b } from "b";
 const { a } = Astro.props;`,
-			want: `export async function getStaticPaths() {
+			want: `// comment
+export async function getStaticPaths() {
   const value = /2/g;
 }`,
 		},
@@ -401,7 +523,8 @@ export const c = "d"`,
 export interface Props {}
 export const a = "b"
 export const c = "d"`,
-			want: `export interface Props {}
+			want: `// comment
+export interface Props {}
 export const a = "b"
 export const c = "d"`,
 		},
@@ -419,12 +542,11 @@ export const data = { value }`,
 			name: "export passthrough",
 			source: `export * from "./local-data.json";
 export { default as A } from "./_types"
-export B from "./_types"
-export type C from "./_types"`,
+// Not valid JS
+// export B from "./_types"
+// export type C from "./_types"`,
 			want: `export * from "./local-data.json";
-export { default as A } from "./_types"
-export B from "./_types"
-export type C from "./_types"`,
+export { default as A } from "./_types"`,
 		},
 		{
 			name: "multi-line export",
@@ -471,7 +593,7 @@ export type FooOrBar = 'Foo'
 export type Props =
 {
 	theme: Theme;
-}
+};
 export interface Foo {
 	bar: string;
 }
@@ -541,7 +663,8 @@ export interface RemoteImageProps extends TransformOptions, ImageAttributes {
 }
 export type Props = LocalImageProps | RemoteImageProps;
 `,
-			want: `export interface LocalImageProps extends Omit<TransformOptions, 'src'>, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
+			want: `// Moved after Astro.props for test
+export interface LocalImageProps extends Omit<TransformOptions, 'src'>, Omit<ImageAttributes, 'src' | 'width' | 'height'> {
 	src: ImageMetadata | Promise<{ default: ImageMetadata }>;
 }
 export interface RemoteImageProps extends TransformOptions, ImageAttributes {
@@ -558,7 +681,8 @@ export type Props = LocalImageProps | RemoteImageProps;`,
 export const foo = 0
 /*
 */`,
-			want: `export const foo = 0`,
+			want: `//
+export const foo = 0`,
 		},
 	}
 
@@ -661,7 +785,6 @@ func TestGetObjectKeys(t *testing.T) {
 			if diff := test_utils.ANSIDiff(string(want), string(got)); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
-
 		})
 	}
 }

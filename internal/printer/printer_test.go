@@ -326,8 +326,8 @@ import type data from "test"
 		{
 			name: "css imports are not included in module metadata",
 			source: `---
-			import './styles.css';
-			---
+import './styles.css';
+---
 			`,
 		},
 		{

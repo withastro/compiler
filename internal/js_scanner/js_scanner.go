@@ -10,6 +10,12 @@ import (
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/js"
 	"github.com/withastro/compiler/internal/loc"
+
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/ast"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/core"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/parser"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/scanner"
+	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/tspath"
 )
 
 type HoistedScripts struct {
@@ -19,195 +25,86 @@ type HoistedScripts struct {
 	BodyLocs    []loc.Loc
 }
 
+type CollectedImportsExportsAndRemainingNodes struct {
+	Imports []*ast.Node
+	Exports []*ast.Node
+	Remains []*ast.Node
+}
+
+func collectImportsExportsAndRemainingNodes(source string) CollectedImportsExportsAndRemainingNodes {
+	// use an absolute‐style path for parser
+	fileName := "/astro-frontmatter.ts"
+
+	// start := time.Now()
+	path := tspath.Path(fileName)
+	// parse with ESNext + full JSDoc mode
+	sf := parser.ParseSourceFile(fileName, path, source, core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
+	rootNode := sf.AsNode()
+
+	var imports []*ast.Node
+	var exports []*ast.Node
+	var remains []*ast.Node
+
+	// only iterate immediate children (top‑level statements)
+	var visitor ast.Visitor
+	visitor = func(child *ast.Node) bool {
+		if child == nil {
+			return true
+		}
+
+		switch {
+		case ast.IsImportDeclaration(child) && child.AsImportDeclaration().ModuleSpecifier != nil:
+			// fmt.Printf("Specifier: %s\n", child.AsImportDeclaration().ModuleSpecifier.AsStringLiteral().Text)
+			imports = append(imports, child)
+		case ast.IsExportDeclaration(child),
+			ast.HasSyntacticModifier(child, ast.ModifierFlagsExport):
+			exports = append(exports, child)
+		default:
+			remains = append(remains, child)
+		}
+
+		return false
+	}
+
+	rootNode.ForEachChild(visitor)
+
+	return CollectedImportsExportsAndRemainingNodes{
+		Imports: imports,
+		Exports: exports,
+		Remains: remains,
+	}
+}
+
 func HoistExports(source []byte) HoistedScripts {
-	shouldHoist := bytes.Contains(source, []byte("export"))
-	if !shouldHoist {
-		body := make([][]byte, 0)
-		body = append(body, source)
-		bodyLocs := make([]loc.Loc, 0)
-		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
-		return HoistedScripts{
-			Body:     body,
-			BodyLocs: bodyLocs,
-		}
+	var body [][]byte
+	var bodyLocs []loc.Loc
+	var hoisted [][]byte
+	var hoistedLocs []loc.Loc
+
+	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
+
+	fmt.Printf("Exports count: %d\n", len(importsAndExports.Exports))
+
+	for _, node := range importsAndExports.Exports {
+		start := node.Pos()
+		end := node.End()
+		exportBody := source[start:end]
+		hoisted = append(hoisted, exportBody)
+		hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
 	}
 
-	l := js.NewLexer(parse.NewInputBytes(source))
-	i := 0
-	end := 0
-
-	hoisted := make([][]byte, 0)
-	hoistedLocs := make([]loc.Loc, 0)
-	body := make([][]byte, 0)
-	bodyLocs := make([]loc.Loc, 0)
-	pairs := make(map[byte]int)
-
-	// Let's lex the script until we find what we need!
-outer:
-	for {
-		token, value := l.Next()
-
-		if token == js.DivToken || token == js.DivEqToken {
-			lns := bytes.Split(source[i+1:], []byte{'\n'})
-			if bytes.Contains(lns[0], []byte{'/'}) {
-				token, value = l.RegExp()
-			}
-		}
-
-		if token == js.ErrorToken {
-			if l.Err() != io.EOF {
-				body := make([][]byte, 0)
-				body = append(body, source)
-				bodyLocs := make([]loc.Loc, 0)
-				bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
-				return HoistedScripts{
-					Hoisted:     hoisted,
-					HoistedLocs: hoistedLocs,
-					Body:        body,
-					BodyLocs:    bodyLocs,
-				}
-			}
-			break
-		}
-
-		// Common delimiters. Track their length, then skip.
-		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
-			i += len(value)
-			continue
-		}
-
-		// Exports should be consumed until all opening braces are closed,
-		// a specifier is found, and a line terminator has been found
-		if token == js.ExportToken {
-			flags := make(map[string]bool)
-			foundIdent := false
-			foundSemicolonOrLineTerminator := false
-			start := i
-			i += len(value)
-			for {
-				next, nextValue := l.Next()
-				if next == js.DivToken || next == js.DivEqToken {
-					lns := bytes.Split(source[i+1:], []byte{'\n'})
-					if bytes.Contains(lns[0], []byte{'/'}) {
-						next, nextValue = l.RegExp()
-					}
-				}
-				i += len(nextValue)
-				flags[string(nextValue)] = true
-
-				if next == js.ErrorToken && l.Err() == io.EOF {
-					foundSemicolonOrLineTerminator = true
-				}
-
-				if js.IsIdentifier(next) {
-					if isKeyword(nextValue) && next != js.FromToken {
-						continue
-					}
-					if string(nextValue) == "type" {
-						continue
-					}
-					if !foundIdent {
-						foundIdent = true
-					}
-				} else if next == js.LineTerminatorToken || next == js.SemicolonToken {
-					if next == js.LineTerminatorToken && i < len(source) && (source[i] == '&' || source[i] == '|') {
-						continue
-					}
-					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
-						continue
-					}
-					if flags["&"] || flags["="] {
-						continue
-					}
-					if pairs['('] > 0 {
-						continue
-					}
-
-					foundSemicolonOrLineTerminator = true
-				} else if js.IsPunctuator(next) {
-					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
-						flags[string(nextValue[0])] = true
-						pairs[nextValue[0]]++
-					} else if nextValue[0] == '}' {
-						pairs['{']--
-					} else if nextValue[0] == ')' {
-						pairs['(']--
-					} else if nextValue[0] == ']' {
-						pairs['[']--
-					}
-				} else {
-					// Sometimes, exports are written in multiple lines, like
-					//
-					// export const foo =
-					//   [...]
-					// export type Props = ThisProps &
-					// 	 SomeWeirdType<{ thatsSuperLong: SoItEndsUpFormattedLikeThis }>
-					//
-					// So, we omit the semicolon check if the line ends up with one of these
-					if flags["&"] && nextValue[0] != '&' {
-						flags["&"] = false
-					}
-					if flags["="] && nextValue[0] != '=' {
-						flags["="] = false
-					}
-				}
-
-				if foundIdent && foundSemicolonOrLineTerminator && pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 {
-					hoisted = append(hoisted, source[start:i])
-					hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
-					if end < start {
-						body = append(body, source[end:start])
-						bodyLocs = append(bodyLocs, loc.Loc{Start: end})
-					}
-					end = i
-					continue outer
-				}
-
-				if next == js.ErrorToken {
-					if l.Err() != io.EOF {
-						body := make([][]byte, 0)
-						body = append(body, source)
-						bodyLocs := make([]loc.Loc, 0)
-						bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
-						return HoistedScripts{
-							Hoisted:     hoisted,
-							HoistedLocs: hoistedLocs,
-							Body:        body,
-							BodyLocs:    bodyLocs,
-						}
-					}
-					break outer
-				}
-			}
-		}
-
-		// Track opening and closing braces
-		if js.IsPunctuator(token) {
-			if value[0] == '{' || value[0] == '(' || value[0] == '[' {
-				pairs[value[0]]++
-				i += len(value)
-				continue
-			} else if value[0] == '}' {
-				pairs['{']--
-			} else if value[0] == ')' {
-				pairs['(']--
-			} else if value[0] == ']' {
-				pairs['[']--
-			}
-		}
-
-		// Track our current position
-		i += len(value)
+	for _, node := range importsAndExports.Remains {
+		start := node.Pos()
+		end := node.End()
+		body = append(body, source[start:end])
+		bodyLocs = append(bodyLocs, loc.Loc{Start: start})
 	}
-
-	body = append(body, source[end:])
-	bodyLocs = append(bodyLocs, loc.Loc{Start: end})
 
 	return HoistedScripts{
-		Hoisted:     hoisted,
-		HoistedLocs: hoistedLocs,
 		Body:        body,
 		BodyLocs:    bodyLocs,
+		Hoisted:     hoisted,
+		HoistedLocs: hoistedLocs,
 	}
 }
 
@@ -216,26 +113,36 @@ func isKeyword(value []byte) bool {
 }
 
 func HoistImports(source []byte) HoistedScripts {
-	imports := make([][]byte, 0)
-	importLocs := make([]loc.Loc, 0)
-	body := make([][]byte, 0)
-	bodyLocs := make([]loc.Loc, 0)
-	prev := 0
-	for i, statement := NextImportStatement(source, 0); i > -1 && i < len(source)+1; i, statement = NextImportStatement(source, i) {
-		bodyLocs = append(bodyLocs, loc.Loc{Start: prev})
-		body = append(body, source[prev:statement.Span.Start])
-		imports = append(imports, statement.Value)
-		importLocs = append(importLocs, loc.Loc{Start: statement.Span.Start})
-		prev = i
+	var body [][]byte
+	var bodyLocs []loc.Loc
+	var hoisted [][]byte
+	var hoistedLocs []loc.Loc
+
+	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
+
+	fmt.Printf("Imports count: %d\n", len(importsAndExports.Imports))
+
+	for _, node := range importsAndExports.Imports {
+		start := node.Pos()
+		end := node.End()
+		importBody := source[start:end]
+		hoisted = append(hoisted, importBody)
+		hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
 	}
-	if prev == 0 {
-		bodyLocs = append(bodyLocs, loc.Loc{Start: 0})
-		body = append(body, source)
-		return HoistedScripts{Body: body, BodyLocs: bodyLocs}
+
+	for _, node := range importsAndExports.Remains {
+		start := node.Pos()
+		end := node.End()
+		body = append(body, source[start:end])
+		bodyLocs = append(bodyLocs, loc.Loc{Start: start})
 	}
-	bodyLocs = append(bodyLocs, loc.Loc{Start: prev})
-	body = append(body, source[prev:])
-	return HoistedScripts{Hoisted: imports, HoistedLocs: importLocs, Body: body, BodyLocs: bodyLocs}
+
+	return HoistedScripts{
+		Body:        body,
+		BodyLocs:    bodyLocs,
+		Hoisted:     hoisted,
+		HoistedLocs: hoistedLocs,
+	}
 }
 
 func HasGetStaticPaths(source []byte) bool {
@@ -491,7 +398,7 @@ func GetObjectKeys(source []byte) [][]byte {
 						if string(key) == ident {
 							keys = append(keys, []byte(key))
 						} else {
-							keys = append(keys, []byte(fmt.Sprintf("%s: %s", value, ident)))
+							keys = append(keys, fmt.Appendf(nil, "%s: %s", value, ident))
 						}
 					}
 				}
@@ -512,10 +419,8 @@ func GetObjectKeys(source []byte) [][]byte {
 }
 
 type Import struct {
-	IsType     bool
 	ExportName string
 	LocalName  string
-	Assertions string
 }
 
 type ImportStatement struct {
@@ -534,7 +439,7 @@ const (
 	ImportNamed
 )
 
-func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
+func NextImportStatements(source []byte, pos int) (int, ImportStatement) {
 	l := js.NewLexer(parse.NewInputBytes(source[pos:]))
 	i := pos
 	for {
@@ -702,6 +607,114 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 
 		i += len(value)
 	}
+}
+
+func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
+	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
+
+	for _, node := range importsAndExports.Imports {
+		start := node.Pos()
+		end := node.End()
+		if start >= pos {
+			var imports []Import
+			var assertions string
+			var importClause *ast.ImportClause
+			importDeclaration := node.AsImportDeclaration()
+			importClauseNode := importDeclaration.ImportClause
+			moduleSpecifier := importDeclaration.ModuleSpecifier.AsStringLiteral()
+			moduleSpecifierString := moduleSpecifier.Text
+
+			if importClauseNode == nil {
+				return end, ImportStatement{
+					Span:      loc.Span{Start: start, End: end},
+					Value:     source[start:end],
+					Specifier: moduleSpecifierString,
+				}
+			}
+
+			// Process assertions only if importAttributes is not nil
+			if importAttributes := importDeclaration.Attributes; importAttributes != nil {
+				attrNode := importAttributes.AsImportAttributes()
+				// calculate the length of the leading strip
+				// to turn "assert { type: 'json' }" into " assert { type: 'json' }"
+				leadingStripLength := (func() int {
+					if attrNode.Token == ast.KindWithKeyword {
+						return len("with")
+					}
+					return len("assert")
+				})()
+				assertionStart := attrNode.Pos() + leadingStripLength + 1
+				assertions = string(source[assertionStart:attrNode.End()])
+			}
+
+			importClause = importClauseNode.AsImportClause()
+			importName := importClause.Name()
+			importNamedBindings := importClause.NamedBindings
+
+			if importName != nil {
+				localName := importName.AsIdentifier().Text
+				imports = append(imports, Import{
+					ExportName: "default",
+					LocalName:  localName,
+				})
+			}
+
+			if importNamedBindings == nil {
+				return end, ImportStatement{
+					Span:       loc.Span{Start: start, End: end},
+					Value:      source[start:end],
+					IsType:     importClause.IsTypeOnly,
+					Imports:    imports,
+					Specifier:  moduleSpecifierString,
+					Assertions: assertions,
+				}
+			}
+
+			switch importNamedBindings.Kind {
+			case ast.KindNamedImports:
+				importSpecifierList := importNamedBindings.AsNamedImports().Elements
+				for _, c := range importSpecifierList.Nodes {
+					importSpecifier := c.AsImportSpecifier()
+					var exportName string
+					var localName string
+
+					propertyName := importSpecifier.PropertyName
+					name := importSpecifier.Name()
+
+					if propertyName != nil {
+						exportName = propertyName.AsIdentifier().Text
+					}
+
+					if name != nil {
+						localName = name.AsIdentifier().Text
+					}
+
+					imports = append(imports, Import{
+						ExportName: exportName,
+						LocalName:  localName,
+					})
+
+				}
+			case ast.KindNamespaceImport:
+				// namespaceImport := importNamedBindings.AsNamespaceImport()
+				imports = append(imports, Import{
+					ExportName: "*",
+					LocalName:  "ddd",
+				})
+			}
+
+			return end, ImportStatement{
+				Span:       loc.Span{Start: start, End: end},
+				Value:      source[start:end],
+				IsType:     importClause.IsTypeOnly,
+				Imports:    imports,
+				Specifier:  moduleSpecifierString,
+				Assertions: assertions,
+			}
+		}
+	}
+
+	return -1, ImportStatement{}
 }
 
 /*
