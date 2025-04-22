@@ -678,28 +678,36 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					var exportName string
 					var localName string
 
-					propertyName := importSpecifier.PropertyName
 					name := importSpecifier.Name()
-
-					if propertyName != nil {
-						exportName = propertyName.AsIdentifier().Text
-					}
+					propertyName := importSpecifier.PropertyName
 
 					if name != nil {
 						localName = name.AsIdentifier().Text
+					}
+
+					if propertyName != nil {
+						exportName = propertyName.AsIdentifier().Text
+					} else if name != nil {
+						exportName = localName
 					}
 
 					imports = append(imports, Import{
 						ExportName: exportName,
 						LocalName:  localName,
 					})
-
 				}
 			case ast.KindNamespaceImport:
-				// namespaceImport := importNamedBindings.AsNamespaceImport()
+				namespaceImport := importNamedBindings.AsNamespaceImport()
+				var localName string
+
+				name := namespaceImport.Name()
+
+				if name != nil {
+					localName = name.AsIdentifier().Text
+				}
 				imports = append(imports, Import{
 					ExportName: "*",
-					LocalName:  "ddd",
+					LocalName:  localName,
 				})
 			}
 
@@ -728,9 +736,10 @@ func ExtractComponentExportName(data string, imported Import) (string, bool) {
 	namespacePrefix := fmt.Sprintf("%s.", imported.LocalName)
 	isNamespacedComponent := strings.Contains(data, ".") && strings.HasPrefix(data, namespacePrefix)
 	localNameEqualsData := imported.LocalName == data
+	fmt.Printf("LocalName: `%s`\nExportName: `%s`\nIsNamespacedComponent: `%t`\nLocalNameEqualsData: `%t`\n", imported.LocalName, imported.ExportName, isNamespacedComponent, localNameEqualsData)
 	if isNamespacedComponent || localNameEqualsData {
 		var exportName string
-		switch true {
+		switch {
 		case localNameEqualsData:
 			exportName = imported.ExportName
 		case imported.ExportName == "*":
