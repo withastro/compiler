@@ -155,118 +155,91 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	if n.Type == FrontmatterNode {
 		if n.FirstChild == nil {
 			p.printCSSImports(opts.cssLen)
-		}
+		} else if c := n.FirstChild; c.Type == TextNode {
+			p.printInternalImports(p.opts.InternalURL, &opts)
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if c.Type == TextNode {
-				p.printInternalImports(p.opts.InternalURL, &opts)
+			exportsPlusPlus := js_scanner.HoistExports([]byte(c.Data))
 
-				start := 0
-				if len(n.Loc) > 0 {
-					start = c.Loc[0].Start
+			exports := exportsPlusPlus.Hoisted
+			exportLocs := exportsPlusPlus.HoistedLocs
+
+			bodies := exportsPlusPlus.Body
+			bodiesLocs := exportsPlusPlus.BodyLocs
+
+			start := 0
+			if len(n.Loc) > 0 {
+				start = c.Loc[0].Start
+			}
+			imports := js_scanner.HoistImports([]byte(c.Data))
+			for i, hoisted := range imports.Hoisted {
+				if len(bytes.TrimSpace(hoisted)) == 0 {
+					continue
 				}
-				render := js_scanner.HoistImports([]byte(c.Data))
-				if len(render.Hoisted) > 0 {
-					for i, hoisted := range render.Hoisted {
-						if len(bytes.TrimSpace(hoisted)) == 0 {
-							continue
-						}
-						hoistedLoc := render.HoistedLocs[i]
-						p.printTextWithSourcemap(string(hoisted)+"\n", loc.Loc{Start: start + hoistedLoc.Start})
-					}
-				}
+				hoistedLoc := imports.HoistedLocs[i]
 
+				// trim leading whitespace
+				// for the first import
+				// if i == 0 {
+				// 	hoisted = bytes.TrimLeft(hoisted, whitespace)
+				// }
+				p.printTextWithSourcemap(string(hoisted), loc.Loc{Start: start + hoistedLoc.Start})
+			}
+
+			p.addNilSourceMapping()
+			p.printCSSImports(opts.cssLen)
+
+			// 1. Component imports, if any exist.
+			p.addNilSourceMapping()
+			p.printComponentMetadata(n.Parent, opts.opts, []byte(p.sourcetext))
+
+			// 2. Top-level Astro global.
+			if printAstroGlobal {
+				p.printTopLevelAstro(opts.opts)
+			}
+
+			// PRINT EXPORTS
+			for i, exported := range exports {
+				exportLoc := exportLocs[i]
+				if len(bytes.TrimSpace(exported)) == 0 {
+					continue
+				}
+				p.printTextWithSourcemap(string(bytes.TrimSpace(exported)), exportLoc)
 				p.addNilSourceMapping()
-				p.printCSSImports(opts.cssLen)
-
-				// 1. Component imports, if any exist.
-				p.addNilSourceMapping()
-				p.printComponentMetadata(n.Parent, opts.opts, []byte(p.sourcetext))
-
-				// 2. Top-level Astro global.
-				if printAstroGlobal {
-					p.printTopLevelAstro(opts.opts)
-				}
-
-				exports := make([][]byte, 0)
-				exportLocs := make([]loc.Loc, 0)
-				bodies := make([][]byte, 0)
-				bodiesLocs := make([]loc.Loc, 0)
-
-				if len(render.Body) > 0 {
-					for i, innerBody := range render.Body {
-						innerStart := render.BodyLocs[i].Start
-						if len(bytes.TrimSpace(innerBody)) == 0 {
-							continue
-						}
-
-						// Extract exports
-						preprocessed := js_scanner.HoistExports(append(innerBody, '\n'))
-						if len(preprocessed.Hoisted) > 0 {
-							for j, exported := range preprocessed.Hoisted {
-								exportedLoc := preprocessed.HoistedLocs[j]
-								exportLocs = append(exportLocs, loc.Loc{Start: start + innerStart + exportedLoc.Start})
-								exports = append(exports, exported)
-							}
-						}
-
-						if len(preprocessed.Body) > 0 {
-							for j, body := range preprocessed.Body {
-								bodyLoc := preprocessed.BodyLocs[j]
-								bodiesLocs = append(bodiesLocs, loc.Loc{Start: start + innerStart + bodyLoc.Start})
-								bodies = append(bodies, body)
-							}
-						}
-					}
-				}
-
-				// PRINT EXPORTS
-				if len(exports) > 0 {
-					for i, exported := range exports {
-						exportLoc := exportLocs[i]
-						if len(bytes.TrimSpace(exported)) == 0 {
-							continue
-						}
-						p.printTextWithSourcemap(string(exported), exportLoc)
-						p.addNilSourceMapping()
-						p.println("")
-					}
-				}
-
-				p.printFuncPrelude(opts.opts, printAstroGlobal)
-				// PRINT BODY
-				if len(bodies) > 0 {
-					for i, body := range bodies {
-						bodyLoc := bodiesLocs[i]
-						if len(bytes.TrimSpace(body)) == 0 {
-							continue
-						}
-						p.printTextWithSourcemap(string(body), bodyLoc)
-					}
-				}
-				// Print empty just to ensure a newline
 				p.println("")
-				if len(n.Parent.Styles) > 0 {
-					definedVars := transform.GetDefineVars(n.Parent.Styles)
-					if len(definedVars) > 0 {
-						p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
-					}
-				}
+			}
 
-				p.printReturnOpen()
-			} else {
-				render1(p, c, RenderOptions{
-					isRoot:           false,
-					isExpression:     true,
-					depth:            depth + 1,
-					opts:             opts.opts,
-					cssLen:           opts.cssLen,
-					printedMaybeHead: opts.printedMaybeHead,
-					scriptCount:      opts.scriptCount,
-				})
-				if len(n.Loc) > 1 {
-					p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
+			p.printFuncPrelude(opts.opts, printAstroGlobal)
+			// PRINT BODY
+			for i, body := range bodies {
+				bodyLoc := bodiesLocs[i]
+				if len(bytes.TrimSpace(body)) == 0 {
+					continue
 				}
+				p.printTextWithSourcemap(string(body), bodyLoc)
+			}
+			// Print empty just to ensure a newline
+			p.println("")
+			p.println("")
+			if len(n.Parent.Styles) > 0 {
+				definedVars := transform.GetDefineVars(n.Parent.Styles)
+				if len(definedVars) > 0 {
+					p.printf("const $$definedVars = %s([%s]);\n", DEFINE_STYLE_VARS, strings.Join(definedVars, ","))
+				}
+			}
+
+			p.printReturnOpen()
+		} else {
+			render1(p, c, RenderOptions{
+				isRoot:           false,
+				isExpression:     true,
+				depth:            depth + 1,
+				opts:             opts.opts,
+				cssLen:           opts.cssLen,
+				printedMaybeHead: opts.printedMaybeHead,
+				scriptCount:      opts.scriptCount,
+			})
+			if len(n.Loc) > 1 {
+				p.addSourceMapping(loc.Loc{Start: n.Loc[1].Start - 3})
 			}
 		}
 		return
