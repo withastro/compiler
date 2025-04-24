@@ -2358,6 +2358,8 @@ func inSelectIM(p *parser) bool {
 			p.resetInsertionMode()
 		case a.Template:
 			return inHeadIM(p)
+		default:
+			return inBodyIM(p)
 		}
 	case CommentToken:
 		p.addChild(&Node{
