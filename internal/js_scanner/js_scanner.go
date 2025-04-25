@@ -3,7 +3,6 @@ package js_scanner
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -31,6 +30,7 @@ type CollectedImportsExportsAndRemainingNodes struct {
 	Remains []*ast.Node
 }
 
+// TODO: work on the same AST for all the analysis work
 func collectImportsExportsAndRemainingNodes(source string) CollectedImportsExportsAndRemainingNodes {
 	// use an absolute‐style path for parser
 	fileName := "/astro-frontmatter.ts"
@@ -83,8 +83,6 @@ func HoistExports(source []byte) HoistedScripts {
 
 	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
 
-	fmt.Printf("Exports count: %d\n", len(importsAndExports.Exports))
-
 	for _, node := range importsAndExports.Exports {
 		start := node.Pos()
 		end := node.End()
@@ -106,10 +104,6 @@ func HoistExports(source []byte) HoistedScripts {
 		Hoisted:     hoisted,
 		HoistedLocs: hoistedLocs,
 	}
-}
-
-func isKeyword(value []byte) bool {
-	return js.Keywords[string(value)] != 0
 }
 
 func HoistImports(source []byte) HoistedScripts {
@@ -166,168 +160,133 @@ type Props struct {
 	Generics  string
 }
 
-func GetPropsType(source []byte) Props {
-	defaultPropType := "Record<string, any>"
-	ident := defaultPropType
-	genericsIdents := make([]string, 0)
-	generics := ""
-	statement := ""
+const DefaultPropType = "Record<string, any>"
 
+func GetPropsType(source []byte) Props {
+	// If source doesn't contain "Props"
+	// return default Props type
 	if !bytes.Contains(source, []byte("Props")) {
 		return Props{
-			Ident:     ident,
-			Statement: statement,
-			Generics:  generics,
+			Ident: DefaultPropType,
 		}
 	}
-	l := js.NewLexer(parse.NewInputBytes(source))
-	i := 0
-	pairs := make(map[byte]int)
-	idents := make([]string, 0)
 
-	start := 0
-	end := 0
+	// Use an absolute-style path for parser
+	fileName := "/astro-frontmatter.ts"
+	path := tspath.Path(fileName)
 
-outer:
-	for {
-		token, value := l.Next()
+	// Parse with ESNext + full JSDoc mode
+	sf := parser.ParseSourceFile(fileName, path, string(source), core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
+	rootNode := sf.AsNode()
 
-		if token == js.DivToken || token == js.DivEqToken {
-			if len(source) > i {
-				lns := bytes.Split(source[i+1:], []byte{'\n'})
-				if bytes.Contains(lns[0], []byte{'/'}) {
-					token, value = l.RegExp()
-				}
-			}
+	var propsType Props
+	propsType.Ident = DefaultPropType
+
+	// Visitor function to find Props type
+	var visitor ast.Visitor
+	visitor = func(node *ast.Node) bool {
+		if node == nil {
+			return true
 		}
 
-		if token == js.ErrorToken {
-			if l.Err() != io.EOF {
-				return Props{
-					Ident: ident,
-				}
-			}
-			break
-		}
+		// Check for interface declaration: interface Props {...}
+		if ast.IsInterfaceDeclaration(node) {
+			interfaceDecl := node.AsInterfaceDeclaration()
+			if interfaceDecl.Name() != nil && interfaceDecl.Name().AsIdentifier().Text == "Props" {
+				// start := node.Pos()
+				// end := node.End()
+				propsType.Ident = "Props"
+				// propsType.Statement = string(bytes.TrimSpace(source[start:end]))
 
-		// Common delimiters. Track their length, then skip.
-		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
-			i += len(value)
-			continue
-		}
+				// Extract generics if present
+				if interfaceDecl.TypeParameters != nil {
+					typeParams := interfaceDecl.TypeParameters
+					if len(typeParams.Nodes) > 0 {
+						typeParamList := make([]string, 0, len(typeParams.Nodes))
+						genericsList := make([]string, 0, len(typeParams.Nodes))
+						for _, param := range typeParams.Nodes {
+							typeParam := param.AsTypeParameter()
+							paramIdent := string(source[typeParam.Pos():typeParam.End()])
 
-		if token == js.ExtendsToken {
-			if bytes.Equal(value, []byte("extends")) {
-				idents = append(idents, "extends")
-			}
-			i += len(value)
-			continue
-		}
-
-		if pairs['{'] == 0 && pairs['('] == 0 && pairs['['] == 0 && pairs['<'] == 1 && token == js.CommaToken {
-			idents = make([]string, 0)
-			i += len(value)
-			continue
-		}
-
-		if js.IsIdentifier(token) {
-			if isKeyword(value) {
-				// fix(#814): fix Props detection when using `{ Props as SomethingElse }`
-				if ident == "Props" && string(value) == "as" {
-					start = 0
-					ident = defaultPropType
-					idents = make([]string, 0)
-				}
-				i += len(value)
-				continue
-			}
-			if pairs['<'] == 1 && pairs['{'] == 0 {
-				foundExtends := false
-				for _, id := range idents {
-					if id == "extends" {
-						foundExtends = true
+							typeParamList = append(typeParamList, paramIdent)
+							genericsList = append(genericsList, typeParam.Name().AsIdentifier().Text)
+						}
+						propsType.Statement = fmt.Sprintf("<%s>", strings.Join(typeParamList, ", "))
+						propsType.Generics = fmt.Sprintf("<%s>", strings.Join(genericsList, ", "))
 					}
 				}
-				if !foundExtends {
-					genericsIdents = append(genericsIdents, string(value))
-				}
-				i += len(value)
-				continue
+				return true
 			}
-			// Note: do not check that `pairs['{'] == 0` to support named imports
-			if pairs['('] == 0 && pairs['['] == 0 && string(value) == "Props" {
-				ident = "Props"
-			}
-			idents = append(idents, string(value))
-			i += len(value)
-			continue
 		}
 
-		if bytes.ContainsAny(value, "<>") {
-			if len(idents) > 0 && idents[len(idents)-1] == "Props" {
-				start = i
-				ident = "Props"
-				idents = make([]string, 0)
-			}
-			for _, c := range value {
-				if c == '<' {
-					pairs['<']++
-					i += len(value)
-					continue
+		// Check for type alias: type Props = {...}
+		if ast.IsTypeAliasDeclaration(node) {
+			typeAlias := node.AsTypeAliasDeclaration()
+			if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == "Props" {
+				// start := node.Pos()
+				// end := node.End()
+				propsType.Ident = "Props"
+				// propsType.Statement = string(bytes.TrimSpace(source[start:end]))
+
+				// Extract generics if present
+				if typeAlias.TypeParameters != nil {
+					typeParams := typeAlias.TypeParameters
+					if len(typeParams.Nodes) > 0 {
+						typeParamList := make([]string, 0, len(typeParams.Nodes))
+						genericsList := make([]string, 0, len(typeParams.Nodes))
+						for _, param := range typeParams.Nodes {
+							typeParam := param.AsTypeParameter()
+
+							typeParamList = append(typeParamList, typeParam.Text())
+							genericsList = append(genericsList, typeParam.Name().AsIdentifier().Text)
+						}
+						propsType.Statement = fmt.Sprintf("<%s>", strings.Join(typeParamList, ", "))
+						propsType.Generics = fmt.Sprintf("<%s>", strings.Join(genericsList, ", "))
+					}
 				}
-				if c == '>' {
-					pairs['<']--
-					if pairs['<'] == 0 {
-						end = i
-						// Important: only break out if we've already found `Props`!
-						if ident != defaultPropType {
-							break outer
-						} else {
-							continue
+				return true
+			}
+		}
+
+		return false
+	}
+
+	rootNode.ForEachChild(visitor)
+
+	if propsType.Ident == DefaultPropType {
+		// now look for the import
+		imports := collectImportsExportsAndRemainingNodes(string(source)).Imports
+		for _, node := range imports {
+			if ast.IsImportDeclaration(node) {
+				importDecl := node.AsImportDeclaration()
+				// if there is a default import or named import, named `Props`
+				// we can assume that it is a Props type
+				if importDecl.ImportClause != nil {
+					importClause := importDecl.ImportClause.AsImportClause()
+
+					if importClause.Name() != nil && importClause.Name().AsIdentifier().Text == "Props" {
+						propsType.Ident = "Props"
+						break
+					}
+
+					if importClause.NamedBindings != nil {
+						if importClause.NamedBindings.Kind == ast.KindNamedImports {
+							namedImports := importClause.NamedBindings.AsNamedImports()
+							for _, element := range namedImports.Elements.Nodes {
+								importSpecifier := element.AsImportSpecifier()
+								if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == "Props" {
+									propsType.Ident = "Props"
+									break
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-
-		if token == js.QuestionToken || (pairs['{'] == 0 && token == js.ColonToken) {
-			idents = make([]string, 0)
-			idents = append(idents, "extends")
-		}
-
-		// Track opening and closing braces
-		if js.IsPunctuator(token) {
-			if value[0] == '{' || value[0] == '(' || value[0] == '[' {
-				idents = make([]string, 0)
-				pairs[value[0]]++
-				i += len(value)
-				continue
-			} else if value[0] == '}' {
-				pairs['{']--
-				if pairs['<'] == 0 && pairs['{'] == 0 && ident != defaultPropType {
-					end = i
-					break outer
-				}
-			} else if value[0] == ')' {
-				pairs['(']--
-			} else if value[0] == ']' {
-				pairs['[']--
-			}
-		}
-
-		// Track our current position
-		i += len(value)
-	}
-	if start > 0 && len(genericsIdents) > 0 && ident != defaultPropType {
-		generics = fmt.Sprintf("<%s>", strings.Join(genericsIdents, ", "))
-		statement = strings.TrimSpace(string(source[start:end]))
 	}
 
-	return Props{
-		Ident:     ident,
-		Statement: statement,
-		Generics:  generics,
-	}
+	return propsType
 }
 
 func IsIdentifier(value []byte) bool {

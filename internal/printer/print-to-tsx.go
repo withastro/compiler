@@ -332,16 +332,15 @@ func getTextType(n *astro.Node) TextType {
 func renderTsx(p *printer, n *Node, o *TSXOptions) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
-		source := []byte(p.sourcetext)
-		props := js_scanner.GetPropsType(source)
-		hasGetStaticPaths := js_scanner.HasGetStaticPaths(source)
 		hasChildren := false
 		startLen := len(p.output)
+		var fmNode *astro.Node
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
 			// Without this, TypeScript can get tripped up by the body of our file.
 			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
+				fmNode = c.PrevSibling
 				buf := strings.TrimSpace(string(p.output))
 				if len(buf)-len(getTSXPrefix()) > 1 {
 					char := rune(buf[len(buf)-1:][0])
@@ -383,12 +382,22 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 		if hasChildren {
 			p.print("</Fragment>\n")
 		}
+		var fmContent []byte
+
+		if fmNode != nil && fmNode.FirstChild != nil {
+			fmContent = []byte(fmNode.FirstChild.Data)
+		}
+
+		props := js_scanner.GetPropsType(fmContent)
+		hasGetStaticPaths := js_scanner.HasGetStaticPaths(fmContent)
+
 		componentName := getTSXComponentName(p.opts.Filename)
 		propsIdent := props.Ident
 		paramsIdent := ""
+
 		if hasGetStaticPaths {
 			paramsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>"
-			if propsIdent == "Record<string, any>" {
+			if propsIdent == js_scanner.DefaultPropType {
 				propsIdent = "ASTRO__MergeUnion<ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>>"
 			}
 		}
@@ -402,7 +411,7 @@ type ASTRO__MergeUnion<T, K extends PropertyKey = T extends unknown ? keyof T : 
 type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;%s`, "\n")
 		}
 
-		if propsIdent != "Record<string, any>" {
+		if propsIdent != js_scanner.DefaultPropType {
 			p.printf(`/**
  * Astro global available in all contexts in .astro files
  *
