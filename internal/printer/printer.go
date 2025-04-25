@@ -29,6 +29,7 @@ type printer struct {
 	output             []byte
 	builder            sourcemap.ChunkBuilder
 	handler            *handler.Handler
+	fmNode             *astro.Node
 	hasFuncPrelude     bool
 	hasInternalImports bool
 	hasCSSImports      bool

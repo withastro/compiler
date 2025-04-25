@@ -20,6 +20,25 @@ func getTSXPrefix() string {
 	return "/* @jsxImportSource astro */\n\n"
 }
 
+// walk traverses the doc tree in pre-order, calling cb on each node.
+// If cb returns true, walk stops traversing
+func walk(doc *Node, cb func(*Node) bool) {
+	var f func(n *Node) bool
+	f = func(n *Node) bool {
+		if cb(n) {
+			return true
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if f(c) {
+				return true
+			}
+		}
+		return false
+	}
+
+	f(doc)
+}
+
 type TSXOptions struct {
 	IncludeScripts bool
 	IncludeStyles  bool
@@ -32,6 +51,16 @@ func PrintToTSX(sourcetext string, n *Node, opts TSXOptions, transformOpts trans
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
 	p.print(getTSXPrefix())
+
+	// store a reference to the frontmatter node
+	walk(n, func(node *Node) bool {
+		if node.Type == FrontmatterNode {
+			p.fmNode = node
+			return true
+		}
+		return false
+	})
+
 	renderTsx(p, n, &opts)
 
 	return PrintResult{
@@ -334,13 +363,11 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 	if n.Type == DocumentNode {
 		hasChildren := false
 		startLen := len(p.output)
-		var fmNode *astro.Node
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// This checks for the first node that comes *after* the frontmatter
 			// to ensure that the statement is properly closed with a `;`.
 			// Without this, TypeScript can get tripped up by the body of our file.
 			if c.PrevSibling != nil && c.PrevSibling.Type == FrontmatterNode {
-				fmNode = c.PrevSibling
 				buf := strings.TrimSpace(string(p.output))
 				if len(buf)-len(getTSXPrefix()) > 1 {
 					char := rune(buf[len(buf)-1:][0])
@@ -382,10 +409,10 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 		if hasChildren {
 			p.print("</Fragment>\n")
 		}
-		var fmContent []byte
 
-		if fmNode != nil && fmNode.FirstChild != nil {
-			fmContent = []byte(fmNode.FirstChild.Data)
+		var fmContent []byte
+		if p.fmNode != nil && p.fmNode.FirstChild != nil {
+			fmContent = []byte(p.fmNode.FirstChild.Data)
 		}
 
 		props := js_scanner.GetPropsType(fmContent)

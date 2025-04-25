@@ -54,7 +54,6 @@ func collectImportsExportsAndRemainingNodes(source string) CollectedImportsExpor
 
 		switch {
 		case ast.IsImportDeclaration(child) && child.AsImportDeclaration().ModuleSpecifier != nil:
-			// fmt.Printf("Specifier: %s\n", child.AsImportDeclaration().ModuleSpecifier.AsStringLiteral().Text)
 			imports = append(imports, child)
 		case ast.IsExportDeclaration(child),
 			ast.HasSyntacticModifier(child, ast.ModifierFlagsExport):
@@ -113,8 +112,6 @@ func HoistImports(source []byte) HoistedScripts {
 	var hoistedLocs []loc.Loc
 
 	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
-
-	fmt.Printf("Imports count: %d\n", len(importsAndExports.Imports))
 
 	for _, node := range importsAndExports.Imports {
 		start := node.Pos()
@@ -223,10 +220,7 @@ func GetPropsType(source []byte) Props {
 		if ast.IsTypeAliasDeclaration(node) {
 			typeAlias := node.AsTypeAliasDeclaration()
 			if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == "Props" {
-				// start := node.Pos()
-				// end := node.End()
 				propsType.Ident = "Props"
-				// propsType.Statement = string(bytes.TrimSpace(source[start:end]))
 
 				// Extract generics if present
 				if typeAlias.TypeParameters != nil {
@@ -525,7 +519,6 @@ func ExtractComponentExportName(data string, imported Import) (string, bool) {
 	namespacePrefix := fmt.Sprintf("%s.", imported.LocalName)
 	isNamespacedComponent := strings.Contains(data, ".") && strings.HasPrefix(data, namespacePrefix)
 	localNameEqualsData := imported.LocalName == data
-	fmt.Printf("LocalName: `%s`\nExportName: `%s`\nIsNamespacedComponent: `%t`\nLocalNameEqualsData: `%t`\n", imported.LocalName, imported.ExportName, isNamespacedComponent, localNameEqualsData)
 	if isNamespacedComponent || localNameEqualsData {
 		var exportName string
 		switch {
