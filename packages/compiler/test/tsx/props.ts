@@ -186,19 +186,19 @@ ${PREFIX()}`;
 test('props generic (very complex)', async () => {
 	const input = `
 ---
-interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
+interface Props<T extends { [key: string]: any }, P extends string | { [key: string]: any }> { }
 ---
 
 <div></div>
 `;
 	const output = `${TSXPrefix}
-interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
+interface Props<T extends { [key: string]: any }, P extends string | { [key: string]: any }> { }
 
 {};<Fragment>
 <div></div>
 
 </Fragment>
-export default function __AstroComponent_<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
+export default function __AstroComponent_<T extends { [key: string]: any }, P extends string | { [key: string]: any }>(_props: Props<T, P>): any {}
 ${PREFIX()}`;
 	const { code } = await convertToTSX(input, { sourcemap: 'external' });
 	assert.snapshot(code, output, 'expected code to match snapshot');
@@ -207,19 +207,19 @@ ${PREFIX()}`;
 test('props generic (very complex II)', async () => {
 	const input = `
 ---
-interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
+interface Props<A, B, T extends (Something<false> | A | B), P extends string | { [key: string]: any }> {}
 ---
 
 <div></div>
 `;
 	const output = `${TSXPrefix}
-interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
+interface Props<A, B, T extends (Something<false> | A | B), P extends string | { [key: string]: any }> {}
 
 {};<Fragment>
 <div></div>
 
 </Fragment>
-export default function __AstroComponent_<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
+export default function __AstroComponent_<A, B, T extends (Something<false> | A | B), P extends string | { [key: string]: any }>(_props: Props<A, B, T, P>): any {}
 ${PREFIX()}`;
 	const { code } = await convertToTSX(input, { sourcemap: 'external' });
 	assert.snapshot(code, output, 'expected code to match snapshot');
