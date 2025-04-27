@@ -199,16 +199,15 @@ func GetPropsType(source []byte) Props {
 				if interfaceDecl.TypeParameters != nil {
 					typeParams := interfaceDecl.TypeParameters
 					if len(typeParams.Nodes) > 0 {
-						typeParamList := make([]string, 0, len(typeParams.Nodes))
+						firstTypeParam := typeParams.Nodes[0].AsTypeParameter()
+						lastTypeParam := typeParams.Nodes[len(typeParams.Nodes)-1].AsTypeParameter()
+						propsType.Statement = fmt.Sprintf("<%s>", source[firstTypeParam.Pos():lastTypeParam.End()])
+
 						genericsList := make([]string, 0, len(typeParams.Nodes))
 						for _, param := range typeParams.Nodes {
 							typeParam := param.AsTypeParameter()
-							paramIdent := string(source[typeParam.Pos():typeParam.End()])
-
-							typeParamList = append(typeParamList, paramIdent)
 							genericsList = append(genericsList, typeParam.Name().AsIdentifier().Text)
 						}
-						propsType.Statement = fmt.Sprintf("<%s>", strings.Join(typeParamList, ", "))
 						propsType.Generics = fmt.Sprintf("<%s>", strings.Join(genericsList, ", "))
 					}
 				}
