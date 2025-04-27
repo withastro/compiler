@@ -20,31 +20,12 @@ func getTSXPrefix() string {
 	return "/* @jsxImportSource astro */\n\n"
 }
 
-// walk traverses the doc tree in pre-order, calling cb on each node.
-// If cb returns true, walk stops traversing
-func walk(doc *Node, cb func(*Node) bool) {
-	var f func(n *Node) bool
-	f = func(n *Node) bool {
-		if cb(n) {
-			return true
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if f(c) {
-				return true
-			}
-		}
-		return false
-	}
-
-	f(doc)
-}
-
 type TSXOptions struct {
 	IncludeScripts bool
 	IncludeStyles  bool
 }
 
-func PrintToTSX(sourcetext string, n *Node, opts TSXOptions, transformOpts transform.TransformOptions, h *handler.Handler) PrintResult {
+func PrintToTSX(sourcetext string, doc *Node, opts TSXOptions, transformOpts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
 		opts:       transformOpts,
@@ -52,16 +33,11 @@ func PrintToTSX(sourcetext string, n *Node, opts TSXOptions, transformOpts trans
 	}
 	p.print(getTSXPrefix())
 
-	// store a reference to the frontmatter node
-	walk(n, func(node *Node) bool {
-		if node.Type == FrontmatterNode {
-			p.fmNode = node
-			return true
-		}
-		return false
-	})
+	if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+		p.fmNode = doc.FirstChild
+	}
 
-	renderTsx(p, n, &opts)
+	renderTsx(p, doc, &opts)
 
 	return PrintResult{
 		Output:         p.output,
