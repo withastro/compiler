@@ -246,10 +246,6 @@ func TestHoistImport(t *testing.T) {
 }
 
 func TestEmptySuited(t *testing.T) {
-	// TODO: Collect `Props` type imports
-	// Props type imports can be any kind of import
-	// even dynamic maybe? Not sure about the dynamic ones
-	// TS snippet with multiple import and export styles
 	src := `
 		// ------------------------------------INCLUDED------------------------------------
     import foo from "./foo";

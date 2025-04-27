@@ -478,6 +478,7 @@ func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
 
 func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && (n.Component || n.CustomElement) {
+		match := matchNodeToImportStatement(doc, n)
 		for _, attr := range n.Attr {
 			if strings.HasPrefix(attr.Key, "client:") {
 				parts := strings.Split(attr.Key, ":")
@@ -495,7 +496,6 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 				if attr.Key == "client:only" {
 					doc.ClientOnlyComponentNodes = append([]*astro.Node{n}, doc.ClientOnlyComponentNodes...)
 
-					match := matchNodeToImportStatement(doc, n)
 					if match != nil {
 						doc.ClientOnlyComponents = append(doc.ClientOnlyComponents, &astro.HydratedComponentMetadata{
 							ExportName:   match.ExportName,
@@ -509,7 +509,6 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 				// prepend node to maintain authored order
 				doc.HydratedComponentNodes = append([]*astro.Node{n}, doc.HydratedComponentNodes...)
 
-				match := matchNodeToImportStatement(doc, n)
 				if match != nil {
 					doc.HydratedComponents = append(doc.HydratedComponents, &astro.HydratedComponentMetadata{
 						ExportName:   match.ExportName,
@@ -543,7 +542,6 @@ func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
 				}
 				n.Attr = append(n.Attr, hydrationAttr)
 
-				match := matchNodeToImportStatement(doc, n)
 				if match != nil {
 					doc.ServerComponents = append(doc.ServerComponents, &astro.HydratedComponentMetadata{
 						ExportName:   match.ExportName,
