@@ -157,14 +157,44 @@ type Props struct {
 	Generics  string
 }
 
-const DefaultPropType = "Record<string, any>"
+func (p *Props) populateInfo(typeParams *ast.NodeList, source []byte) {
+	if len(typeParams.Nodes) > 0 {
+		p.Statement, p.Generics = getPropsInfo(typeParams, source)
+	}
+}
+
+// applyFoundIdent sets the Ident
+// field to the default Props type name
+func (p *Props) applyFoundIdent() {
+	p.Ident = propSymbol
+}
+
+const (
+	AbsentPropType = "Record<string, any>"
+	propSymbol     = "Props"
+)
+
+func getPropsInfo(typeParams *ast.NodeList, source []byte) (statement, generics string) {
+	// Extract generics if present
+	firstTypeParam := typeParams.Nodes[0].AsTypeParameter()
+	lastTypeParam := typeParams.Nodes[len(typeParams.Nodes)-1].AsTypeParameter()
+	statement = fmt.Sprintf("<%s>", source[firstTypeParam.Pos():lastTypeParam.End()])
+
+	genericsList := make([]string, 0, len(typeParams.Nodes))
+	for _, param := range typeParams.Nodes {
+		typeParam := param.AsTypeParameter()
+		genericsList = append(genericsList, typeParam.Name().AsIdentifier().Text)
+	}
+	generics = fmt.Sprintf("<%s>", strings.Join(genericsList, ", "))
+	return
+}
 
 func GetPropsType(source []byte) Props {
 	// If source doesn't contain "Props"
 	// return default Props type
-	if !bytes.Contains(source, []byte("Props")) {
+	if !bytes.Contains(source, []byte(propSymbol)) {
 		return Props{
-			Ident: DefaultPropType,
+			Ident: AbsentPropType,
 		}
 	}
 
@@ -177,7 +207,7 @@ func GetPropsType(source []byte) Props {
 	rootNode := sf.AsNode()
 
 	var propsType Props
-	propsType.Ident = DefaultPropType
+	propsType.Ident = AbsentPropType
 
 	// Visitor function to find Props type
 	var visitor ast.Visitor
@@ -189,27 +219,12 @@ func GetPropsType(source []byte) Props {
 		// Check for interface declaration: interface Props {...}
 		if ast.IsInterfaceDeclaration(node) {
 			interfaceDecl := node.AsInterfaceDeclaration()
-			if interfaceDecl.Name() != nil && interfaceDecl.Name().AsIdentifier().Text == "Props" {
-				// start := node.Pos()
-				// end := node.End()
-				propsType.Ident = "Props"
-				// propsType.Statement = string(bytes.TrimSpace(source[start:end]))
+			if interfaceDecl.Name() != nil && interfaceDecl.Name().AsIdentifier().Text == propSymbol {
+				propsType.applyFoundIdent()
 
-				// Extract generics if present
 				if interfaceDecl.TypeParameters != nil {
 					typeParams := interfaceDecl.TypeParameters
-					if len(typeParams.Nodes) > 0 {
-						firstTypeParam := typeParams.Nodes[0].AsTypeParameter()
-						lastTypeParam := typeParams.Nodes[len(typeParams.Nodes)-1].AsTypeParameter()
-						propsType.Statement = fmt.Sprintf("<%s>", source[firstTypeParam.Pos():lastTypeParam.End()])
-
-						genericsList := make([]string, 0, len(typeParams.Nodes))
-						for _, param := range typeParams.Nodes {
-							typeParam := param.AsTypeParameter()
-							genericsList = append(genericsList, typeParam.Name().AsIdentifier().Text)
-						}
-						propsType.Generics = fmt.Sprintf("<%s>", strings.Join(genericsList, ", "))
-					}
+					propsType.populateInfo(typeParams, source)
 				}
 				return true
 			}
@@ -218,24 +233,12 @@ func GetPropsType(source []byte) Props {
 		// Check for type alias: type Props = {...}
 		if ast.IsTypeAliasDeclaration(node) {
 			typeAlias := node.AsTypeAliasDeclaration()
-			if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == "Props" {
-				propsType.Ident = "Props"
+			if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == propSymbol {
+				propsType.applyFoundIdent()
 
-				// Extract generics if present
 				if typeAlias.TypeParameters != nil {
 					typeParams := typeAlias.TypeParameters
-					if len(typeParams.Nodes) > 0 {
-						typeParamList := make([]string, 0, len(typeParams.Nodes))
-						genericsList := make([]string, 0, len(typeParams.Nodes))
-						for _, param := range typeParams.Nodes {
-							typeParam := param.AsTypeParameter()
-
-							typeParamList = append(typeParamList, typeParam.Text())
-							genericsList = append(genericsList, typeParam.Name().AsIdentifier().Text)
-						}
-						propsType.Statement = fmt.Sprintf("<%s>", strings.Join(typeParamList, ", "))
-						propsType.Generics = fmt.Sprintf("<%s>", strings.Join(genericsList, ", "))
-					}
+					propsType.populateInfo(typeParams, source)
 				}
 				return true
 			}
@@ -246,7 +249,7 @@ func GetPropsType(source []byte) Props {
 
 	rootNode.ForEachChild(visitor)
 
-	if propsType.Ident == DefaultPropType {
+	if propsType.Ident == AbsentPropType {
 		// now look for the import
 		imports := collectImportsExportsAndRemainingNodes(string(source)).Imports
 		for _, node := range imports {
@@ -257,8 +260,8 @@ func GetPropsType(source []byte) Props {
 				if importDecl.ImportClause != nil {
 					importClause := importDecl.ImportClause.AsImportClause()
 
-					if importClause.Name() != nil && importClause.Name().AsIdentifier().Text == "Props" {
-						propsType.Ident = "Props"
+					if importClause.Name() != nil && importClause.Name().AsIdentifier().Text == propSymbol {
+						propsType.applyFoundIdent()
 						break
 					}
 
@@ -267,8 +270,8 @@ func GetPropsType(source []byte) Props {
 							namedImports := importClause.NamedBindings.AsNamedImports()
 							for _, element := range namedImports.Elements.Nodes {
 								importSpecifier := element.AsImportSpecifier()
-								if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == "Props" {
-									propsType.Ident = "Props"
+								if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == propSymbol {
+									propsType.applyFoundIdent()
 									break
 								}
 							}
