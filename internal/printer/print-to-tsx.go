@@ -424,7 +424,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 
 		if hasGetStaticPaths {
 			paramsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>"
-			if propsIdent == js_scanner.AbsentPropType {
+			if propsIdent == js_scanner.FallbackPropsType {
 				propsIdent = "ASTRO__MergeUnion<ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>>"
 			}
 		}
@@ -438,7 +438,7 @@ type ASTRO__MergeUnion<T, K extends PropertyKey = T extends unknown ? keyof T : 
 type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;%s`, "\n")
 		}
 
-		if propsIdent != js_scanner.AbsentPropType {
+		if propsIdent != js_scanner.FallbackPropsType {
 			p.printf(`/**
  * Astro global available in all contexts in .astro files
  *

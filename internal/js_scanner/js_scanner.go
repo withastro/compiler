@@ -170,8 +170,8 @@ func (p *Props) applyFoundIdent() {
 }
 
 const (
-	AbsentPropType = "Record<string, any>"
-	propSymbol     = "Props"
+	FallbackPropsType = "Record<string, any>"
+	propSymbol        = "Props"
 )
 
 func getPropsInfo(typeParams *ast.NodeList, source []byte) (statement, generics string) {
@@ -194,7 +194,7 @@ func GetPropsType(source []byte) Props {
 	// return default Props type
 	if !bytes.Contains(source, []byte(propSymbol)) {
 		return Props{
-			Ident: AbsentPropType,
+			Ident: FallbackPropsType,
 		}
 	}
 
@@ -207,7 +207,6 @@ func GetPropsType(source []byte) Props {
 	rootNode := sf.AsNode()
 
 	var propsType Props
-	propsType.Ident = AbsentPropType
 
 	// Visitor function to find Props type
 	var visitor ast.Visitor
@@ -249,7 +248,9 @@ func GetPropsType(source []byte) Props {
 
 	rootNode.ForEachChild(visitor)
 
-	if propsType.Ident == AbsentPropType {
+	// look for Props type imports if we haven't
+	// found the Props type in the frontmatter yet
+	if propsType.Ident == "" {
 		// now look for the import
 		imports := collectImportsExportsAndRemainingNodes(string(source)).Imports
 		for _, node := range imports {
@@ -265,21 +266,24 @@ func GetPropsType(source []byte) Props {
 						break
 					}
 
-					if importClause.NamedBindings != nil {
-						if importClause.NamedBindings.Kind == ast.KindNamedImports {
-							namedImports := importClause.NamedBindings.AsNamedImports()
-							for _, element := range namedImports.Elements.Nodes {
-								importSpecifier := element.AsImportSpecifier()
-								if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == propSymbol {
-									propsType.applyFoundIdent()
-									break
-								}
+					if importClause.NamedBindings != nil && importClause.NamedBindings.Kind == ast.KindNamedImports {
+						namedImports := importClause.NamedBindings.AsNamedImports()
+						for _, element := range namedImports.Elements.Nodes {
+							importSpecifier := element.AsImportSpecifier()
+							if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == propSymbol {
+								propsType.applyFoundIdent()
+								break
 							}
 						}
 					}
 				}
 			}
 		}
+	}
+
+	// fallback to default Props type
+	if propsType.Ident == "" {
+		propsType.Ident = FallbackPropsType
 	}
 
 	return propsType
