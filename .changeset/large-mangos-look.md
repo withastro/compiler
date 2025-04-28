@@ -2,4 +2,4 @@
 "@astrojs/compiler": patch
 ---
 
-fix: correctly parse select elements containing HTML, preventing elements from being incorrectly nested
+Fixes a bug where the compiler couldn't correctly parse `select` elements, preventing elements from being incorrectly nested
