@@ -2129,7 +2129,7 @@ const meta = { title: 'My App' };
 			s := js_scanner.NewScanner(fmContent)
 			transform.Transform(doc, s, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 
-			result := PrintToJS(code, doc, 0, transform.TransformOptions{
+			result := PrintToJS(code, doc, s, 0, transform.TransformOptions{
 				Scope:                   "XXXX",
 				InternalURL:             "http://localhost:3000/",
 				Filename:                tt.filename,

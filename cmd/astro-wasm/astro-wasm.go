@@ -475,7 +475,7 @@ func Transform() any {
 				}
 
 				var value vert.Value
-				result := printer.PrintToJS(source, doc, len(css), transformOptions, h)
+				result := printer.PrintToJS(source, doc, s, len(css), transformOptions, h)
 				transformResult := &TransformResult{
 					CSS:                  css,
 					Scope:                transformOptions.Scope,

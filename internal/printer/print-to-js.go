@@ -14,6 +14,7 @@ import (
 	. "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/helpers"
+	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
 	"github.com/withastro/compiler/internal/transform"
@@ -44,14 +45,15 @@ import (
 // text node would become a tree containing <html>, <head> and <body> elements.
 // Another example is that the programmatic equivalent of "a<head>b</head>c"
 // becomes "<html><head><head/><body>abc</body></html>".
-func PrintToJS(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions, h *handler.Handler) PrintResult {
+func PrintToJS(sourcetext string, doc *Node, s *js_scanner.Js_scanner, cssLen int, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
 		opts:       opts,
+		scanner:    s,
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 		handler:    h,
 	}
-	return printToJs(p, n, cssLen, opts)
+	return printToJs(p, doc, cssLen, opts)
 }
 
 type RenderOptions struct {

@@ -6,6 +6,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	handler "github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/transform"
 )
 
