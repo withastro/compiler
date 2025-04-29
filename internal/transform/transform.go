@@ -37,7 +37,7 @@ type TransformOptions struct {
 	ExperimentalScriptOrder bool
 }
 
-func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
+func Transform(doc *astro.Node, s *js_scanner.Js_scanner, opts TransformOptions, h *handler.Handler) *astro.Node {
 	shouldScope := len(doc.Styles) > 0 && ScopeStyle(doc.Styles, opts)
 	definedVars := GetDefineVars(doc.Styles)
 	didAddDefinedVars := false
@@ -48,7 +48,7 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		WarnAboutMisplacedReload(n, h)
 		HintAboutImplicitInlineDirective(n, h)
 		ExtractScript(doc, n, &opts, h)
-		AddComponentProps(doc, n, &opts)
+		AddComponentProps(doc, s, n, &opts)
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
@@ -476,9 +476,9 @@ func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
 	}
 }
 
-func AddComponentProps(doc *astro.Node, n *astro.Node, opts *TransformOptions) {
+func AddComponentProps(doc *astro.Node, s *js_scanner.Js_scanner, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && (n.Component || n.CustomElement) {
-		match := matchNodeToImportStatement(doc, n)
+		match := matchNodeToImportStatement(doc, s, n)
 		for _, attr := range n.Attr {
 			if strings.HasPrefix(attr.Key, "client:") {
 				parts := strings.Split(attr.Key, ":")
@@ -574,10 +574,10 @@ type ImportMatch struct {
 	Specifier  string
 }
 
-func matchNodeToImportStatement(doc *astro.Node, n *astro.Node) *ImportMatch {
+func matchNodeToImportStatement(doc *astro.Node, s *js_scanner.Js_scanner, n *astro.Node) *ImportMatch {
 	var match *ImportMatch
 
-	eachImportStatement(doc, func(stmt js_scanner.ImportStatement) bool {
+	eachImportStatement(doc, s, func(stmt js_scanner.ImportStatement) bool {
 		for _, imported := range stmt.Imports {
 			exportName, isUsed := js_scanner.ExtractComponentExportName(n.Data, imported)
 			if isUsed {
@@ -605,15 +605,15 @@ func ResolveIdForMatch(id string, opts *TransformOptions) string {
 	}
 }
 
-func eachImportStatement(doc *astro.Node, cb func(stmt js_scanner.ImportStatement) bool) {
+func eachImportStatement(doc *astro.Node, s *js_scanner.Js_scanner, cb func(stmt js_scanner.ImportStatement) bool) {
 	if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
 		source := []byte(doc.FirstChild.FirstChild.Data)
-		loc, statement := js_scanner.NextImportStatement(source, 0)
+		loc, statement := s.NextImportStatement(source, 0)
 		for loc != -1 {
 			if !cb(statement) {
 				break
 			}
-			loc, statement = js_scanner.NextImportStatement(source, loc)
+			loc, statement = s.NextImportStatement(source, loc)
 		}
 	}
 }

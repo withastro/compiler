@@ -8,6 +8,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/js_scanner"
 )
 
 func transformScopingFixtures() []struct {
@@ -192,7 +193,12 @@ func TestTransformScoping(t *testing.T) {
 			}
 			transformOptions := TransformOptions{Scope: "xxxxxx", ScopedStyleStrategy: scopeStyle}
 			ExtractStyles(doc, &transformOptions)
-			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
+			var fmContent []byte
+			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+				fmContent = []byte(doc.FirstChild.FirstChild.Data)
+			}
+			s := js_scanner.NewScanner(fmContent)
+			Transform(doc, s, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()
 			if tt.want != got {
@@ -214,7 +220,12 @@ func FuzzTransformScoping(f *testing.F) {
 		}
 		transformOptions := TransformOptions{Scope: "xxxxxx"}
 		ExtractStyles(doc, &transformOptions)
-		Transform(doc, transformOptions, handler.NewHandler(source, "/test.astro"))
+		var fmContent []byte
+		if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+			fmContent = []byte(doc.FirstChild.FirstChild.Data)
+		}
+		s := js_scanner.NewScanner(fmContent)
+		Transform(doc, s, transformOptions, handler.NewHandler(source, "/test.astro"))
 		var b strings.Builder
 		astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 		got := b.String()
@@ -303,7 +314,12 @@ func TestFullTransform(t *testing.T) {
 			ExtractStyles(doc, &transformOptions)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
+			var fmContent []byte
+			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+				fmContent = []byte(doc.FirstChild.FirstChild.Data)
+			}
+			s := js_scanner.NewScanner(fmContent)
+			Transform(doc, s, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {
@@ -352,7 +368,12 @@ func TestTransformTrailingSpace(t *testing.T) {
 			ExtractStyles(doc, &transformOptions)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
+			var fmContent []byte
+			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+				fmContent = []byte(doc.FirstChild.FirstChild.Data)
+			}
+			s := js_scanner.NewScanner(fmContent)
+			Transform(doc, s, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc)
 			got := b.String()
 			if tt.want != got {
@@ -473,7 +494,12 @@ func TestCompactTransform(t *testing.T) {
 			ExtractStyles(doc, &transformOptions)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
 			doc.Styles = make([]*astro.Node, 0)
-			Transform(doc, transformOptions, &handler.Handler{})
+			var fmContent []byte
+			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+				fmContent = []byte(doc.FirstChild.FirstChild.Data)
+			}
+			s := js_scanner.NewScanner(fmContent)
+			Transform(doc, s, transformOptions, &handler.Handler{})
 			astro.PrintToSource(&b, doc)
 			got := strings.TrimSpace(b.String())
 			if tt.want != got {
@@ -514,7 +540,12 @@ func TestAnnotation(t *testing.T) {
 				t.Error(err)
 			}
 			h := handler.NewHandler(tt.source, "/src/pages/index.astro")
-			Transform(doc, TransformOptions{
+			var fmContent []byte
+			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+				fmContent = []byte(doc.FirstChild.FirstChild.Data)
+			}
+			s := js_scanner.NewScanner(fmContent)
+			Transform(doc, s, TransformOptions{
 				AnnotateSourceFile: true,
 				Filename:           "/src/pages/index.astro",
 				NormalizedFilename: "/src/pages/index.astro",
@@ -585,7 +616,12 @@ func TestClassAndClassListMerging(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
+			var fmContent []byte
+			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+				fmContent = []byte(doc.FirstChild.FirstChild.Data)
+			}
+			s := js_scanner.NewScanner(fmContent)
+			Transform(doc, s, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
 			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
 			got := b.String()
 			if tt.want != got {

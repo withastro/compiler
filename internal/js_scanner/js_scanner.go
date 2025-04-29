@@ -30,6 +30,26 @@ type CollectedImportsExportsAndRemainingNodes struct {
 	Remains []*ast.Node
 }
 
+type Js_scanner struct {
+	source  []byte
+	Imports []*ast.Node
+	Exports []*ast.Node
+	Remains []*ast.Node
+}
+
+func NewScanner(source []byte) *Js_scanner {
+	if len(bytes.TrimSpace(source)) == 0 {
+		return &Js_scanner{}
+	}
+	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
+	return &Js_scanner{
+		source:  source,
+		Imports: importsAndExports.Imports,
+		Exports: importsAndExports.Exports,
+		Remains: importsAndExports.Remains,
+	}
+}
+
 // TODO: work on the same AST for all the analysis work
 func collectImportsExportsAndRemainingNodes(source string) CollectedImportsExportsAndRemainingNodes {
 	// use an absolute‐style path for parser
@@ -74,26 +94,24 @@ func collectImportsExportsAndRemainingNodes(source string) CollectedImportsExpor
 	}
 }
 
-func HoistExports(source []byte) HoistedScripts {
+func (s *Js_scanner) HoistExports() HoistedScripts {
 	var body [][]byte
 	var bodyLocs []loc.Loc
 	var hoisted [][]byte
 	var hoistedLocs []loc.Loc
 
-	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
-
-	for _, node := range importsAndExports.Exports {
+	for _, node := range s.Exports {
 		start := node.Pos()
 		end := node.End()
-		exportBody := source[start:end]
+		exportBody := s.source[start:end]
 		hoisted = append(hoisted, exportBody)
 		hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
 	}
 
-	for _, node := range importsAndExports.Remains {
+	for _, node := range s.Remains {
 		start := node.Pos()
 		end := node.End()
-		body = append(body, source[start:end])
+		body = append(body, s.source[start:end])
 		bodyLocs = append(bodyLocs, loc.Loc{Start: start})
 	}
 
@@ -105,18 +123,18 @@ func HoistExports(source []byte) HoistedScripts {
 	}
 }
 
-func HoistImports(source []byte) HoistedScripts {
+func (s *Js_scanner) HoistImports() HoistedScripts {
 	var body [][]byte
 	var bodyLocs []loc.Loc
 	var hoisted [][]byte
 	var hoistedLocs []loc.Loc
 
-	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
+	importsAndExports := collectImportsExportsAndRemainingNodes(string(s.source))
 
 	for _, node := range importsAndExports.Imports {
 		start := node.Pos()
 		end := node.End()
-		importBody := source[start:end]
+		importBody := s.source[start:end]
 		hoisted = append(hoisted, importBody)
 		hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
 	}
@@ -124,7 +142,7 @@ func HoistImports(source []byte) HoistedScripts {
 	for _, node := range importsAndExports.Remains {
 		start := node.Pos()
 		end := node.End()
-		body = append(body, source[start:end])
+		body = append(body, s.source[start:end])
 		bodyLocs = append(bodyLocs, loc.Loc{Start: start})
 	}
 
@@ -136,13 +154,13 @@ func HoistImports(source []byte) HoistedScripts {
 	}
 }
 
-func HasGetStaticPaths(source []byte) bool {
+func (s *Js_scanner) HasGetStaticPaths() bool {
 	ident := []byte("getStaticPaths")
-	if !bytes.Contains(source, ident) {
+	if !bytes.Contains(s.source, ident) {
 		return false
 	}
 
-	exports := HoistExports(source)
+	exports := s.HoistExports()
 	for _, statement := range exports.Hoisted {
 		if bytes.Contains(statement, ident) {
 			return true
@@ -189,10 +207,10 @@ func getPropsInfo(typeParams *ast.NodeList, source []byte) (statement, generics 
 	return
 }
 
-func GetPropsType(source []byte) Props {
+func (s *Js_scanner) GetPropsType() Props {
 	// If source doesn't contain "Props"
 	// return default Props type
-	if !bytes.Contains(source, []byte(propSymbol)) {
+	if !bytes.Contains(s.source, []byte(propSymbol)) {
 		return Props{
 			Ident: FallbackPropsType,
 		}
@@ -203,7 +221,7 @@ func GetPropsType(source []byte) Props {
 	path := tspath.Path(fileName)
 
 	// Parse with ESNext + full JSDoc mode
-	sf := parser.ParseSourceFile(fileName, path, string(source), core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
+	sf := parser.ParseSourceFile(fileName, path, string(s.source), core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
 	rootNode := sf.AsNode()
 
 	var propsType Props
@@ -223,7 +241,7 @@ func GetPropsType(source []byte) Props {
 
 				if interfaceDecl.TypeParameters != nil {
 					typeParams := interfaceDecl.TypeParameters
-					propsType.populateInfo(typeParams, source)
+					propsType.populateInfo(typeParams, s.source)
 				}
 				return true
 			}
@@ -237,7 +255,7 @@ func GetPropsType(source []byte) Props {
 
 				if typeAlias.TypeParameters != nil {
 					typeParams := typeAlias.TypeParameters
-					propsType.populateInfo(typeParams, source)
+					propsType.populateInfo(typeParams, s.source)
 				}
 				return true
 			}
@@ -252,7 +270,7 @@ func GetPropsType(source []byte) Props {
 	// found the Props type in the frontmatter yet
 	if propsType.Ident == "" {
 		// now look for the import
-		imports := collectImportsExportsAndRemainingNodes(string(source)).Imports
+		imports := collectImportsExportsAndRemainingNodes(string(s.source)).Imports
 		for _, node := range imports {
 			if ast.IsImportDeclaration(node) {
 				importDecl := node.AsImportDeclaration()
@@ -398,120 +416,119 @@ const (
 	ImportNamed
 )
 
-func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
-	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
+func (s *Js_scanner) NextImportStatement(source []byte, idx int) (int, ImportStatement) {
+	if len(s.Imports) == 0 || idx >= len(s.Imports) {
+		return -1, ImportStatement{}
+	}
 
-	for _, node := range importsAndExports.Imports {
-		start := node.Pos()
-		end := node.End()
-		if start >= pos {
-			var imports []Import
-			var assertions string
-			var importClause *ast.ImportClause
-			importDeclaration := node.AsImportDeclaration()
-			importClauseNode := importDeclaration.ImportClause
-			moduleSpecifier := importDeclaration.ModuleSpecifier.AsStringLiteral()
-			moduleSpecifierString := moduleSpecifier.Text
+	node := s.Imports[idx]
+	start := node.Pos()
+	end := node.End()
 
-			if importClauseNode == nil {
-				return end, ImportStatement{
-					Span:      loc.Span{Start: start, End: end},
-					Value:     source[start:end],
-					Specifier: moduleSpecifierString,
-				}
-			}
+	var imports []Import
+	var assertions string
+	var importClause *ast.ImportClause
 
-			// Process assertions only if importAttributes is not nil
-			if importAttributes := importDeclaration.Attributes; importAttributes != nil {
-				attrNode := importAttributes.AsImportAttributes()
-				// calculate the length of the leading strip
-				// to turn "assert { type: 'json' }" into " assert { type: 'json' }"
-				leadingStripLength := (func() int {
-					if attrNode.Token == ast.KindWithKeyword {
-						return len("with")
-					}
-					return len("assert")
-				})()
-				assertionStart := attrNode.Pos() + leadingStripLength + 1
-				assertions = string(source[assertionStart:attrNode.End()])
-			}
+	importDeclaration := node.AsImportDeclaration()
+	importClauseNode := importDeclaration.ImportClause
+	moduleSpecifier := importDeclaration.ModuleSpecifier.AsStringLiteral()
+	moduleSpecifierString := moduleSpecifier.Text
 
-			importClause = importClauseNode.AsImportClause()
-			importName := importClause.Name()
-			importNamedBindings := importClause.NamedBindings
-
-			if importName != nil {
-				localName := importName.AsIdentifier().Text
-				imports = append(imports, Import{
-					ExportName: "default",
-					LocalName:  localName,
-				})
-			}
-
-			if importNamedBindings == nil {
-				return end, ImportStatement{
-					Span:       loc.Span{Start: start, End: end},
-					Value:      source[start:end],
-					IsType:     importClause.IsTypeOnly,
-					Imports:    imports,
-					Specifier:  moduleSpecifierString,
-					Assertions: assertions,
-				}
-			}
-
-			switch importNamedBindings.Kind {
-			case ast.KindNamedImports:
-				importSpecifierList := importNamedBindings.AsNamedImports().Elements
-				for _, c := range importSpecifierList.Nodes {
-					importSpecifier := c.AsImportSpecifier()
-					var exportName string
-					var localName string
-
-					name := importSpecifier.Name()
-					propertyName := importSpecifier.PropertyName
-
-					if name != nil {
-						localName = name.AsIdentifier().Text
-					}
-
-					if propertyName != nil {
-						exportName = propertyName.AsIdentifier().Text
-					} else if name != nil {
-						exportName = localName
-					}
-
-					imports = append(imports, Import{
-						ExportName: exportName,
-						LocalName:  localName,
-					})
-				}
-			case ast.KindNamespaceImport:
-				namespaceImport := importNamedBindings.AsNamespaceImport()
-				var localName string
-
-				name := namespaceImport.Name()
-
-				if name != nil {
-					localName = name.AsIdentifier().Text
-				}
-				imports = append(imports, Import{
-					ExportName: "*",
-					LocalName:  localName,
-				})
-			}
-
-			return end, ImportStatement{
-				Span:       loc.Span{Start: start, End: end},
-				Value:      source[start:end],
-				IsType:     importClause.IsTypeOnly,
-				Imports:    imports,
-				Specifier:  moduleSpecifierString,
-				Assertions: assertions,
-			}
+	if importClauseNode == nil {
+		return end, ImportStatement{
+			Span:      loc.Span{Start: start, End: end},
+			Value:     source[start:end],
+			Specifier: moduleSpecifierString,
 		}
 	}
 
-	return -1, ImportStatement{}
+	// Process assertions only if importAttributes is not nil
+	if importAttributes := importDeclaration.Attributes; importAttributes != nil {
+		attrNode := importAttributes.AsImportAttributes()
+		// calculate the length of the leading strip
+		// to turn "assert { type: 'json' }" into " assert { type: 'json' }"
+		leadingStripLength := (func() int {
+			if attrNode.Token == ast.KindWithKeyword {
+				return len("with")
+			}
+			return len("assert")
+		})()
+		assertionStart := attrNode.Pos() + leadingStripLength + 1
+		assertions = string(source[assertionStart:attrNode.End()])
+	}
+
+	importClause = importClauseNode.AsImportClause()
+	importName := importClause.Name()
+	importNamedBindings := importClause.NamedBindings
+
+	if importName != nil {
+		localName := importName.AsIdentifier().Text
+		imports = append(imports, Import{
+			ExportName: "default",
+			LocalName:  localName,
+		})
+	}
+
+	if importNamedBindings == nil {
+		return end, ImportStatement{
+			Span:       loc.Span{Start: start, End: end},
+			Value:      source[start:end],
+			IsType:     importClause.IsTypeOnly,
+			Imports:    imports,
+			Specifier:  moduleSpecifierString,
+			Assertions: assertions,
+		}
+	}
+
+	switch importNamedBindings.Kind {
+	case ast.KindNamedImports:
+		importSpecifierList := importNamedBindings.AsNamedImports().Elements
+		for _, c := range importSpecifierList.Nodes {
+			importSpecifier := c.AsImportSpecifier()
+			var exportName string
+			var localName string
+
+			name := importSpecifier.Name()
+			propertyName := importSpecifier.PropertyName
+
+			if name != nil {
+				localName = name.AsIdentifier().Text
+			}
+
+			if propertyName != nil {
+				exportName = propertyName.AsIdentifier().Text
+			} else if name != nil {
+				exportName = localName
+			}
+
+			imports = append(imports, Import{
+				ExportName: exportName,
+				LocalName:  localName,
+			})
+		}
+	case ast.KindNamespaceImport:
+		namespaceImport := importNamedBindings.AsNamespaceImport()
+		var localName string
+
+		name := namespaceImport.Name()
+
+		if name != nil {
+			localName = name.AsIdentifier().Text
+		}
+		imports = append(imports, Import{
+			ExportName: "*",
+			LocalName:  localName,
+		})
+	}
+
+	return end, ImportStatement{
+		Span:       loc.Span{Start: start, End: end},
+		Value:      source[start:end],
+		IsType:     importClause.IsTypeOnly,
+		Imports:    imports,
+		Specifier:  moduleSpecifierString,
+		Assertions: assertions,
+	}
 }
 
 /*

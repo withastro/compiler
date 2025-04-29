@@ -28,7 +28,12 @@ Faucibus 🎈🐋🔄📇🐡💐 🎾🎩🔹🔣🎍🐸🌳 vestibulum, 🐢�
 			h.AppendError(err)
 		}
 
-		PrintToTSX(source, doc, TSXOptions{
+		var fmContent []byte
+		if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+			fmContent = []byte(doc.FirstChild.FirstChild.Data)
+		}
+		s := js_scanner.NewScanner(fmContent)
+		PrintToTSX(source, doc, s, TSXOptions{
 			IncludeScripts: false,
 			IncludeStyles:  false,
 		}, transform.TransformOptions{

@@ -12,6 +12,7 @@ import (
 	"github.com/norunners/vert"
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/printer"
 	"github.com/withastro/compiler/internal/sourcemap"
@@ -263,8 +264,14 @@ func Parse() any {
 		}
 		result := printer.PrintToJSON(source, doc, parseOptions)
 
+		var fmContent []byte
+		if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+			fmContent = []byte(doc.FirstChild.FirstChild.Data)
+		}
+		s := js_scanner.NewScanner(fmContent)
+
 		// AFTER printing, exec transformations to pickup any errors/warnings
-		transform.Transform(doc, transformOptions, h)
+		transform.Transform(doc, s, transformOptions, h)
 
 		return vert.ValueOf(ParseResult{
 			AST:         string(result.Output),
@@ -288,10 +295,15 @@ func ConvertToTSX() any {
 
 		tsxOptions := makeTSXOptions(js.Value(args[1]))
 
-		result := printer.PrintToTSX(source, doc, tsxOptions, transformOptions, h)
+		var fmContent []byte
+		if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+			fmContent = []byte(doc.FirstChild.FirstChild.Data)
+		}
+		s := js_scanner.NewScanner(fmContent)
+		result := printer.PrintToTSX(source, doc, s, tsxOptions, transformOptions, h)
 
 		// AFTER printing, exec transformations to pickup any errors/warnings
-		transform.Transform(doc, transformOptions, h)
+		transform.Transform(doc, s, transformOptions, h)
 
 		sourcemapString := createSourceMapString(source, result, transformOptions)
 		code := string(result.Output)
@@ -359,8 +371,14 @@ func Transform() any {
 				// Wait for all the style goroutines to finish
 				wg.Wait()
 
+				var fmContent []byte
+				if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+					fmContent = []byte(doc.FirstChild.FirstChild.Data)
+				}
+				s := js_scanner.NewScanner(fmContent)
+
 				// Perform CSS and element scoping as needed
-				transform.Transform(doc, transformOptions, h)
+				transform.Transform(doc, s, transformOptions, h)
 
 				css := []string{}
 				scripts := []HoistedScript{}

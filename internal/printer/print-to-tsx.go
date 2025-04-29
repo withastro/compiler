@@ -25,17 +25,14 @@ type TSXOptions struct {
 	IncludeStyles  bool
 }
 
-func PrintToTSX(sourcetext string, doc *Node, opts TSXOptions, transformOpts transform.TransformOptions, h *handler.Handler) PrintResult {
+func PrintToTSX(sourcetext string, doc *Node, s *js_scanner.Js_scanner, opts TSXOptions, transformOpts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
 		sourcetext: sourcetext,
+		scanner:    s,
 		opts:       transformOpts,
 		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
 	}
 	p.print(getTSXPrefix())
-
-	if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
-		p.fmNode = doc.FirstChild
-	}
 
 	renderTsx(p, doc, &opts)
 
@@ -386,13 +383,8 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 			p.print("</Fragment>\n")
 		}
 
-		var fmContent []byte
-		if p.fmNode != nil && p.fmNode.FirstChild != nil {
-			fmContent = []byte(p.fmNode.FirstChild.Data)
-		}
-
-		props := js_scanner.GetPropsType(fmContent)
-		hasGetStaticPaths := js_scanner.HasGetStaticPaths(fmContent)
+		props := p.scanner.GetPropsType()
+		hasGetStaticPaths := p.scanner.HasGetStaticPaths()
 
 		componentName := getTSXComponentName(p.opts.Filename)
 		propsIdent := props.Ident

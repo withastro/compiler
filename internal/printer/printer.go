@@ -29,6 +29,7 @@ type printer struct {
 	output             []byte
 	builder            sourcemap.ChunkBuilder
 	handler            *handler.Handler
+	scanner            *js_scanner.Js_scanner
 	fmNode             *astro.Node
 	hasFuncPrelude     bool
 	hasInternalImports bool
@@ -610,8 +611,8 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	copy(unfoundconly, doc.ClientOnlyComponentNodes)
 
 	modCount := 1
-	l, statement := js_scanner.NextImportStatement(source, 0)
-	for l != -1 {
+	idx, statement := p.scanner.NextImportStatement(source, 0)
+	for idx != -1 {
 		isClientOnlyImport := false
 	component_loop:
 		for _, n := range doc.ClientOnlyComponentNodes {
@@ -666,7 +667,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 				modCount++
 			}
 		}
-		l, statement = js_scanner.NextImportStatement(source, l)
+		idx, statement = p.scanner.NextImportStatement(source, idx)
 	}
 	if len(unfoundconly) > 0 {
 		for _, n := range unfoundconly {

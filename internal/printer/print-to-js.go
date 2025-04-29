@@ -14,7 +14,6 @@ import (
 	. "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
 	"github.com/withastro/compiler/internal/helpers"
-	"github.com/withastro/compiler/internal/js_scanner"
 	"github.com/withastro/compiler/internal/loc"
 	"github.com/withastro/compiler/internal/sourcemap"
 	"github.com/withastro/compiler/internal/transform"
@@ -158,7 +157,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		} else if c := n.FirstChild; c.Type == TextNode {
 			p.printInternalImports(p.opts.InternalURL, &opts)
 
-			exportsPlusPlus := js_scanner.HoistExports([]byte(c.Data))
+			exportsPlusPlus := p.scanner.HoistExports()
 
 			exports := exportsPlusPlus.Hoisted
 			exportLocs := exportsPlusPlus.HoistedLocs
@@ -170,7 +169,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			if len(n.Loc) > 0 {
 				start = c.Loc[0].Start
 			}
-			imports := js_scanner.HoistImports([]byte(c.Data))
+			imports := p.scanner.HoistImports()
 			for i, hoisted := range imports.Hoisted {
 				if len(bytes.TrimSpace(hoisted)) == 0 {
 					continue

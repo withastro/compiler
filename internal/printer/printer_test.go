@@ -7,6 +7,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"github.com/withastro/compiler/internal/js_scanner"
 	types "github.com/withastro/compiler/internal/t"
 	"github.com/withastro/compiler/internal/test_utils"
 	"github.com/withastro/compiler/internal/transform"
@@ -2121,7 +2122,12 @@ const meta = { title: 'My App' };
 				ExperimentalScriptOrder: true,
 			}
 			transform.ExtractStyles(doc, &transformOptions)
-			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
+			var fmContent []byte
+			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
+				fmContent = []byte(doc.FirstChild.FirstChild.Data)
+			}
+			s := js_scanner.NewScanner(fmContent)
+			transform.Transform(doc, s, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 
 			result := PrintToJS(code, doc, 0, transform.TransformOptions{
 				Scope:                   "XXXX",
