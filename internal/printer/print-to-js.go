@@ -191,7 +191,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 
 			// 1. Component imports, if any exist.
 			p.addNilSourceMapping()
-			p.printComponentMetadata(n.Parent, opts.opts, []byte(p.sourcetext))
+			p.printComponentMetadata(n.Parent, opts.opts, true)
 
 			// 2. Top-level Astro global.
 			if printAstroGlobal {
@@ -245,7 +245,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		}
 		return
 	} else if !p.hasFuncPrelude {
-		p.printComponentMetadata(n.Parent, opts.opts, []byte{})
+		p.printComponentMetadata(n.Parent, opts.opts, false)
 		if printAstroGlobal {
 			p.printTopLevelAstro(opts.opts)
 		}

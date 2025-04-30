@@ -129,9 +129,7 @@ func (s *Js_scanner) HoistImports() HoistedScripts {
 	var hoisted [][]byte
 	var hoistedLocs []loc.Loc
 
-	importsAndExports := collectImportsExportsAndRemainingNodes(string(s.source))
-
-	for _, node := range importsAndExports.Imports {
+	for _, node := range s.Imports {
 		start := node.Pos()
 		end := node.End()
 		importBody := s.source[start:end]
@@ -139,7 +137,7 @@ func (s *Js_scanner) HoistImports() HoistedScripts {
 		hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
 	}
 
-	for _, node := range importsAndExports.Remains {
+	for _, node := range s.Remains {
 		start := node.Pos()
 		end := node.End()
 		body = append(body, s.source[start:end])
@@ -270,8 +268,7 @@ func (s *Js_scanner) GetPropsType() Props {
 	// found the Props type in the frontmatter yet
 	if propsType.Ident == "" {
 		// now look for the import
-		imports := collectImportsExportsAndRemainingNodes(string(s.source)).Imports
-		for _, node := range imports {
+		for _, node := range s.Imports {
 			if ast.IsImportDeclaration(node) {
 				importDecl := node.AsImportDeclaration()
 				// if there is a default import or named import, named `Props`
@@ -416,12 +413,15 @@ const (
 	ImportNamed
 )
 
-func (s *Js_scanner) NextImportStatement(source []byte, idx int) (int, ImportStatement) {
-	if len(s.Imports) == 0 || idx >= len(s.Imports) {
+func (s *Js_scanner) NextImportStatement(idx int) (int, ImportStatement) {
+	if len(s.Imports) == 0 || idx >= len(s.Imports) || idx < 0 {
 		return -1, ImportStatement{}
 	}
 
 	node := s.Imports[idx]
+	// increment the index to the next import
+	idx++
+
 	start := node.Pos()
 	end := node.End()
 
@@ -435,9 +435,9 @@ func (s *Js_scanner) NextImportStatement(source []byte, idx int) (int, ImportSta
 	moduleSpecifierString := moduleSpecifier.Text
 
 	if importClauseNode == nil {
-		return end, ImportStatement{
+		return idx, ImportStatement{
 			Span:      loc.Span{Start: start, End: end},
-			Value:     source[start:end],
+			Value:     s.source[start:end],
 			Specifier: moduleSpecifierString,
 		}
 	}
@@ -454,7 +454,7 @@ func (s *Js_scanner) NextImportStatement(source []byte, idx int) (int, ImportSta
 			return len("assert")
 		})()
 		assertionStart := attrNode.Pos() + leadingStripLength + 1
-		assertions = string(source[assertionStart:attrNode.End()])
+		assertions = string(s.source[assertionStart:attrNode.End()])
 	}
 
 	importClause = importClauseNode.AsImportClause()
@@ -470,9 +470,9 @@ func (s *Js_scanner) NextImportStatement(source []byte, idx int) (int, ImportSta
 	}
 
 	if importNamedBindings == nil {
-		return end, ImportStatement{
+		return idx, ImportStatement{
 			Span:       loc.Span{Start: start, End: end},
-			Value:      source[start:end],
+			Value:      s.source[start:end],
 			IsType:     importClause.IsTypeOnly,
 			Imports:    imports,
 			Specifier:  moduleSpecifierString,
@@ -521,9 +521,9 @@ func (s *Js_scanner) NextImportStatement(source []byte, idx int) (int, ImportSta
 		})
 	}
 
-	return end, ImportStatement{
+	return idx, ImportStatement{
 		Span:       loc.Span{Start: start, End: end},
-		Value:      source[start:end],
+		Value:      s.source[start:end],
 		IsType:     importClause.IsTypeOnly,
 		Imports:    imports,
 		Specifier:  moduleSpecifierString,

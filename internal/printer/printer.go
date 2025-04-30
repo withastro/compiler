@@ -603,15 +603,23 @@ func maybeConvertTransition(n *astro.Node) {
 	}
 }
 
-func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, source []byte) {
+func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.TransformOptions, scanImport bool) {
 	var specs []string
 	var asrts []string
 	var conlyspecs []string
+	var idx int
+	var statement js_scanner.ImportStatement
+
 	unfoundconly := make([]*astro.Node, len(doc.ClientOnlyComponentNodes))
 	copy(unfoundconly, doc.ClientOnlyComponentNodes)
 
 	modCount := 1
-	idx, statement := p.scanner.NextImportStatement(source, 0)
+	if scanImport {
+		idx, statement = p.scanner.NextImportStatement(0)
+	} else {
+		idx, statement = p.scanner.NextImportStatement(-1)
+	}
+
 	for idx != -1 {
 		isClientOnlyImport := false
 	component_loop:
@@ -667,7 +675,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 				modCount++
 			}
 		}
-		idx, statement = p.scanner.NextImportStatement(source, idx)
+		idx, statement = p.scanner.NextImportStatement(idx)
 	}
 	if len(unfoundconly) > 0 {
 		for _, n := range unfoundconly {

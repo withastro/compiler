@@ -478,7 +478,7 @@ func HintAboutImplicitInlineDirective(n *astro.Node, h *handler.Handler) {
 
 func AddComponentProps(doc *astro.Node, s *js_scanner.Js_scanner, n *astro.Node, opts *TransformOptions) {
 	if n.Type == astro.ElementNode && (n.Component || n.CustomElement) {
-		match := matchNodeToImportStatement(doc, s, n)
+		match := matchNodeToImportStatement(s, n)
 		for _, attr := range n.Attr {
 			if strings.HasPrefix(attr.Key, "client:") {
 				parts := strings.Split(attr.Key, ":")
@@ -574,10 +574,10 @@ type ImportMatch struct {
 	Specifier  string
 }
 
-func matchNodeToImportStatement(doc *astro.Node, s *js_scanner.Js_scanner, n *astro.Node) *ImportMatch {
+func matchNodeToImportStatement(s *js_scanner.Js_scanner, n *astro.Node) *ImportMatch {
 	var match *ImportMatch
 
-	eachImportStatement(doc, s, func(stmt js_scanner.ImportStatement) bool {
+	eachImportStatement(s, func(stmt js_scanner.ImportStatement) bool {
 		for _, imported := range stmt.Imports {
 			exportName, isUsed := js_scanner.ExtractComponentExportName(n.Data, imported)
 			if isUsed {
@@ -605,16 +605,13 @@ func ResolveIdForMatch(id string, opts *TransformOptions) string {
 	}
 }
 
-func eachImportStatement(doc *astro.Node, s *js_scanner.Js_scanner, cb func(stmt js_scanner.ImportStatement) bool) {
-	if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
-		source := []byte(doc.FirstChild.FirstChild.Data)
-		loc, statement := s.NextImportStatement(source, 0)
-		for loc != -1 {
-			if !cb(statement) {
-				break
-			}
-			loc, statement = s.NextImportStatement(source, loc)
+func eachImportStatement(s *js_scanner.Js_scanner, cb func(stmt js_scanner.ImportStatement) bool) {
+	loc, statement := s.NextImportStatement(0)
+	for loc != -1 {
+		if !cb(statement) {
+			break
 		}
+		loc, statement = s.NextImportStatement(loc)
 	}
 }
 
