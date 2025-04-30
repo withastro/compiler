@@ -90,11 +90,7 @@ func TestPrinterCSS(t *testing.T) {
 			hash := astro.HashString(code)
 			opts := transform.TransformOptions{Scope: hash, ScopedStyleStrategy: scopedStyleStrategy, ExperimentalScriptOrder: true}
 			transform.ExtractStyles(doc, &opts)
-			var fmContent []byte
-			if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
-				fmContent = []byte(doc.FirstChild.FirstChild.Data)
-			}
-			s := js_scanner.NewScanner(fmContent)
+			s := js_scanner.NewScanner(astro.GetFrontmatterContent(doc))
 			transform.Transform(doc, s, opts, handler.NewHandler(code, "/test.astro")) // note: we want to test Transform in context here, but more advanced cases could be tested separately
 			result := PrintCSS(code, doc, transform.TransformOptions{
 				Scope:       "astro-XXXX",

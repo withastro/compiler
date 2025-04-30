@@ -264,11 +264,7 @@ func Parse() any {
 		}
 		result := printer.PrintToJSON(source, doc, parseOptions)
 
-		var fmContent []byte
-		if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
-			fmContent = []byte(doc.FirstChild.FirstChild.Data)
-		}
-		s := js_scanner.NewScanner(fmContent)
+		s := js_scanner.NewScanner(astro.GetFrontmatterContent(doc))
 
 		// AFTER printing, exec transformations to pickup any errors/warnings
 		transform.Transform(doc, s, transformOptions, h)
@@ -295,11 +291,7 @@ func ConvertToTSX() any {
 
 		tsxOptions := makeTSXOptions(js.Value(args[1]))
 
-		var fmContent []byte
-		if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
-			fmContent = []byte(doc.FirstChild.FirstChild.Data)
-		}
-		s := js_scanner.NewScanner(fmContent)
+		s := js_scanner.NewScanner(astro.GetFrontmatterContent(doc))
 		result := printer.PrintToTSX(source, doc, s, tsxOptions, transformOptions, h)
 
 		// AFTER printing, exec transformations to pickup any errors/warnings
@@ -371,11 +363,7 @@ func Transform() any {
 				// Wait for all the style goroutines to finish
 				wg.Wait()
 
-				var fmContent []byte
-				if doc.FirstChild.Type == astro.FrontmatterNode && doc.FirstChild.FirstChild != nil {
-					fmContent = []byte(doc.FirstChild.FirstChild.Data)
-				}
-				s := js_scanner.NewScanner(fmContent)
+				s := js_scanner.NewScanner(astro.GetFrontmatterContent(doc))
 
 				// Perform CSS and element scoping as needed
 				transform.Transform(doc, s, transformOptions, h)

@@ -111,6 +111,20 @@ type Node struct {
 	Loc       []loc.Loc
 }
 
+func GetFrontmatterContent(doc *Node) []byte {
+	if doc.Type != DocumentNode {
+		// we should panic here, because we should never be
+		// calling this on a non-document node
+		panic("html: GetFrontmatterContent called for a non-document Node")
+	}
+
+	if doc.FirstChild.Type == FrontmatterNode && doc.FirstChild.FirstChild != nil {
+		return []byte(doc.FirstChild.FirstChild.Data)
+	}
+
+	return nil
+}
+
 // InsertBefore inserts newChild as a child of n, immediately before oldChild
 // in the sequence of n's children. oldChild may be nil, in which case newChild
 // is appended to the end of n's children.
