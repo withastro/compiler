@@ -27,6 +27,10 @@ test('component metadata added', () => {
 	assert.equal(result.serverComponents.length, 2);
 });
 
+test('component should contain head propagation', () => {
+	assert.equal(result.propagation, true);
+});
+
 test('path resolved to the filename', () => {
 	const m = result.serverComponents[0];
 	assert.ok(m.specifier !== m.resolvedPath);
