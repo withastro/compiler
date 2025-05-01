@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.12.0
+
+### Minor Changes
+
+- e428ae0: Add head propagation metadata to server islands
+
 ## 2.11.0
 
 ### Minor Changes
