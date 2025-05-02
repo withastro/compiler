@@ -384,7 +384,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 		}
 
 		props := p.scanner.GetPropsType()
-		hasGetStaticPaths := p.scanner.HasGetStaticPaths()
+		hasGetStaticPaths := p.scanner.HasGetStaticPaths
 
 		componentName := getTSXComponentName(p.opts.Filename)
 		propsIdent := props.Ident

@@ -1,5 +1,9 @@
 GO_FLAGS += "-ldflags=-s -w"
 
+# Uncomment for debugging
+# compiler optimizations
+# GO_FLAGS += "-gcflags=-m"
+
 # Avoid embedding the build path in the executable for more reproducible builds
 GO_FLAGS += -trimpath
 
