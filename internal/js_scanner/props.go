@@ -25,10 +25,6 @@ func (p *Props) applyFoundIdent() {
 	p.Ident = propSymbol
 }
 
-func (p *Props) setDefaultProps() {
-	p.Ident = propSymbol
-}
-
 const (
 	FallbackPropsType = "Record<string, any>"
 	propSymbol        = "Props"
@@ -49,12 +45,9 @@ func getPropsInfo(typeParams *ast.NodeList, source []byte) (statement, generics 
 	return
 }
 
-func isSetProps(p *Props) bool {
-	return p.Ident == ""
-}
-
-// Visitor function to find Props type
-func localPropsVisitor(s *Js_scanner, node *ast.Node) bool {
+// Visitor function to look for a
+// Props type definition
+func propDefVisitor(s *Js_scanner, node *ast.Node) bool {
 	if node == nil {
 		return true
 	}
@@ -116,6 +109,6 @@ func importPropsVisitor(s *Js_scanner, node *ast.ImportDeclaration) bool {
 	return false
 }
 
-func looseHasPropsType(source string) bool {
-	return strings.Contains(source, propSymbol)
+func (p *Props) hasIdent() bool {
+	return p.Ident != ""
 }
