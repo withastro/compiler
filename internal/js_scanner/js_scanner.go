@@ -17,41 +17,73 @@ import (
 	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/tspath"
 )
 
-type HoistedScripts struct {
-	Hoisted     [][]byte
-	HoistedLocs []loc.Loc
-	Body        [][]byte
-	BodyLocs    []loc.Loc
+// a reusable container
+type Segments struct {
+	Data [][]byte  // the raw byte‐chunks
+	Locs []loc.Loc // their corresponding locations
 }
 
-type CollectedImportsExportsAndRemainingNodes struct {
-	Imports []*ast.Node
-	Exports []*ast.Node
-	Remains []*ast.Node
-}
+type (
+	BodiesInfo     = Segments
+	HoistedScripts = Segments
+)
 
 type Js_scanner struct {
-	source  []byte
-	Imports []*ast.Node
-	Exports []*ast.Node
-	Remains []*ast.Node
+	source      []byte
+	Imports     []*ast.Node
+	ExportsInfo *HoistedScripts
+	ImportsInfo *HoistedScripts
+	Bodies      *BodiesInfo
 }
 
 func NewScanner(source []byte) *Js_scanner {
+	s := &Js_scanner{
+		source:      source,
+		ImportsInfo: &HoistedScripts{},
+		ExportsInfo: &HoistedScripts{},
+		Bodies:      &BodiesInfo{},
+	}
 	if len(bytes.TrimSpace(source)) == 0 {
-		return &Js_scanner{}
+		return s
 	}
-	importsAndExports := collectImportsExportsAndRemainingNodes(string(source))
-	return &Js_scanner{
-		source:  source,
-		Imports: importsAndExports.Imports,
-		Exports: importsAndExports.Exports,
-		Remains: importsAndExports.Remains,
-	}
+
+	s.scan()
+	return s
+}
+
+func (s *Js_scanner) addHoistedImportStatement(node *ast.Node) {
+	s.Imports = append(s.Imports, node)
+}
+
+func (s *Js_scanner) addHoistedImport(start int, end int) {
+	importBody := s.source[start:end]
+	s.ImportsInfo.Data = append(s.ImportsInfo.Data, importBody)
+	s.ImportsInfo.Locs = append(s.ImportsInfo.Locs, loc.Loc{Start: start})
+}
+
+func (s *Js_scanner) addHoistedExport(start int, end int) {
+	exportBody := s.source[start:end]
+	s.ExportsInfo.Data = append(s.ExportsInfo.Data, exportBody)
+	s.ExportsInfo.Locs = append(s.ExportsInfo.Locs, loc.Loc{Start: start})
+}
+
+func (s *Js_scanner) addBody(start int, end int) {
+	body := s.source[start:end]
+	s.Bodies.Data = append(s.Bodies.Data, body)
+	s.Bodies.Locs = append(s.Bodies.Locs, loc.Loc{Start: start})
 }
 
 // TODO: work on the same AST for all the analysis work
-func collectImportsExportsAndRemainingNodes(source string) CollectedImportsExportsAndRemainingNodes {
+func (s *Js_scanner) scan() {
+	source := string(s.source)
+	looseHasImport := strings.Contains(source, "import")
+	looseHasExport := strings.Contains(source, "export")
+
+	if !looseHasImport && !looseHasExport {
+		s.addBody(0, len(source))
+		return
+	}
+
 	// use an absolute‐style path for parser
 	fileName := "/astro-frontmatter.ts"
 
@@ -61,95 +93,29 @@ func collectImportsExportsAndRemainingNodes(source string) CollectedImportsExpor
 	sf := parser.ParseSourceFile(fileName, path, source, core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
 	rootNode := sf.AsNode()
 
-	var imports []*ast.Node
-	var exports []*ast.Node
-	var remains []*ast.Node
-
 	// only iterate immediate children (top‑level statements)
-	var visitor ast.Visitor
-	visitor = func(child *ast.Node) bool {
+	var visitor ast.Visitor = func(child *ast.Node) bool {
 		if child == nil {
 			return true
 		}
 
+		isImport := looseHasImport && ast.IsImportDeclaration(child) && child.AsImportDeclaration().ModuleSpecifier != nil
+		isExport := looseHasExport && (ast.IsExportDeclaration(child) || ast.HasSyntacticModifier(child, ast.ModifierFlagsExport))
+
 		switch {
-		case ast.IsImportDeclaration(child) && child.AsImportDeclaration().ModuleSpecifier != nil:
-			imports = append(imports, child)
-		case ast.IsExportDeclaration(child),
-			ast.HasSyntacticModifier(child, ast.ModifierFlagsExport):
-			exports = append(exports, child)
+		case isImport:
+			s.addHoistedImport(child.Pos(), child.End())
+			s.addHoistedImportStatement(child)
+		case isExport:
+			s.addHoistedExport(child.Pos(), child.End())
 		default:
-			remains = append(remains, child)
+			s.addBody(child.Pos(), child.End())
 		}
 
 		return false
 	}
 
 	rootNode.ForEachChild(visitor)
-
-	return CollectedImportsExportsAndRemainingNodes{
-		Imports: imports,
-		Exports: exports,
-		Remains: remains,
-	}
-}
-
-func (s *Js_scanner) HoistExports() HoistedScripts {
-	var body [][]byte
-	var bodyLocs []loc.Loc
-	var hoisted [][]byte
-	var hoistedLocs []loc.Loc
-
-	for _, node := range s.Exports {
-		start := node.Pos()
-		end := node.End()
-		exportBody := s.source[start:end]
-		hoisted = append(hoisted, exportBody)
-		hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
-	}
-
-	for _, node := range s.Remains {
-		start := node.Pos()
-		end := node.End()
-		body = append(body, s.source[start:end])
-		bodyLocs = append(bodyLocs, loc.Loc{Start: start})
-	}
-
-	return HoistedScripts{
-		Body:        body,
-		BodyLocs:    bodyLocs,
-		Hoisted:     hoisted,
-		HoistedLocs: hoistedLocs,
-	}
-}
-
-func (s *Js_scanner) HoistImports() HoistedScripts {
-	var body [][]byte
-	var bodyLocs []loc.Loc
-	var hoisted [][]byte
-	var hoistedLocs []loc.Loc
-
-	for _, node := range s.Imports {
-		start := node.Pos()
-		end := node.End()
-		importBody := s.source[start:end]
-		hoisted = append(hoisted, importBody)
-		hoistedLocs = append(hoistedLocs, loc.Loc{Start: start})
-	}
-
-	for _, node := range s.Remains {
-		start := node.Pos()
-		end := node.End()
-		body = append(body, s.source[start:end])
-		bodyLocs = append(bodyLocs, loc.Loc{Start: start})
-	}
-
-	return HoistedScripts{
-		Body:        body,
-		BodyLocs:    bodyLocs,
-		Hoisted:     hoisted,
-		HoistedLocs: hoistedLocs,
-	}
 }
 
 func (s *Js_scanner) HasGetStaticPaths() bool {
@@ -158,8 +124,8 @@ func (s *Js_scanner) HasGetStaticPaths() bool {
 		return false
 	}
 
-	exports := s.HoistExports()
-	for _, statement := range exports.Hoisted {
+	exports := s.ExportsInfo
+	for _, statement := range exports.Data {
 		if bytes.Contains(statement, ident) {
 			return true
 		}

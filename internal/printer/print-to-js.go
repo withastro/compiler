@@ -159,24 +159,25 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		} else if c := n.FirstChild; c.Type == TextNode {
 			p.printInternalImports(p.opts.InternalURL, &opts)
 
-			exportsPlusPlus := p.scanner.HoistExports()
+			exportsInfo := p.scanner.ExportsInfo
 
-			exports := exportsPlusPlus.Hoisted
-			exportLocs := exportsPlusPlus.HoistedLocs
+			exports := exportsInfo.Data
+			exportLocs := exportsInfo.Locs
 
-			bodies := exportsPlusPlus.Body
-			bodiesLocs := exportsPlusPlus.BodyLocs
+			bodiesInfo := p.scanner.Bodies
+			bodies := bodiesInfo.Data
+			bodiesLocs := bodiesInfo.Locs
 
 			start := 0
 			if len(n.Loc) > 0 {
 				start = c.Loc[0].Start
 			}
-			imports := p.scanner.HoistImports()
-			for i, hoisted := range imports.Hoisted {
+			imports := p.scanner.ImportsInfo
+			for i, hoisted := range imports.Data {
 				if len(bytes.TrimSpace(hoisted)) == 0 {
 					continue
 				}
-				hoistedLoc := imports.HoistedLocs[i]
+				hoistedLoc := imports.Locs[i]
 
 				// trim leading whitespace
 				// for the first import

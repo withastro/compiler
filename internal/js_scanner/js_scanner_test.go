@@ -232,9 +232,9 @@ func TestHoistImport(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewScanner([]byte(tt.source))
-			result := s.HoistImports()
+			result := s.ImportsInfo
 			got := []byte{}
-			for _, imp := range result.Hoisted {
+			for _, imp := range result.Data {
 				got = append(got, bytes.TrimSpace(imp)...)
 				got = append(got, '\n')
 			}
@@ -355,9 +355,9 @@ func FuzzHoistImport(f *testing.F) {
 	}
 	f.Fuzz(func(t *testing.T, source string) {
 		s := NewScanner([]byte(source))
-		result := s.HoistImports()
+		result := s.ImportsInfo
 		got := []byte{}
-		for _, imp := range result.Hoisted {
+		for _, imp := range result.Data {
 			got = append(got, bytes.TrimSpace(imp)...)
 			got = append(got, '\n')
 		}
@@ -695,9 +695,9 @@ export const foo = 0`,
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewScanner([]byte(tt.source))
 
-			result := s.HoistExports()
+			result := s.ExportsInfo
 			got := []byte{}
-			for _, imp := range result.Hoisted {
+			for _, imp := range result.Data {
 				got = append(got, bytes.TrimSpace(imp)...)
 				got = append(got, '\n')
 			}
