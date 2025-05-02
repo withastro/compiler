@@ -1,15 +1,10 @@
 package js_scanner
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
 	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/ast"
-	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/core"
-	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/parser"
-	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/scanner"
-	"github.com/withastro/compiler/internal/vendored/typescript-go/internals/tspath"
 )
 
 type Props struct {
@@ -27,6 +22,10 @@ func (p *Props) populateInfo(typeParams *ast.NodeList, source []byte) {
 // applyFoundIdent sets the Ident
 // field to the default Props type name
 func (p *Props) applyFoundIdent() {
+	p.Ident = propSymbol
+}
+
+func (p *Props) setDefaultProps() {
 	p.Ident = propSymbol
 }
 
@@ -50,101 +49,73 @@ func getPropsInfo(typeParams *ast.NodeList, source []byte) (statement, generics 
 	return
 }
 
-func (s *Js_scanner) GetPropsType() Props {
-	// If source doesn't contain "Props"
-	// return default Props type
-	if !bytes.Contains(s.source, []byte(propSymbol)) {
-		return Props{
-			Ident: FallbackPropsType,
+func isSetProps(p *Props) bool {
+	return p.Ident == ""
+}
+
+// Visitor function to find Props type
+func localPropsVisitor(s *Js_scanner, node *ast.Node) bool {
+	if node == nil {
+		return true
+	}
+
+	// Check for interface declaration: interface Props {...}
+	if ast.IsInterfaceDeclaration(node) {
+		interfaceDecl := node.AsInterfaceDeclaration()
+		if interfaceDecl.Name() != nil && interfaceDecl.Name().AsIdentifier().Text == propSymbol {
+			s.Props.applyFoundIdent()
+
+			if interfaceDecl.TypeParameters != nil {
+				typeParams := interfaceDecl.TypeParameters
+				s.Props.populateInfo(typeParams, s.source)
+			}
+			return true
 		}
 	}
 
-	// Use an absolute-style path for parser
-	fileName := "/astro-frontmatter.ts"
-	path := tspath.Path(fileName)
+	// Check for type alias: type Props = {...}
+	if ast.IsTypeAliasDeclaration(node) {
+		typeAlias := node.AsTypeAliasDeclaration()
+		if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == propSymbol {
+			s.Props.applyFoundIdent()
 
-	// Parse with ESNext + full JSDoc mode
-	sf := parser.ParseSourceFile(fileName, path, string(s.source), core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
-	rootNode := sf.AsNode()
+			if typeAlias.TypeParameters != nil {
+				typeParams := typeAlias.TypeParameters
+				s.Props.populateInfo(typeParams, s.source)
+			}
+			return true
+		}
+	}
 
-	var propsType Props
+	return false
+}
 
-	// Visitor function to find Props type
-	var visitor ast.Visitor
-	visitor = func(node *ast.Node) bool {
-		if node == nil {
+func importPropsVisitor(s *Js_scanner, node *ast.ImportDeclaration) bool {
+	importDecl := node.AsImportDeclaration()
+	// if there is a default import or named import, named `Props`
+	// we can assume that it is a Props type
+	if importDecl.ImportClause != nil {
+		importClause := importDecl.ImportClause.AsImportClause()
+
+		if importClause.Name() != nil && importClause.Name().AsIdentifier().Text == propSymbol {
+			s.Props.applyFoundIdent()
 			return true
 		}
 
-		// Check for interface declaration: interface Props {...}
-		if ast.IsInterfaceDeclaration(node) {
-			interfaceDecl := node.AsInterfaceDeclaration()
-			if interfaceDecl.Name() != nil && interfaceDecl.Name().AsIdentifier().Text == propSymbol {
-				propsType.applyFoundIdent()
-
-				if interfaceDecl.TypeParameters != nil {
-					typeParams := interfaceDecl.TypeParameters
-					propsType.populateInfo(typeParams, s.source)
-				}
-				return true
-			}
-		}
-
-		// Check for type alias: type Props = {...}
-		if ast.IsTypeAliasDeclaration(node) {
-			typeAlias := node.AsTypeAliasDeclaration()
-			if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == propSymbol {
-				propsType.applyFoundIdent()
-
-				if typeAlias.TypeParameters != nil {
-					typeParams := typeAlias.TypeParameters
-					propsType.populateInfo(typeParams, s.source)
-				}
-				return true
-			}
-		}
-
-		return false
-	}
-
-	rootNode.ForEachChild(visitor)
-
-	// look for Props type imports if we haven't
-	// found the Props type in the frontmatter yet
-	if propsType.Ident == "" {
-		// now look for the import
-		for _, node := range s.Imports {
-			if ast.IsImportDeclaration(node) {
-				importDecl := node.AsImportDeclaration()
-				// if there is a default import or named import, named `Props`
-				// we can assume that it is a Props type
-				if importDecl.ImportClause != nil {
-					importClause := importDecl.ImportClause.AsImportClause()
-
-					if importClause.Name() != nil && importClause.Name().AsIdentifier().Text == propSymbol {
-						propsType.applyFoundIdent()
-						break
-					}
-
-					if importClause.NamedBindings != nil && importClause.NamedBindings.Kind == ast.KindNamedImports {
-						namedImports := importClause.NamedBindings.AsNamedImports()
-						for _, element := range namedImports.Elements.Nodes {
-							importSpecifier := element.AsImportSpecifier()
-							if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == propSymbol {
-								propsType.applyFoundIdent()
-								break
-							}
-						}
-					}
+		if importClause.NamedBindings != nil && importClause.NamedBindings.Kind == ast.KindNamedImports {
+			namedImports := importClause.NamedBindings.AsNamedImports()
+			for _, element := range namedImports.Elements.Nodes {
+				importSpecifier := element.AsImportSpecifier()
+				if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == propSymbol {
+					s.Props.applyFoundIdent()
+					return true
 				}
 			}
 		}
 	}
+	return false
+}
 
-	// fallback to default Props type
-	if propsType.Ident == "" {
-		propsType.Ident = FallbackPropsType
-	}
-
-	return propsType
+func looseHasPropsType(source string) bool {
+	return strings.Contains(source, propSymbol)
 }

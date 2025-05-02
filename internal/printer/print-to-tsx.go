@@ -383,7 +383,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 			p.print("</Fragment>\n")
 		}
 
-		props := p.scanner.GetPropsType()
+		props := p.scanner.Props
 		hasGetStaticPaths := p.scanner.HasGetStaticPaths
 
 		componentName := getTSXComponentName(p.opts.Filename)

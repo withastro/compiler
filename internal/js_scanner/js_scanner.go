@@ -30,6 +30,7 @@ type (
 
 type Js_scanner struct {
 	source            []byte
+	Props             *Props
 	Imports           []*ast.Node
 	ExportsInfo       *HoistedScripts
 	ImportsInfo       *HoistedScripts
@@ -43,6 +44,7 @@ func NewScanner(source []byte) *Js_scanner {
 		ImportsInfo: &HoistedScripts{},
 		ExportsInfo: &HoistedScripts{},
 		Bodies:      &BodiesInfo{},
+		Props:       &Props{},
 	}
 	if len(bytes.TrimSpace(source)) == 0 {
 		return s
@@ -82,54 +84,33 @@ func (s *Js_scanner) scan() {
 	source := string(s.source)
 	looseHasImport := strings.Contains(source, "import")
 	looseHasExport := strings.Contains(source, "export")
+	looseHasPropsDef := looseHasPropsType(source)
 
-	if !looseHasImport && !looseHasExport {
+	if !looseHasImport && !looseHasExport && !looseHasPropsDef {
 		// TODO: make sure it doesn't result to
 		// bad sourcemaps
 		s.addBody(0, len(source))
 		return
 	}
-	looseHasGetStaticPaths := looseHasGetStaticPaths(s.source)
+	looseHasGetStaticPaths := looseHasGetStaticPaths(source)
 
 	// use an absolute‐style path for parser
 	fileName := "/astro-frontmatter.ts"
 
-	// start := time.Now()
 	path := tspath.Path(fileName)
 	// parse with ESNext + full JSDoc mode
 	sf := parser.ParseSourceFile(fileName, path, source, core.ScriptTargetESNext, scanner.JSDocParsingModeParseAll)
 	rootNode := sf.AsNode()
 
-	// only iterate immediate children (top‑level statements)
 	var visitor ast.Visitor = func(n *ast.Node) bool {
-		if n == nil {
-			return true
-		}
-
-		isImport := looseHasImport &&
-			ast.IsImportDeclaration(n) && n.AsImportDeclaration().ModuleSpecifier != nil
-		isExport := looseHasExport &&
-			(ast.IsExportDeclaration(n) || ast.HasSyntacticModifier(n, ast.ModifierFlagsExport))
-
-		switch {
-		case isImport:
-			s.addHoistedImport(n.Pos(), n.End())
-			s.addImportNode(n)
-
-		case isExport:
-			export := s.addHoistedExport(n.Pos(), n.End())
-			if looseHasGetStaticPaths && !s.HasGetStaticPaths && hasGetStaticPaths(export) {
-				s.HasGetStaticPaths = true
-			}
-
-		default:
-			s.addBody(n.Pos(), n.End())
-		}
-
-		return false
+		return segmentsVisitor(s, n, looseHasImport, looseHasExport, looseHasGetStaticPaths)
 	}
 
 	rootNode.ForEachChild(visitor)
+
+	if !isSetProps(s.Props) {
+		s.Props.setDefaultProps()
+	}
 
 	lastChild := sf.Statements.Nodes[len(sf.Statements.Nodes)-1]
 	lastChildEnd := lastChild.End()
@@ -142,11 +123,46 @@ func (s *Js_scanner) scan() {
 	}
 }
 
+// only iterate immediate children (top‑level statements)
+// lhi - looseHasImport
+// lhx - looseHasExport
+// lhgsp - looseHasGetStaticPaths
+func segmentsVisitor(s *Js_scanner, n *ast.Node, lhi, lhx, lhgsp bool) bool {
+	if n == nil {
+		return true
+	}
+
+	switch {
+	case lhi && ast.IsImportDeclaration(n) && n.AsImportDeclaration().ModuleSpecifier != nil:
+		s.addHoistedImport(n.Pos(), n.End())
+		s.addImportNode(n)
+		// visit the import to check for Props
+		if !isSetProps(s.Props) {
+			importPropsVisitor(s, n.AsImportDeclaration())
+		}
+
+	case lhx && (ast.IsExportDeclaration(n) || ast.HasSyntacticModifier(n, ast.ModifierFlagsExport)):
+		export := s.addHoistedExport(n.Pos(), n.End())
+		if lhgsp && !s.HasGetStaticPaths && hasGetStaticPaths(export) {
+			s.HasGetStaticPaths = true
+		}
+
+	default:
+		s.addBody(n.Pos(), n.End())
+		// visit the node to check for
+		// a Props type definition
+		if !isSetProps(s.Props) {
+			localPropsVisitor(s, n)
+		}
+	}
+
+	return false
+}
+
 const GspIdent = "getStaticPaths"
 
-func looseHasGetStaticPaths(source []byte) bool {
-	ident := []byte(GspIdent)
-	return bytes.Contains(source, ident)
+func looseHasGetStaticPaths(source string) bool {
+	return strings.Contains(source, GspIdent)
 }
 
 func hasGetStaticPaths(exportBody []byte) bool {
