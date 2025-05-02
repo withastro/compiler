@@ -130,6 +130,16 @@ func (s *Js_scanner) scan() {
 	}
 
 	rootNode.ForEachChild(visitor)
+
+	lastChild := sf.Statements.Nodes[len(sf.Statements.Nodes)-1]
+	lastChildEnd := lastChild.End()
+
+	if lastChildEnd < len(source) {
+		// For some reason, the EOF node isn't included in the AST,
+		// because of that, we can't retrieve the trailing trivia
+		// This is a workaround to get the trailing trivia
+		s.addBody(lastChildEnd, len(source))
+	}
 }
 
 const GspIdent = "getStaticPaths"
