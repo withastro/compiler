@@ -19,8 +19,7 @@ func (p *Props) populateInfo(typeParams *ast.NodeList, source []byte) {
 	}
 }
 
-// applyFoundIdent sets the Ident
-// field to the default Props type name
+// sets the Ident field to the Props symbol
 func (p *Props) applyFoundIdent() {
 	p.Ident = propSymbol
 }

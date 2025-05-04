@@ -155,7 +155,7 @@ func segmentsVisitor(s *Js_scanner, n *ast.Node, lhi, lhx, lhgsp bool) bool {
 		s.addBody(n.Pos(), n.End())
 	}
 
-	// look for a Props type definition
+	// look for a Props type/interface definition
 	// with or without an export modifier
 	if hasExportMod || isBody {
 		if !s.Props.hasIdent() {
