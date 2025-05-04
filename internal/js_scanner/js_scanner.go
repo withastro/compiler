@@ -188,7 +188,7 @@ const (
 	ImportNamed
 )
 
-func (s *Js_scanner) NextImportStatement() iter.Seq[ImportStatement] {
+func (s *Js_scanner) ImportStatements() iter.Seq[ImportStatement] {
 	return func(yield func(ImportStatement) bool) {
 		for _, node := range s.Imports {
 

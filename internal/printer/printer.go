@@ -614,7 +614,7 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	modCount := 1
 
 	if scanImport {
-		for statement := range p.scanner.NextImportStatement() {
+		for statement := range p.scanner.ImportStatements() {
 			isClientOnlyImport := false
 		component_loop:
 			for _, n := range doc.ClientOnlyComponentNodes {

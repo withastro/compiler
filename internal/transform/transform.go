@@ -606,7 +606,7 @@ func ResolveIdForMatch(id string, opts *TransformOptions) string {
 }
 
 func eachImportStatement(s *js_scanner.Js_scanner, cb func(stmt js_scanner.ImportStatement) bool) {
-	for statement := range s.NextImportStatement() {
+	for statement := range s.ImportStatements() {
 		if !cb(statement) {
 			break
 		}
