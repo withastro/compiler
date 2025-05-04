@@ -607,75 +607,69 @@ func (p *printer) printComponentMetadata(doc *astro.Node, opts transform.Transfo
 	var specs []string
 	var asrts []string
 	var conlyspecs []string
-	var idx int
-	var statement js_scanner.ImportStatement
 
 	unfoundconly := make([]*astro.Node, len(doc.ClientOnlyComponentNodes))
 	copy(unfoundconly, doc.ClientOnlyComponentNodes)
 
 	modCount := 1
+
 	if scanImport {
-		idx, statement = p.scanner.NextImportStatement(0)
-	} else {
-		idx, statement = p.scanner.NextImportStatement(-1)
-	}
+		for statement := range p.scanner.NextImportStatement() {
+			isClientOnlyImport := false
+		component_loop:
+			for _, n := range doc.ClientOnlyComponentNodes {
+				for _, imported := range statement.Imports {
+					exportName, isUsed := js_scanner.ExtractComponentExportName(n.Data, imported)
+					if isUsed {
+						attrTemplate := `"%s"`
+						if opts.ResolvePath == nil {
+							attrTemplate = `$$metadata.resolvePath("%s")`
+						}
+						// Inject metadata attributes to `client:only` Component
+						pathAttr := astro.Attribute{
+							Key:  "client:component-path",
+							Val:  fmt.Sprintf(attrTemplate, transform.ResolveIdForMatch(statement.Specifier, &opts)),
+							Type: astro.ExpressionAttribute,
+						}
+						n.Attr = append(n.Attr, pathAttr)
+						conlyspecs = append(conlyspecs, statement.Specifier)
 
-	for idx != -1 {
-		isClientOnlyImport := false
-	component_loop:
-		for _, n := range doc.ClientOnlyComponentNodes {
-			for _, imported := range statement.Imports {
-				exportName, isUsed := js_scanner.ExtractComponentExportName(n.Data, imported)
-				if isUsed {
-					attrTemplate := `"%s"`
-					if opts.ResolvePath == nil {
-						attrTemplate = `$$metadata.resolvePath("%s")`
-					}
-					// Inject metadata attributes to `client:only` Component
-					pathAttr := astro.Attribute{
-						Key:  "client:component-path",
-						Val:  fmt.Sprintf(attrTemplate, transform.ResolveIdForMatch(statement.Specifier, &opts)),
-						Type: astro.ExpressionAttribute,
-					}
-					n.Attr = append(n.Attr, pathAttr)
-					conlyspecs = append(conlyspecs, statement.Specifier)
+						exportAttr := astro.Attribute{
+							Key:  "client:component-export",
+							Val:  exportName,
+							Type: astro.QuotedAttribute,
+						}
+						n.Attr = append(n.Attr, exportAttr)
+						unfoundconly = remove(unfoundconly, n)
 
-					exportAttr := astro.Attribute{
-						Key:  "client:component-export",
-						Val:  exportName,
-						Type: astro.QuotedAttribute,
+						isClientOnlyImport = true
+						continue component_loop
 					}
-					n.Attr = append(n.Attr, exportAttr)
-					unfoundconly = remove(unfoundconly, n)
-
-					isClientOnlyImport = true
+				}
+				if isClientOnlyImport {
 					continue component_loop
 				}
 			}
-			if isClientOnlyImport {
-				continue component_loop
+			if !isClientOnlyImport && opts.ResolvePath == nil {
+				assertions := ""
+				if statement.Assertions != "" {
+					assertions += " assert "
+					assertions += statement.Assertions
+				}
+
+				isCSSImport := false
+				if len(statement.Imports) == 0 && styleModuleSpecExp.MatchString(statement.Specifier) {
+					isCSSImport = true
+				}
+
+				if !isCSSImport && !statement.IsType {
+					p.print(fmt.Sprintf("\nimport * as $$module%v from '%s'%s;", modCount, statement.Specifier, assertions))
+					specs = append(specs, statement.Specifier)
+					asrts = append(asrts, statement.Assertions)
+					modCount++
+				}
 			}
 		}
-		if !isClientOnlyImport && opts.ResolvePath == nil {
-			assertions := ""
-			if statement.Assertions != "" {
-				assertions += " assert "
-				assertions += statement.Assertions
-			}
-
-			isCSSImport := false
-			if len(statement.Imports) == 0 && styleModuleSpecExp.MatchString(statement.Specifier) {
-				isCSSImport = true
-			}
-
-			if !isCSSImport && !statement.IsType {
-				p.print(fmt.Sprintf("\nimport * as $$module%v from '%s'%s;", modCount, statement.Specifier, assertions))
-				specs = append(specs, statement.Specifier)
-				asrts = append(asrts, statement.Assertions)
-				modCount++
-			}
-		}
-		idx, statement = p.scanner.NextImportStatement(idx)
 	}
 	if len(unfoundconly) > 0 {
 		for _, n := range unfoundconly {

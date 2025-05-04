@@ -2,6 +2,7 @@ package js_scanner
 
 import (
 	"bytes"
+	"iter"
 	"strings"
 
 	"github.com/withastro/compiler/internal/loc"
@@ -187,120 +188,125 @@ const (
 	ImportNamed
 )
 
-func (s *Js_scanner) NextImportStatement(idx int) (int, ImportStatement) {
-	if len(s.Imports) == 0 || idx >= len(s.Imports) || idx < 0 {
-		return -1, ImportStatement{}
-	}
+func (s *Js_scanner) NextImportStatement() iter.Seq[ImportStatement] {
+	return func(yield func(ImportStatement) bool) {
+		for _, node := range s.Imports {
 
-	node := s.Imports[idx]
-	// increment the index to the next import
-	idx++
+			start := node.Pos()
+			end := node.End()
 
-	start := node.Pos()
-	end := node.End()
+			var imports []Import
+			var assertions string
+			var importClause *ast.ImportClause
 
-	var imports []Import
-	var assertions string
-	var importClause *ast.ImportClause
+			importDeclaration := node.AsImportDeclaration()
+			importClauseNode := importDeclaration.ImportClause
+			moduleSpecifier := importDeclaration.ModuleSpecifier.AsStringLiteral()
+			moduleSpecifierString := moduleSpecifier.Text
 
-	importDeclaration := node.AsImportDeclaration()
-	importClauseNode := importDeclaration.ImportClause
-	moduleSpecifier := importDeclaration.ModuleSpecifier.AsStringLiteral()
-	moduleSpecifierString := moduleSpecifier.Text
-
-	if importClauseNode == nil {
-		return idx, ImportStatement{
-			Span:      loc.Span{Start: start, End: end},
-			Value:     s.source[start:end],
-			Specifier: moduleSpecifierString,
-		}
-	}
-
-	// Process assertions only if importAttributes is not nil
-	if importAttributes := importDeclaration.Attributes; importAttributes != nil {
-		attrNode := importAttributes.AsImportAttributes()
-		// calculate the length of the leading strip
-		// to turn "assert { type: 'json' }" into " assert { type: 'json' }"
-		leadingStripLength := (func() int {
-			if attrNode.Token == ast.KindWithKeyword {
-				return len("with")
-			}
-			return len("assert")
-		})()
-		assertionStart := attrNode.Pos() + leadingStripLength + 1
-		assertions = string(s.source[assertionStart:attrNode.End()])
-	}
-
-	importClause = importClauseNode.AsImportClause()
-	importName := importClause.Name()
-	importNamedBindings := importClause.NamedBindings
-
-	if importName != nil {
-		localName := importName.AsIdentifier().Text
-		imports = append(imports, Import{
-			ExportName: "default",
-			LocalName:  localName,
-		})
-	}
-
-	if importNamedBindings == nil {
-		return idx, ImportStatement{
-			Span:       loc.Span{Start: start, End: end},
-			Value:      s.source[start:end],
-			IsType:     importClause.IsTypeOnly,
-			Imports:    imports,
-			Specifier:  moduleSpecifierString,
-			Assertions: assertions,
-		}
-	}
-
-	switch importNamedBindings.Kind {
-	case ast.KindNamedImports:
-		importSpecifierList := importNamedBindings.AsNamedImports().Elements
-		for _, c := range importSpecifierList.Nodes {
-			importSpecifier := c.AsImportSpecifier()
-			var exportName string
-			var localName string
-
-			name := importSpecifier.Name()
-			propertyName := importSpecifier.PropertyName
-
-			if name != nil {
-				localName = name.AsIdentifier().Text
+			if importClauseNode == nil {
+				if !yield(ImportStatement{
+					Span:      loc.Span{Start: start, End: end},
+					Value:     s.source[start:end],
+					Specifier: moduleSpecifierString,
+				}) {
+					return
+				}
+				continue
 			}
 
-			if propertyName != nil {
-				exportName = propertyName.AsIdentifier().Text
-			} else if name != nil {
-				exportName = localName
+			// Process assertions only if importAttributes is not nil
+			if importAttributes := importDeclaration.Attributes; importAttributes != nil {
+				attrNode := importAttributes.AsImportAttributes()
+				// calculate the length of the leading strip
+				// to turn "assert { type: 'json' }" into " assert { type: 'json' }"
+				leadingStripLength := (func() int {
+					if attrNode.Token == ast.KindWithKeyword {
+						return len("with")
+					}
+					return len("assert")
+				})()
+				assertionStart := attrNode.Pos() + leadingStripLength + 1
+				assertions = string(s.source[assertionStart:attrNode.End()])
 			}
 
-			imports = append(imports, Import{
-				ExportName: exportName,
-				LocalName:  localName,
-			})
+			importClause = importClauseNode.AsImportClause()
+			importName := importClause.Name()
+			importNamedBindings := importClause.NamedBindings
+
+			if importName != nil {
+				localName := importName.AsIdentifier().Text
+				imports = append(imports, Import{
+					ExportName: "default",
+					LocalName:  localName,
+				})
+			}
+
+			if importNamedBindings == nil {
+				if !yield(ImportStatement{
+					Span:       loc.Span{Start: start, End: end},
+					Value:      s.source[start:end],
+					IsType:     importClause.IsTypeOnly,
+					Imports:    imports,
+					Specifier:  moduleSpecifierString,
+					Assertions: assertions,
+				}) {
+					return
+				}
+				continue
+			}
+
+			switch importNamedBindings.Kind {
+			case ast.KindNamedImports:
+				importSpecifierList := importNamedBindings.AsNamedImports().Elements
+				for _, c := range importSpecifierList.Nodes {
+					importSpecifier := c.AsImportSpecifier()
+					var exportName string
+					var localName string
+
+					name := importSpecifier.Name()
+					propertyName := importSpecifier.PropertyName
+
+					if name != nil {
+						localName = name.AsIdentifier().Text
+					}
+
+					if propertyName != nil {
+						exportName = propertyName.AsIdentifier().Text
+					} else if name != nil {
+						exportName = localName
+					}
+
+					imports = append(imports, Import{
+						ExportName: exportName,
+						LocalName:  localName,
+					})
+				}
+			case ast.KindNamespaceImport:
+				namespaceImport := importNamedBindings.AsNamespaceImport()
+				var localName string
+
+				name := namespaceImport.Name()
+
+				if name != nil {
+					localName = name.AsIdentifier().Text
+				}
+				imports = append(imports, Import{
+					ExportName: "*",
+					LocalName:  localName,
+				})
+			}
+
+			if !yield(ImportStatement{
+				Span:       loc.Span{Start: start, End: end},
+				Value:      s.source[start:end],
+				IsType:     importClause.IsTypeOnly,
+				Imports:    imports,
+				Specifier:  moduleSpecifierString,
+				Assertions: assertions,
+			}) {
+				return
+			}
 		}
-	case ast.KindNamespaceImport:
-		namespaceImport := importNamedBindings.AsNamespaceImport()
-		var localName string
-
-		name := namespaceImport.Name()
-
-		if name != nil {
-			localName = name.AsIdentifier().Text
-		}
-		imports = append(imports, Import{
-			ExportName: "*",
-			LocalName:  localName,
-		})
-	}
-
-	return idx, ImportStatement{
-		Span:       loc.Span{Start: start, End: end},
-		Value:      s.source[start:end],
-		IsType:     importClause.IsTypeOnly,
-		Imports:    imports,
-		Specifier:  moduleSpecifierString,
-		Assertions: assertions,
 	}
 }
