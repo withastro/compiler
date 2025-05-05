@@ -55,11 +55,11 @@ func propDefVisitor(s *Js_scanner, node *ast.Node) bool {
 	if ast.IsInterfaceDeclaration(node) {
 		interfaceDecl := node.AsInterfaceDeclaration()
 		if interfaceDecl.Name() != nil && interfaceDecl.Name().AsIdentifier().Text == propSymbol {
-			s.Props.applyFoundIdent()
+			s.Result.Props.applyFoundIdent()
 
 			if interfaceDecl.TypeParameters != nil {
 				typeParams := interfaceDecl.TypeParameters
-				s.Props.populateInfo(typeParams, s.source)
+				s.Result.Props.populateInfo(typeParams, s.source)
 			}
 			return true
 		}
@@ -69,11 +69,11 @@ func propDefVisitor(s *Js_scanner, node *ast.Node) bool {
 	if ast.IsTypeAliasDeclaration(node) {
 		typeAlias := node.AsTypeAliasDeclaration()
 		if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == propSymbol {
-			s.Props.applyFoundIdent()
+			s.Result.Props.applyFoundIdent()
 
 			if typeAlias.TypeParameters != nil {
 				typeParams := typeAlias.TypeParameters
-				s.Props.populateInfo(typeParams, s.source)
+				s.Result.Props.populateInfo(typeParams, s.source)
 			}
 			return true
 		}
@@ -90,7 +90,7 @@ func importPropsVisitor(s *Js_scanner, node *ast.ImportDeclaration) bool {
 		importClause := importDecl.ImportClause.AsImportClause()
 
 		if importClause.Name() != nil && importClause.Name().AsIdentifier().Text == propSymbol {
-			s.Props.applyFoundIdent()
+			s.Result.Props.applyFoundIdent()
 			return true
 		}
 
@@ -99,7 +99,7 @@ func importPropsVisitor(s *Js_scanner, node *ast.ImportDeclaration) bool {
 			for _, element := range namedImports.Elements.Nodes {
 				importSpecifier := element.AsImportSpecifier()
 				if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == propSymbol {
-					s.Props.applyFoundIdent()
+					s.Result.Props.applyFoundIdent()
 					return true
 				}
 			}

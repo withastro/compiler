@@ -25,8 +25,7 @@ type (
 	HoistedScripts = Segments
 )
 
-type Js_scanner struct {
-	source            []byte
+type ScanResult struct {
 	Props             *Props
 	Imports           []*ast.Node
 	ExportsInfo       *HoistedScripts
@@ -35,18 +34,25 @@ type Js_scanner struct {
 	HasGetStaticPaths bool
 }
 
+type Js_scanner struct {
+	source []byte
+	Result *ScanResult
+}
+
 func NewScanner(source []byte) *Js_scanner {
 	s := &Js_scanner{
-		source:      source,
-		ImportsInfo: &HoistedScripts{},
-		ExportsInfo: &HoistedScripts{},
-		Bodies:      &BodiesInfo{},
-		Props:       &Props{},
+		source: source,
+		Result: &ScanResult{
+			ImportsInfo: &HoistedScripts{},
+			ExportsInfo: &HoistedScripts{},
+			Bodies:      &BodiesInfo{},
+			Props:       &Props{},
+		},
 	}
 
 	defer func() {
-		if !s.Props.hasIdent() {
-			s.Props.Ident = FallbackPropsType
+		if !s.Result.Props.hasIdent() {
+			s.Result.Props.Ident = FallbackPropsType
 		}
 	}()
 
@@ -59,28 +65,28 @@ func NewScanner(source []byte) *Js_scanner {
 }
 
 func (s *Js_scanner) addImportNode(node *ast.Node) {
-	s.Imports = append(s.Imports, node)
+	s.Result.Imports = append(s.Result.Imports, node)
 }
 
 func (s *Js_scanner) addHoistedImport(start int, end int) {
 	importBody := s.source[start:end]
-	s.ImportsInfo.Data = append(s.ImportsInfo.Data, importBody)
-	s.ImportsInfo.Locs = append(s.ImportsInfo.Locs, loc.Loc{Start: start})
+	s.Result.ImportsInfo.Data = append(s.Result.ImportsInfo.Data, importBody)
+	s.Result.ImportsInfo.Locs = append(s.Result.ImportsInfo.Locs, loc.Loc{Start: start})
 }
 
 // returns the body of the hoisted export
 // to check for getStaticPaths
 func (s *Js_scanner) addHoistedExport(start int, end int) []byte {
 	exportBody := s.source[start:end]
-	s.ExportsInfo.Data = append(s.ExportsInfo.Data, exportBody)
-	s.ExportsInfo.Locs = append(s.ExportsInfo.Locs, loc.Loc{Start: start})
+	s.Result.ExportsInfo.Data = append(s.Result.ExportsInfo.Data, exportBody)
+	s.Result.ExportsInfo.Locs = append(s.Result.ExportsInfo.Locs, loc.Loc{Start: start})
 	return exportBody
 }
 
 func (s *Js_scanner) addBody(start int, end int) {
 	body := s.source[start:end]
-	s.Bodies.Data = append(s.Bodies.Data, body)
-	s.Bodies.Locs = append(s.Bodies.Locs, loc.Loc{Start: start})
+	s.Result.Bodies.Data = append(s.Result.Bodies.Data, body)
+	s.Result.Bodies.Locs = append(s.Result.Bodies.Locs, loc.Loc{Start: start})
 }
 
 // TODO: work on the same AST for all the analysis work
@@ -141,14 +147,14 @@ func segmentsVisitor(s *Js_scanner, n *ast.Node, lhi, lhx, lhgsp bool) bool {
 		s.addHoistedImport(n.Pos(), n.End())
 		s.addImportNode(n)
 		// visit the import to check for Props
-		if !s.Props.hasIdent() {
+		if !s.Result.Props.hasIdent() {
 			importPropsVisitor(s, n.AsImportDeclaration())
 		}
 
 	case lhx && (ast.IsExportDeclaration(n) || hasExportMod):
 		export := s.addHoistedExport(n.Pos(), n.End())
-		if lhgsp && !s.HasGetStaticPaths && hasGetStaticPaths(export) {
-			s.HasGetStaticPaths = true
+		if lhgsp && !s.Result.HasGetStaticPaths && hasGetStaticPaths(export) {
+			s.Result.HasGetStaticPaths = true
 		}
 
 	default:
@@ -159,7 +165,7 @@ func segmentsVisitor(s *Js_scanner, n *ast.Node, lhi, lhx, lhgsp bool) bool {
 	// look for a Props type/interface definition
 	// with or without an export modifier
 	if hasExportMod || isBody {
-		if !s.Props.hasIdent() {
+		if !s.Result.Props.hasIdent() {
 			propDefVisitor(s, n)
 		}
 	}
@@ -190,7 +196,7 @@ const (
 
 func (s *Js_scanner) ImportStatements() iter.Seq[ImportStatement] {
 	return func(yield func(ImportStatement) bool) {
-		for _, node := range s.Imports {
+		for _, node := range s.Result.Imports {
 
 			start := node.Pos()
 			end := node.End()
