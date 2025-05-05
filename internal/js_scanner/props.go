@@ -54,11 +54,10 @@ func propDefVisitor(s *Js_scanner, node *ast.Node) bool {
 	// Check for interface declaration: interface Props {...}
 	if ast.IsInterfaceDeclaration(node) {
 		interfaceDecl := node.AsInterfaceDeclaration()
-		if interfaceDecl.Name() != nil && interfaceDecl.Name().AsIdentifier().Text == propSymbol {
+		if name := interfaceDecl.Name(); name != nil && name.AsIdentifier().Text == propSymbol {
 			s.Result.Props.applyFoundIdent()
 
-			if interfaceDecl.TypeParameters != nil {
-				typeParams := interfaceDecl.TypeParameters
+			if typeParams := interfaceDecl.TypeParameters; typeParams != nil {
 				s.Result.Props.populateInfo(typeParams, s.source)
 			}
 			return true
@@ -68,11 +67,10 @@ func propDefVisitor(s *Js_scanner, node *ast.Node) bool {
 	// Check for type alias: type Props = {...}
 	if ast.IsTypeAliasDeclaration(node) {
 		typeAlias := node.AsTypeAliasDeclaration()
-		if typeAlias.Name() != nil && typeAlias.Name().AsIdentifier().Text == propSymbol {
+		if name := typeAlias.Name(); name != nil && name.AsIdentifier().Text == propSymbol {
 			s.Result.Props.applyFoundIdent()
 
-			if typeAlias.TypeParameters != nil {
-				typeParams := typeAlias.TypeParameters
+			if typeParams := typeAlias.TypeParameters; typeParams != nil {
 				s.Result.Props.populateInfo(typeParams, s.source)
 			}
 			return true
@@ -86,19 +84,19 @@ func importPropsVisitor(s *Js_scanner, node *ast.ImportDeclaration) bool {
 	importDecl := node.AsImportDeclaration()
 	// if there is a default import or named import, named `Props`
 	// we can assume that it is a Props type
-	if importDecl.ImportClause != nil {
-		importClause := importDecl.ImportClause.AsImportClause()
+	if icn := importDecl.ImportClause; icn != nil {
+		importClause := icn.AsImportClause()
 
-		if importClause.Name() != nil && importClause.Name().AsIdentifier().Text == propSymbol {
+		if name := importClause.Name(); name != nil && name.AsIdentifier().Text == propSymbol {
 			s.Result.Props.applyFoundIdent()
 			return true
 		}
 
-		if importClause.NamedBindings != nil && importClause.NamedBindings.Kind == ast.KindNamedImports {
-			namedImports := importClause.NamedBindings.AsNamedImports()
+		if nb := importClause.NamedBindings; nb != nil && nb.Kind == ast.KindNamedImports {
+			namedImports := nb.AsNamedImports()
 			for _, element := range namedImports.Elements.Nodes {
 				importSpecifier := element.AsImportSpecifier()
-				if importSpecifier.Name() != nil && importSpecifier.Name().AsIdentifier().Text == propSymbol {
+				if name := importSpecifier.Name(); name != nil && name.AsIdentifier().Text == propSymbol {
 					s.Result.Props.applyFoundIdent()
 					return true
 				}

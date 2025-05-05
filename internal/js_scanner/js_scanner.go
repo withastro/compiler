@@ -164,10 +164,8 @@ func segmentsVisitor(s *Js_scanner, n *ast.Node, lhi, lhx, lhgsp bool) bool {
 
 	// look for a Props type/interface definition
 	// with or without an export modifier
-	if hasExportMod || isBody {
-		if !s.Result.Props.hasIdent() {
-			propDefVisitor(s, n)
-		}
+	if (hasExportMod || isBody) && !s.Result.Props.hasIdent() {
+		propDefVisitor(s, n)
 	}
 
 	return false
@@ -201,21 +199,31 @@ func (s *Js_scanner) ImportStatements() iter.Seq[ImportStatement] {
 			start := node.Pos()
 			end := node.End()
 
-			var imports []Import
-			var assertions string
+			is := ImportStatement{
+				Span:  loc.Span{Start: start, End: end},
+				Value: s.source[start:end],
+			}
+
 			var importClause *ast.ImportClause
 
 			importDeclaration := node.AsImportDeclaration()
 			importClauseNode := importDeclaration.ImportClause
-			moduleSpecifier := importDeclaration.ModuleSpecifier.AsStringLiteral()
-			moduleSpecifierString := moduleSpecifier.Text
+
+			msExpr := importDeclaration.ModuleSpecifier
+
+			if msExpr == nil {
+				if !yield(is) {
+					return
+				}
+				continue
+			}
+
+			msString := msExpr.AsStringLiteral().Text
+
+			is.Specifier = msString
 
 			if importClauseNode == nil {
-				if !yield(ImportStatement{
-					Span:      loc.Span{Start: start, End: end},
-					Value:     s.source[start:end],
-					Specifier: moduleSpecifierString,
-				}) {
+				if !yield(is) {
 					return
 				}
 				continue
@@ -233,30 +241,25 @@ func (s *Js_scanner) ImportStatements() iter.Seq[ImportStatement] {
 					return len("assert")
 				})()
 				assertionStart := attrNode.Pos() + leadingStripLength + 1
-				assertions = string(s.source[assertionStart:attrNode.End()])
+				is.Assertions = string(s.source[assertionStart:attrNode.End()])
 			}
 
 			importClause = importClauseNode.AsImportClause()
 			importName := importClause.Name()
 			importNamedBindings := importClause.NamedBindings
 
+			is.IsType = importClause.IsTypeOnly
+
 			if importName != nil {
 				localName := importName.AsIdentifier().Text
-				imports = append(imports, Import{
+				is.Imports = []Import{{
 					ExportName: "default",
 					LocalName:  localName,
-				})
+				}}
 			}
 
 			if importNamedBindings == nil {
-				if !yield(ImportStatement{
-					Span:       loc.Span{Start: start, End: end},
-					Value:      s.source[start:end],
-					IsType:     importClause.IsTypeOnly,
-					Imports:    imports,
-					Specifier:  moduleSpecifierString,
-					Assertions: assertions,
-				}) {
+				if !yield(is) {
 					return
 				}
 				continue
@@ -265,8 +268,8 @@ func (s *Js_scanner) ImportStatements() iter.Seq[ImportStatement] {
 			switch importNamedBindings.Kind {
 			case ast.KindNamedImports:
 				importSpecifierList := importNamedBindings.AsNamedImports().Elements
-				for _, c := range importSpecifierList.Nodes {
-					importSpecifier := c.AsImportSpecifier()
+				for _, n := range importSpecifierList.Nodes {
+					importSpecifier := n.AsImportSpecifier()
 					var exportName string
 					var localName string
 
@@ -283,7 +286,7 @@ func (s *Js_scanner) ImportStatements() iter.Seq[ImportStatement] {
 						exportName = localName
 					}
 
-					imports = append(imports, Import{
+					is.Imports = append(is.Imports, Import{
 						ExportName: exportName,
 						LocalName:  localName,
 					})
@@ -297,20 +300,13 @@ func (s *Js_scanner) ImportStatements() iter.Seq[ImportStatement] {
 				if name != nil {
 					localName = name.AsIdentifier().Text
 				}
-				imports = append(imports, Import{
+				is.Imports = append(is.Imports, Import{
 					ExportName: "*",
 					LocalName:  localName,
 				})
 			}
 
-			if !yield(ImportStatement{
-				Span:       loc.Span{Start: start, End: end},
-				Value:      s.source[start:end],
-				IsType:     importClause.IsTypeOnly,
-				Imports:    imports,
-				Specifier:  moduleSpecifierString,
-				Assertions: assertions,
-			}) {
+			if !yield(is) {
 				return
 			}
 		}
