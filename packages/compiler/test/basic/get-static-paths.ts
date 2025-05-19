@@ -25,6 +25,29 @@ export async function getStaticPaths()
 	);
 });
 
+test('getStaticPaths with braces on newline and destructured params', async () => {
+	const FIXTURE = `---
+import A from './A.astro';
+export async function getStaticPaths({ paginate })
+{
+  return [
+    { params: { id: '1' } },
+    { params: { id: '2' } },
+    { params: { id: '3' } }
+  ];
+}
+---
+
+<div></div>
+`;
+	const result = await transform(FIXTURE);
+	assert.match(
+		result.code,
+		'export async function getStaticPaths({ paginate })\n{',
+		'Expected output to contain getStaticPaths output'
+	);
+});
+
 test('getStaticPaths as const without braces', async () => {
 	const FIXTURE = `---
 import A from './A.astro';
