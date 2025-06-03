@@ -80,8 +80,10 @@ outer:
 		// a specifier is found, and a line terminator has been found
 		if token == js.ExportToken {
 			flags := make(map[string]bool)
+			tokensFound := make(map[string]bool)
 			foundIdent := false
 			foundSemicolonOrLineTerminator := false
+			foundBody := false
 			start := i
 			i += len(value)
 			for {
@@ -94,6 +96,7 @@ outer:
 				}
 				i += len(nextValue)
 				flags[string(nextValue)] = true
+				tokensFound[string(nextValue)] = true
 
 				if next == js.ErrorToken && l.Err() == io.EOF {
 					foundSemicolonOrLineTerminator = true
@@ -113,7 +116,7 @@ outer:
 					if next == js.LineTerminatorToken && i < len(source) && (source[i] == '&' || source[i] == '|') {
 						continue
 					}
-					if (flags["function"] || flags["=>"] || flags["interface"]) && !flags["{"] {
+					if (flags["function"] || flags["=>"] || flags["interface"]) && !foundBody {
 						continue
 					}
 					if flags["&"] || flags["="] {
@@ -125,6 +128,17 @@ outer:
 
 					foundSemicolonOrLineTerminator = true
 				} else if js.IsPunctuator(next) {
+					if nextValue[0] == '{' {
+						if flags["function"] {
+							// Curly braces can occur in a function parameter destructuring, which we don't want to consider
+							foundBody = foundBody || pairs['('] == 0
+						} else if flags["=>"] {
+							// Arrow can also occur in type definition before arrow function body (which we don't want to consider), but `=` cannot
+							foundBody = foundBody || tokensFound["="]
+						} else {
+							foundBody = true
+						}
+					}
 					if nextValue[0] == '{' || nextValue[0] == '(' || nextValue[0] == '[' {
 						flags[string(nextValue[0])] = true
 						pairs[nextValue[0]]++

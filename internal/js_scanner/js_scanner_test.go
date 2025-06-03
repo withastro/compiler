@@ -263,6 +263,116 @@ const b = await fetch()`,
 }`,
 		},
 		{
+			name: "getStaticPaths with curly brace on next line and destructured props",
+			source: `import { fn } from "package";
+export async function getStaticPaths({ paginate })
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export async function getStaticPaths({ paginate })
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
+			name: "getStaticPaths with curly brace on next line and param definition type in curly braces",
+			source: `import { fn } from "package";
+export async function getStaticPaths(input: { paginate: any })
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export async function getStaticPaths(input: { paginate: any })
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
+			name: "getStaticPaths with curly brace on next line and param definition type in square braces",
+			source: `import { fn } from "package";
+export async function getStaticPaths([{ stuff }])
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export async function getStaticPaths([{ stuff }])
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
+			name: "getStaticPaths with curly brace on next line and type specified with square braces 1",
+			source: `import { fn } from "package";
+export const getStaticPaths: () => { params: any }[]
+= () =>
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export const getStaticPaths: () => { params: any }[]
+= () =>
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
+			name: "getStaticPaths with curly brace on next line and type specified with square braces 2",
+			source: `import { fn } from "package";
+export const getStaticPaths: () => { params: any }[] =
+() =>
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export const getStaticPaths: () => { params: any }[] =
+() =>
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
+			name: "getStaticPaths with curly brace on next line and type specified with square braces 3",
+			source: `import { fn } from "package";
+export const getStaticPaths: () => { params: any }[] = ()
+=>
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export const getStaticPaths: () => { params: any }[] = ()
+=>
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
+			name: "getStaticPaths with curly brace on next line and type specified with square braces 4",
+			source: `import { fn } from "package";
+export const getStaticPaths: () => { params: any }[] = () =>
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export const getStaticPaths: () => { params: any }[] = () =>
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
+			name: "getStaticPaths with curly brace on next line and definition specified by anonymous function with destructured parameter",
+			source: `import { fn } from "package";
+export const getStaticPaths = function({ paginate })
+{
+	const content = Astro.fetchContent('**/*.md');
+}
+const b = await fetch()`,
+			want: `export const getStaticPaths = function({ paginate })
+{
+	const content = Astro.fetchContent('**/*.md');
+}`,
+		},
+		{
 			name: "getStaticPaths with comments",
 			source: `import { fn } from "package";
 export async function getStaticPaths() {
