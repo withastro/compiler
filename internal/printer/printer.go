@@ -108,7 +108,7 @@ func (p *printer) addTSXStyle(start int, end int, content string, styleType stri
 func (p *printer) getAsyncFuncPrefix() string {
 	// Decide whether to print `async` if top-level await is used. Use a loose check for now.
 	funcPrefix := ""
-	if strings.Contains(p.sourcetext, "await") {
+	if strings.Contains(p.sourcetext, "await") || p.needsTransitionCSS {
 		funcPrefix = "async "
 	}
 	return funcPrefix
@@ -569,7 +569,7 @@ func maybeConvertTransition(n *astro.Node) {
 
 		n.Attr = append(n.Attr, astro.Attribute{
 			Key:  "data-astro-transition-scope",
-			Val:  fmt.Sprintf(`%s(%s, "%s", %s, %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationExpr, transitionExpr),
+			Val:  fmt.Sprintf(`await %s(%s, "%s", %s, %s)`, RENDER_TRANSITION, RESULT, n.TransitionScope, animationExpr, transitionExpr),
 			Type: astro.ExpressionAttribute,
 		})
 	}
