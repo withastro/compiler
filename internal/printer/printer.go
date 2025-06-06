@@ -108,7 +108,7 @@ func (p *printer) addTSXStyle(start int, end int, content string, styleType stri
 func (p *printer) getAsyncFuncPrefix() string {
 	// Decide whether to print `async` if top-level await is used. Use a loose check for now.
 	funcPrefix := ""
-	if strings.Contains(p.sourcetext, "await") || p.needsTransitionCSS {
+	if strings.Contains(p.sourcetext, "await") || strings.Contains(p.sourcetext, "transition:name") || strings.Contains(p.sourcetext, "transition:animate") {
 		funcPrefix = "async "
 	}
 	return funcPrefix
