@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.12.1
+
+### Patch Changes
+
+- 138c07f: Improves detection of function body opening curly brace for exported functions.
+- 4a967ab: Fixes a bug where view transition names got lost after update to Astro 5.9
+
 ## 2.12.0
 
 ### Minor Changes
