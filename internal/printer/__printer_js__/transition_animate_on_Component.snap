@@ -33,9 +33,9 @@ import "transitions.css";
 
 export const $$metadata = $$createMetadata("/projects/app/src/pages/page.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
 
-const $$Page = $$createComponent(($$result, $$props, $$slots) => {
+const $$Page = $$createComponent(async ($$result, $$props, $$slots) => {
 
-return $$render`${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":($$renderTransition($$result, "wkm5vset", "morph", ""))})}`;
+return $$render`${$$renderComponent($$result,'Component',Component,{"class":"bar","data-astro-transition-scope":(await $$renderTransition($$result, "wkm5vset", "morph", ""))})}`;
 }, '/projects/app/src/pages/page.astro', 'self');
 export default $$Page;
 ```
