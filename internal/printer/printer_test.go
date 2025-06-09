@@ -185,7 +185,7 @@ func TestPrinter(t *testing.T) {
 		},
 		{
 			name:   "slot with fallback",
-			source: `<body><slot><p>Hello world!</p></slot><body>`,
+			source: `<body><slot><p>Hello world!</p></slot></body>`,
 		},
 		{
 			name:   "slot with fallback II",
