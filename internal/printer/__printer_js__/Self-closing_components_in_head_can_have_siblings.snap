@@ -3,7 +3,7 @@
 ## Input
 
 ```
-<html><head><BaseHead /><link href="test"></head><html>
+<html><head><BaseHead /><link href="test"></head></html>
 ```
 
 ## Output

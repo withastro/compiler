@@ -1001,7 +1001,7 @@ const name = 'world';
 		},
 		{
 			name:   "Self-closing script in head works",
-			source: `<html><head><script is:inline /></head><html>`,
+			source: `<html><head><script is:inline /></head></html>`,
 		},
 		{
 			name:   "Self-closing title",
@@ -1013,7 +1013,7 @@ const name = 'world';
 		},
 		{
 			name:   "Self-closing components in head can have siblings",
-			source: `<html><head><BaseHead /><link href="test"></head><html>`,
+			source: `<html><head><BaseHead /><link href="test"></head></html>`,
 		},
 		{
 			name:   "Self-closing formatting elements",
