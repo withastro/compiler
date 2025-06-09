@@ -33,9 +33,9 @@ import "transitions.css";
 
 export const $$metadata = $$createMetadata("/projects/app/src/pages/page.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
 
-const $$Page = $$createComponent(async ($$result, $$props, $$slots) => {
+const $$Page = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute(await $$renderTransition($$result, "ih7yuffh", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`;
+return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "ih7yuffh", (slide({duration:15})), ""), "data-astro-transition-scope")}></div>`;
 }, '/projects/app/src/pages/page.astro', 'self');
 export default $$Page;
 ```
