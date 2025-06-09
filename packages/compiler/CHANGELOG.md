@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 2.12.2
+
+### Patch Changes
+
+- 950635e: Reverts a change where view transitions were made async to accomodate the CSP requirements.
+
 ## 2.12.1
 
 ### Patch Changes
