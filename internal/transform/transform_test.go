@@ -8,6 +8,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"golang.org/x/net/html/atom"
 )
 
 func transformScopingFixtures() []struct {
@@ -193,7 +194,14 @@ func TestTransformScoping(t *testing.T) {
 			transformOptions := TransformOptions{Scope: "xxxxxx", ScopedStyleStrategy: scopeStyle}
 			ExtractStyles(doc, &transformOptions)
 			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
-			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+
+			var node *astro.Node
+			walk(doc, func(n *astro.Node) {
+				if node == nil && n.Type == astro.ElementNode && n.DataAtom == atom.Div {
+					node = n
+				}
+			})
+			astro.PrintToSource(&b, node)
 			got := b.String()
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
@@ -216,7 +224,13 @@ func FuzzTransformScoping(f *testing.F) {
 		ExtractStyles(doc, &transformOptions)
 		Transform(doc, transformOptions, handler.NewHandler(source, "/test.astro"))
 		var b strings.Builder
-		astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+		var node *astro.Node
+		walk(doc, func(n *astro.Node) {
+			if node == nil && n.Type == astro.ElementNode && n.DataAtom == atom.Div {
+				node = n
+			}
+		})
+		astro.PrintToSource(&b, node)
 		got := b.String()
 		// hacky - we only expect scoping for non global styles / non inline styles
 		testRegex := regexp.MustCompile(`is:global|:global\(|is:inline|<style>\s*</style>`)
@@ -586,7 +600,14 @@ func TestClassAndClassListMerging(t *testing.T) {
 				t.Error(err)
 			}
 			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
-			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+
+			var node *astro.Node
+			walk(doc, func(n *astro.Node) {
+				if node == nil && n.Type == astro.ElementNode && n.DataAtom == atom.Div {
+					node = n
+				}
+			})
+			astro.PrintToSource(&b, node)
 			got := b.String()
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
