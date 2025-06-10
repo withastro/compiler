@@ -1,0 +1,88 @@
+
+[TestPrinter/table_component_wrapped_in_figure_(#1015) - 1]
+## Input
+
+```
+/-/-/-/
+import Table from "./base/table.astro";
+
+const headingContent = "foo";
+const cellContent = "bar";
+/-/-/-/
+
+<figure>
+  <Table>
+    <thead>
+      <tr>
+        <th>{headingContent}</th>
+        <th>Cell 2</th>
+        <th>Cell 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{cellContent}</td>
+        <td>Data 2</td>
+        <td>Data 3</td>
+      </tr>
+    </tbody>
+  </Table>
+</figure>
+```
+
+## Output
+
+```js
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+import Table from "./base/table.astro";
+
+import * as $$module1 from './base/table.astro';
+
+export const $$metadata = $$createMetadata(import.meta.url, { modules: [{ module: $$module1, specifier: './base/table.astro', assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+
+const headingContent = "foo";
+const cellContent = "bar";
+
+return $$render`${$$maybeRenderHead($$result)}<figure>
+  ${$$renderComponent($$result,'Table',Table,{},{"default": () => $$render`
+    <thead>
+      <tr>
+        <th>${headingContent}</th>
+        <th>Cell 2</th>
+        <th>Cell 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${cellContent}</td>
+        <td>Data 2</td>
+        <td>Data 3</td>
+      </tr>
+    </tbody>
+  `,})}
+</figure>`;
+}, undefined, undefined);
+export default $$Component;
+```
+---

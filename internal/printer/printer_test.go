@@ -2676,6 +2676,37 @@ const meta = { title: 'My App' };
 				ExperimentalExactParsingThingy: true,
 			},
 		},
+		{
+			name: "table component wrapped in figure (#1015)",
+			source: `---
+import Table from "./base/table.astro";
+
+const headingContent = "foo";
+const cellContent = "bar";
+---
+
+<figure>
+  <Table>
+    <thead>
+      <tr>
+        <th>{headingContent}</th>
+        <th>Cell 2</th>
+        <th>Cell 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{cellContent}</td>
+        <td>Data 2</td>
+        <td>Data 3</td>
+      </tr>
+    </tbody>
+  </Table>
+</figure>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		if tt.only {
