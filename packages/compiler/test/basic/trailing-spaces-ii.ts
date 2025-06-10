@@ -23,7 +23,7 @@ test.before(async () => {
 });
 
 test('trailing space', () => {
-	assert.ok(result.code, 'Expected to compiler');
+	assert.ok(result.code, 'Expected to compile');
 	assert.match(
 		result.code,
 		`<span class="spoiler astro-bqati2k5">

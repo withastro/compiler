@@ -2608,6 +2608,55 @@ const meta = { title: 'My App' };
 				ExperimentalExactParsingThingy: true,
 			},
 		},
+			{
+				name: "code tag not duplicated I (#983)",
+				source: `<html>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td><code>{}</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+				name: "code tag not duplicated II (#983)",
+			source: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th>A</th>
+          <th>B</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Code element with HTML entities</td>
+          <td><code>&lt;bar&gt;</code></td>
+        </tr>
+        <tr>
+          <td>Code element below with curly braces</td>
+          <td><code>{` + BACKTICK + `<bar>` + BACKTICK + `}</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		if tt.only {
