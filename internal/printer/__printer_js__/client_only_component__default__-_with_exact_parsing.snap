@@ -1,0 +1,59 @@
+
+[TestPrinter/client:only_component_(default)_-_with_exact_parsing - 1]
+## Input
+
+```
+/-/-/-/
+import Component from '../components';
+/-/-/-/
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component client:only />
+  </body>
+</html>
+```
+
+## Output
+
+```js
+import {
+  Fragment,
+  render as $$render,
+  createAstro as $$createAstro,
+  createComponent as $$createComponent,
+  renderComponent as $$renderComponent,
+  renderHead as $$renderHead,
+  maybeRenderHead as $$maybeRenderHead,
+  unescapeHTML as $$unescapeHTML,
+  renderSlot as $$renderSlot,
+  mergeSlots as $$mergeSlots,
+  addAttribute as $$addAttribute,
+  spreadAttributes as $$spreadAttributes,
+  defineStyleVars as $$defineStyleVars,
+  defineScriptVars as $$defineScriptVars,
+  renderTransition as $$renderTransition,
+  createTransitionScope as $$createTransitionScope,
+  renderScript as $$renderScript,
+  createMetadata as $$createMetadata
+} from "http://localhost:3000/";
+import Component from '../components';
+
+export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: ['../components'], hydrationDirectives: new Set(['only']), hoisted: [] });
+
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+
+return $$render`<html>
+  <head>
+    <title>Hello world</title>
+  ${$$renderHead($$result)}</head>
+  <body>
+    ${$$renderComponent($$result,'Component',null,{"client:only":true,"client:component-hydration":"only","client:component-path":($$metadata.resolvePath("../components")),"client:component-export":"default"})}
+  </body>
+</html>`;
+}, undefined, undefined);
+export default $$Component;
+```
+---

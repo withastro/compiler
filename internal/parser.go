@@ -3171,10 +3171,8 @@ func ParseWithOptions(r io.Reader, opts ...ParseOption) (*Node, error) {
 			Type:                DocumentNode,
 			HydrationDirectives: make(map[string]bool),
 		},
-		framesetOK: true,
-		// TODO: use the experimental flag
-		// to choose the correct initial insertion mode
-		im:               initialIMExact,
+		framesetOK:       true,
+		im:               initialIM,
 		frontmatterState: FrontmatterInitial,
 		exitLiteralIM:    func() bool { return false },
 	}
