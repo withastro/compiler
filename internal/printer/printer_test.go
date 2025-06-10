@@ -2657,6 +2657,25 @@ const meta = { title: 'My App' };
 				ExperimentalExactParsingThingy: true,
 			},
 		},
+		{
+			name: "no space after expression in title works (#1049)",
+			source: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title ? ` + BACKTICK + `${title} - ` + BACKTICK + ` : ""}Placeholder</title>
+  <title>{title}- Placeholder</title>
+</head>
+<body>
+  <slot />
+</body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		if tt.only {
