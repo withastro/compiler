@@ -2677,7 +2677,7 @@ const meta = { title: 'My App' };
 			},
 		},
 		{
-			name: "table component wrapped in figure (#1015)",
+			name: "table component wrapped in element containing expression I (#1015)",
 			source: `---
 import Table from "./base/table.astro";
 
@@ -2703,6 +2703,30 @@ const cellContent = "bar";
     </tbody>
   </Table>
 </figure>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name: "table component wrapped in element containing expression II (#958)",
+			source: `---
+import Layout from '../layouts/Layout.astro';
+const linkURL = '0000';
+---
+
+<Layout title="Welcome to Astro.">
+	<main>
+		<table>
+			<tr>
+				<th>TH</th>
+				<td><a href={linkURL}>{linkURL}</a></td>
+			</tr>
+		</table>
+		<div style="margin-top:1em;">
+			test
+		</div>
+	</main>
+</Layout>`,
 			transformOptions: transform.TransformOptions{
 				ExperimentalExactParsingThingy: true,
 			},
