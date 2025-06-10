@@ -2576,22 +2576,37 @@ const meta = { title: 'My App' };
 		{
 			name:   "select with option containing element",
 			source: `<select><option><span>Lemon</span></option></select>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "select with 2 options containing element",
 			source: `<select><option><span>Lemon</span></option><option><span>Lime</span></option></select>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "select with option containing element with div sibling",
 			source: `<select><option><span>Lemon</span></option></select><div>Orange</div>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "select with 2 options containing element with div sibling",
 			source: `<select><option><span>Lemon</span></option><option><span>Lime</span></option></select><div>Orange</div>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "select with option containing element and button containing selected content",
 			source: `<select><button><selectedcontent></selectedcontent></button><option><span>Lemon</span></option></select>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 	}
 	for _, tt := range tests {
