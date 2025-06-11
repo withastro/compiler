@@ -341,7 +341,7 @@ func Transform() any {
 					}
 				}()
 
-				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true), astro.ParseOptionExperimentalBetterLiteralThingy(transformOptions.ExperimentalExactParsingThingy))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionExperimentalBetterLiteralThingy(transformOptions.ExperimentalExactParsingThingy))
 				if err != nil {
 					reject.Invoke(wasm_utils.ErrorToJSError(h, err))
 					return
