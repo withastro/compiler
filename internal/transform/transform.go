@@ -36,6 +36,7 @@ type TransformOptions struct {
 	AnnotateSourceFile      bool
 	RenderScript            bool
 	ExperimentalScriptOrder bool
+	ExperimentalExactParsingThingy bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {

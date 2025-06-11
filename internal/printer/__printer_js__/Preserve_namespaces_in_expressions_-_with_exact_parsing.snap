@@ -1,9 +1,9 @@
 
-[TestPrinter/Self-closing_components_in_head_can_have_siblings - 1]
+[TestPrinter/Preserve_namespaces_in_expressions_-_with_exact_parsing - 1]
 ## Input
 
 ```
-<html><head><BaseHead /><link href="test"></head></html>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href={`#${iconId}`}></svg>
 ```
 
 ## Output
@@ -34,7 +34,7 @@ export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydra
 
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">${$$renderHead($$result)}</head></html>`;
+return $$render`${$$maybeRenderHead($$result)}<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect${$$addAttribute(`#${iconId}`, "xlink:href")}></rect></svg>`;
 }, undefined, undefined);
 export default $$Component;
 ```

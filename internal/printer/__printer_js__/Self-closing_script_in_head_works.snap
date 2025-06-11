@@ -3,7 +3,7 @@
 ## Input
 
 ```
-<html><head><script is:inline /></head><html>
+<html><head><script is:inline /></head></html>
 ```
 
 ## Output

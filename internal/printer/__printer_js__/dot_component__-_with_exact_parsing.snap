@@ -1,9 +1,19 @@
 
-[TestPrinter/Self-closing_components_in_head_can_have_siblings - 1]
+[TestPrinter/dot_component__-_with_exact_parsing - 1]
 ## Input
 
 ```
-<html><head><BaseHead /><link href="test"></head></html>
+/-/-/-/
+import * as ns from '../components';
+/-/-/-/
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <ns.Component />
+  </body>
+</html>
 ```
 
 ## Output
@@ -29,12 +39,22 @@ import {
   renderScript as $$renderScript,
   createMetadata as $$createMetadata
 } from "http://localhost:3000/";
+import * as ns from '../components';
 
-export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+import * as $$module1 from '../components';
+
+export const $$metadata = $$createMetadata(import.meta.url, { modules: [{ module: $$module1, specifier: '../components', assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
 
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">${$$renderHead($$result)}</head></html>`;
+return $$render`<html>
+  <head>
+    <title>Hello world</title>
+  ${$$renderHead($$result)}</head>
+  <body>
+    ${$$renderComponent($$result,'ns.Component',ns.Component,{})}
+  </body>
+</html>`;
 }, undefined, undefined);
 export default $$Component;
 ```

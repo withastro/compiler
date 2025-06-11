@@ -3,7 +3,7 @@
 ## Input
 
 ```
-<body><slot><p>Hello world!</p></slot><body>
+<body><slot><p>Hello world!</p></slot></body>
 ```
 
 ## Output
