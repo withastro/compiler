@@ -2730,7 +2730,16 @@ const linkURL = '0000';
 			transformOptions: transform.TransformOptions{
 				ExperimentalExactParsingThingy: true,
 			},
-		},
+		},{
+			name: "anchor tag in template, containing an expression, isn't duplicated (#971)",
+			source: `<template>
+    <a href="https://example.com">{text}</a>.
+</template>
+<p>This should not be a link</p>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+},
 	}
 	for _, tt := range tests {
 		if tt.only {
