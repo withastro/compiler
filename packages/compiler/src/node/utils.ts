@@ -71,6 +71,11 @@ export function walk(node: ParentNode, callback: Visitor): void {
 	walker.visit(node);
 }
 
+export function walkAsync(node: ParentNode, callback: Visitor): Promise<void> {
+	const walker = new Walker(callback);
+	return walker.visit(node);
+}
+
 function serializeAttributes(node: TagLikeNode): string {
 	let output = '';
 	for (const attr of node.attributes) {
