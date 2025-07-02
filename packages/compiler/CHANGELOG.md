@@ -1,5 +1,13 @@
 # @astrojs/compiler
 
+## 2.13.0
+
+### Minor Changes
+
+- 89c80fe: Adds a `walkAsync` utility function that returns a Promise from the tree traversal process.
+
+  Unlike the existing `walk` function which doesn't provide a way to wait for traversal completion, `walkAsync` allows consumers to `await` the full traversal of the AST.
+
 ## 2.12.2
 
 ### Patch Changes
