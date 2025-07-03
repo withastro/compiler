@@ -6,6 +6,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/test_utils"
+	"golang.org/x/net/html/atom"
 )
 
 func TestScopeStyle(t *testing.T) {
@@ -283,7 +284,13 @@ func TestScopeStyle(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			styleEl := doc.LastChild.FirstChild.FirstChild // note: root is <html>, and we need to get <style> which lives in head
+			var styleEl *astro.Node // note: root is <html>, and we need to get <style> which lives in head
+
+			walk(doc, func(n *astro.Node) {
+				if styleEl == nil && n.Type == astro.ElementNode && n.DataAtom == atom.Style {
+					styleEl = n
+				}
+			})
 			styles := []*astro.Node{styleEl}
 			ScopeStyle(styles, TransformOptions{Scope: "xxxxxx"})
 			got := styles[0].FirstChild.Data

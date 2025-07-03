@@ -1,9 +1,16 @@
 
-[TestPrinter/Self-closing_components_in_head_can_have_siblings - 1]
+[TestPrinter/noscript_component_-_with_exact_parsing - 1]
 ## Input
 
 ```
-<html><head><BaseHead /><link href="test"></head></html>
+<html>
+  <head></head>
+  <body>
+    <noscript>
+        <Component />
+    </noscript>
+  </body>
+</html>
 ```
 
 ## Output
@@ -34,7 +41,14 @@ export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydra
 
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">${$$renderHead($$result)}</head></html>`;
+return $$render`<html>
+  <head>${$$renderHead($$result)}</head>
+  <body>
+    <noscript>
+        ${$$renderComponent($$result,'Component',Component,{})}
+    </noscript>
+  </body>
+</html>`;
 }, undefined, undefined);
 export default $$Component;
 ```

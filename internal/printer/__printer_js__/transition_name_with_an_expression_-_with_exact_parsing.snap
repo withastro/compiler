@@ -1,9 +1,9 @@
 
-[TestPrinter/Self-closing_components_in_head_can_have_siblings - 1]
+[TestPrinter/transition:name_with_an_expression_-_with_exact_parsing - 1]
 ## Input
 
 ```
-<html><head><BaseHead /><link href="test"></head></html>
+<div transition:name={one + '-' + 'two'}></div>
 ```
 
 ## Output
@@ -29,13 +29,14 @@ import {
   renderScript as $$renderScript,
   createMetadata as $$createMetadata
 } from "http://localhost:3000/";
+import "transitions.css";
 
-export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+export const $$metadata = $$createMetadata("/projects/app/src/pages/page.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
 
-const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+const $$Page = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">${$$renderHead($$result)}</head></html>`;
-}, undefined, undefined);
-export default $$Component;
+return $$render`${$$maybeRenderHead($$result)}<div${$$addAttribute($$renderTransition($$result, "66ayzuhd", "", (one + '-' + 'two')), "data-astro-transition-scope")}></div>`;
+}, '/projects/app/src/pages/page.astro', 'self');
+export default $$Page;
 ```
 ---
