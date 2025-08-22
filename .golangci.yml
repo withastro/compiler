@@ -1,10 +1,8 @@
-run:
-  skip-dirs:
-    - lib
-  skip-files:
-    - xxhash.go
-
 issues:
+  exclude-dirs:
+    - lib
+  exclude-files:
+    - xxhash.go
   exclude-rules:
     - path: token.go
       linters:
