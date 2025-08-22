@@ -46,32 +46,6 @@ export default $$Component;`
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
-func suffixWithFilename(filename string, transitions bool) string {
-	propagationArg := "undefined"
-	if transitions {
-		propagationArg = `'self'`
-	}
-	return fmt.Sprintf("%s;", BACKTICK) + fmt.Sprintf(`
-}, '%s', %s);
-export default $$Component;`, filename, propagationArg)
-}
-
-type want struct {
-	frontmatter    []string
-	definedVars    []string
-	getStaticPaths string
-	code           string
-	metadata
-}
-
-type metadata struct {
-	hoisted              []string
-	hydratedComponents   []string
-	clientOnlyComponents []string
-	modules              []string
-	hydrationDirectives  []string
-}
-
 type testcase struct {
 	name             string
 	source           string
@@ -1234,19 +1208,19 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 		},
 		{
-			name:  "Fragment with await",
+			name:   "Fragment with await",
 			source: `<body><Fragment> { await Promise.resolve("Awaited") } </Fragment></body>`,
 		},
 		{
-			name:  "Fragment shorthand with await",
+			name:   "Fragment shorthand with await",
 			source: `<body><> { await Promise.resolve("Awaited") } </></body>`,
 		},
 		{
-			name:  "Fragment wrapping link with awaited href",
+			name:   "Fragment wrapping link with awaited href",
 			source: `<head><Fragment><link rel="preload" href={(await import('../fonts/some-font.woff2')).default} as="font" crossorigin /></Fragment></head>`,
 		},
 		{
-			name:  "Component with await",
+			name:   "Component with await",
 			source: `<body><Component> { await Promise.resolve("Awaited") } </Component></body>`,
 		},
 		{
