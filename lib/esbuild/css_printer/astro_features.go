@@ -66,6 +66,8 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 		}
 	}
 
+	var onlyPseudoSubclassSelectors *bool
+
 	for i, sub := range sel.SubclassSelectors {
 		whitespace := mayNeedWhitespaceAfter
 
@@ -126,6 +128,22 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			p.print("]")
 
 		case *css_ast.SSPseudoClass:
+			if sel.TypeSelector == nil && onlyPseudoSubclassSelectors == nil {
+				onlyPseudoSubclassSelectors = new(bool)
+				*onlyPseudoSubclassSelectors = true
+				for _, ss := range sel.SubclassSelectors {
+					_, ok := ss.(*css_ast.SSPseudoClass)
+					if !ok {
+						*onlyPseudoSubclassSelectors = false
+						break
+					}
+				}
+			}
+			// If there is no type selector and all subclass selectors are pseudo
+			// selectors, we need to add the scope before the first pseudo selector.
+			if sel.TypeSelector == nil && *onlyPseudoSubclassSelectors && i == 0 && s.Name != "global" && s.Name != "root" {
+				scoped = p.printScopedSelector()
+			}
 			p.printPseudoClassSelector(*s, whitespace)
 			if s.Name == "global" || s.Name == "root" {
 				scoped = true

@@ -166,6 +166,21 @@ func TestScopeStyle(t *testing.T) {
 			source: ".class\\:class:focus{}",
 			want:   ".class\\:class:where(.astro-xxxxxx):focus{}",
 		},
+		{
+			name:   "only pseudo element",
+			source: ".class>::before{}",
+			want:   ".class:where(.astro-xxxxxx)>:where(.astro-xxxxxx)::before{}",
+		},
+		{
+			name:   "only pseudo class + pseudo element",
+			source: ".class>:not(:first-child)::after{}",
+			want:   ".class:where(.astro-xxxxxx)>:where(.astro-xxxxxx):not(:first-child)::after{}",
+		},
+		{
+			name:   "nested only pseudo element",
+			source: ".class{& .other_class{&::after{}}}",
+			want:   ".class:where(.astro-xxxxxx){& .other_class:where(.astro-xxxxxx){&:where(.astro-xxxxxx)::after{}}}",
+		},
 		// the following tests assert we leave valid CSS alone
 		{
 			name:   "attributes",
