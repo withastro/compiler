@@ -1,0 +1,10 @@
+name: Issue Labeled
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  reply_labelled:
+    if: github.repository_owner == 'withastro'
+    uses: withastro/automation/.github/workflows/issue-labeled.yml@main
