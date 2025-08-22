@@ -12,14 +12,5 @@ issues:
         - errcheck
 
     - linters:
-        - typecheck
-      text: "syscall/js"
-    - linters:
         - staticcheck
       text: "SA9003"
-    - linters:
-        - typecheck
-      text: "by package vert"
-    - linters:
-        - typecheck
-      text: "vert."
