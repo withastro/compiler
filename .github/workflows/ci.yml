@@ -73,6 +73,9 @@ jobs:
         uses: golangci/golangci-lint-action@v4
         with:
           version: latest
+        env:
+          GOOS: js
+          GOARCH: wasm
 
   lint-js:
     timeout-minutes: 3
