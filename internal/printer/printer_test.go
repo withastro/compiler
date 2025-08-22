@@ -2092,6 +2092,15 @@ const meta = { title: 'My App' };
 			name:   "namespace is preserved when inside an expression",
 			source: `<svg>{<image />}</svg>`,
 		},
+		{
+			name: "head content with component first",
+			source: `---
+import Analytics from '../components/Analytics.astro';
+---
+<Analytics />
+<title>{title}</title>
+<meta name="description" content="a description" />`,
+		},
 	}
 	for _, tt := range tests {
 		if tt.only {

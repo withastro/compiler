@@ -1509,7 +1509,7 @@ func inBodyIM(p *parser) bool {
 		case a.Br:
 			p.tok.Type = StartTagToken
 			return false
-		case a.Template:
+		case a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta, a.Noframes, a.Script, a.Style, a.Template, a.Title:
 			return inHeadIM(p)
 		default:
 			p.inBodyEndTagOther(p.tok.DataAtom, p.tok.Data)
