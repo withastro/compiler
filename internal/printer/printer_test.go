@@ -1562,6 +1562,14 @@ const items = ["Dog", "Cat", "Platipus"];
 			source: `<form><select>{options.map((option) => (<option value={option.id}>{option.title}</option>))}</select><div><label>Title 3</label><input type="text" /></div><button type="submit">Submit</button></form>`,
 		},
 		{
+			name:   "selectedcontent element in customizable select",
+			source: `<select><button><selectedcontent></selectedcontent></button><option>Option 1</option><option>Option 2</option></select>`,
+		},
+		{
+			name:   "selectedcontent self-closing element",
+			source: `<select><button><selectedcontent /></button><option>Option 1</option><option>Option 2</option></select>`,
+		},
+		{
 			name:   "Expression in form followed by other sibling forms",
 			source: "<form><p>No expression here. So the next form will render.</p></form><form><h3>{data.formLabelA}</h3></form><form><h3>{data.formLabelB}</h3></form><form><p>No expression here, but the last form before me had an expression, so my form didn't render.</p></form><form><h3>{data.formLabelC}</h3></form><div><p>Here is some in-between content</p></div><form><h3>{data.formLabelD}</h3></form>",
 		},
