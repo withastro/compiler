@@ -393,7 +393,6 @@ func (p *parser) addExpression() {
 		Loc:           p.generateLoc(),
 		Namespace:     p.top().Namespace,
 	})
-
 }
 
 func isFragment(data string) bool {
@@ -722,6 +721,38 @@ func beforeHTMLIM(p *parser) bool {
 		return true
 	}
 	p.parseImpliedToken(StartTagToken, a.Html, a.Html.String())
+	return false
+}
+
+func initialIMExact(p *parser) bool {
+	switch p.tok.Type {
+	case FrontmatterFenceToken:
+		p.setOriginalIM()
+		p.im = frontmatterIM
+		return false
+	case TextToken:
+		p.tok.Data = strings.TrimLeft(p.tok.Data, whitespace)
+		if len(p.tok.Data) == 0 {
+			// It was all whitespace, so ignore it.
+			return true
+		}
+	case CommentToken:
+		p.doc.AppendChild(&Node{
+			Type: CommentNode,
+			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
+		})
+		return true
+	case DoctypeToken:
+		n := parseDoctypeExact(p.tok.Data)
+		p.doc.AppendChild(n)
+		p.im = inLiteralIMExact
+		return true
+	}
+	if p.frontmatterState == FrontmatterInitial {
+		p.addFrontmatter(true)
+	}
+	p.im = inLiteralIMExact
 	return false
 }
 
@@ -1776,6 +1807,14 @@ func textIM(p *parser) bool {
 	return p.tok.Type == EndTagToken
 }
 
+func parseText(p *parser) {
+	d := p.tok.Data
+	if d == "" {
+		return
+	}
+	p.addText(d)
+}
+
 // Section 12.2.6.4.9.
 func inTableIM(p *parser) bool {
 	switch p.tok.Type {
@@ -2805,6 +2844,42 @@ func inExpressionIM(p *parser) bool {
 	return p.tok.Type == EndTagToken
 }
 
+func inLiteralIMExact(p *parser) bool {
+	switch p.tok.Type {
+	case DoctypeToken:
+		n := parseDoctypeExact(p.tok.Data)
+		p.doc.AppendChild(n)
+	case StartTagToken:
+		p.addElement()
+		if p.hasSelfClosingToken {
+			p.addLoc()
+			p.oe.pop()
+			p.acknowledgeSelfClosingTag()
+		}
+	case StartExpressionToken:
+		p.addExpression()
+		p.setOriginalIM()
+		p.im = inExpressionIMExact
+	case ErrorToken:
+		// ignore the token
+	case TextToken:
+		parseText(p)
+	case CommentToken:
+		p.addChild(&Node{
+			Type: CommentNode,
+			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
+		})
+	case EndTagToken:
+		p.addLoc()
+		p.oe.pop()
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
+	}
+	return true
+}
+
 func ignoreTheRemainingTokens(p *parser) bool {
 	return true
 }
@@ -2815,6 +2890,34 @@ func getExitLiteralFunc(p *parser) func() bool {
 	return func() bool {
 		return len(p.oe) == oe
 	}
+}
+
+func inExpressionIMExact(p *parser) bool {
+	switch p.tok.Type {
+	case ErrorToken:
+		p.oe.pop()
+	case TextToken:
+		parseText(p)
+		return true
+	case StartTagToken, EndTagToken:
+		return inLiteralIMExact(p)
+	case EndExpressionToken:
+		p.addLoc()
+		p.oe.pop()
+		p.im = p.originalIM
+		p.originalIM = nil
+		return true
+	case CommentToken:
+		p.addChild(&Node{
+			Type: CommentNode,
+			Data: p.tok.Data,
+			Loc:  p.generateLoc(),
+		})
+		return true
+	}
+	p.im = p.originalIM
+	p.originalIM = nil
+	return p.tok.Type == EndTagToken
 }
 
 const whitespaceOrNUL = whitespace + "\x00"
@@ -3049,6 +3152,14 @@ func ParseOptionEnableScripting(enable bool) ParseOption {
 func ParseOptionEnableLiteral(enable bool) ParseOption {
 	return func(p *parser) {
 		p.literal = enable
+	}
+}
+
+func ParseOptionExperimentalBetterLiteralThingy(enable bool) ParseOption {
+	return func(p *parser) {
+		if enable {
+			p.im = initialIMExact
+		}
 	}
 }
 

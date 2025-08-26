@@ -1,9 +1,26 @@
 
-[TestPrinter/Self-closing_components_in_head_can_have_siblings - 1]
+[TestPrinter/nested_head_content_stays_in_the_head_-_with_exact_parsing - 1]
 ## Input
 
 ```
-<html><head><BaseHead /><link href="test"></head></html>
+/-/-/-/
+const meta = { title: 'My App' };
+/-/-/-/
+
+<html>
+    <head>
+        <meta charset="utf-8" />
+
+        {
+            meta && <title>{meta.title}</title>
+        }
+
+        <meta name="after">
+    </head>
+    <body>
+        <h1>My App</h1>
+    </body>
+</html>
 ```
 
 ## Output
@@ -34,7 +51,22 @@ export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydra
 
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">${$$renderHead($$result)}</head></html>`;
+const meta = { title: 'My App' };
+
+return $$render`<html>
+    <head>
+        <meta charset="utf-8">
+
+        ${
+            meta && $$render`<title>${meta.title}</title>`
+        }
+
+        <meta name="after">
+    ${$$renderHead($$result)}</head>
+    <body>
+        <h1>My App</h1>
+    </body>
+</html>`;
 }, undefined, undefined);
 export default $$Component;
 ```

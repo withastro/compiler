@@ -154,3 +154,53 @@ var quirkyIDs = []string{
 	"-//webtechs//dtd mozilla html 2.0//",
 	"-//webtechs//dtd mozilla html//",
 }
+
+func parseDoctypeExact(s string) (n *Node) {
+	n = &Node{Type: DoctypeNode}
+
+	// Find the name.
+	space := strings.IndexAny(s, whitespace)
+	if space == -1 {
+		space = len(s)
+	}
+	n.Data = s[:space]
+	n.Data = strings.ToLower(n.Data)
+	s = strings.TrimLeft(s[space:], whitespace)
+
+	if len(s) < 6 {
+		// It can't start with "PUBLIC" or "SYSTEM".
+		// Ignore the rest of the string.
+		return n
+	}
+
+	key := strings.ToLower(s[:6])
+	s = s[6:]
+	for key == "public" || key == "system" {
+		s = strings.TrimLeft(s, whitespace)
+		if s == "" {
+			break
+		}
+		quote := s[0]
+		if quote != '"' && quote != '\'' {
+			break
+		}
+		s = s[1:]
+		q := strings.IndexRune(s, rune(quote))
+		var id string
+		if q == -1 {
+			id = s
+			s = ""
+		} else {
+			id = s[:q]
+			s = s[q+1:]
+		}
+		n.Attr = append(n.Attr, Attribute{Key: key, Val: id})
+		if key == "public" {
+			key = "system"
+		} else {
+			key = ""
+		}
+	}
+
+	return n
+}

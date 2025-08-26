@@ -159,7 +159,7 @@ func TestPrinter(t *testing.T) {
 		},
 		{
 			name:   "slot with fallback",
-			source: `<body><slot><p>Hello world!</p></slot><body>`,
+			source: `<body><slot><p>Hello world!</p></slot></body>`,
 		},
 		{
 			name:   "slot with fallback II",
@@ -343,6 +343,35 @@ import type data from "test"
 </Layout>`,
 		},
 		{
+			name: "expression returning multiple elements - with verbatim parsing",
+			source: `<Layout title="Welcome to Astro.">
+	<main>
+		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
+		{
+			Object.entries(DUMMY_DATA).map(([dummyKey, dummyValue]) => {
+				return (
+					<p>
+						onlyp {dummyKey}
+					</p>
+					<h2>
+						onlyh2 {dummyKey}
+					</h2>
+					<div>
+						<h2>div+h2 {dummyKey}</h2>
+					</div>
+					<p>
+						<h2>p+h2 {dummyKey}</h2>
+					</p>
+				);
+			})
+		}
+	</main>
+</Layout>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name: "nested template literal expression",
 			source: `<html lang="en">
 <body>
@@ -350,6 +379,18 @@ import type data from "test"
 {Object.keys(importedAuthors).map(author => <p><div>{author}</div></p>)}
 </body>
 </html>`,
+		},
+		{
+			name: "nested template literal expression - with exact parsing",
+			source: `<html lang="en">
+<body>
+{Object.keys(importedAuthors).map(author => <p><div>hello</div></p>)}
+{Object.keys(importedAuthors).map(author => <p><div>{author}</div></p>)}
+</body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "complex nested template literal expression",
@@ -370,6 +411,23 @@ import VueComponent from '../components/Vue.vue';
 </html>`,
 		},
 		{
+			name: "component - with exact parsing",
+			source: `---
+import VueComponent from '../components/Vue.vue';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <VueComponent />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name: "dot component",
 			source: `---
 import * as ns from '../components';
@@ -382,6 +440,23 @@ import * as ns from '../components';
     <ns.Component />
   </body>
 </html>`,
+		},
+		{
+			name: "dot component  - with exact parsing",
+			source: `---
+import * as ns from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <ns.Component />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "component with quoted attributes",
@@ -412,6 +487,21 @@ import * as ns from '../components';
 </html>`,
 		},
 		{
+			name: "noscript component - with exact parsing",
+			source: `
+<html>
+  <head></head>
+  <body>
+	<noscript>
+		<Component />
+	</noscript>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name:   "noscript styles",
 			source: `<noscript><style>div { color: red; }</style></noscript>`,
 		},
@@ -438,6 +528,23 @@ import Component from '../components';
 </html>`,
 		},
 		{
+			name: "client:only component (default) - with exact parsing",
+			source: `---
+import Component from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component client:only />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name: "client:only component (named)",
 			source: `---
 import { Component } from '../components';
@@ -450,6 +557,23 @@ import { Component } from '../components';
     <Component client:only />
   </body>
 </html>`,
+		},
+		{
+			name: "client:only component (named) - with exact parsing",
+			source: `---
+import { Component } from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component client:only />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name: "client:only component (namespace)",
@@ -466,6 +590,23 @@ import * as components from '../components';
 </html>`,
 		},
 		{
+			name: "client:only component (namespace) - with exact parsing",
+			source: `---
+import * as components from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <components.A client:only />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name: "client:only component (namespaced default)",
 			source: `---
 import defaultImport from '../components/ui-1';
@@ -478,6 +619,23 @@ import defaultImport from '../components/ui-1';
 	<defaultImport.Counter1 client:only />
   </body>
 </html>`,
+		},
+		{
+			name: "client:only component (namespaced default) - with exact parsing",
+			source: `---
+import defaultImport from '../components/ui-1';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+	<defaultImport.Counter1 client:only />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name: "client:only component (namespaced named)",
@@ -494,6 +652,23 @@ import { namedImport } from '../components/ui-2';
 </html>`,
 		},
 		{
+			name: "client:only component (namespaced named) - with exact parsing",
+			source: `---
+import { namedImport } from '../components/ui-2';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+	<namedImport.Counter2 client:only />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name: "client:only component (multiple)",
 			source: `---
 import Component from '../components';
@@ -508,6 +683,25 @@ import Component from '../components';
 	<Component test="c" client:only />
   </body>
 </html>`,
+		},
+		{
+			name: "client:only component (multiple) - with exact parsing",
+			source: `---
+import Component from '../components';
+---
+<html>
+  <head>
+    <title>Hello world</title>
+  </head>
+  <body>
+    <Component test="a" client:only />
+	<Component test="b" client:only />
+	<Component test="c" client:only />
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "iframe",
@@ -680,6 +874,23 @@ const name = "world";
 </html>`,
 		},
 		{
+			name: "head expression - with exact parsing",
+			source: `---
+const name = "world";
+---
+<html>
+  <head>
+    <title>Hello {name}</title>
+  </head>
+  <body>
+    <div></div>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name: "head expression and conditional rendering of fragment",
 			source: `---
 const testBool = true;
@@ -694,6 +905,25 @@ const testBool = true;
 	  <div></div>
 	</body>
 </html>`,
+		},
+		{
+			name: "head expression and conditional rendering of fragment - with exact parsing",
+			source: `---
+const testBool = true;
+---
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>{testBool ? "Hey" : "Bye"}</title>
+		{testBool && (<><meta name="description" content="test" /></>)}
+	</head>
+	<body>
+	  <div></div>
+	</body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name: "conditional rendering of title containing expression",
@@ -757,6 +987,42 @@ const testBool = true;
 </html>`,
 		},
 		{
+			name: "html5 boilerplate - with exact parsing",
+			source: `<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>A Basic HTML5 Template</title>
+  <meta name="description" content="A simple HTML5 Template for new projects.">
+  <meta name="author" content="SitePoint">
+
+  <meta property="og:title" content="A Basic HTML5 Template">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.sitepoint.com/a-basic-html5-template/">
+  <meta property="og:description" content="A simple HTML5 Template for new projects.">
+  <meta property="og:image" content="image.png">
+
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="css/styles.css?v=1.0">
+
+</head>
+
+<body>
+  <!-- your content here... -->
+  <script is:inline src="js/scripts.js"></script>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name: "React framework example",
 			source: `---
 // Component Imports
@@ -803,6 +1069,57 @@ const someProps = {
     </main>
   </body>
 </html>`,
+		},
+		{
+			name: "React framework example - with exact parsing",
+			source: `---
+// Component Imports
+import Counter from '../components/Counter.jsx'
+const someProps = {
+  count: 0,
+}
+
+// Full Astro Component Syntax:
+// https://docs.astro.build/core-concepts/astro-components/
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width"
+    />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      :global(:root) {
+        font-family: system-ui;
+        padding: 2em 0;
+      }
+      :global(.counter) {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        place-items: center;
+        font-size: 2em;
+        margin-top: 2em;
+      }
+      :global(.children) {
+        display: grid;
+        place-items: center;
+        margin-bottom: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <Counter {...someProps} client:visible>
+        <h1>Hello React!</h1>
+      </Counter>
+    </main>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name: "script in <head>",
@@ -975,7 +1292,7 @@ const name = 'world';
 		},
 		{
 			name:   "Self-closing script in head works",
-			source: `<html><head><script is:inline /></head><html>`,
+			source: `<html><head><script is:inline /></head></html>`,
 		},
 		{
 			name:   "Self-closing title",
@@ -987,7 +1304,7 @@ const name = 'world';
 		},
 		{
 			name:   "Self-closing components in head can have siblings",
-			source: `<html><head><BaseHead /><link href="test"></head><html>`,
+			source: `<html><head><BaseHead /><link href="test"></head></html>`,
 		},
 		{
 			name:   "Self-closing formatting elements",
@@ -1071,6 +1388,9 @@ const title = 'icon';
 ---
 <svg>{title ? <title>{title}</title> : null}</svg>`,
 		},
+		// FIXME: Something causes a weird
+		// failure in the next two tests
+		// in exact parsing mode
 		{
 			name:   "Empty script",
 			source: `<script hoist></script>`,
@@ -1208,19 +1528,19 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 		},
 		{
-			name:  "Fragment with await",
+			name:   "Fragment with await",
 			source: `<body><Fragment> { await Promise.resolve("Awaited") } </Fragment></body>`,
 		},
 		{
-			name:  "Fragment shorthand with await",
+			name:   "Fragment shorthand with await",
 			source: `<body><> { await Promise.resolve("Awaited") } </></body>`,
 		},
 		{
-			name:  "Fragment wrapping link with awaited href",
+			name:   "Fragment wrapping link with awaited href",
 			source: `<head><Fragment><link rel="preload" href={(await import('../fonts/some-font.woff2')).default} as="font" crossorigin /></Fragment></head>`,
 		},
 		{
-			name:  "Component with await",
+			name:   "Component with await",
 			source: `<body><Component> { await Promise.resolve("Awaited") } </Component></body>`,
 		},
 		{
@@ -1234,6 +1554,13 @@ import { Container, Col, Row } from 'react-bootstrap';
 		{
 			name:   "Preserve namespaces in expressions",
 			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href={` + BACKTICK + `#${iconId}` + BACKTICK + `}></svg>`,
+		},
+		{
+			name:   "Preserve namespaces in expressions - with exact parsing",
+			source: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect xlink:href={` + BACKTICK + `#${iconId}` + BACKTICK + `}></svg>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "Preserve namespaces for components",
@@ -1284,6 +1611,55 @@ const { product } = Astro.props;
   <Footer />
 </body>
 </html>`, BACKTICK, BACKTICK),
+		},
+		{
+			name: "import.meta.env - with exact parsing",
+			source: fmt.Sprintf(`---
+import Header from '../../components/Header.jsx'
+import Footer from '../../components/Footer.astro'
+import ProductPageContent from '../../components/ProductPageContent.jsx';
+
+export async function getStaticPaths() {
+  let products = await fetch(%s${import.meta.env.PUBLIC_NETLIFY_URL}/.netlify/functions/get-product-list%s)
+    .then(res => res.json()).then((response) => {
+      console.log('--- built product pages ---')
+      return response.products.edges
+    });
+
+  return products.map((p, i) => {
+    return {
+      params: {pid: p.node.handle},
+      props: {product: p},
+    };
+  });
+}
+
+const { product } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shoperoni | Buy {product.node.title}</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style/global.css">
+</head>
+<body>
+  <Header />
+  <div class="product-page">
+    <article>
+      <ProductPageContent client:visible product={product.node} />
+    </article>
+  </div>
+  <Footer />
+</body>
+</html>`, BACKTICK, BACKTICK),
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name: "import.meta",
@@ -1349,6 +1725,33 @@ const content = "lol";
   </body>
 </html>
 `,
+		},
+		{
+			name: "table simple case - with exact parsing",
+			source: `---
+const content = "lol";
+---
+
+<html>
+  <body>
+    <table>
+      <tr>
+        <td>{content}</td>
+      </tr>
+      {
+        (
+          <tr>
+            <td>1</td>
+          </tr>
+        )
+      }
+    </table>Hello
+  </body>
+</html>
+`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name: "complex table",
@@ -1959,6 +2362,9 @@ const items = ["Dog", "Cat", "Platipus"];
 }`,
 		},
 		{
+			// FIXME: Something causes a weird
+			// failure in this test
+			// in exact parsing mode
 			name:   "component with only a script",
 			source: "<script>console.log('hello world');</script>",
 		},
@@ -2005,16 +2411,43 @@ const items = ["Dog", "Cat", "Platipus"];
 			transitions: true,
 		},
 		{
+			name:        "transition:name with an expression - with exact parsing",
+			source:      `<div transition:name={one + '-' + 'two'}></div>`,
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name:        "transition:name with an template literal",
 			source:      "<div transition:name=`${one}-two`></div>",
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
 		},
 		{
+			name:        "transition:name with an template literal - with exact parsing",
+			source:      "<div transition:name=`${one}-two`></div>",
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name:        "transition:animate with an expression",
 			source:      "<div transition:animate={slide({duration:15})}></div>",
 			filename:    "/projects/app/src/pages/page.astro",
 			transitions: true,
+		},
+		{
+			name:        "transition:animate with an expression - with exact parsing",
+			source:      "<div transition:animate={slide({duration:15})}></div>",
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:        "transition:animate on Component",
@@ -2028,14 +2461,38 @@ const items = ["Dog", "Cat", "Platipus"];
 			transitions: true,
 		},
 		{
+			name:        "transition:persist converted to a data attribute - with exact parsing",
+			source:      `<div transition:persist></div>`,
+			transitions: true,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name:        "transition:persist uses transition:name if defined",
 			source:      `<div transition:persist transition:name="foo"></div>`,
 			transitions: true,
 		},
 		{
+			name:        "transition:persist uses transition:name if defined - with exact parsing",
+			source:      `<div transition:persist transition:name="foo"></div>`,
+			transitions: true,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name:        "transition:persist-props converted to a data attribute",
 			source:      `<my-island transition:persist transition:persist-props="false"></my-island>`,
 			transitions: true,
+		},
+		{
+			name:        "transition:persist-props converted to a data attribute - with exact parsing",
+			source:      `<my-island transition:persist transition:persist-props="false"></my-island>`,
+			transitions: true,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
 		},
 		{
 			name:   "trailing expression",
@@ -2063,9 +2520,200 @@ const meta = { title: 'My App' };
 </html>`,
 		},
 		{
+			name: "nested head content stays in the head - with exact parsing",
+			source: `---
+const meta = { title: 'My App' };
+---
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+
+		{
+			meta && <title>{meta.title}</title>
+		}
+
+		<meta name="after">
+	</head>
+	<body>
+		<h1>My App</h1>
+	</body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
 			name:   "namespace is preserved when inside an expression",
 			source: `<svg>{<image />}</svg>`,
 		},
+		{
+			name:   "select with option containing element",
+			source: `<select><option><span>Lemon</span></option></select>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name:   "select with 2 options containing element",
+			source: `<select><option><span>Lemon</span></option><option><span>Lime</span></option></select>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name:   "select with option containing element with div sibling",
+			source: `<select><option><span>Lemon</span></option></select><div>Orange</div>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name:   "select with 2 options containing element with div sibling",
+			source: `<select><option><span>Lemon</span></option><option><span>Lime</span></option></select><div>Orange</div>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name:   "select with option containing element and button containing selected content",
+			source: `<select><button><selectedcontent></selectedcontent></button><option><span>Lemon</span></option></select>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+			{
+				name: "code tag not duplicated I (#983)",
+				source: `<html>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td><code>{}</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+				name: "code tag not duplicated II (#983)",
+			source: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th>A</th>
+          <th>B</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Code element with HTML entities</td>
+          <td><code>&lt;bar&gt;</code></td>
+        </tr>
+        <tr>
+          <td>Code element below with curly braces</td>
+          <td><code>{` + BACKTICK + `<bar>` + BACKTICK + `}</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name: "no space after expression in title works (#1049)",
+			source: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title ? ` + BACKTICK + `${title} - ` + BACKTICK + ` : ""}Placeholder</title>
+  <title>{title}- Placeholder</title>
+</head>
+<body>
+  <slot />
+</body>
+</html>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name: "table component wrapped in element containing expression I (#1015)",
+			source: `---
+import Table from "./base/table.astro";
+
+const headingContent = "foo";
+const cellContent = "bar";
+---
+
+<figure>
+  <Table>
+    <thead>
+      <tr>
+        <th>{headingContent}</th>
+        <th>Cell 2</th>
+        <th>Cell 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{cellContent}</td>
+        <td>Data 2</td>
+        <td>Data 3</td>
+      </tr>
+    </tbody>
+  </Table>
+</figure>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},
+		{
+			name: "table component wrapped in element containing expression II (#958)",
+			source: `---
+import Layout from '../layouts/Layout.astro';
+const linkURL = '0000';
+---
+
+<Layout title="Welcome to Astro.">
+	<main>
+		<table>
+			<tr>
+				<th>TH</th>
+				<td><a href={linkURL}>{linkURL}</a></td>
+			</tr>
+		</table>
+		<div style="margin-top:1em;">
+			test
+		</div>
+	</main>
+</Layout>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+		},{
+			name: "anchor tag in template, containing an expression, isn't duplicated (#971)",
+			source: `<template>
+    <a href="https://example.com">{text}</a>.
+</template>
+<p>This should not be a link</p>`,
+			transformOptions: transform.TransformOptions{
+				ExperimentalExactParsingThingy: true,
+			},
+},
 	}
 	for _, tt := range tests {
 		if tt.only {
@@ -2080,7 +2728,7 @@ const meta = { title: 'My App' };
 			// transform output from source
 			code := test_utils.Dedent(tt.source)
 
-			doc, err := astro.Parse(strings.NewReader(code))
+			doc, err := astro.ParseWithOptions(strings.NewReader(code), astro.ParseOptionExperimentalBetterLiteralThingy(tt.transformOptions.ExperimentalExactParsingThingy))
 			h := handler.NewHandler(code, "<stdin>")
 
 			if err != nil {

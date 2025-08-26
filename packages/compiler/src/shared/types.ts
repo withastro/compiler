@@ -13,6 +13,7 @@ export interface PreprocessorError {
 
 export interface ParseOptions {
 	position?: boolean;
+	experimentalExactParsingThingy?: boolean;
 }
 
 export enum DiagnosticSeverity {
@@ -48,6 +49,7 @@ export interface TransformOptions {
 	compact?: boolean;
 	resultScopedSlot?: boolean;
 	scopedStyleStrategy?: 'where' | 'class' | 'attribute';
+  	experimentalExactParsingThingy?: boolean;
 	/**
 	 * @deprecated "as" has been removed and no longer has any effect!
 	 */
@@ -70,7 +72,7 @@ export interface TransformOptions {
 
 export type ConvertToTSXOptions = Pick<
 	TransformOptions,
-	'filename' | 'normalizedFilename' | 'sourcemap'
+	'filename' | 'normalizedFilename' | 'sourcemap' | 'experimentalExactParsingThingy'
 > & {
 	/** If set to true, script tags content will be included in the generated TSX
 	 * Scripts will be wrapped in an arrow function to be compatible with JSX's spec

@@ -8,6 +8,7 @@ import (
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
+	"golang.org/x/net/html/atom"
 )
 
 func transformScopingFixtures() []struct {
@@ -193,7 +194,14 @@ func TestTransformScoping(t *testing.T) {
 			transformOptions := TransformOptions{Scope: "xxxxxx", ScopedStyleStrategy: scopeStyle}
 			ExtractStyles(doc, &transformOptions)
 			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
-			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+
+			var node *astro.Node
+			walk(doc, func(n *astro.Node) {
+				if node == nil && n.Type == astro.ElementNode && n.DataAtom == atom.Div {
+					node = n
+				}
+			})
+			astro.PrintToSource(&b, node)
 			got := b.String()
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
@@ -216,7 +224,13 @@ func FuzzTransformScoping(f *testing.F) {
 		ExtractStyles(doc, &transformOptions)
 		Transform(doc, transformOptions, handler.NewHandler(source, "/test.astro"))
 		var b strings.Builder
-		astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+		var node *astro.Node
+		walk(doc, func(n *astro.Node) {
+			if node == nil && n.Type == astro.ElementNode && n.DataAtom == atom.Div {
+				node = n
+			}
+		})
+		astro.PrintToSource(&b, node)
 		got := b.String()
 		// hacky - we only expect scoping for non global styles / non inline styles
 		testRegex := regexp.MustCompile(`is:global|:global\(|is:inline|<style>\s*</style>`)
@@ -231,9 +245,10 @@ func FuzzTransformScoping(f *testing.F) {
 
 func TestFullTransform(t *testing.T) {
 	tests := []struct {
-		name   string
-		source string
-		want   string
+		name                           string
+		source                         string
+		want                           string
+		experimentalExactParsingThingy bool
 	}{
 		{
 			name:   "top-level component with leading style",
@@ -256,9 +271,21 @@ func TestFullTransform(t *testing.T) {
 			want:   `<Navigation></Navigation><h1>Astro</h1>`,
 		},
 		{
+			name:                           "Component before html I - with exact parsing",
+			source:                         `<Navigation /><html><body><h1>Astro</h1></body></html>`,
+			want:                           `<Navigation></Navigation><html><body><h1>Astro</h1></body></html>`,
+			experimentalExactParsingThingy: true,
+		},
+		{
 			name:   "Component before html II",
 			source: `<MainHead title={title} description={description} /><html lang="en"><body><slot /></body></html>`,
 			want:   `<MainHead title={title} description={description}></MainHead><slot></slot>`,
+		},
+		{
+			name:                           "Component before html II - with exact parsing",
+			source:                         `<MainHead title={title} description={description} /><html lang="en"><body><slot /></body></html>`,
+			want:                           `<MainHead title={title} description={description}></MainHead><html lang="en"><body><slot></slot></body></html>`,
+			experimentalExactParsingThingy: true,
 		},
 		{
 			name:   "respects explicitly authored elements",
@@ -295,7 +322,7 @@ func TestFullTransform(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b.Reset()
-			doc, err := astro.Parse(strings.NewReader(tt.source))
+			doc, err := astro.ParseWithOptions(strings.NewReader(tt.source), astro.ParseOptionExperimentalBetterLiteralThingy(tt.experimentalExactParsingThingy))
 			if err != nil {
 				t.Error(err)
 			}
@@ -390,7 +417,7 @@ func TestCompactTransform(t *testing.T) {
 		},
 		{
 			name:   "remove whitespace only",
-			source: `<head>  <script>console.log("hoisted")</script>  <head>`,
+			source: `<head>  <script>console.log("hoisted")</script>  </head>`,
 			want:   `<head></head>`,
 		},
 		{
@@ -524,7 +551,6 @@ func TestAnnotation(t *testing.T) {
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
 			}
-
 		})
 	}
 }
@@ -586,7 +612,14 @@ func TestClassAndClassListMerging(t *testing.T) {
 				t.Error(err)
 			}
 			Transform(doc, TransformOptions{}, handler.NewHandler(tt.source, "/test.astro"))
-			astro.PrintToSource(&b, doc.LastChild.FirstChild.NextSibling.FirstChild)
+
+			var node *astro.Node
+			walk(doc, func(n *astro.Node) {
+				if node == nil && n.Type == astro.ElementNode && n.DataAtom == atom.Div {
+					node = n
+				}
+			})
+			astro.PrintToSource(&b, node)
 			got := b.String()
 			if tt.want != got {
 				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)

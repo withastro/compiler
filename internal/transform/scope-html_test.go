@@ -96,7 +96,6 @@ func tests() []struct {
 			want:   `<A  0>={0>} class="astro-xxxxxx"></A>`,
 		},
 	}
-
 }
 
 func TestScopeHTML(t *testing.T) {
@@ -125,7 +124,6 @@ func TestScopeHTML(t *testing.T) {
 			astro.PrintToSource(&b, nodes[0])
 		})
 	}
-
 }
 
 func FuzzScopeHTML(f *testing.F) {

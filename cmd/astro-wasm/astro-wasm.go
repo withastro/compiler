@@ -143,21 +143,27 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		experimentalScriptOrder = true
 	}
 
+	experimentalExactParsingThingy := false
+	if jsBool(options.Get("experimentalExactParsingThingy")) {
+		experimentalExactParsingThingy = true
+	}
+
 	return transform.TransformOptions{
-		Filename:                filename,
-		NormalizedFilename:      normalizedFilename,
-		InternalURL:             internalURL,
-		SourceMap:               sourcemap,
-		AstroGlobalArgs:         astroGlobalArgs,
-		Compact:                 compact,
-		ResolvePath:             resolvePathFn,
-		PreprocessStyle:         preprocessStyle,
-		ResultScopedSlot:        scopedSlot,
-		ScopedStyleStrategy:     scopedStyleStrategy,
-		TransitionsAnimationURL: transitionsAnimationURL,
-		AnnotateSourceFile:      annotateSourceFile,
-		RenderScript:            renderScript,
-		ExperimentalScriptOrder: experimentalScriptOrder,
+		Filename:                       filename,
+		NormalizedFilename:             normalizedFilename,
+		InternalURL:                    internalURL,
+		SourceMap:                      sourcemap,
+		AstroGlobalArgs:                astroGlobalArgs,
+		Compact:                        compact,
+		ResolvePath:                    resolvePathFn,
+		PreprocessStyle:                preprocessStyle,
+		ResultScopedSlot:               scopedSlot,
+		ScopedStyleStrategy:            scopedStyleStrategy,
+		TransitionsAnimationURL:        transitionsAnimationURL,
+		AnnotateSourceFile:             annotateSourceFile,
+		RenderScript:                   renderScript,
+		ExperimentalScriptOrder:        experimentalScriptOrder,
+		ExperimentalExactParsingThingy: experimentalExactParsingThingy,
 	}
 }
 
@@ -257,7 +263,7 @@ func Parse() any {
 		h := handler.NewHandler(source, parseOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true), astro.ParseOptionExperimentalBetterLiteralThingy(transformOptions.ExperimentalExactParsingThingy))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -281,7 +287,7 @@ func ConvertToTSX() any {
 		h := handler.NewHandler(source, transformOptions.Filename)
 
 		var doc *astro.Node
-		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true))
+		doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionEnableLiteral(true), astro.ParseOptionExperimentalBetterLiteralThingy(transformOptions.ExperimentalExactParsingThingy))
 		if err != nil {
 			h.AppendError(err)
 		}
@@ -335,7 +341,7 @@ func Transform() any {
 					}
 				}()
 
-				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h))
+				doc, err := astro.ParseWithOptions(strings.NewReader(source), astro.ParseOptionWithHandler(h), astro.ParseOptionExperimentalBetterLiteralThingy(transformOptions.ExperimentalExactParsingThingy))
 				if err != nil {
 					reject.Invoke(wasm_utils.ErrorToJSError(h, err))
 					return

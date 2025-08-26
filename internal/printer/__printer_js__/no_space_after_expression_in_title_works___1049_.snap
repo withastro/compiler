@@ -1,9 +1,21 @@
 
-[TestPrinter/Self-closing_components_in_head_can_have_siblings - 1]
+[TestPrinter/no_space_after_expression_in_title_works_(#1049) - 1]
 ## Input
 
 ```
-<html><head><BaseHead /><link href="test"></head></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title ? `${title} - ` : ""}Placeholder</title>
+  <title>{title}- Placeholder</title>
+</head>
+<body>
+  <slot />
+</body>
+</html>
 ```
 
 ## Output
@@ -34,7 +46,19 @@ export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydra
 
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`<html><head>${$$renderComponent($$result,'BaseHead',BaseHead,{})}<link href="test">${$$renderHead($$result)}</head></html>`;
+return $$render`
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title ? `${title} - ` : ""}Placeholder</title>
+  <title>${title}- Placeholder</title>
+${$$renderHead($$result)}</head>
+<body>
+  ${$$renderSlot($$result,$$slots["default"])}
+</body>
+</html>`;
 }, undefined, undefined);
 export default $$Component;
 ```
