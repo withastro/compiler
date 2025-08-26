@@ -46,32 +46,6 @@ export default $$Component;`
 var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\nconst Astro = $$Astro;"
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
-func suffixWithFilename(filename string, transitions bool) string {
-	propagationArg := "undefined"
-	if transitions {
-		propagationArg = `'self'`
-	}
-	return fmt.Sprintf("%s;", BACKTICK) + fmt.Sprintf(`
-}, '%s', %s);
-export default $$Component;`, filename, propagationArg)
-}
-
-type want struct {
-	frontmatter    []string
-	definedVars    []string
-	getStaticPaths string
-	code           string
-	metadata
-}
-
-type metadata struct {
-	hoisted              []string
-	hydratedComponents   []string
-	clientOnlyComponents []string
-	modules              []string
-	hydrationDirectives  []string
-}
-
 type testcase struct {
 	name             string
 	source           string
