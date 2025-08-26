@@ -1208,19 +1208,19 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 		},
 		{
-			name:  "Fragment with await",
+			name:   "Fragment with await",
 			source: `<body><Fragment> { await Promise.resolve("Awaited") } </Fragment></body>`,
 		},
 		{
-			name:  "Fragment shorthand with await",
+			name:   "Fragment shorthand with await",
 			source: `<body><> { await Promise.resolve("Awaited") } </></body>`,
 		},
 		{
-			name:  "Fragment wrapping link with awaited href",
+			name:   "Fragment wrapping link with awaited href",
 			source: `<head><Fragment><link rel="preload" href={(await import('../fonts/some-font.woff2')).default} as="font" crossorigin /></Fragment></head>`,
 		},
 		{
-			name:  "Component with await",
+			name:   "Component with await",
 			source: `<body><Component> { await Promise.resolve("Awaited") } </Component></body>`,
 		},
 		{
@@ -2065,6 +2065,26 @@ const meta = { title: 'My App' };
 		{
 			name:   "namespace is preserved when inside an expression",
 			source: `<svg>{<image />}</svg>`,
+		},
+		{
+			name:   "select with option containing element",
+			source: `<select><option><span>Lemon</span></option></select>`,
+		},
+		{
+			name:   "select with 2 options containing element",
+			source: `<select><option><span>Lemon</span></option><option><span>Lime</span></option></select>`,
+		},
+		{
+			name:   "select with option containing element with div sibling",
+			source: `<select><option><span>Lemon</span></option></select><div>Orange</div>`,
+		},
+		{
+			name:   "select with 2 options containing element with div sibling",
+			source: `<select><option><span>Lemon</span></option><option><span>Lime</span></option></select><div>Orange</div>`,
+		},
+		{
+			name:   "select with option containing element and button containing selected content",
+			source: `<select><button><selectedcontent></selectedcontent></button><option><span>Lemon</span></option></select>`,
 		},
 	}
 	for _, tt := range tests {
