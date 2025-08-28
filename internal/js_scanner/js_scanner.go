@@ -229,6 +229,12 @@ func isKeyword(value []byte) bool {
 	return js.Keywords[string(value)] != 0
 }
 
+// isPropsAliasing checks if we're in a Props aliasing context (import { Props as X })
+// rather than destructuring with 'as' property ({ as: Component })
+func isPropsAliasing(idents []string) bool {
+	return len(idents) > 0 && idents[len(idents)-1] == "Props"
+}
+
 func HoistImports(source []byte) HoistedScripts {
 	imports := make([][]byte, 0)
 	importLocs := make([]loc.Loc, 0)
@@ -340,7 +346,8 @@ outer:
 		if js.IsIdentifier(token) {
 			if isKeyword(value) {
 				// fix(#814): fix Props detection when using `{ Props as SomethingElse }`
-				if ident == "Props" && string(value) == "as" {
+				// fix(#927): only reset Props when 'as' follows 'Props' in the same context
+				if ident == "Props" && string(value) == "as" && isPropsAliasing(idents) {
 					start = 0
 					ident = defaultPropType
 					idents = make([]string, 0)
