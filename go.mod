@@ -3,6 +3,7 @@ module github.com/withastro/compiler
 go 1.21
 
 require (
+	github.com/gkampitakis/go-snaps v0.5.2
 	github.com/google/go-cmp v0.5.9
 	github.com/iancoleman/strcase v0.2.0
 	github.com/lithammer/dedent v1.1.0
@@ -15,7 +16,6 @@ require (
 require (
 	github.com/gkampitakis/ciinfo v0.3.0 // indirect
 	github.com/gkampitakis/go-diff v1.3.2 // indirect
-	github.com/gkampitakis/go-snaps v0.5.2 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/maruel/natural v1.1.1 // indirect
