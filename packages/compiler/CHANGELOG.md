@@ -1,5 +1,18 @@
 # @astrojs/compiler
 
+## 2.13.0
+
+### Minor Changes
+
+- 89c80fee: Adds a `walkAsync` utility function that returns a Promise from the tree traversal process.
+
+  Unlike the existing `walk` function which doesn't provide a way to wait for traversal completion, `walkAsync` allows consumers to `await` the full traversal of the AST.
+
+### Patch Changes
+
+- 2a27aca7: Fixes a potential parsing issue with head content defined in a component where another component is rendered first.
+- 1264286c: Fixes a CSS scoping issue when a selector contains only pseudo selectors.
+
 ## 2.12.2
 
 ### Patch Changes
