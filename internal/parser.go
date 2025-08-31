@@ -1418,6 +1418,14 @@ func inBodyIM(p *parser) bool {
 				return true
 			}
 		default:
+			// Special handling for selectedcontent as a void element
+			if p.tok.Data == "selectedcontent" {
+				p.reconstructActiveFormattingElements()
+				p.addElement()
+				p.oe.pop()
+				p.acknowledgeSelfClosingTag()
+				return true
+			}
 			p.reconstructActiveFormattingElements()
 			p.addElement()
 			if p.hasSelfClosingToken {
@@ -1433,6 +1441,12 @@ func inBodyIM(p *parser) bool {
 		if isComponent(p.tok.Data) {
 			p.addLoc()
 			p.oe.pop()
+			return true
+		}
+
+		// Special handling for selectedcontent end tag - just ignore it
+		// since it's treated as a void element
+		if p.tok.Data == "selectedcontent" {
 			return true
 		}
 
@@ -2319,6 +2333,19 @@ func inSelectIM(p *parser) bool {
 			p.resetInsertionMode()
 		case a.Template:
 			return inHeadIM(p)
+		default:
+			// Handle closing tags for elements that are allowed in customizable select
+			// (like button for the new HTML select element)
+			if p.tok.Data == "button" {
+				// Close the button if it's open
+				for i := len(p.oe) - 1; i >= 0; i-- {
+					if p.oe[i].Data == "button" {
+						p.oe = p.oe[:i]
+						break
+					}
+				}
+				return true
+			}
 		}
 	case CommentToken:
 		p.addChild(&Node{

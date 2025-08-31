@@ -416,6 +416,16 @@ func TestBasic(t *testing.T) {
 			[]TokenType{StartTagToken, StartExpressionToken, TextToken, StartTagToken, StartExpressionToken, TextToken, EndExpressionToken, EndTagToken, TextToken, EndExpressionToken, EndTagToken, StartTagToken, TextToken, EndTagToken},
 		},
 		{
+			"selectedcontent element",
+			`<select><button><selectedcontent></selectedcontent></button><option>A</option></select>`,
+			[]TokenType{StartTagToken, StartTagToken, StartTagToken, EndTagToken, EndTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken},
+		},
+		{
+			"selectedcontent self-closing",
+			`<select><button><selectedcontent /></button><option>A</option></select>`,
+			[]TokenType{StartTagToken, StartTagToken, SelfClosingTagToken, EndTagToken, StartTagToken, TextToken, EndTagToken, EndTagToken},
+		},
+		{
 			"single open brace",
 			"<main id={`{`}></main>",
 			[]TokenType{StartTagToken, EndTagToken},
