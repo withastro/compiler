@@ -1211,9 +1211,15 @@ func (z *Tokenizer) readStartTag() TokenType {
 	}
 
 	// HTML void tags list: https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#syntax-elements
-	// Also look for a self-closing token that’s not in the list (e.g. "<svg><path/></svg>")
+	// Also look for a self-closing token that's not in the list (e.g. "<svg><path/></svg>")
 	if z.startTagIn("area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr") || z.err == nil && z.buf[z.raw.End-2] == '/' {
 		// Reset tokenizer state for self-closing elements
+		z.rawTag = ""
+		return SelfClosingTagToken
+	}
+	// Special handling for selectedcontent - it's void but can have a closing tag in HTML
+	if z.startTagIn("selectedcontent") && z.err == nil && z.buf[z.raw.End-2] == '/' {
+		// Only treat as self-closing if it actually has />
 		z.rawTag = ""
 		return SelfClosingTagToken
 	}

@@ -820,19 +820,20 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 // are those that can't have any contents.
 // nolint
 var voidElements = map[string]bool{
-	"area":   true,
-	"base":   true,
-	"br":     true,
-	"col":    true,
-	"embed":  true,
-	"hr":     true,
-	"img":    true,
-	"input":  true,
-	"keygen": true, // "keygen" has been removed from the spec, but are kept here for backwards compatibility.
-	"link":   true,
-	"meta":   true,
-	"param":  true,
-	"source": true,
-	"track":  true,
-	"wbr":    true,
+	"area":            true,
+	"base":            true,
+	"br":              true,
+	"col":             true,
+	"embed":           true,
+	"hr":              true,
+	"img":             true,
+	"input":           true,
+	"keygen":          true, // "keygen" has been removed from the spec, but are kept here for backwards compatibility.
+	"link":            true,
+	"meta":            true,
+	"param":           true,
+	"selectedcontent": true,
+	"source":          true,
+	"track":           true,
+	"wbr":             true,
 }
