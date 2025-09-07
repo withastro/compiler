@@ -289,4 +289,150 @@ export default function __AstroComponent_(_props: Record<string, any>): any {}\n
 	assert.snapshot(code, output, 'expected code to match snapshot');
 });
 
+test('props interface with as property', async () => {
+	const input = `---
+interface Props {
+  as?: string;
+  href?: string;
+}
+---
+
+<div></div>
+`;
+	const output = `${TSXPrefix}
+interface Props {
+  as?: string;
+  href?: string;
+}
+
+{};<Fragment>
+<div></div>
+
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX()}`;
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.snapshot(code, output, 'expected code to match snapshot');
+});
+
+test('props with destructured as property', async () => {
+	const input = `---
+interface Props {
+  as?: string;
+  className?: string;
+}
+
+const { as, className } = Astro.props;
+---
+
+<div class={className}>{as}</div>
+`;
+	const output = `${TSXPrefix}
+interface Props {
+  as?: string;
+  className?: string;
+}
+
+const { as, className } = Astro.props;
+
+<Fragment>
+<div class={className}>{as}</div>
+
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX()}`;
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.snapshot(code, output, 'expected code to match snapshot');
+});
+
+test('props with renamed as property in destructuring', async () => {
+	const input = `---
+interface Props {
+  as?: string;
+}
+
+const { as: element } = Astro.props;
+---
+
+<div>{element}</div>
+`;
+	const output = `${TSXPrefix}
+interface Props {
+  as?: string;
+}
+
+const { as: element } = Astro.props;
+
+<Fragment>
+<div>{element}</div>
+
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX()}`;
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.snapshot(code, output, 'expected code to match snapshot');
+});
+
+test('props interface with as and other properties', async () => {
+	const input = `---
+interface Props extends HTMLAttributes<'div'> {
+  as?: keyof HTMLElementTagNameMap;
+  variant?: 'primary' | 'secondary';
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { as = 'div', variant = 'primary', size = 'md', ...rest } = Astro.props;
+---
+
+<div data-variant={variant} data-size={size}></div>
+`;
+	const output = `${TSXPrefix}
+interface Props extends HTMLAttributes<'div'> {
+  as?: keyof HTMLElementTagNameMap;
+  variant?: 'primary' | 'secondary';
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { as = 'div', variant = 'primary', size = 'md', ...rest } = Astro.props;
+
+<Fragment>
+<div data-variant={variant} data-size={size}></div>
+
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX()}`;
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.snapshot(code, output, 'expected code to match snapshot');
+});
+
+test('props type alias with as property', async () => {
+	const input = `---
+type Props = {
+  as?: string;
+  children?: any;
+}
+
+const props = Astro.props as Props;
+---
+
+<div>{props.children}</div>
+`;
+	const output = `${TSXPrefix}
+type Props = {
+  as?: string;
+  children?: any;
+}
+
+const props = Astro.props as Props;
+
+<Fragment>
+<div>{props.children}</div>
+
+</Fragment>
+export default function __AstroComponent_(_props: Props): any {}
+${PREFIX()}`;
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.snapshot(code, output, 'expected code to match snapshot');
+});
+
 test.run();
