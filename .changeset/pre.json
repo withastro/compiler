@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "@astrojs/compiler": "2.13.0"
+  },
+  "changesets": []
+}
