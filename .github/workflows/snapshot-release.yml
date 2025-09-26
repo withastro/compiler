@@ -71,14 +71,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      - name: Build WASM
-        run: make wasm
-
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build JS
-        run: pnpm run build:compiler
+      - name: Build Packages
+        run: pnpm run build:all
 
       - name: Bump Package Versions
         id: changesets
