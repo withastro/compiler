@@ -6,7 +6,7 @@ test('outputs scripts in expected order', async () => {
 	const result = await transform(
 		`
     <script>console.log(1)</script>
-    <script>console.log(2)</script>`,
+    <script>console.log(2)</script>`
 	);
 
 	const scripts = result.scripts;
