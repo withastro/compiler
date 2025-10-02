@@ -23,7 +23,6 @@ test.before(async () => {
 });
 
 test('trailing space', () => {
-	console.log({ code: result.code })
 	assert.ok(result.code, 'Expected to compiler');
 	assert.match(
 		result.code,
