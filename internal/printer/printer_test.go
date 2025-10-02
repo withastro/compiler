@@ -51,7 +51,6 @@ type testcase struct {
 	source           string
 	only             bool
 	transitions      bool
-	transformOptions transform.TransformOptions
 	filename         string
 }
 
@@ -2072,7 +2071,6 @@ import Analytics from '../components/Analytics.astro';
 			}
 
 			hash := astro.HashString(code)
-			// combine from tt.transformOptions
 			transformOptions := transform.TransformOptions{
 				Scope:                   hash,
 				ExperimentalScriptOrder: true,
