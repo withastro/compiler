@@ -7,9 +7,6 @@ test('outputs scripts in expected order', async () => {
 		`
     <script>console.log(1)</script>
     <script>console.log(2)</script>`,
-		{
-			experimentalScriptOrder: true,
-		}
 	);
 
 	const scripts = result.scripts;
