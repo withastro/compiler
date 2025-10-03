@@ -35,7 +35,6 @@ type TransformOptions struct {
 	PreprocessStyle         interface{}
 	AnnotateSourceFile      bool
 	RenderScript            bool
-	ExperimentalScriptOrder bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -128,11 +127,7 @@ func ExtractStyles(doc *astro.Node, opts *TransformOptions) {
 				return
 			}
 			// append node to maintain authored order
-			if opts.ExperimentalScriptOrder {
-				doc.Styles = append(doc.Styles, n)
-			} else {
-				doc.Styles = append([]*astro.Node{n}, doc.Styles...)
-			}
+			doc.Styles = append(doc.Styles, n)
 		}
 	})
 	// Important! Remove styles from original location *after* walking the doc
@@ -443,11 +438,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 
 			// append node to maintain authored order
 			if shouldAdd {
-				if opts.ExperimentalScriptOrder {
-					doc.Scripts = append(doc.Scripts, n)
-				} else {
-					doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
-				}
+				doc.Scripts = append(doc.Scripts, n)
 				n.HandledScript = true
 			}
 		} else {

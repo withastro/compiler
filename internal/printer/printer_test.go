@@ -2109,7 +2109,6 @@ import Analytics from '../components/Analytics.astro';
 			transformOptions := transform.TransformOptions{
 				Scope:                   hash,
 				RenderScript:            tt.transformOptions.RenderScript,
-				ExperimentalScriptOrder: true,
 			}
 			transform.ExtractStyles(doc, &transformOptions)
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately

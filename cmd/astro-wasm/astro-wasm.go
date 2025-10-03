@@ -140,11 +140,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		renderScript = true
 	}
 
-	experimentalScriptOrder := false
-	if jsBool(options.Get("experimentalScriptOrder")) {
-		experimentalScriptOrder = true
-	}
-
 	return transform.TransformOptions{
 		Filename:                filename,
 		NormalizedFilename:      normalizedFilename,
@@ -159,7 +154,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		TransitionsAnimationURL: transitionsAnimationURL,
 		AnnotateSourceFile:      annotateSourceFile,
 		RenderScript:            renderScript,
-		ExperimentalScriptOrder: experimentalScriptOrder,
 	}
 }
 

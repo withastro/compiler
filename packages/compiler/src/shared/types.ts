@@ -65,7 +65,6 @@ export interface TransformOptions {
 	 * @experimental
 	 */
 	renderScript?: boolean;
-	experimentalScriptOrder?: boolean;
 }
 
 export type ConvertToTSXOptions = Pick<
