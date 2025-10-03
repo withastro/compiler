@@ -1,5 +1,21 @@
 # @astrojs/compiler
 
+## 3.0.0
+
+### Major Changes
+
+- bd5be737: Removes the first argument of `$result.createAstro()`
+
+  `$result.createAstro()` does not accept an `AstroGlobalPartial` as the first argument anymore:
+
+  ```diff
+  -const Astro = $result.createAstro($Astro, $props, $slots);
+  +const Astro = $result.createAstro($props, $slots);
+  ```
+
+- f4d1a540: Removes `renderScript` from `TransformOptions`. It is now the default and only behavior
+- ac52387c: Removes `experimentalScriptOrder` from `TransformOptions`. It is now the default and only behavior
+
 ## 2.13.0
 
 ### Minor Changes
