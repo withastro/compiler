@@ -135,11 +135,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		scopedStyleStrategy = "where"
 	}
 
-	experimentalScriptOrder := false
-	if jsBool(options.Get("experimentalScriptOrder")) {
-		experimentalScriptOrder = true
-	}
-
 	return transform.TransformOptions{
 		Filename:                filename,
 		NormalizedFilename:      normalizedFilename,
@@ -153,7 +148,6 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 		ScopedStyleStrategy:     scopedStyleStrategy,
 		TransitionsAnimationURL: transitionsAnimationURL,
 		AnnotateSourceFile:      annotateSourceFile,
-		ExperimentalScriptOrder: experimentalScriptOrder,
 	}
 }
 
