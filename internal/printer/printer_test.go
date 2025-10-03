@@ -51,7 +51,6 @@ type testcase struct {
 	source           string
 	only             bool
 	transitions      bool
-	transformOptions transform.TransformOptions
 	filename         string
 }
 
@@ -845,70 +844,37 @@ import Widget2 from '../components/Widget2.astro';
 			source: `<script>Here</script><div></div>`,
 		},
 		{
-			name:   "script (renderScript: true)",
+			name:   "script",
 			source: `<main><script>console.log("Hello");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script multiple (renderScript: true)",
+			name:   "script multiple",
 			source: `<main><script>console.log("Hello");</script><script>console.log("World");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script external (renderScript: true)",
+			name:   "script external",
 			source: `<main><script src="./hello.js"></script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script external in expression (renderScript: true)",
+			name:   "script external in expression",
 			source: `<main>{<script src="./hello.js"></script>}`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			// maintain the original behavior, though it may be
-			// unneeded as renderScript is now on by default
-			name:     "script external in expression (renderScript: false)",
-			source:   `<main>{<script src="./hello.js"></script>}`,
-			filename: "/src/pages/index.astro",
-		},
-		{
-			name:   "script in expression (renderScript: true)",
+			name:   "script in expression",
 			source: `<main>{true && <script>console.log("hello")</script>}`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:     "script in expression (renderScript: false)",
-			source:   `<main>{false && <script>console.log("hello")</script>}`,
-			filename: "/src/pages/index.astro",
-		},
-		{
-			name:   "script inline (renderScript: true)",
+			name:   "script inline",
 			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 		},
 		{
-			name:   "script mixed handled and inline (renderScript: true)",
+			name:   "script mixed handled and inline",
 			source: `<main><script>console.log("Hello");</script><script is:inline>console.log("World");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
@@ -2105,10 +2071,8 @@ import Analytics from '../components/Analytics.astro';
 			}
 
 			hash := astro.HashString(code)
-			// combine from tt.transformOptions
 			transformOptions := transform.TransformOptions{
 				Scope:                   hash,
-				RenderScript:            tt.transformOptions.RenderScript,
 			}
 			transform.ExtractStyles(doc, &transformOptions)
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
