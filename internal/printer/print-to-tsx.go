@@ -387,7 +387,7 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 		propsIdent := props.Ident
 		paramsIdent := ""
 		if hasGetStaticPaths {
-			paramsIdent = "ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>"
+			paramsIdent = "ASTRO__STRINGIFY_PARAMS<ASTRO__Get<ASTRO__InferredGetStaticPath, 'params'>>"
 			if propsIdent == "Record<string, any>" {
 				propsIdent = "ASTRO__MergeUnion<ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>>"
 			}
@@ -395,6 +395,10 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 
 		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics))
 		if hasGetStaticPaths {
+			// Convert a string|number|undefined type to a string|undefined type
+			p.println("type ASTRO__STRINGIFY_VALUE<T> = Extract<T, string | undefined> | T extends number ? string : never")
+			// Convert a Record<string, string|number|undefined> type to a Record<string, string|undefined> type
+			p.println("type ASTRO__STRINGIFY_PARAMS<T> = T extends Record<string, any> ? { [K in keyof T]: ASTRO__STRINGIFY_VALUE<T[K]> } : T")
 			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 type ASTRO__Flattened<T> = T extends Array<infer U> ? ASTRO__Flattened<U> : T;
 type ASTRO__InferredGetStaticPath = ASTRO__Flattened<ASTRO__ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
