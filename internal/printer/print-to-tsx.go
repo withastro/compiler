@@ -395,15 +395,13 @@ func renderTsx(p *printer, n *Node, o *TSXOptions) {
 
 		p.print(fmt.Sprintf("export default function %s%s(_props: %s%s): any {}\n", componentName, props.Statement, propsIdent, props.Generics))
 		if hasGetStaticPaths {
-			// Convert a string|number|undefined type to a string|undefined type
-			p.println("type ASTRO__STRINGIFY_VALUE<T> = Extract<T, string | undefined> | T extends number ? string : never")
-			// Convert a Record<string, string|number|undefined> type to a Record<string, string|undefined> type
-			p.println("type ASTRO__STRINGIFY_PARAMS<T> = T extends Record<string, any> ? { [K in keyof T]: ASTRO__STRINGIFY_VALUE<T[K]> } : T")
-			p.printf(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+			p.println(`type ASTRO__ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 type ASTRO__Flattened<T> = T extends Array<infer U> ? ASTRO__Flattened<U> : T;
 type ASTRO__InferredGetStaticPath = ASTRO__Flattened<ASTRO__ArrayElement<Awaited<ReturnType<typeof getStaticPaths>>>>;
 type ASTRO__MergeUnion<T, K extends PropertyKey = T extends unknown ? keyof T : never> = T extends unknown ? T & { [P in Exclude<K, keyof T>]?: never } extends infer O ? { [P in keyof O]: O[P] } : never : never;
-type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;%s`, "\n")
+type ASTRO__STRINGIFY_VALUE<T> = Extract<T, string | undefined> | T extends number ? string : never
+type ASTRO__STRINGIFY_PARAMS<T> = T extends Record<string, any> ? { [K in keyof T]: ASTRO__STRINGIFY_VALUE<T[K]> } : T;
+type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;`)
 		}
 
 		if propsIdent != "Record<string, any>" {
