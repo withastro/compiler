@@ -63,6 +63,10 @@ jobs:
     name: Create a snapshot release of a pull request
     if: github.repository_owner == 'withastro' && github.event_name == 'issue_comment' && github.event.issue.pull_request && startsWith(github.event.comment.body, '!preview')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
     defaults:
       run:
         shell: bash
