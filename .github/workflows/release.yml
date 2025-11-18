@@ -48,7 +48,6 @@ jobs:
         run: pnpm run build:compiler
 
       - name: Create Release Pull Request or Publish to npm
-        id: changesets
         uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
         with:
           publish: pnpm run release
@@ -134,7 +133,6 @@ jobs:
         run: pnpm run build:all
 
       - name: Bump Package Versions
-        id: changesets
         run: |
           pnpm exec changeset version --snapshot ${{ steps.getSnapshotName.outputs.result }} > changesets.output.txt 2>&1
           echo ::set-output name=result::`cat changesets.output.txt`
