@@ -28,7 +28,10 @@ test('trailing space', () => {
 		result.code,
 		`<span class="spoiler astro-bqati2k5">
     \${$$renderSlot($$result,$$slots["default"])}
-</span>\``
+</span>
+
+
+\${$$renderScript($$result,"<stdin>?astro&type=script&index=0&lang.ts")}\``
 	);
 });
 

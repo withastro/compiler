@@ -1,9 +1,9 @@
 
-[TestPrinter/script_external_in_expression_(renderScript:_true) - 1]
+[TestPrinter/script_multiple - 1]
 ## Input
 
 ```
-<main>{<script src="./hello.js"></script>}
+<main><script>console.log("Hello");</script><script>console.log("World");</script>
 ```
 
 ## Output
@@ -30,11 +30,11 @@ import {
   createMetadata as $$createMetadata
 } from "http://localhost:3000/";
 
-export const $$metadata = $$createMetadata("/src/pages/index.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [{ type: 'external', src: './hello.js' }] });
+export const $$metadata = $$createMetadata("/src/pages/index.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [{ type: 'inline', value: `console.log("Hello");` }, { type: 'inline', value: `console.log("World");` }] });
 
 const $$Index = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`${$$maybeRenderHead($$result)}<main>${$$render`${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}`}</main>`;
+return $$render`${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=1&lang.ts")}</main>`;
 }, '/src/pages/index.astro', undefined);
 export default $$Index;
 ```

@@ -1,9 +1,9 @@
 
-[TestPrinter/script_in_expression_(renderScript:_false) - 1]
+[TestPrinter/script - 1]
 ## Input
 
 ```
-<main>{false && <script>console.log("hello")</script>}
+<main><script>console.log("Hello");</script>
 ```
 
 ## Output
@@ -30,11 +30,11 @@ import {
   createMetadata as $$createMetadata
 } from "http://localhost:3000/";
 
-export const $$metadata = $$createMetadata("/src/pages/index.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
+export const $$metadata = $$createMetadata("/src/pages/index.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [{ type: 'inline', value: `console.log("Hello");` }] });
 
 const $$Index = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`${$$maybeRenderHead($$result)}<main>${false && $$render`<script>console.log("hello")</script>`}</main>`;
+return $$render`${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}</main>`;
 }, '/src/pages/index.astro', undefined);
 export default $$Index;
 ```

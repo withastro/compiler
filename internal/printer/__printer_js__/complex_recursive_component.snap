@@ -35,7 +35,7 @@ export const $$metadata = $$createMetadata("/projects/app/src/components/RenderN
 const $$Astro = $$createAstro('https://astro.build');
 const Astro = $$Astro;
 const $$RenderNode = $$createComponent(($$result, $$props, $$slots) => {
-const Astro = $$result.createAstro($$Astro, $$props, $$slots);
+const Astro = $$result.createAstro($$props, $$slots);
 Astro.self = $$RenderNode;
 
 return $$render`${($$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`${$$unescapeHTML(`<${Node.tag} ${stringifyAttributes(Node.attributes)}>`)}`,})}${Node.children.map((child) => ($$render`${$$renderComponent($$result,'Astro.self',Astro.self,{"node":(child)})}`))}${$$renderComponent($$result,'Fragment',Fragment,{},{"default": () => $$render`${$$unescapeHTML(`</${Node.tag}>`)}`,})}`,})}`)}`;
