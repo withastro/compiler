@@ -1184,6 +1184,98 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<style>div { color: red; }</style><div {...Astro.props} />`,
 		},
 		{
+			name:   "spread with attribute override",
+			source: `<div {...props} class="override" />`,
+		},
+		{
+			name:   "spread with multiple attribute overrides",
+			source: `<div {...props} class="override" id="fixed" data-test="value" />`,
+		},
+		{
+			name:   "multiple spreads with overrides",
+			source: `<div {...props1} class="middle" {...props2} id="last" />`,
+		},
+		{
+			name:   "spread with namespace attribute override",
+			source: `<svg {...props} xmlns:xlink="http://www.w3.org/1999/xlink" />`,
+		},
+		{
+			name:   "spread before and after regular attributes",
+			source: `<div class="before" {...props} title="after" />`,
+		},
+		{
+			name:   "spread with scoped styles and attribute override",
+			source: `<style>div { color: red; }</style><div {...props} class="override" />`,
+		},
+		{
+			name:   "spread only class override",
+			source: `<div {...Astro.props} class="my-class" />`,
+		},
+		{
+			name:   "spread with aria attribute override",
+			source: `<button {...props} aria-label="Custom Label" />`,
+		},
+		{
+			name:   "spread with data attribute override",
+			source: `<div {...props} data-testid="my-test-id" />`,
+		},
+		{
+			name:   "duplicate quoted attributes - last wins",
+			source: `<div class="foo" class="bar"></div>`,
+		},
+		{
+			name:   "multiple duplicates - last of many wins",
+			source: `<div id="a" id="b" id="c"></div>`,
+		},
+		{
+			name:   "duplicate expression attributes",
+			source: `<div class={foo} class={bar}></div>`,
+		},
+		{
+			name:   "duplicate empty attributes",
+			source: `<div disabled disabled></div>`,
+		},
+		{
+			name:   "duplicate template literal attributes",
+			source: `<div class={` + BACKTICK + `${a}` + BACKTICK + `} class={` + BACKTICK + `${b}` + BACKTICK + `}></div>`,
+		},
+		{
+			name:   "mixed attribute types for same key",
+			source: `<div class="foo" class={bar}></div>`,
+		},
+		{
+			name:   "interleaved duplicates preserve order",
+			source: `<div a="1" b="2" a="3" c="4"></div>`,
+		},
+		{
+			name:   "duplicate namespaced attributes (SVG)",
+			source: `<svg xlink:href="a" xlink:href="b"></svg>`,
+		},
+		{
+			name:   "duplicate attributes on components",
+			source: `<Component prop="a" prop="b"></Component>`,
+		},
+		{
+			name:   "duplicate shorthand attributes",
+			source: `<div {class} {class}></div>`,
+		},
+		{
+			name:   "duplicate data attributes",
+			source: `<div data-test="a" data-test="b"></div>`,
+		},
+		{
+			name:   "duplicate aria attributes",
+			source: `<button aria-label="first" aria-label="second"></button>`,
+		},
+		{
+			name:   "complex duplicate scenario",
+			source: `<div class="a" id="1" class="b" title="x" id="2" class="c"></div>`,
+		},
+		{
+			name:   "duplicate attributes with expressions and strings",
+			source: `<div data-value="static" data-value={dynamic}></div>`,
+		},
+		{
 			name:   "Fragment",
 			source: `<body><Fragment><div>Default</div><div>Named</div></Fragment></body>`,
 		},

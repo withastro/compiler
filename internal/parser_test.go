@@ -126,3 +126,129 @@ func findTargetNode(doc *Node) *Node {
 	})
 	return target
 }
+
+type DuplicateAttributeTest struct {
+	name           string
+	input          string
+	targetId       string
+	expectedAttrs  map[string]string // key -> value
+	expectedLength int               // expected number of attributes
+}
+
+func TestDuplicateAttributes(t *testing.T) {
+	cases := []DuplicateAttributeTest{
+		{
+			name:     "duplicate class attributes - last wins",
+			input:    `<div id="target" class="first" class="second" class="third"></div>`,
+			targetId: "target",
+			expectedAttrs: map[string]string{
+				"id":    "target",
+				"class": "third",
+			},
+			expectedLength: 2,
+		},
+		{
+			name:     "duplicate data attributes - last wins",
+			input:    `<div id="target" data-value="1" data-value="2"></div>`,
+			targetId: "target",
+			expectedAttrs: map[string]string{
+				"id":         "target",
+				"data-value": "2",
+			},
+			expectedLength: 2,
+		},
+		{
+			name:     "multiple different duplicates",
+			input:    `<div id="target" class="a" title="first" class="b" title="second"></div>`,
+			targetId: "target",
+			expectedAttrs: map[string]string{
+				"id":    "target",
+				"class": "b",
+				"title": "second",
+			},
+			expectedLength: 3,
+		},
+		{
+			name:     "no duplicates",
+			input:    `<div id="target" class="test" title="hello"></div>`,
+			targetId: "target",
+			expectedAttrs: map[string]string{
+				"id":    "target",
+				"class": "test",
+				"title": "hello",
+			},
+			expectedLength: 3,
+		},
+		{
+			name:     "duplicate with namespace - last wins",
+			input:    `<svg id="target" xmlns:xlink="http://first" xmlns:xlink="http://second"></svg>`,
+			targetId: "target",
+			expectedAttrs: map[string]string{
+				"id": "target",
+			},
+			expectedLength: 2, // id + xlink namespace
+		},
+		{
+			name:     "three duplicates of same attribute",
+			input:    `<div id="target" data-test="one" data-test="two" data-test="three"></div>`,
+			targetId: "target",
+			expectedAttrs: map[string]string{
+				"id":        "target",
+				"data-test": "three",
+			},
+			expectedLength: 2,
+		},
+		{
+			name:     "duplicate aria attributes",
+			input:    `<button id="target" aria-label="first" aria-label="second"></button>`,
+			targetId: "target",
+			expectedAttrs: map[string]string{
+				"id":         "target",
+				"aria-label": "second",
+			},
+			expectedLength: 2,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			code := test_utils.Dedent(tt.input)
+			doc, err := Parse(strings.NewReader(code))
+
+			if err != nil {
+				t.Errorf("Parse error: %v", err)
+				return
+			}
+
+			target := findTargetNode(doc)
+			if target == nil {
+				t.Error("Target node not found")
+				return
+			}
+
+			if len(target.Attr) != tt.expectedLength {
+				t.Errorf("Expected %d attributes, got %d", tt.expectedLength, len(target.Attr))
+			}
+
+			for key, expectedVal := range tt.expectedAttrs {
+				found := false
+				for _, attr := range target.Attr {
+					attrKey := attr.Key
+					if attr.Namespace != "" {
+						attrKey = attr.Namespace + ":" + attr.Key
+					}
+					if attrKey == key {
+						found = true
+						if attr.Val != expectedVal {
+							t.Errorf("For attribute %s: expected value %q, got %q", key, expectedVal, attr.Val)
+						}
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected attribute %s not found", key)
+				}
+			}
+		})
+	}
+}

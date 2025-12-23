@@ -1,9 +1,9 @@
 
-[TestPrinter/spread_with_style_but_no_explicit_class - 1]
+[TestPrinter/spread_only_class_override - 1]
 ## Input
 
 ```
-<style>div { color: red; }</style><div {...Astro.props} />
+<div {...Astro.props} class="my-class" />
 ```
 
 ## Output
@@ -38,7 +38,7 @@ const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 const Astro = $$result.createAstro($$Astro, $$props, $$slots);
 Astro.self = $$Component;
 
-return $$render`${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,undefined,{"class":"astro-XXXX"}></div>`;
+return $$render`${$$maybeRenderHead($$result)}<div${$$spreadAttributes(Astro.props,undefined,undefined,["class"])} class="my-class"></div>`;
 }, undefined, undefined);
 export default $$Component;
 ```
