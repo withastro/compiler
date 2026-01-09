@@ -18,14 +18,14 @@ test('multiple duplicates - last of many wins', async () => {
 });
 
 test('duplicate expression attributes', async () => {
-	const input = `<div class={foo} class={bar}></div>`;
+	const input = '<div class={foo} class={bar}></div>';
 	const { code } = await convertToTSX(input, { sourcemap: 'external' });
 	assert.match(code, 'class={bar}');
 	assert.not.match(code, 'class={foo}');
 });
 
 test('duplicate empty attributes', async () => {
-	const input = `<div disabled disabled></div>`;
+	const input = '<div disabled disabled></div>';
 	const { code } = await convertToTSX(input, { sourcemap: 'external' });
 	// Should only appear once
 	const matches = code.match(/disabled/g);
@@ -125,7 +125,7 @@ test('spread before all named attrs', async () => {
 });
 
 test('spread with no conflicts', async () => {
-	const input = `<div {...props}></div>`;
+	const input = '<div {...props}></div>';
 	const { code } = await convertToTSX(input, { sourcemap: 'external' });
 	assert.match(code, '{...props}');
 });

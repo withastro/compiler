@@ -59,7 +59,7 @@ test('duplicate namespaced attributes', async () => {
 });
 
 test('duplicate empty attributes', async () => {
-	const input = `<div disabled disabled></div>`;
+	const input = '<div disabled disabled></div>';
 	const { ast } = await parse(input);
 	const element = ast.children[0] as ElementNode;
 
@@ -81,7 +81,7 @@ test('case sensitivity - different cases kept separate', async () => {
 });
 
 test('duplicate expression attributes', async () => {
-	const input = `<div class={foo} class={bar}></div>`;
+	const input = '<div class={foo} class={bar}></div>';
 	const { ast } = await parse(input);
 	const element = ast.children[0] as ElementNode;
 
