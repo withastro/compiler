@@ -1208,24 +1208,36 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 		},
 		{
-			name:  "Fragment with await",
+			name:   "Fragment with await",
 			source: `<body><Fragment> { await Promise.resolve("Awaited") } </Fragment></body>`,
 		},
 		{
-			name:  "Fragment shorthand with await",
+			name:   "Fragment shorthand with await",
 			source: `<body><> { await Promise.resolve("Awaited") } </></body>`,
 		},
 		{
-			name:  "Fragment wrapping link with awaited href",
+			name:   "Fragment wrapping link with awaited href",
 			source: `<head><Fragment><link rel="preload" href={(await import('../fonts/some-font.woff2')).default} as="font" crossorigin /></Fragment></head>`,
 		},
 		{
-			name:  "Component with await",
+			name:   "Component with await",
 			source: `<body><Component> { await Promise.resolve("Awaited") } </Component></body>`,
 		},
 		{
 			name:   "Preserve slots inside custom-element",
 			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
+		},
+		{
+			name:   "Preserve slot attribute in expression for custom element",
+			source: `<body><my-element>{!href ? <button slot={slotName}>Button</button> : <a href={href} slot={slotName}>Link</a>}</my-element></body>`,
+		},
+		{
+			name:   "Preserve slot attribute in conditional expression for custom element",
+			source: `<body><my-element>{show && <div slot="content">Content</div>}</my-element></body>`,
+		},
+		{
+			name:   "Preserve slot attribute at root level in expression",
+			source: `{!href ? <button slot={slotName}>Button</button> : <a href={href} slot={slotName}>Link</a>}`,
 		},
 		{
 			name:   "Preserve namespaces",
