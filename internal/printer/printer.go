@@ -412,7 +412,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.printf(`"%s"`, a.Key)
 			p.print(":")
 			p.addSourceMapping(a.ValLoc)
-			p.print(`"` + escapeDoubleQuote(a.Val) + `"`)
+			p.print(`"` + escapeDoubleQuote(escapeNewlines(a.Val)) + `"`)
 		case astro.EmptyAttribute:
 			p.addSourceMapping(a.KeyLoc)
 			p.printf(`"%s"`, a.Key)
