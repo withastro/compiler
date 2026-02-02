@@ -137,8 +137,37 @@ func ExtractStyles(doc *astro.Node, opts *TransformOptions) {
 	})
 	// Important! Remove styles from original location *after* walking the doc
 	for _, style := range doc.Styles {
-		style.Parent.RemoveChild(style)
+		removeNodeWithTrailingWhitespace(style)
 	}
+}
+
+// removeNodeWithTrailingWhitespace removes a node and also removes any preceding
+// whitespace-only text node if it would become trailing whitespace after removal.
+// This prevents orphaned whitespace when extracting style/script tags.
+func removeNodeWithTrailingWhitespace(n *astro.Node) {
+	prev := n.PrevSibling
+	next := n.NextSibling
+
+	// Check if we should remove preceding whitespace:
+	// 1. There is a previous sibling
+	// 2. It's a whitespace-only text node
+	// 3. After removing n, this whitespace would be trailing (no more non-whitespace siblings after)
+	if prev != nil && prev.Type == astro.TextNode && strings.TrimSpace(prev.Data) == "" {
+		// Check if there are any non-whitespace siblings after n
+		hasNonWhitespaceAfter := false
+		for sib := next; sib != nil; sib = sib.NextSibling {
+			if sib.Type != astro.TextNode || strings.TrimSpace(sib.Data) != "" {
+				hasNonWhitespaceAfter = true
+				break
+			}
+		}
+		// If no non-whitespace content follows, remove the preceding whitespace
+		if !hasNonWhitespaceAfter {
+			prev.Parent.RemoveChild(prev)
+		}
+	}
+
+	n.Parent.RemoveChild(n)
 }
 
 func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
