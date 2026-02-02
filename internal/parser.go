@@ -1103,6 +1103,19 @@ func copyAttributes(dst *Node, src Token) {
 func inBodyIM(p *parser) bool {
 	switch p.tok.Type {
 	case FrontmatterFenceToken:
+		// If originalIM is already set, we have a closing fence without an opening one
+		if p.originalIM != nil {
+			p.handler.AppendError(&loc.ErrorWithRange{
+				Code: loc.ERROR_MISSING_FRONTMATTER_FENCE,
+				Text: "The closing frontmatter fence (---) is missing an opening fence",
+				Hint: "Add --- at the beginning of your file before any import statements or code",
+				Range: loc.Range{
+					Loc: p.tok.Loc,
+					Len: 3,
+				},
+			})
+			return true
+		}
 		p.setOriginalIM()
 		p.im = frontmatterIM
 		return false
