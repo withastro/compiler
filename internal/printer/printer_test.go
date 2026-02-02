@@ -2083,6 +2083,16 @@ import Analytics from '../components/Analytics.astro';
 <title>{title}</title>
 <meta name="description" content="a description" />`,
 		},
+		{
+			name: "jsx comment between doctype and html",
+			source: `<!doctype html>
+{/* Comment */}
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+	</head>
+</html>`,
+		},
 	}
 	for _, tt := range tests {
 		if tt.only {
@@ -2237,6 +2247,16 @@ const c = '\''
 		{
 			name:   "element with unterminated template literal attribute",
 			source: `<main id=` + BACKTICK + `gotcha />`,
+		},
+		{
+			name: "jsx comment between doctype and html",
+			source: `<!doctype html>
+{/* Comment */}
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+	</head>
+</html>`,
 		},
 	}
 
