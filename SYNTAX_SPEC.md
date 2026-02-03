@@ -22,12 +22,11 @@ An `.astro` file is composed of up to two sections described below. All are opti
 
 ```
 ┌──────────────────────────────────┐
-│  ---                             │  ← component script (optional)
-│ TypeScript                       │
+│  ---                             │
+│  Component Script                │
 │  ---                             │
 ├──────────────────────────────────┤
-│  Template                        │  ← HTML + expressions (optional)
-│  (includes <style> and <script>) │
+│  Template                        │
 └──────────────────────────────────┘
 ```
 
