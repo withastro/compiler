@@ -30,6 +30,15 @@ test('missing opening frontmatter fence reports error instead of panic', () => {
 		result.diagnostics[0].hint,
 		'Add --- at the beginning of your file before any import statements or code'
 	);
+	// Verify the error location points to the closing --- fence
+	const loc = result.diagnostics[0].location;
+	// The line number should point to the line containing ---
+	assert.is(FIXTURE.split('\n')[loc.line - 1], '---');
+	// The column and length should extract exactly the --- characters
+	assert.is(
+		FIXTURE.split('\n')[loc.line - 1].slice(loc.column - 1, loc.column - 1 + loc.length),
+		'---'
+	);
 });
 
 test.run();
