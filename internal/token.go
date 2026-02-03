@@ -1886,6 +1886,7 @@ frontmatter_loop:
 			case FrontmatterInitial:
 				z.fm = FrontmatterOpen
 				z.dashCount = 0
+				z.data.Start = z.raw.End - len("---")
 				z.data.End = z.raw.End
 				z.tt = FrontmatterFenceToken
 				z.openBraceIsExpressionStart = false
