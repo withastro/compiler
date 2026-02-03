@@ -59,7 +59,7 @@ The region between the two `---` fences.
 - Only one component script block is allowed per file.
 - Any amount of whitespace may appear before the opening `---` or after the closing `---`.
 
-The component script is TypeScript. All standard TypeScript syntax is valid, apart from the exceptions and additions outlined below.
+The component script is TypeScript. All standard TypeScript syntax is valid, apart from the exceptions and additions outlined in §2.1.
 
 ### 2.1 Top-level return
 
@@ -82,7 +82,7 @@ if (!user) {
 
 Everything after the closing `---`, or the entire file when there is no component script.
 
-The template mostly follows the [JSX spec](https://facebook.github.io/jsx/), with the differences and additions outlined below.
+The template mostly follows the [JSX specification](https://facebook.github.io/jsx/), with the differences and additions outlined in §3.1.
 
 ### 3.1 Differences from JSX
 
@@ -170,7 +170,11 @@ Astro supports all HTML tags, including `<script>` and `<style>`. See §4 and §
 
 Multiple `<style>` blocks are allowed per file.
 
-### 5.1 `lang` attribute
+### 4.1 Language
+
+By default, `<style>` blocks can contain CSS. The content adheres to standard CSS syntax as defined by the [CSS Syntax Module](https://www.w3.org/TR/css-syntax-3/).
+
+### 4.2 `lang` attribute
 
 Specifies a preprocessor language:
 
@@ -181,7 +185,7 @@ Specifies a preprocessor language:
 </style>
 ```
 
-Valid values: `scss`, `sass`, `less`, `styl`. The syntax then follows the rules of the specified preprocessor.
+The syntax then follows the rules of the specified preprocessor instead of standard CSS.
 
 ---
 
@@ -195,7 +199,7 @@ Valid values: `scss`, `sass`, `less`, `styl`. The syntax then follows the rules 
 
 Multiple `<script>` blocks are allowed per file.
 
-### 6.1 Language
+### 5.1 Language
 
 A bare `<script>` tag with no attributes, can contains TypeScript. The content adheres to standard TypeScript syntax.
 
@@ -210,14 +214,19 @@ A bare `<script>` tag with no attributes, can contains TypeScript. The content a
 </script>
 ```
 
-If any attributes are present, the content is instead JavaScript. The content adheres to standard JavaScript syntax.
+If any attributes are present, the content follows standard [HTML `<script>` element](https://html.spec.whatwg.org/multipage/scripting.html#the-script-element) rules.
 
 ```astro
+<script defer>
+	// JavaScript
+</script>
+
 <script type="module">
-  interface NotTS { // Syntax error, unexpected keyword etc.
-    id: number;
-    name: string;
-  }
+  // JavaScript module
+  import { foo } from "./foo.js";
+</script>
+
+<script type="application/json">
+  { "key": "value" }
 </script>
 ```
-
