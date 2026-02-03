@@ -55,9 +55,10 @@ const greeting = "Hello";
 
 The region between the two `---` fences.
 
-- Both the opening and closing `---` must be on their own line.
+- The opening and closing fences are not required on their own line. Code may appear on the same line as both fences.
 - Only one component script block is allowed per file.
-- Any amount of whitespace may appear before the opening `---` or after the closing `---`.
+- Any amount of whitespace may appear before the opening fence or after the closing fence.
+- Any content may appear before before the opening fence, but is customarily ignored.
 
 The component script is TypeScript. All standard TypeScript syntax is valid, apart from the exceptions and additions outlined in §2.1.
 
@@ -80,7 +81,7 @@ if (!user) {
 
 ## 3. Template
 
-Everything after the closing `---`, or the entire file when there is no component script.
+The template is considered to be everything after the closing fence of the component script, or the entire file when there is no component script.
 
 The template mostly follows the [JSX specification](https://facebook.github.io/jsx/), with the differences and additions outlined in §3.1.
 
