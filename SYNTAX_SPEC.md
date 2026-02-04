@@ -111,7 +111,7 @@ In addition to the standard JSX fragment syntax `<>…</>`, `Fragment` is suppor
 </Fragment>
 ```
 
-The behavior is otherwise identical to the shorthand syntax.
+This form may accept attributes, unlike the shorthand syntax.
 
 #### HTML doctype
 
@@ -186,7 +186,7 @@ Would result in the component's name being Namespace, an attribute named `:` wit
 
 #### Attribute shorthand
 
-Attributes can use a shorthand syntax where `{prop}` expands to `prop={prop}`:
+Attributes can use a shorthand syntax where `{prop}` is equivalent to `prop={prop}`:
 
 ```astro
 <Component {prop} />
@@ -202,7 +202,38 @@ Attributes can use backticks for interpolation without opening an expression:
 <Component attribute=`hello ${value}` />
 ```
 
+#### Less-than signs in text nodes
+
+Less-than signs `<` in text nodes are parsed following HTML rules, meaning they do not need to be escaped:
+
+```astro
+<p>5 < 10</p>
+```
+
+#### Non-ascii tag names are not supported
+
+Tag names must use ASCII characters only. Non-ascii tag names (e.g. `<日本>`) are not supported and are treated as text nodes.
+
+#### Unquoted attribute values
+
+Attribute values do not need to be quoted if they contain only alphanumeric characters, hyphens, underscores, and periods:
+
+```astro
+<Component data-id=12345 class=my-class />
+```
+
 #### Unclosed HTML tags
+
+Like HTML, tags do not need to be explicitly closed.
+
+```astro
+<p>Hello
+<p>World
+```
+
+It is up to the parser to optionally try to infer where tags close based on HTML parsing rules, or leave them unclosed.
+
+##### Void elements
 
 HTML void elements do not need to be self-closed:
 
