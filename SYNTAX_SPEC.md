@@ -89,18 +89,59 @@ The template mostly follows the [JSX specification](https://facebook.github.io/j
 
 These differences apply both within the template and within expressions inside the template.
 
-For instance, it is possible to use HTML comments inside an expression:
+#### HTML comments
+
+HTML comments `<!-- … -->` are allowed.
 
 ```astro
-{ // JSX expression
-  /* This is a JSX comment */
-  <!-- This is an HTML comment -->
+<!-- This is an HTML comment -->
+{
+	<!-- This is an HTML comment inside an expression -->
 }
 ```
 
-#### HTML comments
+#### <Fragment>
 
-HTML comments `<!-- … -->` are allowed directly in the template (in addition to the standard JSX `{/* … */}` comments).
+In addition to the standard JSX fragment syntax `<>…</>`, `Fragment` is supported as the tag name for fragments, i.e. `<Fragment>…</Fragment>`.
+
+```astro
+<Fragment>
+	<div>Item 1</div>	
+	<div>Item 2</div>
+</Fragment>
+```
+
+The behavior is otherwise identical to the shorthand syntax.
+
+#### HTML doctype
+
+The [HTML doctype declaration](https://html.spec.whatwg.org/multipage/syntax.html#the-doctype) is allowed inside the template.
+
+```astro
+<!DOCTYPE html>
+```
+
+#### Whitespace in expressions
+
+Whitespace inside expressions `{ }` is preserved as text nodes, unlike JSX where whitespace inside expression containers is ignored:
+
+```astro
+<!-- Whitespace around element -->
+{
+    <div>Hello</div>
+}
+
+<!-- Leading/trailing spaces -->
+{   <div>test</div>   }
+
+<!-- Whitespace-only expression -->
+{   }
+```
+
+In Astro, all of these produce text nodes for the whitespace whereas in JSX:
+
+- Whitespace around elements inside `{ }` is ignored
+- Whitespace-only expressions result in an empty expression, with no text nodes.
 
 #### Multiple root elements
 
@@ -121,11 +162,27 @@ Unlike JSX, no single root element is required:
 
 #### Attribute names
 
-Attribute names do not need to be valid JS identifiers. Characters like `@` and `.` are allowed:
+Attribute names [follow the HTML conventions](https://html.spec.whatwg.org/multipage/syntax.html#syntax-attribute-name) and are not required to be valid JavaScript identifiers. For example, characters like hyphens and colons are allowed in attribute names:
 
 ```astro
-<div @click="handler" x.data="value" />
+<div @click="handler" x.data="value" :class="my-class" />
 ```
+
+#### Namespace in component names are not supported
+
+Colons in component names are not treated as namespace separators. For example:
+
+```astro
+<Namespace:Component />
+```
+
+Will be treated as a single component name (i.e. `Namespace:Component`). Spaces are not allowed in component names, so the following:
+
+```astro
+<Namespace : Component />
+```
+
+Would result in the component's name being Namespace, an attribute named `:` with no value, and an attribute named `Component` with no value.
 
 #### Attribute shorthand
 
