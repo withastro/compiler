@@ -4,5 +4,9 @@
   "initialVersions": {
     "@astrojs/compiler": "2.13.1"
   },
-  "changesets": []
+  "changesets": [
+    "little-spoons-search",
+    "neat-camels-raise",
+    "silver-deers-buy"
+  ]
 }
