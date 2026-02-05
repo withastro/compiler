@@ -94,6 +94,12 @@ func escapeDoubleQuote(str string) string {
 	return strings.Replace(str, `"`, "\\\"", -1)
 }
 
+func escapeNewlines(str string) string {
+	str = strings.Replace(str, "\n", `\n`, -1)
+	str = strings.Replace(str, "\r", `\r`, -1)
+	return str
+}
+
 func encodeDoubleQuote(str string) string {
 	return strings.Replace(str, `"`, "&quot;", -1)
 }

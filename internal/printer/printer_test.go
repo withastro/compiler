@@ -2083,6 +2083,10 @@ import Analytics from '../components/Analytics.astro';
 <title>{title}</title>
 <meta name="description" content="a description" />`,
 		},
+		{
+			name:   "multiline class attribute on component",
+			source: "<Component class=\"some-class\n  another-class\n  third-class\">content</Component>",
+		},
 	}
 	for _, tt := range tests {
 		if tt.only {
