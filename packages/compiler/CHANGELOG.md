@@ -1,5 +1,12 @@
 # @astrojs/compiler
 
+## 2.13.1
+
+### Patch Changes
+
+- 357b8fe: Fixes a panic when parsing files with a closing frontmatter fence (---) but no opening fence. The compiler now returns a helpful diagnostic error instead of crashing.
+- cba568f: Fixes the "Unterminated string literal" error when using multiline attribute values on components.
+
 ## 2.13.0
 
 ### Minor Changes
