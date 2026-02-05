@@ -83,7 +83,7 @@ if (!user) {
 
 The template is considered to be everything after the closing fence of the component script, or the entire file when there is no component script.
 
-The template mostly follows the [JSX specification](https://facebook.github.io/jsx/), with the differences and additions outlined in §3.3.
+The template mostly follows the [JSX specification](https://facebook.github.io/jsx/), with the differences and additions outlined in §3.2.
 
 ### 3.1 Whitespace between the component script and template is ignored
 
