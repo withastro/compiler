@@ -83,11 +83,25 @@ if (!user) {
 
 The template is considered to be everything after the closing fence of the component script, or the entire file when there is no component script.
 
-The template mostly follows the [JSX specification](https://facebook.github.io/jsx/), with the differences and additions outlined in §3.1.
+The template mostly follows the [JSX specification](https://facebook.github.io/jsx/), with the differences and additions outlined in §3.3.
 
-### 3.1 Differences from JSX
+### 3.1 Whitespace between the component script and template is ignored
 
-These differences apply both within the template and within expressions inside the template.
+Any amount of whitespace (spaces, tabs, newlines) between the closing fence of the component script and the start of the template is ignored and does not produce text nodes.
+
+```astro
+---
+const greeting = "Hello";
+---
+
+
+
+<h1>{greeting}, World!</h1>
+```
+
+### 3.2 Differences from JSX
+
+Unless mentioned otherwise, these differences apply both within the template and within expressions inside the template.
 
 #### HTML comments
 
@@ -115,10 +129,18 @@ This form may accept attributes, unlike the shorthand syntax.
 
 #### HTML doctype
 
-The [HTML doctype declaration](https://html.spec.whatwg.org/multipage/syntax.html#the-doctype) is allowed inside the template.
+The [HTML doctype declaration](https://html.spec.whatwg.org/multipage/syntax.html#the-doctype) is allowed.
 
 ```astro
 <!DOCTYPE html>
+```
+
+##### Top-level text nodes
+
+Top level text inside the template is treated as text nodes.
+
+```astro
+Hello, World!
 ```
 
 #### Whitespace in expressions
