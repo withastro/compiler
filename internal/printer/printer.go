@@ -349,7 +349,7 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions, printAstroGl
 	p.println(fmt.Sprintf("const %s = %s(%s(%s, $$props, %s) => {", componentName, CREATE_COMPONENT, p.getAsyncFuncPrefix(), RESULT, SLOTS))
 	if printAstroGlobal {
 		p.addNilSourceMapping()
-		p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
+		p.println(fmt.Sprintf("const Astro = %s.createAstro($$props, %s);", RESULT, SLOTS))
 		p.addNilSourceMapping()
 		p.println(fmt.Sprintf("Astro.self = %s;", componentName))
 	}

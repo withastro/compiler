@@ -34,8 +34,6 @@ type TransformOptions struct {
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
 	AnnotateSourceFile      bool
-	RenderScript            bool
-	ExperimentalScriptOrder bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -88,13 +86,6 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	}
 	NormalizeSetDirectives(doc, h)
 
-	// Important! Remove scripts from original location *after* walking the doc
-	if !opts.RenderScript {
-		for _, script := range doc.Scripts {
-			script.Parent.RemoveChild(script)
-		}
-	}
-
 	// If we've emptied out all the nodes, this was a Fragment that only contained hoisted elements
 	// Add an empty FrontmatterNode to allow the empty component to be printed
 	if doc.FirstChild == nil {
@@ -128,11 +119,7 @@ func ExtractStyles(doc *astro.Node, opts *TransformOptions) {
 				return
 			}
 			// append node to maintain authored order
-			if opts.ExperimentalScriptOrder {
-				doc.Styles = append(doc.Styles, n)
-			} else {
-				doc.Styles = append([]*astro.Node{n}, doc.Styles...)
-			}
+			doc.Styles = append(doc.Styles, n)
 		}
 	})
 	// Important! Remove styles from original location *after* walking the doc
@@ -409,8 +396,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			return
 		}
 		// Ignore scripts in svg/noscript/etc
-		// In expressions ignore scripts, unless `RenderScript` is true
-		if !IsHoistable(n, opts.RenderScript) {
+		if !IsHoistable(n, true) {
 			return
 		}
 
@@ -443,11 +429,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 
 			// append node to maintain authored order
 			if shouldAdd {
-				if opts.ExperimentalScriptOrder {
-					doc.Scripts = append(doc.Scripts, n)
-				} else {
-					doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
-				}
+				doc.Scripts = append(doc.Scripts, n)
 				n.HandledScript = true
 			}
 		} else {

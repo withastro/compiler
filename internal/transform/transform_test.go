@@ -390,8 +390,8 @@ func TestCompactTransform(t *testing.T) {
 		},
 		{
 			name:   "remove whitespace only",
-			source: `<head>  <script>console.log("hoisted")</script>  <head>`,
-			want:   `<head></head>`,
+			source: `<head>  <script>console.log("test")</script>  <head>`,
+			want:   `<head><script>console.log("test")</script></head>`,
 		},
 		{
 			name:   "collapse surrounding whitespace",
