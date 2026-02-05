@@ -58,7 +58,7 @@ The region between the two `---` fences.
 - The opening and closing fences are not required on their own line. Code may appear on the same line as both fences.
 - Only one component script block is allowed per file.
 - Any amount of whitespace may appear before the opening fence or after the closing fence.
-- Any content may appear before before the opening fence, but is customarily ignored.
+- Any content may appear before the opening fence, but is customarily ignored.
 
 The component script is TypeScript. All standard TypeScript syntax is valid, apart from the exceptions and additions outlined in §2.1.
 
@@ -232,9 +232,9 @@ Less-than signs `<` in text nodes are parsed following HTML rules, meaning they 
 <p>5 < 10</p>
 ```
 
-#### Non-ascii tag names are not supported
+#### Non-ASCII tag names are not supported
 
-Tag names must use ASCII characters only. Non-ascii tag names (e.g. `<日本>`) are not supported and are treated as text nodes.
+Tag names must use ASCII characters only. Non-ASCII tag names (e.g. `<日本>`) are not supported and are treated as text nodes.
 
 #### Unquoted attribute values
 
