@@ -245,3 +245,5 @@ test('separated by newlines (#815)', async () => {
 
 	assert.match(result, output);
 });
+
+test.run();

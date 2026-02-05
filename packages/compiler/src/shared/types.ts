@@ -45,7 +45,7 @@ export interface TransformOptions {
 	normalizedFilename?: string;
 	sourcemap?: boolean | 'inline' | 'external' | 'both';
 	astroGlobalArgs?: string;
-	compact?: boolean;
+	compact?: boolean | 'jsx';
 	resultScopedSlot?: boolean;
 	scopedStyleStrategy?: 'where' | 'class' | 'attribute';
 	/**
