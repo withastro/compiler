@@ -432,7 +432,7 @@ func (p *parser) addElement() {
 		Type:          ElementNode,
 		DataAtom:      p.tok.DataAtom,
 		Data:          p.tok.Data,
-		Attr:          p.tok.Attr,
+		Attr:          deduplicateAttributes(p.tok.Attr),
 		Fragment:      isFragment(p.tok.Data),
 		Component:     isComponent(p.tok.Data),
 		CustomElement: isCustomElement(p.tok.Data),
@@ -1082,21 +1082,81 @@ func afterHeadIM(p *parser) bool {
 	return false
 }
 
-// copyAttributes copies attributes of src not found on dst to dst.
+// copyAttributes copies attributes from src to dst, with "last wins" semantics.
+// If an attribute key already exists in dst, it is replaced with the value from src.
 func copyAttributes(dst *Node, src Token) {
 	if len(src.Attr) == 0 {
 		return
 	}
-	attr := map[string]string{}
-	for _, t := range dst.Attr {
-		attr[t.Key] = t.Val
+
+	// Build index of existing attributes with their positions
+	attrIndex := make(map[string]int)
+	for i, t := range dst.Attr {
+		key := t.Key
+		if t.Namespace != "" {
+			key = t.Namespace + ":" + t.Key
+		}
+		attrIndex[key] = i
 	}
+
+	// Add or replace attributes from src
 	for _, t := range src.Attr {
-		if _, ok := attr[t.Key]; !ok {
+		key := t.Key
+		if t.Namespace != "" {
+			key = t.Namespace + ":" + t.Key
+		}
+
+		if existingIdx, ok := attrIndex[key]; ok {
+			// Replace existing attribute with new value (last wins)
+			dst.Attr[existingIdx] = t
+		} else {
+			// Add new attribute
 			dst.Attr = append(dst.Attr, t)
-			attr[t.Key] = t.Val
+			attrIndex[key] = len(dst.Attr) - 1
 		}
 	}
+}
+
+// deduplicateAttributes returns a new slice with only the last occurrence
+// of each attribute key, preserving the original order of first appearances.
+// Spread attributes are always kept in their original positions.
+func deduplicateAttributes(attrs []Attribute) []Attribute {
+	if len(attrs) <= 1 {
+		return attrs
+	}
+
+	// Track last occurrence index for each named attribute key
+	lastIndex := make(map[string]int)
+
+	// First pass: record last occurrence of each named (non-spread) attribute
+	for i, attr := range attrs {
+		if attr.Type == SpreadAttribute {
+			continue // Spreads don't participate in key-based deduplication
+		}
+		key := attr.Key
+		if attr.Namespace != "" {
+			key = attr.Namespace + ":" + attr.Key
+		}
+		lastIndex[key] = i
+	}
+
+	// Second pass: keep spreads always, and named attributes only at their last occurrence
+	result := make([]Attribute, 0, len(attrs))
+	for i, attr := range attrs {
+		if attr.Type == SpreadAttribute {
+			result = append(result, attr)
+		} else {
+			key := attr.Key
+			if attr.Namespace != "" {
+				key = attr.Namespace + ":" + attr.Key
+			}
+			if lastIndex[key] == i {
+				result = append(result, attr)
+			}
+		}
+	}
+
+	return result
 }
 
 // Section 12.2.6.4.7.
