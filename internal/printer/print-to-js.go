@@ -482,11 +482,18 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 			}
 
 			if a.Key == "slot" {
-				if n.Parent.Component || n.Parent.Expression {
+				// Walk up the tree to find the nearest non-Expression ancestor
+				// to determine if we're inside an Astro Component (slot should be stripped)
+				// or a CustomElement/regular HTML (slot should be preserved)
+				parent := n.Parent
+				for parent != nil && parent.Expression {
+					parent = parent.Parent
+				}
+				if parent != nil && parent.Component {
 					continue
 				}
 				// Note: if we encounter "slot" NOT inside a component, that's fine
-				// These should be preserved in the output
+				// These should be preserved in the output (e.g., for web components)
 				p.printAttribute(a, n)
 			} else if a.Key == "data-astro-source-file" {
 				p.printAttribute(a, n)
