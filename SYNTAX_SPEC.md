@@ -56,7 +56,7 @@ const greeting = "Hello";
 The region between the two `---` fences.
 
 - The opening and closing fences are not required on their own line. Code may appear on the same line as both fences.
-- Only one component script block is allowed per file.
+- Only one component script is allowed per file.
 - Any amount of whitespace may appear before the opening fence or after the closing fence.
 - Any content may appear before the opening fence, but is customarily ignored.
 
