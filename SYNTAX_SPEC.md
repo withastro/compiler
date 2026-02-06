@@ -336,7 +336,7 @@ Multiple `<script>` blocks are allowed per file.
 
 ### 5.1 Language
 
-A bare `<script>` tag with no attributes, can contains TypeScript. The content adheres to standard TypeScript syntax.
+A bare `<script>` tag with no attributes can contain TypeScript. The content adheres to standard TypeScript syntax.
 
 ```astro
 <script>
