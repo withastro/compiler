@@ -127,6 +127,18 @@ In addition to the standard JSX fragment syntax `<>…</>`, `Fragment` is suppor
 
 This form may accept attributes, unlike the shorthand syntax.
 
+#### `is:raw` Directive
+
+The `is:raw` attribute on any element allows the content to be treated as raw text instead of JSX.
+
+```astro
+<Component is:raw>{<% non-JS content %>}</Component>
+
+<div is:raw>
+	{not an expression, just text}
+</div>
+```
+
 #### HTML doctype
 
 The [HTML doctype declaration](https://html.spec.whatwg.org/multipage/syntax.html#the-doctype) is allowed.
@@ -265,9 +277,21 @@ HTML void elements do not need to be self-closed:
 <img src="image.png">
 ```
 
-#### All HTML tags supported
+#### All HTML tags are supported
 
-Astro supports all HTML tags, including `<script>` and `<style>`. See §4 and §5 for details on their syntax.
+Astro supports all HTML tags, including `<script>` and `<style>` and foreign elements like `<math>` or `<svg>`.
+
+```astro
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <semantics>
+    <annotation encoding="application/x-tex">
+      f\colon X \to \mathbb{R}^{2x}
+    </annotation>
+  </semantics>
+</math>
+```
+
+In this example, `{R}` and `{2x}` are treated as text, not expressions.
 
 ---
 
@@ -325,7 +349,7 @@ A bare `<script>` tag with no attributes, can contains TypeScript. The content a
 </script>
 ```
 
-If any attributes are present, the content follows standard [HTML `<script>` element](https://html.spec.whatwg.org/multipage/scripting.html#the-script-element) rules.
+If any attributes are present, the content instead follows standard [HTML `<script>` element](https://html.spec.whatwg.org/multipage/scripting.html#the-script-element) rules.
 
 ```astro
 <script defer>
