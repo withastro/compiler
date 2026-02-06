@@ -2,4 +2,4 @@
 "@astrojs/compiler": patch
 ---
 
-Fixes trailing whitespace being preserved before style tags when they are extracted
+Fixes a bug where trailing whitespaces were preserved before `<style>` tags after transformation, in certain cases. Now trailing whitespaces are correctly removed.
