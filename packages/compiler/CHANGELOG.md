@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 3.0.0-beta.1
+
+### Patch Changes
+
+- 8275bdd: Fixes a bug where trailing whitespaces were preserved before `<style>` tags after transformation, in certain cases. Now trailing whitespaces are correctly removed.
+
 ## 3.0.0-beta.0
 
 ### Major Changes

@@ -5,6 +5,7 @@
     "@astrojs/compiler": "2.13.1"
   },
   "changesets": [
+    "fix-trailing-whitespace",
     "little-spoons-search",
     "neat-camels-raise",
     "silver-deers-buy"
