@@ -2,6 +2,7 @@ package printer
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -47,6 +48,39 @@ func getTSXComponentName(filename string) string {
 	} else {
 		return "__AstroComponent_"
 	}
+}
+
+func trimExt(filename string) string {
+	return strings.TrimSuffix(filename, filepath.Ext(filename))
+}
+
+func getParamsTypeFromFilename(filename string) string {
+	defaultType := "Record<string, string | number>"
+	if filename == "<stdin>" {
+		return defaultType
+	}
+	if len(filename) == 0 {
+		return defaultType
+	}
+	parts := strings.Split(filename, "/")
+	params := make([]string, 0)
+	r, err := regexp.Compile(`\[(?:\.{3})?([^]]+)\]`)
+	if err != nil {
+		return defaultType
+	}
+	for _, part := range parts {
+		if !strings.ContainsAny(part, "[]") {
+			continue
+		}
+		part = trimExt(part)
+		for _, match := range r.FindAllStringSubmatch(part, -1) {
+			params = append(params, fmt.Sprintf(`"%s"`, match[1]))
+		}
+	}
+	if len(params) == 0 {
+		return defaultType
+	}
+	return fmt.Sprintf("Record<%s, string | number>", strings.Join(params, " | "))
 }
 
 func getComponentName(filename string) string {
