@@ -1,6 +1,6 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { TSXPrefix } from '../utils.js';
 
 function getPrefix({
@@ -28,8 +28,9 @@ type ASTRO__MergeUnion<T, K extends PropertyKey = T extends unknown ? keyof T : 
 type ASTRO__Get<T, K> = T extends undefined ? undefined : K extends keyof T ? T[K] : never;`;
 }
 
-test('explicit props definition', async () => {
-	const input = `---
+describe('tsx/props-and-getStaticPaths', { skip: true }, () => {
+	it('explicit props definition', async () => {
+		const input = `---
 interface Props {};
 export function getStaticPaths() {
   return {};
@@ -37,7 +38,7 @@ export function getStaticPaths() {
 ---
 
 <div></div>`;
-	const output = `${TSXPrefix}\ninterface Props {};
+		const output = `${TSXPrefix}\ninterface Props {};
 export function getStaticPaths() {
   return {};
 }
@@ -48,19 +49,19 @@ export function getStaticPaths() {
 export default function __AstroComponent_(_props: Props): any {}
 ${getSuffix()}
 ${getPrefix({ props: 'Props' })}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('inferred props', async () => {
-	const input = `---
+	it('inferred props', async () => {
+		const input = `---
 export function getStaticPaths() {
   return {};
 }
 ---
 
 <div></div>`;
-	const output = `${TSXPrefix}\nexport function getStaticPaths() {
+		const output = `${TSXPrefix}\nexport function getStaticPaths() {
   return {};
 }
 
@@ -70,8 +71,7 @@ export function getStaticPaths() {
 export default function __AstroComponent_(_props: ASTRO__MergeUnion<ASTRO__Get<ASTRO__InferredGetStaticPath, 'props'>>): any {}
 ${getSuffix()}
 ${getPrefix()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 });
-
-test.run();

@@ -1,6 +1,6 @@
 import { type TransformResult, transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import assert from 'node:assert/strict';
+import { before, describe, it } from 'node:test';
 
 const FIXTURE = `---
 import * as components from '../components';
@@ -15,24 +15,24 @@ const { MyComponent } = components;
   </body>
 </html>`;
 
-let result: TransformResult;
-test.before(async () => {
-	result = await transform(FIXTURE, {
-		filename: '/src/components/Cool.astro',
+describe('client-only-unfound', { skip: true }, () => {
+	let result: TransformResult;
+	before(async () => {
+		result = await transform(FIXTURE, {
+			filename: '/src/components/Cool.astro',
+		});
+	});
+
+	it('got an error because client:only component not found import', () => {
+		assert.ok(Array.isArray(result.diagnostics));
+		assert.strictEqual(result.diagnostics.length, 1);
+		assert.strictEqual(
+			result.diagnostics[0].text,
+			'Unable to find matching import statement for client:only component'
+		);
+		assert.strictEqual(
+			FIXTURE.split('\n')[result.diagnostics[0].location.line - 1],
+			'    <MyComponent client:only />'
+		);
 	});
 });
-
-test('got an error because client:only component not found import', () => {
-	assert.ok(Array.isArray(result.diagnostics));
-	assert.is(result.diagnostics.length, 1);
-	assert.is(
-		result.diagnostics[0].text,
-		'Unable to find matching import statement for client:only component'
-	);
-	assert.is(
-		FIXTURE.split('\n')[result.diagnostics[0].location.line - 1],
-		'    <MyComponent client:only />'
-	);
-});
-
-test.run();

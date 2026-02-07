@@ -1,6 +1,6 @@
 import { type TransformResult, transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
 
 const FIXTURE = `
 ---
@@ -12,15 +12,16 @@ import Parent from './Parent.astro';
 `;
 
 let result: TransformResult;
-test.before(async () => {
-	result = await transform(FIXTURE, {
-		resolvePath: async (s) => s,
-		resultScopedSlot: true,
+
+describe('slot-result/result', () => {
+	before(async () => {
+		result = await transform(FIXTURE, {
+			resolvePath: async (s) => s,
+			resultScopedSlot: true,
+		});
+	});
+
+	it('resultScopedSlot: includes the result object in the call to the slot', () => {
+		assert.match(result.code, /\(\$\$result\) =>/);
 	});
 });
-
-test('resultScopedSlot: includes the result object in the call to the slot', () => {
-	assert.match(result.code, /\(\$\$result\) =>/);
-});
-
-test.run();

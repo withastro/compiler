@@ -1,129 +1,78 @@
 # Contributing
 
-Contributions are welcome to the Go compiler!
+Contributions are welcome to the Astro compiler!
 
 ## Setup
 
-### Go
+### Rust
 
-[Go][go] `1.20+` is needed to work with this repo. On Macs, installing via [Homebrew][homebrew] is recommended: `brew install go`. For Windows & Linux, you can [follow Go’s installation guide][go] if you don’t have your own preferred method of package installation.
+[Rust][rust] is needed to work with this repo. Install it via [rustup][rustup].
 
-If you use VS Code as your primary editor, installing the [Go extension][go-vscode] is highly recommended.
+The workspace uses oxc crates (parser, AST, etc.) as git dependencies.
 
 ### Node
 
-You will also need [Node.js][node] installed, as well as PNPM 8.x (`npm i -g pnpm`). More often than not, you won’t need to touch JS in this repo, but in case you do, be sure to run `pnpm install` first.
+You will also need [Node.js][node] installed, as well as pnpm (`npm i -g pnpm`). Run `pnpm install` to install dependencies.
 
 ## Code Structure
 
-A simple explanation of the compiler process is:
+The compiler is split into two Rust crates:
 
-1. Tokenizes (`internal/token.go`)
-2. Scans (`internal/js_scanner.go`)
-3. Prints (`internal/printer/print-to-js.go`)
+- `crates/astro_codegen/` - The core code generation engine that transforms Astro ASTs into JavaScript
+- `crates/astro_napi/` - Node.js NAPI bindings that expose the compiler to JavaScript
 
-**Tokenizing** takes the raw `.astro` text and turns it into simple tokens such as `FrontmatterStart`, `FrontmatterEnd`, `TagStart`, `TagEnd`, etc.
+The compilation pipeline is:
 
-**Scanning** does a basic scanning of the JS to pull out imports after the tokenizer has made it clear where JS begins and ends.
+1. **Parsing** - `oxc_parser` (from the oxc project) parses `.astro` files into an AST
+2. **Scanning** - `AstroScanner` pre-analyzes the AST to collect metadata (hydrated components, scripts, etc.)
+3. **Printing** - `AstroCodegen` generates JavaScript code from the AST
 
-**Printing** takes all the output up till now and generates (prints) valid TypeScript that can be executed within Node.
+The `packages/compiler/` TypeScript package provides the `@astrojs/compiler` npm API, wrapping the NAPI bindings.
 
-When adding a new feature or debugging an issue, start at the tokenizer, then move onto the scanner, and finally end at the printer. By starting at the lowest level of complexity (tokenizer), it will be easier to reason about.
+## Building
+
+```shell
+# Build the NAPI native addon (debug mode)
+pnpm run build:napi
+
+# Build the TypeScript package
+pnpm run build:compiler
+
+# Build everything
+pnpm run build:all
+```
 
 ## Tests
 
-It's important to **run the test from the root of the project**. Doing so, `go` will load all the necessary global information needed to run the tests.
-
-### Run all tests
+### Rust tests
 
 ```shell
-go test -v ./internal/...
+# Run all Rust tests (unit + snapshot)
+cargo test
+
+# Run only astro_codegen tests
+cargo test -p astro_codegen
+
+# Update snapshots after changes
+cargo insta review
 ```
-### Run a specific test suite 
+
+### TypeScript tests
 
 ```shell
-go test -v ./internal/printer
+pnpm run test
 ```
-### Run a specific test case
-
-Many of our test cases are designed like this:
-
-```go
-func TestPrintToJSON(t *testing.T) {
-  tests := []jsonTestcase{
-  	{
-  	  name:   "basic",
-  	  source: `<h1>Hello world!</h1>`,
-  	  want:   []ASTNode{{Type: "element", Name: "h1", Children: []ASTNode{{Type: "text", Value: "Hello world!"}}}},
-  	},
-    {
-  	  name:   "Comment preserves whitespace",
-  	  source: `<!-- hello -->`,
-  	  want:   []ASTNode{{Type: "comment", Value: " hello "}},
-  	}
-  }
-}
-```
-
-In this particular instance, the test case is name of the function, a slash `/`, followed by the `name` field. If the test case has spaces, you can use them.
-
-```shell
-go test -v ./internal/... -run TestPrintToJSON/basic
-go test -v ./internal/... -run TestPrintToJSON/Comment preserves whitespace
-```
-
-#### Snapshot testing
-
-We use [go-snaps](https://github.com/gkampitakis/go-snaps) for snapshot testing. Visit their repository for more details on how to use it
-
-#### Update snapshots
-
-Some of our tests use snapshot tests. If some of you changes are expected to update some snapshot tests, you can use the environment variable `UPDATE_SNAPS` to do so:
-
-```shell
-UPDATE_SNAPS=true go test -v ./internal/...
-```
-
-Instead, if there are some **obsolete snapshots**, you can `UPDATE_SNAPS=clean`:
-
-```shell
-UPDATE_SNAPS=clean go test -v ./internal/...
-```
-
 
 ### Adding new test cases
 
-The printer tests emit only snapshots. Go to `printer_test.go` and add a new test case:
-
-```go
-{
-	name: "New name for this test"
-	code: "<div></div>"
-}
-```
-
-Then run the below command, and a new snapshot named `new_name_for_this_test.snap` should appear in the snapshot folder.
+Add a new `.astro` fixture file in `crates/astro_codegen/tests/fixtures/` and run:
 
 ```shell
-go test -v ./internal/printer/printer_test.go
+cargo test -p astro_codegen
 ```
 
-Other tests, like tokenizer and scanner be found in `internal/token_test.go`, `internal/js_scanner_test.go` and respectively.
+A new `.snap` file will be created. Review it with `cargo insta review`.
 
-Those tests don't emit any snapshot, and you'll have to add a `want` field:
-
-```go
-{
-	name: "New name for this test"
-	code: "<div></div>",
-	want: want{
-		code: "<div></div>"
-	}
-}
-```
-
-
-[homebrew]: https://brew.sh/
-[go]: https://golang.org/
-[go-vscode]: https://marketplace.visualstudio.com/items?itemName=golang.go
+[rust]: https://www.rust-lang.org/
+[rustup]: https://rustup.rs/
 [node]: https://nodejs.org/

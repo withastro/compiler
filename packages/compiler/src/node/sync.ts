@@ -1,78 +1,38 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import type * as types from '../shared/types.js';
-import Go from './wasm_exec.js';
+import { compileAstroSync } from '@astrojs/compiler-binding';
+import { mapOptions, mapResult } from './shared.js';
 
 type UnwrappedPromise<T> = T extends (...params: any) => Promise<infer Return>
 	? (...params: Parameters<T>) => Return
 	: T;
 
-interface Service {
-	transform: UnwrappedPromise<typeof types.transform>;
-	parse: UnwrappedPromise<typeof types.parse>;
-	convertToTSX: UnwrappedPromise<typeof types.convertToTSX>;
-}
+export const transform: UnwrappedPromise<typeof types.transform> = (input, options) => {
+	const result = mapResult(compileAstroSync(input, mapOptions(options)));
 
-function getService(): Service {
-	if (!longLivedService) {
-		longLivedService = startRunningService();
+	// Post-process: call resolvePath for each component specifier if provided
+	if (typeof options?.resolvePath === 'function') {
+		const resolve = options.resolvePath;
+		const resolveAll = (components: types.HydratedComponent[]) => {
+			for (const c of components) {
+				const resolved = resolve(c.specifier);
+				// Sync transform only supports synchronous resolvePath
+				if (typeof resolved === 'string') {
+					c.resolvedPath = resolved;
+				}
+			}
+		};
+		resolveAll(result.hydratedComponents);
+		resolveAll(result.clientOnlyComponents);
+		resolveAll(result.serverComponents);
 	}
-	return longLivedService;
-}
 
-let longLivedService: Service | undefined;
+	return result;
+};
 
-export const transform = ((input, options) =>
-	getService().transform(input, options)) satisfies Service['transform'];
+export const parse: UnwrappedPromise<typeof types.parse> = (_input, _options) => {
+	throw new Error('parse() is not yet implemented in the Rust compiler');
+};
 
-export const parse = ((input, options) => {
-	return getService().parse(input, options);
-}) satisfies Service['parse'];
-
-export const convertToTSX = ((input, options) => {
-	return getService().convertToTSX(input, options);
-}) satisfies Service['convertToTSX'];
-
-export function startRunningService(): Service {
-	const go = new Go();
-	const wasm = instantiateWASM(
-		fileURLToPath(new URL('../astro.wasm', import.meta.url)),
-		go.importObject
-	);
-	go.run(wasm);
-	const _service: any = (globalThis as any)['@astrojs/compiler'];
-	return {
-		transform: (input, options) => {
-			try {
-				return _service.transform(input, options || {});
-			} catch (err) {
-				// Recreate the service next time on panic
-				longLivedService = void 0;
-				throw err;
-			}
-		},
-		parse: (input, options) => {
-			try {
-				const result = _service.parse(input, options || {});
-				return { ...result, ast: JSON.parse(result.ast) };
-			} catch (err) {
-				longLivedService = void 0;
-				throw err;
-			}
-		},
-		convertToTSX: (input, options) => {
-			try {
-				const result = _service.convertToTSX(input, options || {});
-				return { ...result, map: JSON.parse(result.map) };
-			} catch (err) {
-				longLivedService = void 0;
-				throw err;
-			}
-		},
-	};
-}
-
-function instantiateWASM(wasmURL: string, importObject: Record<string, any>): WebAssembly.Instance {
-	const wasmArrayBuffer = readFileSync(wasmURL);
-	return new WebAssembly.Instance(new WebAssembly.Module(wasmArrayBuffer), importObject);
-}
+export const convertToTSX: UnwrappedPromise<typeof types.convertToTSX> = (_input, _options) => {
+	throw new Error('convertToTSX() is not yet implemented in the Rust compiler');
+};

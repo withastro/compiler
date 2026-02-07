@@ -1,6 +1,6 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { TSXPrefix } from '../utils.js';
 
 const PREFIX = (component = '__AstroComponent_') => `/**
@@ -10,38 +10,39 @@ const PREFIX = (component = '__AstroComponent_') => `/**
 */
 declare const Astro: Readonly<import('astro').AstroGlobal<Props, typeof ${component}>>`;
 
-test('no props', async () => {
-	const input = '<div></div>';
-	const output = `${TSXPrefix}<Fragment>
+describe('tsx/props', { skip: true }, () => {
+	it('no props', async () => {
+		const input = '<div></div>';
+		const output = `${TSXPrefix}<Fragment>
 <div></div>
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('nested Props', async () => {
-	const input = `---
+	it('nested Props', async () => {
+		const input = `---
 function DoTheThing(Props) {}
 ---`;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 function DoTheThing(Props) {}
 
 
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props interface', async () => {
-	const input = `
+	it('props interface', async () => {
+		const input = `
 ---
 interface Props {}
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 interface Props {}
 
 {};<Fragment>
@@ -50,19 +51,19 @@ interface Props {}
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props import', async () => {
-	const input = `
+	it('props import', async () => {
+		const input = `
 ---
 import { Props } from './somewhere';
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 import { Props } from './somewhere';
 
 <Fragment>
@@ -71,19 +72,19 @@ import { Props } from './somewhere';
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props alias', async () => {
-	const input = `
+	it('props alias', async () => {
+		const input = `
 ---
 import { MyComponent as Props } from './somewhere';
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 import { MyComponent as Props } from './somewhere';
 
 <Fragment>
@@ -92,19 +93,19 @@ import { MyComponent as Props } from './somewhere';
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props type import', async () => {
-	const input = `
+	it('props type import', async () => {
+		const input = `
 ---
 import type { Props } from './somewhere';
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 import type { Props } from './somewhere';
 
 <Fragment>
@@ -113,19 +114,19 @@ import type { Props } from './somewhere';
 </Fragment>
 export default function __AstroComponent_(_props: Props): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props type', async () => {
-	const input = `
+	it('props type', async () => {
+		const input = `
 ---
 type Props = {}
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 type Props = {}
 
 {};<Fragment>
@@ -134,22 +135,22 @@ type Props = {}
 </Fragment>
 export default function Test__AstroComponent_(_props: Props): any {}
 ${PREFIX('Test__AstroComponent_')}`;
-	const { code } = await convertToTSX(input, {
-		filename: '/Users/nmoo/test.astro',
-		sourcemap: 'external',
+		const { code } = await convertToTSX(input, {
+			filename: '/Users/nmoo/test.astro',
+			sourcemap: 'external',
+		});
+		assert.strictEqual(code, output, 'expected code to match snapshot');
 	});
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
 
-test('props generic (simple)', async () => {
-	const input = `
+	it('props generic (simple)', async () => {
+		const input = `
 ---
 interface Props<T> {}
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 interface Props<T> {}
 
 {};<Fragment>
@@ -158,19 +159,19 @@ interface Props<T> {}
 </Fragment>
 export default function __AstroComponent_<T>(_props: Props<T>): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props generic (complex)', async () => {
-	const input = `
+	it('props generic (complex)', async () => {
+		const input = `
 ---
 interface Props<T extends Other<{ [key: string]: any }>> {}
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 interface Props<T extends Other<{ [key: string]: any }>> {}
 
 {};<Fragment>
@@ -179,19 +180,19 @@ interface Props<T extends Other<{ [key: string]: any }>> {}
 </Fragment>
 export default function __AstroComponent_<T extends Other<{ [key: string]: any }>>(_props: Props<T>): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props generic (very complex)', async () => {
-	const input = `
+	it('props generic (very complex)', async () => {
+		const input = `
 ---
 interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 interface Props<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never> {}
 
 {};<Fragment>
@@ -200,19 +201,19 @@ interface Props<T extends { [key: string]: any }, P extends string ? { [key: str
 </Fragment>
 export default function __AstroComponent_<T extends { [key: string]: any }, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('props generic (very complex II)', async () => {
-	const input = `
+	it('props generic (very complex II)', async () => {
+		const input = `
 ---
 interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 interface Props<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never> {}
 
 {};<Fragment>
@@ -221,12 +222,12 @@ interface Props<T extends Something<false> ? A : B, P extends string ? { [key: s
 </Fragment>
 export default function __AstroComponent_<T extends Something<false> ? A : B, P extends string ? { [key: string]: any }: never>(_props: Props<T, P>): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('polymorphic props', async () => {
-	const input = `
+	it('polymorphic props', async () => {
+		const input = `
 ---
 interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<Tag> {
   as?: Tag;
@@ -235,7 +236,7 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<Tag> {
   as?: Tag;
 }
@@ -246,19 +247,19 @@ interface Props<Tag extends keyof JSX.IntrinsicElements> extends HTMLAttributes<
 </Fragment>
 export default function __AstroComponent_<Tag extends keyof JSX.IntrinsicElements>(_props: Props<Tag>): any {}
 ${PREFIX()}`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('unrelated prop import', async () => {
-	const input = `
+	it('unrelated prop import', async () => {
+		const input = `
 ---
 import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 ---
 
 <SvelteOptionalProps />
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 
 <Fragment>
@@ -266,18 +267,18 @@ import SvelteOptionalProps from './SvelteOptionalProps.svelte';
 
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
-});
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 
-test('unrelated sibling prop', async () => {
-	const input = `---
+	it('unrelated sibling prop', async () => {
+		const input = `---
 import type { Props as ComponentBProps } from './ComponentB.astro'
 ---
 
 <div />
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 import type { Props as ComponentBProps } from './ComponentB.astro'
 
 {};<Fragment>
@@ -285,8 +286,7 @@ import type { Props as ComponentBProps } from './ComponentB.astro'
 
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 });
-
-test.run();

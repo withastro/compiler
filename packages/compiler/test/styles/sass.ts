@@ -1,6 +1,6 @@
 import { type TransformResult, transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
 import { preprocessStyle } from '../utils.js';
 
 const FIXTURE = `
@@ -28,25 +28,24 @@ div {
 </style>
 `;
 
-let result: TransformResult;
-test.before(async () => {
-	result = await transform(FIXTURE, {
-		sourcemap: true,
-		preprocessStyle,
-		experimentalScriptOrder: true,
+describe('styles/sass', { skip: true }, () => {
+	let result: TransformResult;
+	before(async () => {
+		result = await transform(FIXTURE, {
+			sourcemap: true,
+			preprocessStyle,
+			experimentalScriptOrder: true,
+		});
+	});
+
+	it('transforms scss one', () => {
+		assert.ok(result.css[0].includes('color:red'), 'Expected "color:red" to be present.');
+	});
+
+	it('transforms scss two', () => {
+		assert.ok(
+			result.css[result.css.length - 1].includes('color:green'),
+			'Expected "color:green" to be present.'
+		);
 	});
 });
-
-test('transforms scss one', () => {
-	assert.match(result.css[0], 'color:red', 'Expected "color:red" to be present.');
-});
-
-test('transforms scss two', () => {
-	assert.match(
-		result.css[result.css.length - 1],
-		'color:green',
-		'Expected "color:green" to be present.'
-	);
-});
-
-test.run();

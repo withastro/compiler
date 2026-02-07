@@ -59,12 +59,6 @@ export interface TransformOptions {
 		attrs: Record<string, string>
 	) => null | Promise<PreprocessorResult | PreprocessorError>;
 	annotateSourceFile?: boolean;
-	/**
-	 * Render script tags to be processed (e.g. script tags that have no attributes or only a `src` attribute)
-	 * using a `renderScript` function from `internalURL`, instead of stripping the script entirely.
-	 * @experimental
-	 */
-	renderScript?: boolean;
 	experimentalScriptOrder?: boolean;
 }
 
@@ -175,13 +169,6 @@ export interface ParseResult {
 	diagnostics: DiagnosticMessage[];
 }
 
-// This function transforms a single JavaScript file. It can be used to minify
-// JavaScript, convert TypeScript/JSX to JavaScript, or convert newer JavaScript
-// to older JavaScript. It returns a promise that is either resolved with a
-// "TransformResult" object or rejected with a "TransformFailure" object.
-//
-// Works in node: yes
-// Works in browser: yes
 export declare function transform(
 	input: string,
 	options?: TransformOptions
@@ -194,28 +181,7 @@ export declare function convertToTSX(
 	options?: ConvertToTSXOptions
 ): Promise<TSXResult>;
 
-// This configures the browser-based version of astro. It is necessary to
-// call this first and wait for the returned promise to be resolved before
-// making other API calls when using astro in the browser.
-//
-// Works in node: yes
-// Works in browser: yes ("options" is required)
-export declare function initialize(options: InitializeOptions): Promise<void>;
-
 /**
- * When calling the core compiler APIs, e.g. `transform`, `parse`, etc, they
- * would automatically instantiate a WASM instance to process the input. When
- * done, you can call this to manually teardown the WASM instance.
- *
- * If the APIs are called again, they will automatically instantiate a new WASM
- * instance. In browsers, you have to call `initialize()` again before using the APIs.
- *
- * Note: Calling teardown is optional and exists mostly as an optimization only.
+ * No-op. Exists for backwards compatibility with the WASM-based compiler.
  */
 export declare function teardown(): void;
-
-export interface InitializeOptions {
-	// The URL of the "astro.wasm" file. This must be provided when running
-	// astro in the browser.
-	wasmURL?: string;
-}

@@ -1,6 +1,6 @@
 import { transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
 
 const FIXTURE_A = `
 <style>
@@ -32,21 +32,22 @@ const FIXTURE_D = `
 `;
 
 const scopes: string[] = [];
-test.before(async () => {
-	const [{ scope: a }, { scope: b }, { scope: c }, { scope: d }] = await Promise.all(
-		[FIXTURE_A, FIXTURE_B, FIXTURE_C, FIXTURE_D].map((source) => transform(source))
-	);
-	scopes.push(a, b, c, d);
-});
 
-test('hash changes when content outside of style change', () => {
-	const [, b, c] = scopes;
-	assert.not.equal(b, c, 'Expected scopes to not be equal');
-});
+describe('styles/hash', () => {
+	before(async () => {
+		const [{ scope: a }, { scope: b }, { scope: c }, { scope: d }] = await Promise.all(
+			[FIXTURE_A, FIXTURE_B, FIXTURE_C, FIXTURE_D].map((source) => transform(source))
+		);
+		scopes.push(a, b, c, d);
+	});
 
-test('hash changes when scripts change', () => {
-	const [, , c, d] = scopes;
-	assert.not.equal(c, d, 'Expected scopes to not be equal');
-});
+	it('hash changes when content outside of style change', () => {
+		const [, b, c] = scopes;
+		assert.notDeepStrictEqual(b, c, 'Expected scopes to not be equal');
+	});
 
-test.run();
+	it('hash changes when scripts change', () => {
+		const [, , c, d] = scopes;
+		assert.notDeepStrictEqual(c, d, 'Expected scopes to not be equal');
+	});
+});

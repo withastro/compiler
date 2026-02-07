@@ -1,88 +1,422 @@
-name: Test
+name: CI
+
+env:
+  DEBUG: napi:*
+  APP_NAME: astro
+  MACOSX_DEPLOYMENT_TARGET: "10.13"
+  CARGO_INCREMENTAL: "1"
+  # The NAPI crate lives inside the workspace
+  NAPI_PACKAGE_PATH: crates/astro_napi
 
 on:
-  workflow_dispatch:
   push:
-    branches: ['main', 'next']
+    branches: [main, next]
+    tags-ignore:
+      - "**"
+    paths-ignore:
+      - "**/*.md"
+      - LICENSE
+      - "**/*.gitignore"
+      - .editorconfig
+      - docs/**
   pull_request:
-    branches: ['main', 'next']
+    branches: [main, next]
 
-# Automatically cancel in-progress actions on the same branch
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    timeout-minutes: 3
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-
-      - name: Set up Go
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
-        with:
-          go-version: 1.22
-
-      - name: Test
-        run: go test -v -timeout 30s ./internal/...
-
-  test-wasm:
     timeout-minutes: 10
-    strategy:
-      matrix:
-        OS: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.OS }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          go-version: 1.22
+          components: clippy, rustfmt
 
-      - name: Set up PNPM
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - name: Cargo fmt
+        run: cargo fmt -- --check
 
-      - name: Set up Node.js
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: pnpm
 
-      - name: Build WASM
-        run: make wasm
-
-      - name: Install NPM Dependencies
+      - name: Install dependencies
         run: pnpm install
-        env:
-          CI: true
 
-      - name: Build JS
-        run: pnpm run build:compiler
-
-      - name: Test WASM
-        run: pnpm test:ci
-
-  lint:
-    timeout-minutes: 3
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@d6238b002a20823d52840fda27e2d4891c5952dc # v4.0.1
-        with:
-          version: latest
-        env:
-          GOOS: js
-          GOARCH: wasm
-
-  lint-js:
-    timeout-minutes: 3
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Setup Biome
-        uses: biomejs/setup-biome@454fa0d884737805f48d7dc236c1761a0ac3cc13 # v2.6.0
-      - name: Run linting
+        uses: biomejs/setup-biome@v2
+
+      - name: Biome lint
         run: biome ci --diagnostic-level=warn
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          # ── macOS ──────────────────────────────────────────
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            build: pnpm run build --target x86_64-apple-darwin
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            build: pnpm run build --target aarch64-apple-darwin
+
+          # ── Windows ────────────────────────────────────────
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            build: pnpm run build --target x86_64-pc-windows-msvc
+          - host: windows-latest
+            target: i686-pc-windows-msvc
+            build: pnpm run build --target i686-pc-windows-msvc
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+            build: pnpm run build --target aarch64-pc-windows-msvc
+
+          # ── Linux GNU ──────────────────────────────────────
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            build: pnpm run build --target x86_64-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            build: pnpm run build --target aarch64-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            build: pnpm run build --target armv7-unknown-linux-gnueabihf --use-napi-cross
+          - host: ubuntu-latest
+            target: powerpc64le-unknown-linux-gnu
+            build: pnpm run build --target powerpc64le-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install -y gcc-s390x-linux-gnu
+              pnpm run build --target s390x-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install -y gcc-riscv64-linux-gnu
+              pnpm run build --target riscv64gc-unknown-linux-gnu --use-napi-cross
+
+          # ── Linux musl ─────────────────────────────────────
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            build: pnpm run build --target x86_64-unknown-linux-musl -x
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            build: pnpm run build --target aarch64-unknown-linux-musl -x
+          - host: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            build: pnpm run build --target armv7-unknown-linux-musleabihf -x
+          - host: ubuntu-latest
+            target: riscv64gc-unknown-linux-musl
+            build: pnpm run build --target riscv64gc-unknown-linux-musl -x
+
+          # ── Android ────────────────────────────────────────
+          - host: ubuntu-latest
+            target: aarch64-linux-android
+            build: pnpm run build --target aarch64-linux-android
+          - host: ubuntu-latest
+            target: armv7-linux-androideabi
+            build: pnpm run build --target armv7-linux-androideabi
+
+          # ── OpenHarmony ────────────────────────────────────
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-ohos
+            build: pnpm run build --target aarch64-unknown-linux-ohos
+
+          # ── WASM ───────────────────────────────────────────
+          - host: ubuntu-latest
+            target: wasm32-wasip1-threads
+            build: pnpm run build --target wasm32-wasip1-threads
+
+    name: Build - ${{ matrix.settings.target }}
+    runs-on: ${{ matrix.settings.host }}
+    defaults:
+      run:
+        working-directory: crates/astro_napi
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.settings.target }}
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.napi-rs
+            .cargo-cache
+            target/
+          key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
+
+      - uses: mlugg/setup-zig@v2
+        if: ${{ contains(matrix.settings.target, 'musl') }}
+        with:
+          version: 0.14.1
+
+      - name: Install cargo-zigbuild
+        uses: taiki-e/install-action@v2
+        if: ${{ contains(matrix.settings.target, 'musl') }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tool: cargo-zigbuild
+
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: .
+
+      - name: Build
+        run: ${{ matrix.settings.build }}
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.settings.target }}
+          path: |
+            crates/astro_napi/${{ env.APP_NAME }}.*.node
+            crates/astro_napi/${{ env.APP_NAME }}.*.wasm
+          if-no-files-found: error
+
+  build-freebsd:
+    name: Build FreeBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        id: build
+        uses: cross-platform-actions/action@v0.27.0
+        env:
+          DEBUG: napi:*
+          RUSTUP_IO_THREADS: 1
+        with:
+          operating_system: freebsd
+          version: "14.2"
+          memory: 8G
+          cpu_count: 3
+          environment_variables: "DEBUG RUSTUP_IO_THREADS"
+          shell: bash
+          run: |
+            sudo pkg install -y -f curl node libnghttp2 npm cmake
+            sudo npm install -g pnpm --ignore-scripts
+            curl https://sh.rustup.rs -sSf --output rustup.sh
+            sh rustup.sh -y --profile minimal --default-toolchain stable
+            source "$HOME/.cargo/env"
+            echo "~~~~ rustc --version ~~~~"
+            rustc --version
+            echo "~~~~ node -v ~~~~"
+            node -v
+            echo "~~~~ pnpm --version ~~~~"
+            pnpm --version
+            pwd
+            ls -lah
+            whoami
+            env
+            freebsd-version
+            pnpm install
+            cd crates/astro_napi
+            pnpm run build
+            cd ../..
+            rm -rf node_modules
+            rm -rf target
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-freebsd
+          path: crates/astro_napi/${{ env.APP_NAME }}.*.node
+          if-no-files-found: error
+
+  test-macOS-windows-binding:
+    name: Test - ${{ matrix.settings.target }} - node@${{ matrix.node }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            architecture: x64
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            architecture: arm64
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            architecture: x64
+        node:
+          - "20"
+          - "22"
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+          architecture: ${{ matrix.settings.architecture }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-${{ matrix.settings.target }}
+          path: crates/astro_napi
+
+      - name: List packages
+        run: ls -R crates/astro_napi
+        shell: bash
+
+      - name: Test bindings
+        run: pnpm test
+        working-directory: crates/astro_napi
+
+  test-wasi:
+    name: Test WASI target
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-wasm32-wasip1-threads
+          path: crates/astro_napi
+
+      - name: List packages
+        run: ls -R crates/astro_napi
+        shell: bash
+
+      - name: Test bindings
+        run: pnpm test
+        working-directory: crates/astro_napi
+        env:
+          NAPI_RS_FORCE_WASI: 1
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    needs:
+      - lint
+      - build
+      - build-freebsd
+      - test-macOS-windows-binding
+      - test-wasi
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Create npm dirs
+        run: pnpm napi create-npm-dirs
+        working-directory: crates/astro_napi
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: crates/astro_napi/artifacts
+
+      - name: Move artifacts
+        run: pnpm artifacts
+        working-directory: crates/astro_napi
+
+      - name: List packages
+        run: ls -R crates/astro_napi/npm
+        shell: bash
+
+      - name: Publish
+        run: |
+          npm config set provenance true
+          if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
+          then
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            # Publish per-platform packages and the binding package
+            cd crates/astro_napi
+            npm publish --access public
+            cd ../..
+            # Build and publish the TS wrapper
+            pnpm --filter @astrojs/compiler run build
+            cd packages/compiler
+            npm publish --access public
+          elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
+          then
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            # Publish per-platform packages and the binding package
+            cd crates/astro_napi
+            npm publish --tag next --access public
+            cd ../..
+            # Build and publish the TS wrapper
+            pnpm --filter @astrojs/compiler run build
+            cd packages/compiler
+            npm publish --tag next --access public
+          else
+            echo "Not a release, skipping publish"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

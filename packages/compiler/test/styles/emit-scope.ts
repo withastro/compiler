@@ -1,6 +1,6 @@
 import { type TransformResult, transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
 
 const FIXTURE = `
 ---
@@ -13,14 +13,15 @@ let value = 'world';
 `;
 
 let result: TransformResult;
-test.before(async () => {
-	result = await transform(FIXTURE, {
-		sourcemap: true,
+
+describe('styles/emit-scope', () => {
+	before(async () => {
+		result = await transform(FIXTURE, {
+			sourcemap: true,
+		});
+	});
+
+	it('emits a scope', () => {
+		assert.ok(result.scope, 'Expected to return a scope');
 	});
 });
-
-test('emits a scope', () => {
-	assert.ok(result.scope, 'Expected to return a scope');
-});
-
-test.run();

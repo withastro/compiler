@@ -1,20 +1,20 @@
 import { type TransformResult, transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { before, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 
 const FIXTURE = `
 <slot />
 `;
 
-let result: TransformResult;
-test.before(async () => {
-	result = await transform(FIXTURE, {
-		filename: 'test.astro',
+describe('head-metadata/without-head', () => {
+	let result: TransformResult;
+	before(async () => {
+		result = await transform(FIXTURE, {
+			filename: 'test.astro',
+		});
+	});
+
+	it('containsHead is false', () => {
+		assert.deepStrictEqual(result.containsHead, false);
 	});
 });
-
-test('containsHead is false', () => {
-	assert.equal(result.containsHead, false);
-});
-
-test.run();

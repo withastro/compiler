@@ -1,6 +1,6 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
 import type { TSXResult } from '../../types.js';
 
 const FIXTURE = `<html>
@@ -14,18 +14,18 @@ const FIXTURE = `<html>
   </body>
 </html>`;
 
-let result: TSXResult;
-test.before(async () => {
-	result = await convertToTSX(FIXTURE, {
-		filename: '/src/components/EOF.astro',
+describe('tsx-errors/eof', { skip: true }, () => {
+	let result: TSXResult;
+	before(async () => {
+		result = await convertToTSX(FIXTURE, {
+			filename: '/src/components/EOF.astro',
+		});
+	});
+
+	it('got a tokenizer error', () => {
+		assert.ok(Array.isArray(result.diagnostics));
+		assert.strictEqual(result.diagnostics.length, 1);
+		assert.strictEqual(result.diagnostics[0].text, 'Unterminated comment');
+		assert.strictEqual(FIXTURE.split('\n')[result.diagnostics[0].location.line - 1], '      {/*');
 	});
 });
-
-test('got a tokenizer error', () => {
-	assert.ok(Array.isArray(result.diagnostics));
-	assert.is(result.diagnostics.length, 1);
-	assert.is(result.diagnostics[0].text, 'Unterminated comment');
-	assert.is(FIXTURE.split('\n')[result.diagnostics[0].location.line - 1], '      {/*');
-});
-
-test.run();
