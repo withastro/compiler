@@ -1,12 +1,12 @@
 import { type TransformResult, transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
 
 const FIXTURE = `
 ---
 import Foo from './Foo.jsx'
 import Bar from './Bar.jsx'
-import { name } './foo.module.css'
+import { name } from './foo.module.css'
 ---
 <Foo />
 <Foo client:load />
@@ -14,22 +14,23 @@ import { name } './foo.module.css'
 `;
 
 let result: TransformResult;
-test.before(async () => {
-	result = await transform(FIXTURE, {
-		resolvePath: async (s) => s,
+
+describe('resolve-path/preserve', () => {
+	before(async () => {
+		result = await transform(FIXTURE, {
+			resolvePath: async (s) => s,
+		});
+	});
+
+	it('preserve path', () => {
+		assert.match(result.code, /"client:load":true.*"client:component-path":\("\.\/Foo\.jsx"\)/);
+		assert.match(result.code, /"client:only":"react".*"client:component-path":\("\.\/Foo\.jsx"\)/);
+	});
+
+	it('no metadata', () => {
+		assert.doesNotMatch(result.code, /\$\$metadata/);
+		assert.doesNotMatch(result.code, /\$\$createMetadata/);
+		assert.doesNotMatch(result.code, /createMetadata as \$\$createMetadata/);
+		assert.doesNotMatch(result.code, /import \* as \$\$module\d/);
 	});
 });
-
-test('preserve path', () => {
-	assert.match(result.code, /"client:load":true.*"client:component-path":\("\.\/Foo\.jsx"\)/);
-	assert.match(result.code, /"client:only":"react".*"client:component-path":\("\.\/Foo\.jsx"\)/);
-});
-
-test('no metadata', () => {
-	assert.not.match(result.code, /\$\$metadata/);
-	assert.not.match(result.code, /\$\$createMetadata/);
-	assert.not.match(result.code, /createMetadata as \$\$createMetadata/);
-	assert.not.match(result.code, /import \* as \$\$module\d/);
-});
-
-test.run();

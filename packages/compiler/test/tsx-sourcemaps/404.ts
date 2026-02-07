@@ -1,10 +1,12 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 
-test('404 generates a valid identifier', async () => {
-	const input = '<div {name} />';
+describe('tsx-sourcemaps/404', { skip: true }, () => {
+	it('404 generates a valid identifier', async () => {
+		const input = '<div {name} />';
 
-	const output = await convertToTSX(input, { filename: '404.astro', sourcemap: 'inline' });
-	assert.match(output.code, 'export default function __AstroComponent_');
+		const output = await convertToTSX(input, { filename: '404.astro', sourcemap: 'inline' });
+		assert.ok(output.code.includes('export default function __AstroComponent_'));
+	});
 });

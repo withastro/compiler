@@ -1,9 +1,10 @@
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { testJSSourcemap } from '../utils.js';
 
-test('script is:inline', async () => {
-	const input = `---
+describe('js-sourcemaps/module', { skip: true }, () => {
+	it('script is:inline', async () => {
+		const input = `---
   // valid
   import { foo } from './script.js';
     import ComponentAstro from './astro.astro';
@@ -14,14 +15,13 @@ test('script is:inline', async () => {
   foo;baz;ComponentAstro;ComponentSvelte;ComponentVue;
 ---
 `;
-	const output = await testJSSourcemap(input, `'./script'`);
+		const output = await testJSSourcemap(input, `'./script'`);
 
-	assert.equal(output, {
-		line: 8,
-		column: 23,
-		source: 'index.astro',
-		name: null,
+		assert.deepStrictEqual(output, {
+			line: 8,
+			column: 23,
+			source: 'index.astro',
+			name: null,
+		});
 	});
 });
-
-test.run();

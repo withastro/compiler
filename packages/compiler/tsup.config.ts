@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig((options) => ({
-	entry: ['src/node/**', 'src/browser/**', 'src/shared/**'],
+	entry: ['src/node/**', 'src/shared/**'],
 	outDir: 'dist',
 	format: ['cjs', 'esm'],
 	dts: true,
@@ -9,6 +9,6 @@ export default defineConfig((options) => ({
 	minify: !options.watch,
 	sourcemap: Boolean(options.watch),
 	watch: options.watch,
-	publicDir: 'wasm',
 	shims: true,
+	external: ['@astrojs/compiler-binding'],
 }));

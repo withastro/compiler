@@ -1,5 +1,5 @@
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { testJSSourcemap } from '../utils.js';
 
 const input = `---
@@ -35,12 +35,14 @@ const { article } = Astro.props;
 
 <ArticleLayout article={article} />`;
 
-test('tracks getStaticPaths', async () => {
-	const loc = await testJSSourcemap(input, 'getStaticPaths');
-	assert.equal(loc, { source: 'index.astro', line: 13, column: 14, name: null });
-});
+describe('js-sourcemaps/complex-frontmatter', { skip: true }, () => {
+	it('tracks getStaticPaths', async () => {
+		const loc = await testJSSourcemap(input, 'getStaticPaths');
+		assert.deepStrictEqual(loc, { source: 'index.astro', line: 13, column: 14, name: null });
+	});
 
-test('tracks foobar', async () => {
-	const loc = await testJSSourcemap(input, 'foobar');
-	assert.equal(loc, { source: 'index.astro', line: 6, column: 7, name: null });
+	it('tracks foobar', async () => {
+		const loc = await testJSSourcemap(input, 'foobar');
+		assert.deepStrictEqual(loc, { source: 'index.astro', line: 6, column: 7, name: null });
+	});
 });

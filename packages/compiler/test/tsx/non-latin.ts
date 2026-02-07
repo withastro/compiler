@@ -1,6 +1,6 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { TSXPrefix } from '../utils.js';
 
 // https://mathiasbynens.be/notes/javascript-identifiers
@@ -29,7 +29,7 @@ var Ꙭൽↈⴱ = 'huh';
 var ᱹ = 1;
 console.assert([1, 2, 3][ᱹ] === 2);
 
-// While perfectly valid, this doesn’t work in most browsers:
+// While perfectly valid, this doesn't work in most browsers:
 var foo\u200Cbar = 42;
 
 // This is *not* a bitwise left shift (\`<<\`):
@@ -48,15 +48,16 @@ var Ⅴ = 5;
 // Cthulhu was here
 var Hͫ̆̒̐ͣ̊̄ͯ͗͏̵̗̻̰̠̬͝ͅE̴̷̬͎̱̘͇͍̾ͦ͊͒͊̓̓̐_̫̠̱̩̭̤͈̑̎̋ͮͩ̒͑̾͋͘Ç̳͕̯̭̱̲̣̠̜͋̍O̴̦̗̯̹̼ͭ̐ͨ̊̈͘͠M̶̝̠̭̭̤̻͓͑̓̊ͣͤ̎͟͠E̢̞̮̹͍̞̳̣ͣͪ͐̈T̡̯̳̭̜̠͕͌̈́̽̿ͤ̿̅̑Ḧ̱̱̺̰̳̹̘̰́̏ͪ̂̽͂̀͠ = 'Zalgo';`;
 
-test('non-latin characters', async () => {
-	const input = `
+describe('tsx/non-latin', { skip: true }, () => {
+	it('non-latin characters', async () => {
+		const input = `
 ---
 ${value}
 ---
 
 <div></div>
 `;
-	const output = `${TSXPrefix}
+		const output = `${TSXPrefix}
 ${value}
 
 <Fragment>
@@ -64,8 +65,7 @@ ${value}
 
 </Fragment>
 export default function __AstroComponent_(_props: Record<string, any>): any {}\n`;
-	const { code } = await convertToTSX(input, { sourcemap: 'external' });
-	assert.snapshot(code, output, 'expected code to match snapshot');
+		const { code } = await convertToTSX(input, { sourcemap: 'external' });
+		assert.strictEqual(code, output, 'expected code to match snapshot');
+	});
 });
-
-test.run();

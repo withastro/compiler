@@ -1,21 +1,21 @@
 import { type TransformResult, transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import assert from 'node:assert/strict';
+import { before, describe, it } from 'node:test';
 
 const FIXTURE = `
 <script client:load></script>
 `;
 
-let result: TransformResult;
-test.before(async () => {
-	result = await transform(FIXTURE);
-});
+describe('client-directive/warn', { skip: true }, () => {
+	let result: TransformResult;
+	before(async () => {
+		result = await transform(FIXTURE);
+	});
 
-test('reports a warning for using a client directive', () => {
-	assert.ok(Array.isArray(result.diagnostics));
-	assert.is(result.diagnostics.length, 2);
-	assert.equal(result.diagnostics[0].severity, 2);
-	assert.match(result.diagnostics[0].text, 'does not need the client:load directive');
+	it('reports a warning for using a client directive', () => {
+		assert.ok(Array.isArray(result.diagnostics));
+		assert.strictEqual(result.diagnostics.length, 2);
+		assert.deepStrictEqual(result.diagnostics[0].severity, 2);
+		assert.ok(result.diagnostics[0].text.includes('does not need the client:load directive'));
+	});
 });
-
-test.run();

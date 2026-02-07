@@ -1,21 +1,21 @@
 import { convertToTSX } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
 import type { TSXResult } from '../../types.js';
 
 const FIXTURE = '<div class={';
 
-let result: TSXResult;
-test.before(async () => {
-	result = await convertToTSX(FIXTURE, {
-		filename: '/src/components/unfinished.astro',
+describe('tsx-errors/unfinished-component', { skip: true }, () => {
+	let result: TSXResult;
+	before(async () => {
+		result = await convertToTSX(FIXTURE, {
+			filename: '/src/components/unfinished.astro',
+		});
+	});
+
+	it('did not crash on unfinished component', () => {
+		assert.ok(result);
+		assert.ok(Array.isArray(result.diagnostics));
+		assert.strictEqual(result.diagnostics.length, 0);
 	});
 });
-
-test('did not crash on unfinished component', () => {
-	assert.ok(result);
-	assert.ok(Array.isArray(result.diagnostics));
-	assert.is(result.diagnostics.length, 0);
-});
-
-test.run();

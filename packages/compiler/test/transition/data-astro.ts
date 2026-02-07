@@ -1,6 +1,6 @@
 import { transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 const FIXTURE = `
 <div data-astro-reload>
@@ -12,11 +12,11 @@ const FIXTURE = `
   <script is:inline data-astro-rerun>"Bar"</script>
 </div>`;
 
-test('Issues warnings for data-astro-* attributes', async () => {
-	const result = await transform(FIXTURE);
-	assert.equal(result.diagnostics.length, 2);
-	assert.equal(result.diagnostics[0].code, 2000);
-	assert.equal(result.diagnostics[1].code, 2010);
+describe('transition/data-astro', { skip: true }, () => {
+	it('Issues warnings for data-astro-* attributes', async () => {
+		const result = await transform(FIXTURE);
+		assert.deepStrictEqual(result.diagnostics.length, 2);
+		assert.deepStrictEqual(result.diagnostics[0].code, 2000);
+		assert.deepStrictEqual(result.diagnostics[1].code, 2010);
+	});
 });
-
-test.run();

@@ -2,7 +2,12 @@
 .pnpm-store
 node_modules
 *.wasm
+*.node
 /astro
 debug.test
 __debug_bin
 packages/compiler/sourcemap.mjs
+
+# Rust
+/target
+Cargo.lock
