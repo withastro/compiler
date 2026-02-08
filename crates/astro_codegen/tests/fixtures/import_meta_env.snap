@@ -1,6 +1,6 @@
 ---
-source: crates/oxc_astro_codegen/tests/snapshots.rs
-input_file: crates/oxc_astro_codegen/tests/fixtures/import_meta_env.astro
+source: crates/astro_codegen/tests/snapshots.rs
+input_file: crates/astro_codegen/tests/fixtures/import_meta_env.astro
 ---
 import {
   Fragment,
@@ -47,7 +47,7 @@ export async function getStaticPaths() {
 	});
 }
 const $$Component = $$createComponent(async ($$result, $$props, $$slots) => {
-const Astro = $$result.createAstro($$Astro, $$props, $$slots);
+const Astro = $$result.createAstro($$props, $$slots);
 Astro.self = $$Component;
 
 const { product } = Astro.props;

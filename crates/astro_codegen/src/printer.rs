@@ -784,9 +784,16 @@ impl<'a> AstroCodegen<'a> {
                             false
                         };
 
-                        if is_client_only_import {
+                        // Skip bare CSS imports from $$module re-imports
+                        // (matching Go compiler behavior: side-effect-only CSS imports
+                        // don't need metadata tracking)
+                        let is_bare_css_import = import.specifiers.is_none()
+                            && is_css_specifier(source);
+
+                        if is_client_only_import || is_bare_css_import {
                             // Client:only imports are tracked by the scanner and
                             // resolved in build(). Skip $$module re-import.
+                            // Bare CSS imports don't need metadata tracking.
                         } else {
                             // Normal import - add to modules
                             let namespace_var = format!("$$module{module_counter}");
@@ -859,7 +866,7 @@ impl<'a> AstroCodegen<'a> {
         // Print Astro setup inside component if needed
         if self.uses_astro_global() {
             self.println(&format!(
-                "const Astro = {}.createAstro($$Astro, $$props, $$slots);",
+                "const Astro = {}.createAstro($$props, $$slots);",
                 runtime::RESULT
             ));
             self.println(&format!("Astro.self = {component_name};"));
@@ -1208,12 +1215,10 @@ impl<'a> AstroCodegen<'a> {
 
         self.print(",{");
 
-        // For Fragment, include slot attribute as a prop (don't skip it)
-        // For other components, slot is handled via slot functions
+        // Components always receive slot as a prop (matching Go compiler behavior).
+        // Only HTML elements have the slot attribute stripped when inside named slots.
         let prev_skip_slot = self.skip_slot_attribute;
-        if name == "Fragment" {
-            self.skip_slot_attribute = false;
-        }
+        self.skip_slot_attribute = false;
 
         // Print attributes as object properties (skip set:html/set:text if present)
         self.print_component_attributes_filtered(
@@ -2519,6 +2524,10 @@ impl<'a> AstroCodegen<'a> {
                 self.print_expression(&paren.expression);
                 self.print(")");
             }
+            Expression::ChainExpression(chain) => {
+                // Handle optional chaining like arr?.map(x => <JSX>)
+                self.print_chain_expression(chain);
+            }
             Expression::CallExpression(call) => {
                 // Handle call expressions like arr.map(x => <JSX>)
                 self.print_call_expression(call);
@@ -2541,23 +2550,54 @@ impl<'a> AstroCodegen<'a> {
         }
     }
 
+    fn print_chain_expression(&mut self, chain: &oxc_ast::ast::ChainExpression<'a>) {
+        match &chain.expression {
+            oxc_ast::ast::ChainElement::CallExpression(call) => {
+                self.print_call_expression(call);
+            }
+            oxc_ast::ast::ChainElement::StaticMemberExpression(member) => {
+                self.print_expression(&member.object);
+                self.print(if member.optional { "?." } else { "." });
+                self.print(member.property.name.as_str());
+            }
+            oxc_ast::ast::ChainElement::ComputedMemberExpression(member) => {
+                self.print_expression(&member.object);
+                self.print(if member.optional { "?.[" } else { "[" });
+                self.print_expression(&member.expression);
+                self.print("]");
+            }
+            _ => {
+                // TSNonNullExpression, PrivateFieldExpression - use source text fallback
+                let start = chain.span.start as usize;
+                let end = chain.span.end as usize;
+                if start < self.source_text.len() && end <= self.source_text.len() {
+                    self.print(&self.source_text[start..end]);
+                }
+            }
+        }
+    }
+
     fn print_call_expression(&mut self, call: &oxc_ast::ast::CallExpression<'a>) {
         // Print callee
         match &call.callee {
             Expression::StaticMemberExpression(member) => {
                 self.print_expression(&member.object);
-                self.print(".");
+                self.print(if member.optional { "?." } else { "." });
                 self.print(member.property.name.as_str());
             }
             Expression::ComputedMemberExpression(member) => {
                 self.print_expression(&member.object);
-                self.print("[");
+                self.print(if member.optional { "?.[" } else { "[" });
                 self.print_expression(&member.expression);
                 self.print("]");
             }
             other => {
                 self.print_expression(other);
             }
+        }
+        // Print optional call syntax
+        if call.optional {
+            self.print("?.");
         }
         // Print arguments
         self.print("(");
@@ -2763,6 +2803,15 @@ struct HydrationInfo {
 }
 
 // Helper functions
+
+/// Check if an import specifier refers to a CSS file.
+/// Matches the Go compiler's `styleModuleSpecExp` regex.
+fn is_css_specifier(specifier: &str) -> bool {
+    matches!(
+        specifier.rsplit('.').next(),
+        Some("css" | "pcss" | "postcss" | "sass" | "scss" | "styl" | "stylus" | "less")
+    )
+}
 
 fn is_void_element(name: &str) -> bool {
     matches!(

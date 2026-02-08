@@ -106,6 +106,18 @@ rustc-hash = "2"
 insta = "1.43.2"
 mimalloc-safe = "0.1.56"
 
+# Temporary local override for testing oxc changes
+[patch."https://github.com/Princesseuh/oxc"]
+oxc_allocator = { path = "../oxc/crates/oxc_allocator" }
+oxc_ast = { path = "../oxc/crates/oxc_ast" }
+oxc_ast_visit = { path = "../oxc/crates/oxc_ast_visit" }
+oxc_codegen = { path = "../oxc/crates/oxc_codegen" }
+oxc_data_structures = { path = "../oxc/crates/oxc_data_structures" }
+oxc_diagnostics = { path = "../oxc/crates/oxc_diagnostics" }
+oxc_parser = { path = "../oxc/crates/oxc_parser" }
+oxc_span = { path = "../oxc/crates/oxc_span" }
+oxc_syntax = { path = "../oxc/crates/oxc_syntax" }
+
 [profile.dev]
 debug = false
 
