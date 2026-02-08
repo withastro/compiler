@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig((options) => ({
-	entry: ['src/node/**', 'src/shared/**'],
+	entry: ['src/**'],
 	outDir: 'dist',
 	format: ['cjs', 'esm'],
 	dts: true,

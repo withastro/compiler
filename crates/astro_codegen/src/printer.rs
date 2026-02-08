@@ -104,7 +104,7 @@ pub struct TransformResult {
     pub hydrated_components: Vec<TransformResultHydratedComponent>,
     /// Components with `client:only` directive.
     pub client_only_components: Vec<TransformResultHydratedComponent>,
-    /// Server components (stub: empty vec).
+    /// Components with `server:defer` directive.
     pub server_components: Vec<TransformResultHydratedComponent>,
     /// Whether the template contains an explicit `<head>` element.
     pub contains_head: bool,

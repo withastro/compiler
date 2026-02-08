@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsup"
   },
-  "main": "./dist/node/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/shared/types.d.ts",
   "repository": {
     "type": "git",
@@ -23,24 +23,24 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/node/index.d.ts",
-      "import": "./dist/node/index.js",
-      "require": "./dist/node/index.cjs",
-      "default": "./dist/node/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     },
     "./sync": {
-      "types": "./dist/node/sync.d.ts",
-      "import": "./dist/node/sync.js",
-      "require": "./dist/node/sync.cjs",
-      "default": "./dist/node/sync.js"
+      "types": "./dist/sync.d.ts",
+      "import": "./dist/sync.js",
+      "require": "./dist/sync.cjs",
+      "default": "./dist/sync.js"
     },
     "./utils": {
-      "types": "./dist/node/utils.d.ts",
-      "import": "./dist/node/utils.js",
-      "require": "./dist/node/utils.cjs",
-      "default": "./dist/node/utils.js"
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.cjs",
+      "default": "./dist/utils.js"
     },
-    "./types": "./dist/shared/types.d.ts",
+    "./types": "./dist/types.d.ts",
     "./package.json": "./package.json"
   },
   "dependencies": {

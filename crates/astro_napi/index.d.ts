@@ -34,7 +34,7 @@ export declare class AstroCompileResult {
  * Options for compiling Astro files to JavaScript.
  *
  * Matches the Go compiler's `TransformOptions` from `@astrojs/compiler`.
- * Fields marked as stubs are accepted for API compatibility but not yet functional.
+ * Some fields (such as `sourcemap`, `compact`, CSS scoping) are stubs accepted for API compatibility.
  */
 export interface AstroCompileOptions {
   /**
@@ -73,7 +73,7 @@ export interface AstroCompileOptions {
   compact?: boolean
   /**
    * Enable scoped slot result handling.
-   * **Stub**: not yet implemented.
+   * When `true`, slot callbacks receive the `$$result` render context parameter.
    *
    * @default false
    */

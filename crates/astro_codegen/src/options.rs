@@ -1,8 +1,8 @@
 //! Options for Astro codegen.
 //!
 //! These options mirror the Go Astro compiler's `TransformOptions` from
-//! `@astrojs/compiler`. Fields that require runtime callbacks or CSS processing
-//! are accepted but stubbed (they exist for API compatibility).
+//! `@astrojs/compiler`. Some fields (such as `compact`, `sourcemap`, CSS scoping)
+//! are accepted but stubbed for API compatibility.
 
 /// Scoped style strategy for CSS scoping.
 ///
@@ -56,9 +56,8 @@ pub struct TransformOptions {
 
     /// Enable scoped slot result handling.
     ///
-    /// When `true`, enables the `resultScopedSlot` behavior from the Go compiler.
-    ///
-    /// **Stub**: not yet implemented; accepted for API compatibility.
+    /// When `true`, slot callbacks receive the `$$result` render context parameter:
+    /// `($$result) => ...` instead of `() => ...`.
     pub result_scoped_slot: bool,
 
     /// Strategy for CSS scoping.
@@ -214,7 +213,7 @@ impl TransformOptions {
         self
     }
 
-    /// Enable or disable scoped slot result handling (stub).
+    /// Enable or disable scoped slot result handling.
     #[must_use]
     pub fn with_result_scoped_slot(mut self, enabled: bool) -> Self {
         self.result_scoped_slot = enabled;
