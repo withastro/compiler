@@ -15,7 +15,7 @@ export function mapOptions(options?: TransformOptions): AstroCompileOptions | un
 		scopedStyleStrategy: options.scopedStyleStrategy,
 		transitionsAnimationUrl: options.transitionsAnimationURL,
 		annotateSourceFile: options.annotateSourceFile,
-		experimentalScriptOrder: options.experimentalScriptOrder,
+
 		resolvePathProvided: typeof options.resolvePath === 'function' ? true : undefined,
 	};
 }

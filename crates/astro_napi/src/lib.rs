@@ -82,12 +82,6 @@ pub struct AstroCompileOptions {
     /// @default false
     pub annotate_source_file: Option<bool>,
 
-    /// Enable experimental script ordering behavior.
-    /// **Stub**: not yet implemented.
-    ///
-    /// @default false
-    pub experimental_script_order: Option<bool>,
-
     /// Whether to strip HTML comments from component slot children.
     /// Matches the official Astro compiler behavior by default.
     ///
@@ -286,7 +280,6 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
         ),
         transitions_animation_url: options.transitions_animation_url.clone(),
         annotate_source_file: options.annotate_source_file.unwrap_or(false),
-        experimental_script_order: options.experimental_script_order.unwrap_or(false),
         strip_slot_comments: options.strip_slot_comments.unwrap_or(true),
         resolve_path: None,
         // Signal that caller has resolvePath — codegen skips $$metadata emission,

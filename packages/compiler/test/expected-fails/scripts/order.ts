@@ -1,16 +1,13 @@
-import { transform } from '@astrojs/compiler';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { transform } from '@astrojs/compiler';
 
 describe('scripts/order', { skip: true }, () => {
 	it('outputs scripts in expected order', async () => {
 		const result = await transform(
 			`
     <script>console.log(1)</script>
-    <script>console.log(2)</script>`,
-			{
-				experimentalScriptOrder: true,
-			}
+    <script>console.log(2)</script>`
 		);
 
 		const scripts = result.scripts;

@@ -1,0 +1,35 @@
+---
+import { Icon } from 'astro-icon/components';
+
+type Props = {
+	href: string;
+	title: string;
+	class?: string;
+	subtitle?: string;
+};
+
+const { title, subtitle, href, class: className } = Astro.props;
+---
+
+<a
+	href={href}
+	class:list={[
+		'h-9 group w-fit flex items-center justify-center gap-0 bg-astro-dark-900/55 rounded-full',
+		className,
+	]}
+>
+	<div
+		class="px-3 h-full w-fit flex items-center gap-2 text-white bg-gradient-to-tr from-[#1321AC] to-[#881ABD] rounded-full"
+	>
+		<span class="text-sm font-light">{title}</span>
+		<Icon name="ri/arrow-right-line" size="16" class="block sm:hidden" aria-hidden="true" />
+	</div>
+	{
+		subtitle && (
+			<div class="hidden sm:flex px-3 h-full w-fit items-center justify-center gap-2">
+				<span class="text-sm group-hover:underline font-light">{subtitle}</span>
+				<Icon name="ri/arrow-right-line" size="16" class="" aria-hidden="true" />
+			</div>
+		)
+	}
+</a>

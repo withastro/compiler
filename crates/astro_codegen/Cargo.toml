@@ -27,6 +27,11 @@ cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
+divan = { workspace = true }
 insta = { workspace = true, features = ["glob"] }
 oxc_parser = { workspace = true, features = ["astro"] }
 oxc_span = { workspace = true }
+
+[[bench]]
+name = "codegen"
+harness = false

@@ -27,7 +27,6 @@ export interface TransformOptions {
 		attrs: Record<string, string>
 	) => null | Promise<PreprocessorResult | PreprocessorError>;
 	annotateSourceFile?: boolean;
-	experimentalScriptOrder?: boolean;
 }
 
 export type ConvertToTSXOptions = Pick<

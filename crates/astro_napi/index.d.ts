@@ -98,13 +98,6 @@ export interface AstroCompileOptions {
    */
   annotateSourceFile?: boolean
   /**
-   * Enable experimental script ordering behavior.
-   * **Stub**: not yet implemented.
-   *
-   * @default false
-   */
-  experimentalScriptOrder?: boolean
-  /**
    * Whether to strip HTML comments from component slot children.
    * Matches the official Astro compiler behavior by default.
    *

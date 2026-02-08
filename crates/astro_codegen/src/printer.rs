@@ -311,9 +311,9 @@ impl<'a> AstroCodegen<'a> {
     }
 
     /// Check if the source contains `await` and thus needs async functions.
-    /// This is a simple text check matching the Go compiler behavior.
+    /// Detected by the scanner via AST visitor (no false positives from strings/comments).
     fn needs_async(&self) -> bool {
-        self.source_text.contains("await")
+        self.scan_result.as_ref().is_some_and(|r| r.has_await)
     }
 
     /// Get the async function prefix if needed ("async " or "").

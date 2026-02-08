@@ -78,11 +78,6 @@ pub struct TransformOptions {
     /// **Stub**: accepted for API compatibility.
     pub annotate_source_file: bool,
 
-    /// Enable experimental script ordering behavior.
-    ///
-    /// **Stub**: accepted for API compatibility.
-    pub experimental_script_order: bool,
-
     /// Whether to strip HTML comments from component slot children.
     ///
     /// When `true` (default), HTML comments inside component children are not
@@ -133,7 +128,6 @@ impl Default for TransformOptions {
             scoped_style_strategy: ScopedStyleStrategy::default(),
             transitions_animation_url: None,
             annotate_source_file: false,
-            experimental_script_order: false,
             strip_slot_comments: true, // Match Go compiler behavior by default
             resolve_path: None,
             resolve_path_provided: false,
@@ -154,7 +148,6 @@ impl std::fmt::Debug for TransformOptions {
             .field("scoped_style_strategy", &self.scoped_style_strategy)
             .field("transitions_animation_url", &self.transitions_animation_url)
             .field("annotate_source_file", &self.annotate_source_file)
-            .field("experimental_script_order", &self.experimental_script_order)
             .field("strip_slot_comments", &self.strip_slot_comments)
             .field(
                 "resolve_path",
@@ -238,13 +231,6 @@ impl TransformOptions {
     #[must_use]
     pub fn with_annotate_source_file(mut self, enabled: bool) -> Self {
         self.annotate_source_file = enabled;
-        self
-    }
-
-    /// Enable or disable experimental script ordering (stub).
-    #[must_use]
-    pub fn with_experimental_script_order(mut self, enabled: bool) -> Self {
-        self.experimental_script_order = enabled;
         self
     }
 

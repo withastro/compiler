@@ -1,6 +1,6 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
-import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { before, describe, it } from 'node:test';
+import { type TransformResult, transform } from '@astrojs/compiler';
 import { preprocessStyle } from '../../utils.js';
 
 const FIXTURE = `
@@ -34,7 +34,6 @@ describe('styles/sass', { skip: true }, () => {
 		result = await transform(FIXTURE, {
 			sourcemap: true,
 			preprocessStyle,
-			experimentalScriptOrder: true,
 		});
 	});
 

@@ -65,6 +65,8 @@ pub struct ScanResult {
     pub uses_astro_global: bool,
     /// Whether the source uses transition directives (`transition:*`, `server:defer`)
     pub uses_transitions: bool,
+    /// Whether the source contains an `await` expression (needs async wrappers)
+    pub has_await: bool,
     /// Set of component names (or namespace roots) that use `client:only`.
     /// Used by the printer to detect client:only imports during frontmatter processing.
     pub client_only_component_names: FxHashSet<String>,
@@ -93,6 +95,8 @@ pub struct AstroScanner<'a> {
     uses_astro_global: bool,
     /// Whether we've found transition directives
     uses_transitions: bool,
+    /// Whether we've found an `await` expression
+    has_await: bool,
     /// Set of component names that use `client:only`
     client_only_component_names: FxHashSet<String>,
     /// Collected hydrated components
@@ -113,6 +117,7 @@ impl<'a> AstroScanner<'a> {
             allocator,
             uses_astro_global: false,
             uses_transitions: false,
+            has_await: false,
             client_only_component_names: FxHashSet::default(),
             hydrated_components: Vec::new(),
             client_only_components: Vec::new(),
@@ -128,6 +133,7 @@ impl<'a> AstroScanner<'a> {
         ScanResult {
             uses_astro_global: self.uses_astro_global,
             uses_transitions: self.uses_transitions,
+            has_await: self.has_await,
             client_only_component_names: self.client_only_component_names,
             hydrated_components: self.hydrated_components,
             client_only_components: self.client_only_components,
@@ -365,6 +371,12 @@ impl<'a> Visit<'a> for AstroScanner<'a> {
 
         // Continue walking children (the default walk handles this)
         walk::walk_jsx_element(self, el);
+    }
+
+    /// Detect `await` expressions — used to determine if async wrappers are needed.
+    fn visit_await_expression(&mut self, it: &AwaitExpression<'a>) {
+        self.has_await = true;
+        walk::walk_await_expression(self, it);
     }
 
     /// Process standalone AstroScript nodes (direct children of the root,
