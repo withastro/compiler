@@ -1,1 +1,1 @@
-export type * from './dist/shared/types.js';
+export type * from './dist/types.js';
