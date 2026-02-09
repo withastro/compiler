@@ -1,34 +1,17 @@
 ---
-source: crates/oxc_astro_codegen/tests/snapshots.rs
-input_file: crates/oxc_astro_codegen/tests/fixtures/svg_expressions.astro
+source: crates/astro_codegen/tests/snapshots.rs
+input_file: crates/astro_codegen/tests/fixtures/svg_expressions.astro
 ---
-import {
-  Fragment,
-  render as $$render,
-  createAstro as $$createAstro,
-  createComponent as $$createComponent,
-  renderComponent as $$renderComponent,
-  renderHead as $$renderHead,
-  maybeRenderHead as $$maybeRenderHead,
-  unescapeHTML as $$unescapeHTML,
-  renderSlot as $$renderSlot,
-  mergeSlots as $$mergeSlots,
-  addAttribute as $$addAttribute,
-  spreadAttributes as $$spreadAttributes,
-  defineStyleVars as $$defineStyleVars,
-  defineScriptVars as $$defineScriptVars,
-  renderTransition as $$renderTransition,
-  createTransitionScope as $$createTransitionScope,
-  renderScript as $$renderScript,
-  createMetadata as $$createMetadata
-} from "http://localhost:3000/";
-
-export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
-
+import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
+export const $$metadata = $$createMetadata(import.meta.url, {
+	modules: [],
+	hydratedComponents: [],
+	clientOnlyComponents: [],
+	hydrationDirectives: new Set([]),
+	hoisted: []
+});
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
-
-const title = "icon";
-
-return $$render`${$$maybeRenderHead($$result)}<svg>${title ?? null}</svg>`;
+	const title = "icon";
+	return $$render`${$$maybeRenderHead($$result)}<svg>${title ?? null}</svg>`;
 }, undefined, undefined);
 export default $$Component;

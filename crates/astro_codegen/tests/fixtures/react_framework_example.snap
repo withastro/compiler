@@ -1,38 +1,24 @@
 ---
-source: crates/oxc_astro_codegen/tests/snapshots.rs
-input_file: crates/oxc_astro_codegen/tests/fixtures/react_framework_example.astro
+source: crates/astro_codegen/tests/snapshots.rs
+input_file: crates/astro_codegen/tests/fixtures/react_framework_example.astro
 ---
-import {
-  Fragment,
-  render as $$render,
-  createAstro as $$createAstro,
-  createComponent as $$createComponent,
-  renderComponent as $$renderComponent,
-  renderHead as $$renderHead,
-  maybeRenderHead as $$maybeRenderHead,
-  unescapeHTML as $$unescapeHTML,
-  renderSlot as $$renderSlot,
-  mergeSlots as $$mergeSlots,
-  addAttribute as $$addAttribute,
-  spreadAttributes as $$spreadAttributes,
-  defineStyleVars as $$defineStyleVars,
-  defineScriptVars as $$defineScriptVars,
-  renderTransition as $$renderTransition,
-  createTransitionScope as $$createTransitionScope,
-  renderScript as $$renderScript,
-  createMetadata as $$createMetadata
-} from "http://localhost:3000/";
+import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
 import Counter from "../components/Counter.jsx";
-
 import * as $$module1 from "../components/Counter.jsx";
-
-export const $$metadata = $$createMetadata(import.meta.url, { modules: [{ module: $$module1, specifier: "../components/Counter.jsx", assert: {} }], hydratedComponents: [Counter], clientOnlyComponents: [], hydrationDirectives: new Set(["visible"]), hoisted: [] });
-
+export const $$metadata = $$createMetadata(import.meta.url, {
+	modules: [{
+		module: $$module1,
+		specifier: "../components/Counter.jsx",
+		assert: {}
+	}],
+	hydratedComponents: [Counter],
+	clientOnlyComponents: [],
+	hydrationDirectives: new Set(["visible"]),
+	hoisted: []
+});
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
-
-const someProps = { count: 0 };
-
-return $$render`<html lang="en">
+	const someProps = { count: 0 };
+	return $$render`<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
@@ -58,9 +44,15 @@ return $$render`<html lang="en">
   ${$$renderHead($$result)}</head>
   <body>
     <main>
-      ${$$renderComponent($$result,"Counter",Counter,{...(someProps),"client:visible":true,"client:component-hydration":"visible","client:component-path":("../components/Counter.jsx"),"client:component-export":("default")},{"default": () => $$render`
+      ${$$renderComponent($$result, "Counter", Counter, {
+		...someProps,
+		"client:visible": true,
+		"client:component-hydration": "visible",
+		"client:component-path": "../components/Counter.jsx",
+		"client:component-export": "default"
+	}, { "default": () => $$render`
         <h1>Hello React!</h1>
-      `,})}
+      ` })}
     </main>
   </body>
 </html>`;

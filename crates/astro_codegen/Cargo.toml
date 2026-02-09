@@ -21,7 +21,11 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["code_buffer"] }
+oxc_parser = { workspace = true, features = ["astro"] }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
+oxc_transformer = { workspace = true }
 
 cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
@@ -29,8 +33,6 @@ rustc-hash = { workspace = true }
 [dev-dependencies]
 divan = { workspace = true }
 insta = { workspace = true, features = ["glob"] }
-oxc_parser = { workspace = true, features = ["astro"] }
-oxc_span = { workspace = true }
 
 [[bench]]
 name = "codegen"

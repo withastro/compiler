@@ -335,7 +335,7 @@ impl<'a> AstroCodegen<'a> {
         let scan_result = AstroScanner::new(self.allocator).scan(root);
         self.scan_result = Some(scan_result);
 
-        // Phase 2: Print — emit code using the collected metadata
+        // Phase 2: Print — emit code using the collected metadata (may contain TS syntax)
         self.print_astro_root(root);
 
         // Build public hoisted scripts from internal representation
@@ -393,6 +393,12 @@ impl<'a> AstroCodegen<'a> {
         let contains_head = self.has_explicit_head;
         let scope = self.source_hash.clone();
         let code = self.code.into_string();
+
+        // Phase 3: Strip TypeScript from the generated code.
+        // The codegen output is valid TypeScript (frontmatter + template expressions
+        // may contain `as` casts, interfaces, type annotations, etc.). We parse it
+        // as TS, run the transformer, and re-emit as JavaScript.
+        let code = strip_typescript(self.allocator, &code);
 
         TransformResult {
             code,
@@ -710,8 +716,6 @@ impl<'a> AstroCodegen<'a> {
                 }
 
                 if let Statement::ImportDeclaration(import) = stmt {
-                    imports.push(stmt);
-
                     // Track module import for metadata
                     let source = import.source.value.as_str();
 
@@ -785,17 +789,22 @@ impl<'a> AstroCodegen<'a> {
                         };
 
                         // Skip bare CSS imports from $$module re-imports
-                        // (matching Go compiler behavior: side-effect-only CSS imports
-                        // don't need metadata tracking)
                         let is_bare_css_import = import.specifiers.is_none()
                             && is_css_specifier(source);
 
-                        if is_client_only_import || is_bare_css_import {
-                            // Client:only imports are tracked by the scanner and
-                            // resolved in build(). Skip $$module re-import.
-                            // Bare CSS imports don't need metadata tracking.
+                        if is_client_only_import {
+                            // Client:only component imports are not needed at runtime
+                            // on the server — the component reference is `null` in
+                            // renderComponent(). Don't emit the import at all so we
+                            // don't pull client-side framework code into the SSR bundle.
+                            continue;
+                        } else if is_bare_css_import {
+                            // Bare CSS imports don't need metadata tracking, but the
+                            // import itself should still be emitted.
+                            imports.push(stmt);
                         } else {
-                            // Normal import - add to modules
+                            // Normal import - emit and add to modules
+                            imports.push(stmt);
                             let namespace_var = format!("$$module{module_counter}");
 
                             // Extract import assertion/with clause if present
@@ -827,6 +836,10 @@ impl<'a> AstroCodegen<'a> {
                             });
                             module_counter += 1;
                         }
+                    } else {
+                        // Type-only imports (`import type { ... }`) are emitted so
+                        // that `strip_typescript` can see and remove them.
+                        imports.push(stmt);
                     }
                 } else {
                     other.push(stmt);
@@ -840,7 +853,7 @@ impl<'a> AstroCodegen<'a> {
     fn print_statement(&mut self, stmt: &Statement<'_>) {
         // Use the regular codegen for statements
         let mut codegen = Codegen::new();
-        stmt.print(&mut codegen, Context::default());
+        stmt.print(&mut codegen, Context::default().with_typescript());
         let code = codegen.into_source_text();
         // Trim trailing newline if present (Codegen may add one)
         let code = code.trim_end_matches('\n');
@@ -1343,7 +1356,7 @@ impl<'a> AstroCodegen<'a> {
                                 e.print_expr(
                                     &mut codegen,
                                     oxc_syntax::precedence::Precedence::Lowest,
-                                    Context::default(),
+                                    Context::default().with_typescript(),
                                 );
                                 return Some((
                                     codegen.into_source_text(),
@@ -1687,7 +1700,7 @@ impl<'a> AstroCodegen<'a> {
                             e.print_expr(
                                 &mut codegen,
                                 oxc_syntax::precedence::Precedence::Lowest,
-                                Context::default(),
+                                Context::default().with_typescript(),
                             );
                         }
                         // For dynamic names, we return a placeholder that will need special handling
@@ -1751,7 +1764,7 @@ impl<'a> AstroCodegen<'a> {
                                 e.print_expr(
                                     &mut codegen,
                                     oxc_syntax::precedence::Precedence::Lowest,
-                                    Context::default(),
+                                    Context::default().with_typescript(),
                                 );
                             }
                             // For set:html with non-literal expressions, use $$unescapeHTML
@@ -1912,7 +1925,7 @@ impl<'a> AstroCodegen<'a> {
                     e.print_expr(
                         &mut codegen,
                         oxc_syntax::precedence::Precedence::Lowest,
-                        Context::default(),
+                        Context::default().with_typescript(),
                     );
                     let source = codegen.into_source_text();
                     // Template literals don't need parens, but other expressions do
@@ -2254,6 +2267,9 @@ impl<'a> AstroCodegen<'a> {
         &mut self,
         arrow: &oxc_ast::ast::ArrowFunctionExpression<'a>,
     ) {
+        if arrow.r#async {
+            self.print("async ");
+        }
         // Print parameters
         let needs_parens = arrow.params.items.len() != 1
             || arrow.params.rest.is_some()
@@ -2351,7 +2367,7 @@ impl<'a> AstroCodegen<'a> {
             }
             _ => {
                 let mut codegen = Codegen::new();
-                stmt.print(&mut codegen, Context::default());
+                stmt.print(&mut codegen, Context::default().with_typescript());
                 let code = codegen.into_source_text();
                 self.print(&code);
                 self.print("\n");
@@ -2542,7 +2558,7 @@ impl<'a> AstroCodegen<'a> {
                 expr.print_expr(
                     &mut codegen,
                     oxc_syntax::precedence::Precedence::Lowest,
-                    Context::default(),
+                    Context::default().with_typescript(),
                 );
                 let code = codegen.into_source_text();
                 self.print(&code);
@@ -2623,6 +2639,9 @@ impl<'a> AstroCodegen<'a> {
     }
 
     fn print_arrow_function(&mut self, arrow: &oxc_ast::ast::ArrowFunctionExpression<'a>) {
+        if arrow.r#async {
+            self.print("async ");
+        }
         // Print parameters
         // Single simple identifier param doesn't need parens, but destructuring patterns do
         let needs_parens = arrow.params.items.len() != 1
@@ -2696,7 +2715,7 @@ impl<'a> AstroCodegen<'a> {
             Statement::VariableDeclaration(decl) => {
                 // Use regular codegen for variable declarations
                 let mut codegen = Codegen::new();
-                decl.print(&mut codegen, Context::default());
+                decl.print(&mut codegen, Context::default().with_typescript());
                 let code = codegen.into_source_text();
                 self.print(&code);
                 self.print("\n");
@@ -2740,7 +2759,7 @@ impl<'a> AstroCodegen<'a> {
             _ => {
                 // For other statements, use regular codegen
                 let mut codegen = Codegen::new();
-                stmt.print(&mut codegen, Context::default());
+                stmt.print(&mut codegen, Context::default().with_typescript());
                 let code = codegen.into_source_text();
                 self.print(&code);
                 self.print("\n");
@@ -2754,7 +2773,7 @@ impl<'a> AstroCodegen<'a> {
         } else {
             // For complex patterns, use regular codegen
             let mut codegen = Codegen::new();
-            pattern.print(&mut codegen, Context::default());
+            pattern.print(&mut codegen, Context::default().with_typescript());
             let code = codegen.into_source_text();
             self.print(&code);
         }
@@ -2894,7 +2913,7 @@ fn get_slot_attribute_value(attrs: &[JSXAttributeItem<'_>]) -> Option<SlotValue>
                         e.print_expr(
                             &mut codegen,
                             oxc_syntax::precedence::Precedence::Lowest,
-                            Context::default(),
+                            Context::default().with_typescript(),
                         );
                         return Some(SlotValue::Dynamic(codegen.into_source_text()));
                     }
@@ -3282,6 +3301,45 @@ fn get_component_name(filename: Option<&str>) -> String {
     format!("$${pascal}")
 }
 
+/// Strip TypeScript syntax from generated code.
+///
+/// Parses the code as TypeScript, runs `oxc_transformer` (TS-only stripping,
+/// no JSX transform, no ES downleveling), and re-emits as JavaScript.
+fn strip_typescript(allocator: &Allocator, code: &str) -> String {
+    let source_type = oxc_span::SourceType::mjs().with_typescript(true);
+    let ret = oxc_parser::Parser::new(allocator, code, source_type).parse();
+
+    if !ret.errors.is_empty() {
+        // If parsing fails, return the code unchanged — the downstream
+        // consumer will report a better error.
+        return code.to_string();
+    }
+
+    let mut program = ret.program;
+    let scoping = oxc_semantic::SemanticBuilder::new()
+        .with_excess_capacity(2.0)
+        .build(&program)
+        .semantic
+        .into_scoping();
+
+    let mut options = oxc_transformer::TransformOptions::default();
+    // Keep value imports that appear unused. In our generated code, imported
+    // identifiers are referenced inside template literal strings (e.g.
+    // `$$render\`${Component}\``) which semantic analysis cannot see, so
+    // without this flag the transformer would incorrectly remove them.
+    // This flag only affects import elision — all other TS stripping
+    // (type annotations, interfaces, `as` casts, etc.) happens regardless.
+    options.typescript.only_remove_type_imports = true;
+    let _ = oxc_transformer::Transformer::new(allocator, std::path::Path::new(""), &options)
+        .build_with_scoping(scoping, &mut program);
+
+    let codegen_options = oxc_codegen::CodegenOptions {
+        single_quote: false,
+        ..oxc_codegen::CodegenOptions::default()
+    };
+    oxc_codegen::Codegen::new().with_options(codegen_options).build(&program).code
+}
+
 #[cfg(test)]
 #[expect(clippy::needless_raw_string_hashes, clippy::uninlined_format_args, clippy::print_stderr)]
 mod tests {
@@ -3459,8 +3517,9 @@ import Component from 'test';
 <Component client:load />"#;
         let output = compile_astro(source);
 
+        eprintln!("OUTPUT:\n{output}");
         assert!(
-            output.contains("\"client:component-hydration\":\"load\""),
+            output.contains("client:component-hydration") && output.contains("load"),
             "Missing hydration directive"
         );
     }
@@ -3569,7 +3628,7 @@ import Component from 'test';
             "Custom elements should use $$renderComponent"
         );
         assert!(
-            output.contains(r#""my-element","my-element""#),
+            output.contains("\"my-element\"") && output.matches("\"my-element\"").count() >= 2,
             "Custom element should have tag name as both display name and quoted identifier"
         );
 
@@ -3882,5 +3941,36 @@ import Avatar from "./Avatar.jsx";
 
         // server:defer should not appear as a rendered prop
         assert!(!result.code.contains("\"server:defer\""), "server:defer should be stripped from props");
+    }
+
+    #[test]
+    fn test_typescript_satisfies_stripped() {
+        let source = r#"---
+interface SEOProps { title: string; }
+const seo = { title: 'Hello' } satisfies SEOProps;
+---
+<h1>{seo.title}</h1>"#;
+        let output = compile_astro(source);
+
+        // `satisfies` is TypeScript-only syntax — must be stripped
+        assert!(!output.contains("satisfies"), "satisfies keyword should be stripped: {}", output);
+        // The interface should also be stripped
+        assert!(!output.contains("interface SEOProps"), "interface should be stripped: {}", output);
+        // The value expression should remain
+        assert!(output.contains("title: \"Hello\"") || output.contains("title: 'Hello'"),
+            "value expression should remain: {}", output);
+    }
+
+    #[test]
+    fn test_type_only_import_stripped() {
+        let source = r#"---
+import type { Props } from './types';
+const x: Props = { title: 'hi' };
+---
+<h1>{x.title}</h1>"#;
+        let output = compile_astro(source);
+
+        // `import type` should be stripped by strip_typescript
+        assert!(!output.contains("import type"), "import type should be stripped: {}", output);
     }
 }

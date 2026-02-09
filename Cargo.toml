@@ -92,8 +92,10 @@ oxc_codegen = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro
 oxc_data_structures = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_diagnostics = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_parser = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro", features = ["regular_expression"] }
+oxc_semantic = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_span = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_syntax = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_transformer = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 
 # NAPI
 napi = { version = "3", features = ["tokio_rt"] }
@@ -113,11 +115,17 @@ oxc_allocator = { path = "../oxc/crates/oxc_allocator" }
 oxc_ast = { path = "../oxc/crates/oxc_ast" }
 oxc_ast_visit = { path = "../oxc/crates/oxc_ast_visit" }
 oxc_codegen = { path = "../oxc/crates/oxc_codegen" }
+oxc_compat = { path = "../oxc/crates/oxc_compat" }
 oxc_data_structures = { path = "../oxc/crates/oxc_data_structures" }
 oxc_diagnostics = { path = "../oxc/crates/oxc_diagnostics" }
+oxc_ecmascript = { path = "../oxc/crates/oxc_ecmascript" }
 oxc_parser = { path = "../oxc/crates/oxc_parser" }
+oxc_regular_expression = { path = "../oxc/crates/oxc_regular_expression" }
+oxc_semantic = { path = "../oxc/crates/oxc_semantic" }
 oxc_span = { path = "../oxc/crates/oxc_span" }
 oxc_syntax = { path = "../oxc/crates/oxc_syntax" }
+oxc_transformer = { path = "../oxc/crates/oxc_transformer" }
+oxc_traverse = { path = "../oxc/crates/oxc_traverse" }
 
 [profile.dev]
 debug = false

@@ -2,36 +2,36 @@
 source: crates/astro_codegen/tests/snapshots.rs
 input_file: crates/astro_codegen/tests/fixtures/import_meta_env.astro
 ---
-import {
-  Fragment,
-  render as $$render,
-  createAstro as $$createAstro,
-  createComponent as $$createComponent,
-  renderComponent as $$renderComponent,
-  renderHead as $$renderHead,
-  maybeRenderHead as $$maybeRenderHead,
-  unescapeHTML as $$unescapeHTML,
-  renderSlot as $$renderSlot,
-  mergeSlots as $$mergeSlots,
-  addAttribute as $$addAttribute,
-  spreadAttributes as $$spreadAttributes,
-  defineStyleVars as $$defineStyleVars,
-  defineScriptVars as $$defineScriptVars,
-  renderTransition as $$renderTransition,
-  createTransitionScope as $$createTransitionScope,
-  renderScript as $$renderScript,
-  createMetadata as $$createMetadata
-} from "http://localhost:3000/";
+import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
 import Header from "../../components/Header.jsx";
 import Footer from "../../components/Footer.astro";
 import ProductPageContent from "../../components/ProductPageContent.jsx";
-
 import * as $$module1 from "../../components/Header.jsx";
 import * as $$module2 from "../../components/Footer.astro";
 import * as $$module3 from "../../components/ProductPageContent.jsx";
-
-export const $$metadata = $$createMetadata(import.meta.url, { modules: [{ module: $$module1, specifier: "../../components/Header.jsx", assert: {} }, { module: $$module2, specifier: "../../components/Footer.astro", assert: {} }, { module: $$module3, specifier: "../../components/ProductPageContent.jsx", assert: {} }], hydratedComponents: [ProductPageContent], clientOnlyComponents: [], hydrationDirectives: new Set(["visible"]), hoisted: [] });
-
+export const $$metadata = $$createMetadata(import.meta.url, {
+	modules: [
+		{
+			module: $$module1,
+			specifier: "../../components/Header.jsx",
+			assert: {}
+		},
+		{
+			module: $$module2,
+			specifier: "../../components/Footer.astro",
+			assert: {}
+		},
+		{
+			module: $$module3,
+			specifier: "../../components/ProductPageContent.jsx",
+			assert: {}
+		}
+	],
+	hydratedComponents: [ProductPageContent],
+	clientOnlyComponents: [],
+	hydrationDirectives: new Set(["visible"]),
+	hoisted: []
+});
 const $$Astro = $$createAstro("https://astro.build");
 const Astro = $$Astro;
 export async function getStaticPaths() {
@@ -47,12 +47,10 @@ export async function getStaticPaths() {
 	});
 }
 const $$Component = $$createComponent(async ($$result, $$props, $$slots) => {
-const Astro = $$result.createAstro($$props, $$slots);
-Astro.self = $$Component;
-
-const { product } = Astro.props;
-
-return $$render`<html lang="en">
+	const Astro = $$result.createAstro($$props, $$slots);
+	Astro.self = $$Component;
+	const { product } = Astro.props;
+	return $$render`<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -62,13 +60,19 @@ return $$render`<html lang="en">
   <link rel="stylesheet" href="/style/global.css">
 ${$$renderHead($$result)}</head>
 <body>
-  ${$$renderComponent($$result,"Header",Header,{})}
+  ${$$renderComponent($$result, "Header", Header, {})}
   <div class="product-page">
     <article>
-      ${$$renderComponent($$result,"ProductPageContent",ProductPageContent,{"client:visible":true,"product":(product.node),"client:component-hydration":"visible","client:component-path":("../../components/ProductPageContent.jsx"),"client:component-export":("default")})}
+      ${$$renderComponent($$result, "ProductPageContent", ProductPageContent, {
+		"client:visible": true,
+		"product": product.node,
+		"client:component-hydration": "visible",
+		"client:component-path": "../../components/ProductPageContent.jsx",
+		"client:component-export": "default"
+	})}
     </article>
   </div>
-  ${$$renderComponent($$result,"Footer",Footer,{})}
+  ${$$renderComponent($$result, "Footer", Footer, {})}
 </body>
 </html>`;
 }, undefined, undefined);
