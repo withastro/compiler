@@ -368,11 +368,12 @@ impl<'a> AstroCodegen<'a> {
             self.print("\": ");
             self.print_slot_fn_open();
             // Skip slot attribute when printing these children
+            let prev = self.skip_slot_attribute;
             self.skip_slot_attribute = true;
             for child in slot_children {
                 self.print_jsx_child(child);
             }
-            self.skip_slot_attribute = false;
+            self.skip_slot_attribute = prev;
             self.print("`,");
         }
 
@@ -382,9 +383,10 @@ impl<'a> AstroCodegen<'a> {
             self.print(&escape_double_quotes(name));
             self.print("\": ");
             self.print_slot_fn_open();
+            let prev = self.skip_slot_attribute;
             self.skip_slot_attribute = true;
             self.print_jsx_child(child);
-            self.skip_slot_attribute = false;
+            self.skip_slot_attribute = prev;
             self.print("`,");
         }
 
@@ -395,11 +397,12 @@ impl<'a> AstroCodegen<'a> {
             self.print(expr);
             self.print("]: ");
             self.print_slot_fn_open();
+            let prev = self.skip_slot_attribute;
             self.skip_slot_attribute = true;
             for child in slot_children {
                 self.print_jsx_child(child);
             }
-            self.skip_slot_attribute = false;
+            self.skip_slot_attribute = prev;
             self.print("`,");
         }
 
@@ -507,7 +510,7 @@ impl<'a> AstroCodegen<'a> {
                 if let Some(arg) = &ret.argument {
                     self.print_conditional_slot_branch(arg);
                 }
-                self.print("\n");
+                self.print(";\n");
             }
             Statement::SwitchStatement(switch_stmt) => {
                 self.add_source_mapping_for_span(switch_stmt.span);
@@ -568,9 +571,10 @@ impl<'a> AstroCodegen<'a> {
                     self.print(&escape_double_quotes(slot_name));
                     self.print("\": ");
                     self.print_slot_fn_open();
+                    let prev = self.skip_slot_attribute;
                     self.skip_slot_attribute = true;
                     self.print_jsx_element(el);
-                    self.skip_slot_attribute = false;
+                    self.skip_slot_attribute = prev;
                     self.print("`}");
                 } else {
                     // No slot attribute — print as default

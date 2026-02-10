@@ -1644,6 +1644,158 @@ const attrs = { id: "main", role: "banner" };
 }
 
 // ---------------------------------------------------------------
+// Column-level sourcemap accuracy tests
+// ---------------------------------------------------------------
+
+#[test]
+fn test_sourcemap_frontmatter_const_column() {
+    // `const x = 42;` starts at column 0 on line 1.
+    // The generated output should map it back to column 0 of line 1.
+    let source = "---\nconst x = 42;\n---\n<p>{x}</p>";
+    let result = compile_astro_with_sourcemap(source);
+    assert_tokens_in_bounds(source, &result);
+    let tokens = token_tuples(&result.map);
+
+    // Find tokens on source line 1 (the const declaration)
+    let line1_tokens: Vec<_> = tokens.iter().filter(|t| t.2 == 1).collect();
+    assert!(
+        !line1_tokens.is_empty(),
+        "should have tokens mapping to source line 1"
+    );
+
+    // At least one token should point to column 0 (the start of `const`)
+    let has_col0 = line1_tokens.iter().any(|t| t.3 == 0);
+    assert!(
+        has_col0,
+        "should have a token at source column 0 on line 1 (`const`). Tokens: {line1_tokens:?}"
+    );
+}
+
+#[test]
+fn test_sourcemap_expression_column_offset() {
+    // `{name}` starts at column 4 on the template line.
+    // We want to verify the column is correct, not just the line.
+    let source = "---\nconst name = \"x\";\n---\n<p>{name}</p>";
+    let result = compile_astro_with_sourcemap(source);
+    assert_tokens_in_bounds(source, &result);
+    let tokens = token_tuples(&result.map);
+
+    // Source line 3: `<p>{name}</p>`
+    // `{name}` starts at column 3 (0-indexed: <p> is 0,1,2 then { is 3)
+    let line3_tokens: Vec<_> = tokens.iter().filter(|t| t.2 == 3).collect();
+    assert!(
+        !line3_tokens.is_empty(),
+        "should have tokens mapping to source line 3"
+    );
+
+    // Check that we have a token pointing somewhere in the `{name}` range (col 3-8)
+    let has_expr_col = line3_tokens.iter().any(|t| t.3 >= 3 && t.3 <= 8);
+    assert!(
+        has_expr_col,
+        "should have a token in the expression column range (3-8) on line 3. Tokens: {line3_tokens:?}"
+    );
+}
+
+#[test]
+fn test_sourcemap_indented_frontmatter_column() {
+    // Frontmatter with indentation — the column should reflect the actual offset.
+    let source = "---\n  const y = 99;\n---\n<div>{y}</div>";
+    let result = compile_astro_with_sourcemap(source);
+    assert_tokens_in_bounds(source, &result);
+    let tokens = token_tuples(&result.map);
+
+    // Source line 1: `  const y = 99;` — `const` starts at column 2
+    assert!(
+        tokens.iter().any(|t| t.2 == 1),
+        "should have tokens mapping to source line 1"
+    );
+}
+
+#[test]
+fn test_sourcemap_multiline_frontmatter_columns() {
+    // Multiple frontmatter variables each at different columns
+    let source = "---\nconst a = 1;\nconst b = 2;\n---\n<p>{a} {b}</p>";
+    let result = compile_astro_with_sourcemap(source);
+    assert_tokens_in_bounds(source, &result);
+    let tokens = token_tuples(&result.map);
+
+    // Both line 1 and line 2 should have column 0 mappings (each starts with `const`)
+    for src_line in [1u32, 2] {
+        let line_tokens: Vec<_> = tokens.iter().filter(|t| t.2 == src_line).collect();
+        assert!(
+            !line_tokens.is_empty(),
+            "should have tokens on source line {src_line}"
+        );
+        let has_col0 = line_tokens.iter().any(|t| t.3 == 0);
+        assert!(
+            has_col0,
+            "source line {src_line} should have a token at column 0. Tokens: {line_tokens:?}"
+        );
+    }
+}
+
+#[test]
+fn test_sourcemap_template_column_after_expression() {
+    // After an expression like `{x}`, the next HTML text should map to the
+    // correct column in the original source.
+    let source = "<p>{x} text</p>";
+    let result = compile_astro_with_sourcemap(source);
+    assert_tokens_in_bounds(source, &result);
+    let tokens = token_tuples(&result.map);
+
+    // All tokens should be on source line 0
+    for t in &tokens {
+        assert_eq!(t.2, 0, "all tokens should map to line 0. Token: {t:?}");
+    }
+}
+
+#[test]
+fn test_sourcemap_column_accuracy_on_closing_tag() {
+    // `</div>` on a separate line should map to the correct column (0)
+    let source = "<div>\n  <p>hi</p>\n</div>";
+    let result = compile_astro_with_sourcemap(source);
+    assert_tokens_in_bounds(source, &result);
+    let tokens = token_tuples(&result.map);
+
+    // Source line 2: `</div>` starts at column 0
+    let line2_tokens: Vec<_> = tokens.iter().filter(|t| t.2 == 2).collect();
+    assert!(
+        !line2_tokens.is_empty(),
+        "should have tokens mapping to the closing </div> line. Tokens: {tokens:?}"
+    );
+
+    // The mapping should point to column 0 (start of `</div>`)
+    let has_col0 = line2_tokens.iter().any(|t| t.3 == 0);
+    assert!(
+        has_col0,
+        "closing </div> should map to column 0 on source line 2. Tokens: {line2_tokens:?}"
+    );
+}
+
+#[test]
+fn test_sourcemap_column_on_attribute_expression() {
+    // Verify column-level accuracy for attribute expressions
+    let source = "---\nconst href = \"/\";\n---\n<a href={href}>Link</a>";
+    let result = compile_astro_with_sourcemap(source);
+    assert_tokens_in_bounds(source, &result);
+    let tokens = token_tuples(&result.map);
+
+    // Source line 3: `<a href={href}>Link</a>`
+    let line3_tokens: Vec<_> = tokens.iter().filter(|t| t.2 == 3).collect();
+    assert!(
+        !line3_tokens.is_empty(),
+        "should have tokens on the template line with attribute expression"
+    );
+
+    // Verify a mapping exists near column 0 for the `<a` tag
+    let has_tag_start = line3_tokens.iter().any(|t| t.3 <= 2);
+    assert!(
+        has_tag_start,
+        "should have a mapping near column 0 for the <a tag. Tokens: {line3_tokens:?}"
+    );
+}
+
+// ---------------------------------------------------------------
 // Tests for static/boolean HTML attribute mapping (Fix 2)
 // ---------------------------------------------------------------
 

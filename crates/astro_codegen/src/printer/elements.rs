@@ -294,7 +294,7 @@ impl<'a> AstroCodegen<'a> {
                     transition_name = Some((Self::get_attr_value_string(attr), attr.span));
                 } else if name == "transition:animate" {
                     transition_animate = Some((Self::get_attr_value_string(attr), attr.span));
-                } else if name == "transition:persist" || name == "transition:persist-props" {
+                } else if name == "transition:persist" {
                     transition_persist =
                         Some((Self::get_attr_value_string_or_empty(attr), attr.span));
                 }
@@ -361,8 +361,9 @@ impl<'a> AstroCodegen<'a> {
                     if name == "is:inline" || name == "is:raw" {
                         continue;
                     }
-                    // Skip transition directives — already handled above
-                    if name.starts_with("transition:") {
+                    // Skip transition directives — already handled above.
+                    // Exception: transition:persist-props is a simple rename, handled below.
+                    if name.starts_with("transition:") && name != "transition:persist-props" {
                         continue;
                     }
                     // Skip individual class if we're merging with class:list
@@ -379,6 +380,15 @@ impl<'a> AstroCodegen<'a> {
                             self.print_jsx_expression(&expr.expression);
                             self.print("], \"class:list\")}");
                         }
+                        continue;
+                    }
+                    // transition:persist-props → data-astro-transition-persist-props
+                    // Simple key rename, like the Go compiler does.
+                    if name == "transition:persist-props" {
+                        self.print_html_attribute_with_name(
+                            attr,
+                            "data-astro-transition-persist-props",
+                        );
                         continue;
                     }
                     self.print_html_attribute(attr);
@@ -445,18 +455,22 @@ impl<'a> AstroCodegen<'a> {
     /// Print a single HTML attribute (static or dynamic).
     fn print_html_attribute(&mut self, attr: &JSXAttribute<'a>) {
         let name = get_jsx_attribute_name(&attr.name);
-        self.add_source_mapping_for_span(attr.span);
+        self.print_html_attribute_with_name(attr, &name);
+    }
 
+    /// Print a single HTML attribute using the given output name (for key renames).
+    fn print_html_attribute_with_name(&mut self, attr: &JSXAttribute<'a>, name: &str) {
+        self.add_source_mapping_for_span(attr.span);
         match &attr.value {
             None => {
                 // Boolean attribute
                 self.print(" ");
-                self.print(&name);
+                self.print(name);
             }
             Some(value) => match value {
                 JSXAttributeValue::StringLiteral(lit) => {
                     self.print(" ");
-                    self.print(&name);
+                    self.print(name);
                     self.print("=\"");
                     self.print(&escape_html_attribute(lit.value.as_str()));
                     self.print("\"");
@@ -466,20 +480,20 @@ impl<'a> AstroCodegen<'a> {
                     self.print(&format!("${{{}(", runtime::ADD_ATTRIBUTE));
                     self.print_jsx_expression(&expr.expression);
                     self.print(", \"");
-                    self.print(&name);
+                    self.print(name);
                     self.print("\")}");
                 }
                 JSXAttributeValue::Element(el) => {
                     // JSX element as attribute value (rare)
                     self.print(" ");
-                    self.print(&name);
+                    self.print(name);
                     self.print("=\"");
                     self.print_jsx_element(el);
                     self.print("\"");
                 }
                 JSXAttributeValue::Fragment(frag) => {
                     self.print(" ");
-                    self.print(&name);
+                    self.print(name);
                     self.print("=\"");
                     self.print_jsx_fragment(frag);
                     self.print("\"");

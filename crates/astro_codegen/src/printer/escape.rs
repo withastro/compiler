@@ -202,3 +202,404 @@ fn is_html_entity_start(s: &str) -> bool {
         .next()
         .is_some_and(|c| c.is_ascii_alphanumeric())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- escape_template_literal ----
+
+    #[test]
+    fn template_literal_no_special_chars() {
+        assert_eq!(escape_template_literal("hello world"), "hello world");
+    }
+
+    #[test]
+    fn template_literal_escapes_backtick() {
+        assert_eq!(escape_template_literal("a`b"), "a\\`b");
+        assert_eq!(escape_template_literal("``"), "\\`\\`");
+    }
+
+    #[test]
+    fn template_literal_escapes_dollar_brace() {
+        assert_eq!(escape_template_literal("${foo}"), "\\${foo}");
+        assert_eq!(escape_template_literal("a${b}c"), "a\\${b}c");
+    }
+
+    #[test]
+    fn template_literal_dollar_without_brace_unchanged() {
+        assert_eq!(escape_template_literal("$100"), "$100");
+        assert_eq!(escape_template_literal("a$b"), "a$b");
+    }
+
+    #[test]
+    fn template_literal_escapes_backslash() {
+        assert_eq!(escape_template_literal("a\\b"), "a\\\\b");
+        assert_eq!(escape_template_literal("\\"), "\\\\");
+    }
+
+    #[test]
+    fn template_literal_combined_specials() {
+        // All three specials in one string
+        assert_eq!(escape_template_literal("`${\\"), "\\`\\${\\\\");
+    }
+
+    #[test]
+    fn template_literal_empty_string() {
+        assert_eq!(escape_template_literal(""), "");
+    }
+
+    #[test]
+    fn template_literal_unicode() {
+        assert_eq!(escape_template_literal("héllo 🌍"), "héllo 🌍");
+    }
+
+    #[test]
+    fn template_literal_nested_template() {
+        // Simulates content that looks like nested template literals
+        assert_eq!(
+            escape_template_literal("html`<div>${x}</div>`"),
+            "html\\`<div>\\${x}</div>\\`"
+        );
+    }
+
+    // ---- escape_double_quotes ----
+
+    #[test]
+    fn double_quotes_basic() {
+        assert_eq!(escape_double_quotes("hello"), "hello");
+    }
+
+    #[test]
+    fn double_quotes_escapes_quotes() {
+        assert_eq!(escape_double_quotes(r#"say "hi""#), r#"say \"hi\""#);
+    }
+
+    #[test]
+    fn double_quotes_empty() {
+        assert_eq!(escape_double_quotes(""), "");
+    }
+
+    #[test]
+    fn double_quotes_only_quotes() {
+        assert_eq!(escape_double_quotes(r#""""#), r#"\"\""#);
+    }
+
+    #[test]
+    fn double_quotes_preserves_backslash() {
+        // Per the doc: backslashes are NOT escaped
+        assert_eq!(escape_double_quotes("a\\b"), "a\\b");
+    }
+
+    // ---- escape_single_quote ----
+
+    #[test]
+    fn single_quote_basic() {
+        assert_eq!(escape_single_quote("hello"), "hello");
+    }
+
+    #[test]
+    fn single_quote_escapes_quotes() {
+        assert_eq!(escape_single_quote("it's"), "it\\'s");
+    }
+
+    #[test]
+    fn single_quote_empty() {
+        assert_eq!(escape_single_quote(""), "");
+    }
+
+    #[test]
+    fn single_quote_preserves_backslash() {
+        assert_eq!(escape_single_quote("a\\b"), "a\\b");
+    }
+
+    // ---- escape_html_attribute ----
+
+    #[test]
+    fn html_attr_no_special_chars() {
+        assert_eq!(escape_html_attribute("hello"), "hello");
+    }
+
+    #[test]
+    fn html_attr_escapes_backtick() {
+        assert_eq!(escape_html_attribute("a`b"), "a\\`b");
+    }
+
+    #[test]
+    fn html_attr_escapes_dollar_brace() {
+        assert_eq!(escape_html_attribute("${x}"), "\\${x}");
+    }
+
+    #[test]
+    fn html_attr_escapes_double_quote() {
+        assert_eq!(escape_html_attribute("a\"b"), "a&quot;b");
+    }
+
+    #[test]
+    fn html_attr_escapes_angle_brackets() {
+        assert_eq!(escape_html_attribute("<script>"), "&lt;script&gt;");
+    }
+
+    #[test]
+    fn html_attr_escapes_bare_ampersand() {
+        assert_eq!(escape_html_attribute("a & b"), "a &amp; b");
+    }
+
+    #[test]
+    fn html_attr_preserves_valid_entity() {
+        assert_eq!(escape_html_attribute("&lt;"), "&lt;");
+        assert_eq!(escape_html_attribute("&amp;"), "&amp;");
+        assert_eq!(escape_html_attribute("&#x22;"), "&#x22;");
+        assert_eq!(escape_html_attribute("&#60;"), "&#60;");
+    }
+
+    #[test]
+    fn html_attr_combined_xss_attempt() {
+        // A typical XSS vector in an attribute context
+        assert_eq!(
+            escape_html_attribute(r#"" onload="alert(1)"#),
+            "&quot; onload=&quot;alert(1)"
+        );
+    }
+
+    #[test]
+    fn html_attr_template_literal_injection() {
+        // Attempting to break out of template literal in attribute
+        assert_eq!(escape_html_attribute("`+alert(1)+`"), "\\`+alert(1)+\\`");
+    }
+
+    #[test]
+    fn html_attr_expression_injection() {
+        assert_eq!(escape_html_attribute("${alert(1)}"), "\\${alert(1)}");
+    }
+
+    // ---- escape_ampersands (tested through escape_html_attribute) ----
+
+    #[test]
+    fn ampersands_no_ampersand() {
+        // No & at all — should borrow, not allocate
+        let result = escape_ampersands("hello world");
+        assert_eq!(&*result, "hello world");
+        assert!(matches!(result, std::borrow::Cow::Borrowed(_)));
+    }
+
+    #[test]
+    fn ampersands_bare_ampersand() {
+        assert_eq!(&*escape_ampersands("a & b"), "a &amp; b");
+    }
+
+    #[test]
+    fn ampersands_trailing_ampersand() {
+        assert_eq!(&*escape_ampersands("a&"), "a&amp;");
+    }
+
+    #[test]
+    fn ampersands_preserves_named_entity() {
+        assert_eq!(&*escape_ampersands("&quot;"), "&quot;");
+        assert_eq!(&*escape_ampersands("&lt;"), "&lt;");
+        assert_eq!(&*escape_ampersands("&gt;"), "&gt;");
+        assert_eq!(&*escape_ampersands("&amp;"), "&amp;");
+    }
+
+    #[test]
+    fn ampersands_preserves_hex_entity() {
+        assert_eq!(&*escape_ampersands("&#x3C;"), "&#x3C;");
+        assert_eq!(&*escape_ampersands("&#X3C;"), "&#X3C;");
+    }
+
+    #[test]
+    fn ampersands_preserves_decimal_entity() {
+        assert_eq!(&*escape_ampersands("&#60;"), "&#60;");
+    }
+
+    #[test]
+    fn ampersands_url_query_params() {
+        // &q=75 starts with & followed by alphanumeric — treated as potential entity
+        assert_eq!(
+            &*escape_ampersands("image.jpg?w=100&q=75"),
+            "image.jpg?w=100&q=75"
+        );
+    }
+
+    #[test]
+    fn ampersands_mixed() {
+        assert_eq!(
+            &*escape_ampersands("a & b &lt; c &amp; d"),
+            "a &amp; b &lt; c &amp; d"
+        );
+    }
+
+    #[test]
+    fn ampersands_unicode_after_amp() {
+        // & followed by non-ASCII — not an entity start
+        assert_eq!(&*escape_ampersands("&é"), "&amp;é");
+    }
+
+    // ---- is_html_entity_start ----
+
+    #[test]
+    fn entity_start_named() {
+        assert!(is_html_entity_start("&lt;"));
+        assert!(is_html_entity_start("&amp;"));
+        assert!(is_html_entity_start("&quot;"));
+    }
+
+    #[test]
+    fn entity_start_hex() {
+        assert!(is_html_entity_start("&#x3C;"));
+        assert!(is_html_entity_start("&#X3C;"));
+    }
+
+    #[test]
+    fn entity_start_decimal() {
+        assert!(is_html_entity_start("&#60;"));
+    }
+
+    #[test]
+    fn entity_start_bare_ampersand() {
+        assert!(!is_html_entity_start("& "));
+        assert!(!is_html_entity_start("&"));
+    }
+
+    #[test]
+    fn entity_start_ampersand_space() {
+        assert!(!is_html_entity_start("& foo"));
+    }
+
+    #[test]
+    fn entity_start_not_ampersand() {
+        assert!(!is_html_entity_start("hello"));
+        assert!(!is_html_entity_start(""));
+    }
+
+    #[test]
+    fn entity_start_hash_no_digit() {
+        // &#z is not valid (z is not a digit)
+        assert!(!is_html_entity_start("&#z"));
+    }
+
+    #[test]
+    fn entity_start_hash_x_no_hex() {
+        // &#x followed by non-hex — not valid
+        assert!(!is_html_entity_start("&#x;"));
+        assert!(!is_html_entity_start("&#xG"));
+    }
+
+    // ---- decode_html_entities ----
+
+    #[test]
+    fn decode_no_entities() {
+        assert_eq!(decode_html_entities("hello world"), "hello world");
+    }
+
+    #[test]
+    fn decode_named_entities() {
+        assert_eq!(decode_html_entities("&lt;"), "<");
+        assert_eq!(decode_html_entities("&gt;"), ">");
+        assert_eq!(decode_html_entities("&amp;"), "&");
+        assert_eq!(decode_html_entities("&quot;"), "\"");
+        assert_eq!(decode_html_entities("&apos;"), "'");
+    }
+
+    #[test]
+    fn decode_hex_entity() {
+        assert_eq!(decode_html_entities("&#x3C;"), "<");
+        assert_eq!(decode_html_entities("&#X3C;"), "<");
+        assert_eq!(decode_html_entities("&#x3E;"), ">");
+    }
+
+    #[test]
+    fn decode_decimal_entity() {
+        assert_eq!(decode_html_entities("&#60;"), "<");
+        assert_eq!(decode_html_entities("&#62;"), ">");
+    }
+
+    #[test]
+    fn decode_mixed_text_and_entities() {
+        assert_eq!(
+            decode_html_entities("a &lt; b &amp;&amp; c &gt; d"),
+            "a < b && c > d"
+        );
+    }
+
+    #[test]
+    fn decode_invalid_entity_preserved() {
+        // Unknown named entity — kept as-is
+        assert_eq!(decode_html_entities("&notarealentity;"), "&notarealentity;");
+    }
+
+    #[test]
+    fn decode_bare_ampersand() {
+        // & not followed by entity syntax — kept as-is
+        assert_eq!(decode_html_entities("a & b"), "a & b");
+    }
+
+    #[test]
+    fn decode_entity_without_semicolon() {
+        // &lt without ; — not treated as entity
+        assert_eq!(decode_html_entities("&lt "), "&lt ");
+    }
+
+    #[test]
+    fn decode_empty_string() {
+        assert_eq!(decode_html_entities(""), "");
+    }
+
+    #[test]
+    fn decode_unicode_hex_entity() {
+        // Unicode emoji via hex entity
+        assert_eq!(decode_html_entities("&#x1F600;"), "😀");
+    }
+
+    #[test]
+    fn decode_unicode_decimal_entity() {
+        assert_eq!(decode_html_entities("&#128512;"), "😀");
+    }
+
+    #[test]
+    fn decode_consecutive_entities() {
+        assert_eq!(decode_html_entities("&lt;&gt;"), "<>");
+    }
+
+    // ---- decode_entity (tested through decode_html_entities) ----
+
+    #[test]
+    fn decode_entity_no_ampersand() {
+        assert_eq!(decode_entity("lt;"), None);
+    }
+
+    #[test]
+    fn decode_entity_no_semicolon() {
+        assert_eq!(decode_entity("&lt"), None);
+    }
+
+    #[test]
+    fn decode_entity_hex_case_insensitive() {
+        assert_eq!(decode_entity("&#x3c;"), Some('<'));
+        assert_eq!(decode_entity("&#X3C;"), Some('<'));
+    }
+
+    #[test]
+    fn decode_entity_invalid_hex() {
+        assert_eq!(decode_entity("&#xZZZ;"), None);
+    }
+
+    #[test]
+    fn decode_entity_invalid_decimal() {
+        assert_eq!(decode_entity("&#abc;"), None);
+    }
+
+    #[test]
+    fn decode_entity_invalid_unicode_codepoint() {
+        // U+D800 is a surrogate, not a valid char
+        assert_eq!(decode_entity("&#xD800;"), None);
+    }
+
+    #[test]
+    fn decode_entity_xml_entities_coverage() {
+        // Spot-check some less common XML entities
+        assert_eq!(decode_entity("&copy;"), Some('©'));
+        assert_eq!(decode_entity("&reg;"), Some('®'));
+        assert_eq!(decode_entity("&nbsp;"), Some('\u{00A0}'));
+    }
+}

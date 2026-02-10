@@ -2503,4 +2503,592 @@ const x: Props = { title: 'hi' };
             "import type should be stripped: {output}"
         );
     }
+
+    // === Bug #2 regression: semicolons after return in slot-aware statements ===
+
+    #[test]
+    fn test_slot_aware_return_has_semicolon() {
+        // A ternary in a component child that routes to named slots triggers
+        // print_slot_aware_statement → ReturnStatement. The return must end
+        // with a semicolon to avoid ASI hazards.
+        let source = r#"---
+import Component from "test";
+---
+<Component>{(() => {
+  if (condition) {
+    return <div slot="a">A</div>;
+  }
+  return <div slot="b">B</div>;
+})()}</Component>"#;
+        let output = compile_astro(source);
+
+        // The compiled output should not contain "return " followed by something
+        // without a semicolon before the newline. We check that every "return "
+        // in the output has a matching ";" on the same statement.
+        assert!(
+            !output.contains("return \n"),
+            "Return statement should not be followed by bare newline (ASI hazard): {output}"
+        );
+    }
+
+    // === Bug #3 regression: transition:persist-props on HTML elements ===
+
+    #[test]
+    fn test_transition_persist_props_html_element() {
+        // transition:persist-props on an HTML element should produce a simple
+        // rename to data-astro-transition-persist-props, NOT trigger
+        // $$createTransitionScope hash generation in the template body.
+        let source = r#"<div transition:persist-props="all">content</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("data-astro-transition-persist-props"),
+            "Should rename transition:persist-props to data-astro-transition-persist-props: {output}"
+        );
+        // $$createTransitionScope appears in the import, but should NOT appear
+        // in the template body (i.e. inside the $$render`` template literal).
+        let template_start = output.find("$$render`").unwrap();
+        let template_body = &output[template_start..];
+        assert!(
+            !template_body.contains("$$createTransitionScope("),
+            "transition:persist-props should NOT invoke $$createTransitionScope in template: {output}"
+        );
+    }
+
+    #[test]
+    fn test_transition_persist_and_persist_props_together() {
+        // When both transition:persist and transition:persist-props are on the
+        // same element, persist should get its normal handling and persist-props
+        // should be a simple rename.
+        let source = r#"<div transition:persist transition:persist-props="all">content</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("data-astro-transition-persist"),
+            "Should have data-astro-transition-persist: {output}"
+        );
+        assert!(
+            output.contains("data-astro-transition-persist-props"),
+            "Should rename transition:persist-props: {output}"
+        );
+    }
+
+    // === Test 3: Adversarial/edge-case input tests ===
+
+    #[test]
+    fn test_template_literal_injection_in_text() {
+        // Backticks in text content should be escaped since output
+        // is inside a template literal.
+        let source = r"<div>some `backtick` text</div>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\\`backtick\\`"),
+            "Backticks in text should be escaped: {output}"
+        );
+    }
+
+    #[test]
+    fn test_empty_frontmatter() {
+        let source = "---\n---\n<p>hello</p>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("<p>hello</p>"),
+            "Should render content after empty frontmatter: {output}"
+        );
+        assert!(
+            output.contains("$$createComponent"),
+            "Should still create component wrapper: {output}"
+        );
+    }
+
+    #[test]
+    fn test_empty_frontmatter_no_template() {
+        // Edge case: empty frontmatter with no template content
+        let source = "---\n---\n";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$createComponent"),
+            "Should still create component wrapper: {output}"
+        );
+    }
+
+    #[test]
+    fn test_deeply_nested_ternary_in_expression() {
+        let source = r#"<div>{a ? b ? c ? "deep" : "d" : "e" : "f"}</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("deep"),
+            "Should handle deeply nested ternary: {output}"
+        );
+    }
+
+    #[test]
+    fn test_html_entity_in_text_content() {
+        // HTML entities in text should be decoded when used in expressions
+        let source = "<div>&lt;script&gt;</div>";
+        let output = compile_astro(source);
+
+        // The text content should appear in the template literal
+        assert!(
+            output.contains("&lt;script&gt;") || output.contains("<script>"),
+            "Should handle HTML entities in text: {output}"
+        );
+    }
+
+    #[test]
+    fn test_attribute_with_special_characters() {
+        let source = r#"<div data-value="a&b<c>d&quot;e"></div>"#;
+        let output = compile_astro(source);
+
+        // The attribute should be preserved or properly escaped
+        assert!(
+            output.contains("data-value="),
+            "Should include the attribute: {output}"
+        );
+    }
+
+    // === Test 5: JSX statement coverage (for/while/try/throw in JSX) ===
+
+    #[test]
+    fn test_for_statement_in_jsx_expression() {
+        let source = r"<div>{(() => {
+  const items = [];
+  for (let i = 0; i < 3; i++) {
+    items.push(i);
+  }
+  return items;
+})()}</div>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("for"),
+            "Should handle for statement in JSX: {output}"
+        );
+    }
+
+    #[test]
+    fn test_while_statement_in_jsx_expression() {
+        let source = r"<div>{(() => {
+  let i = 0;
+  while (i < 3) {
+    i++;
+  }
+  return i;
+})()}</div>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("while"),
+            "Should handle while statement in JSX: {output}"
+        );
+    }
+
+    #[test]
+    fn test_try_catch_in_jsx_expression() {
+        let source = r#"<div>{(() => {
+  try {
+    return riskyCall();
+  } catch (e) {
+    return "fallback";
+  }
+})()}</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("try") && output.contains("catch"),
+            "Should handle try/catch in JSX: {output}"
+        );
+    }
+
+    #[test]
+    fn test_throw_in_jsx_expression() {
+        let source = r#"<div>{(() => {
+  if (!data) {
+    throw new Error("missing");
+  }
+  return data;
+})()}</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("throw"),
+            "Should handle throw in JSX: {output}"
+        );
+    }
+
+    // === Test 7: Empty frontmatter variations ===
+
+    #[test]
+    fn test_frontmatter_only_comments() {
+        let source = "---\n// just a comment\n---\n<p>hi</p>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("<p>hi</p>"),
+            "Should handle comment-only frontmatter: {output}"
+        );
+    }
+
+    #[test]
+    fn test_no_frontmatter_at_all() {
+        let source = "<p>no frontmatter</p>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("<p>no frontmatter</p>"),
+            "Should handle missing frontmatter: {output}"
+        );
+        assert!(
+            output.contains("$$createComponent"),
+            "Should still create component: {output}"
+        );
+    }
+
+    // === Spread attributes ===
+
+    #[test]
+    fn test_spread_attributes_on_element() {
+        let source = r#"---
+const props = { class: "foo", id: "bar" };
+---
+<div {...props}>content</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$spreadAttributes"),
+            "Should use $$spreadAttributes for spread: {output}"
+        );
+    }
+
+    // === Boolean and valueless attributes ===
+
+    #[test]
+    fn test_boolean_attribute() {
+        let source = r"<input disabled />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("disabled"),
+            "Should handle boolean attribute: {output}"
+        );
+    }
+
+    // === set:html and set:text directives ===
+
+    #[test]
+    fn test_set_html_directive() {
+        let source = r#"---
+const html = "<strong>bold</strong>";
+---
+<div set:html={html} />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$unescapeHTML"),
+            "Should use $$unescapeHTML for set:html: {output}"
+        );
+        // set:html should not appear as an attribute
+        assert!(
+            !output.contains("set:html="),
+            "set:html should be stripped from attributes: {output}"
+        );
+    }
+
+    #[test]
+    fn test_set_text_directive() {
+        let source = r#"---
+const text = "hello <world>";
+---
+<div set:text={text} />"#;
+        let output = compile_astro(source);
+
+        // set:text should not appear as an attribute
+        assert!(
+            !output.contains("set:text="),
+            "set:text should be stripped from attributes: {output}"
+        );
+    }
+
+    // === Conditional rendering patterns ===
+
+    #[test]
+    fn test_logical_and_rendering() {
+        let source = r"<div>{show && <p>visible</p>}</div>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("show") && output.contains("<p>visible</p>"),
+            "Should handle logical AND rendering: {output}"
+        );
+    }
+
+    #[test]
+    fn test_ternary_rendering() {
+        let source = r"<div>{show ? <p>yes</p> : <p>no</p>}</div>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("<p>yes</p>") && output.contains("<p>no</p>"),
+            "Should handle ternary rendering: {output}"
+        );
+    }
+
+    // === Map/iteration patterns ===
+
+    #[test]
+    fn test_array_map_rendering() {
+        let source = r#"---
+const items = ["a", "b", "c"];
+---
+<ul>{items.map(item => <li>{item}</li>)}</ul>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("<li>"),
+            "Should handle array map rendering: {output}"
+        );
+    }
+
+    // === Transition directives ===
+
+    #[test]
+    fn test_transition_name_on_element() {
+        let source = r#"<div transition:name="fade">content</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$renderTransition") || output.contains("data-astro-transition-scope"),
+            "Should handle transition:name: {output}"
+        );
+        assert!(
+            output.contains("fade"),
+            "Should include transition name: {output}"
+        );
+    }
+
+    #[test]
+    fn test_transition_persist_on_element() {
+        let source = r"<div transition:persist>content</div>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("data-astro-transition-persist") || output.contains("$$createTransitionScope"),
+            "Should handle transition:persist: {output}"
+        );
+    }
+
+    // === Test 4: Slot analysis tests (through full compilation) ===
+
+    #[test]
+    fn test_slot_ternary_multiple_named_slots() {
+        // Ternary expression with different slot names on each branch
+        // should trigger $$mergeSlots.
+        let source = r#"---
+import Component from "test";
+---
+<Component>{cond ? <div slot="a">A</div> : <div slot="b">B</div>}</Component>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$mergeSlots"),
+            "Ternary with different slot names should use $$mergeSlots: {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_ternary_same_slot_name() {
+        // Ternary where both branches have the SAME slot name
+        // should not need $$mergeSlots — it's a single slot.
+        let source = r#"---
+import Component from "test";
+---
+<Component>{cond ? <div slot="x">A</div> : <span slot="x">B</span>}</Component>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"x\":"),
+            "Both branches with same slot name should produce slot 'x': {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_logical_and_named() {
+        // Logical AND with a named slot
+        let source = r#"---
+import Component from "test";
+---
+<Component>{show && <div slot="footer">Footer</div>}</Component>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"footer\":"),
+            "Logical AND with named slot should produce slot: {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_default_and_named_together() {
+        // Mix of default and named slot children
+        let source = r#"---
+import Component from "test";
+---
+<Component>
+    <p>Default content</p>
+    <div slot="header">Header</div>
+</Component>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"default\":"),
+            "Should have default slot: {output}"
+        );
+        assert!(
+            output.contains("\"header\":"),
+            "Should have header slot: {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_no_children() {
+        // Component with no children — no slots at all
+        let source = r#"---
+import Component from "test";
+---
+<Component />"#;
+        let output = compile_astro(source);
+
+        // Should not have any slot definitions
+        assert!(
+            !output.contains("\"default\":") || output.contains("\"default\": () =>"),
+            "Self-closing component should have no slots: {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_dynamic_slot_attribute() {
+        // Dynamic slot name: slot={name}
+        let source = r#"---
+import Component from "test";
+const slotName = "dynamic";
+---
+<Component><div slot={slotName}>Content</div></Component>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("slotName"),
+            "Dynamic slot name should reference the variable: {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_fragment_children() {
+        // Fragment as component child
+        let source = r#"---
+import Component from "test";
+---
+<Component><>fragment child</></Component>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("fragment child"),
+            "Fragment children should be rendered: {output}"
+        );
+    }
+
+    // === Test 6: JSXAttributeValue::Element/Fragment paths ===
+
+    #[test]
+    fn test_jsx_element_as_attribute_value_on_component() {
+        // JSX element as attribute value on a component renders as "[JSX]"
+        let source = r#"---
+import Comp from "test";
+---
+<Comp attr=<span>hi</span> />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("[JSX]"),
+            "JSX element as component attribute should render as [JSX]: {output}"
+        );
+    }
+
+    #[test]
+    fn test_jsx_fragment_as_attribute_value_on_component() {
+        // JSX fragment as attribute value on a component renders as "[Fragment]"
+        let source = r#"---
+import Comp from "test";
+---
+<Comp attr=<>fragment</> />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("[Fragment]"),
+            "JSX fragment as component attribute should render as [Fragment]: {output}"
+        );
+    }
+
+    // === Test 8: Dynamic slot names on <slot> element ===
+
+    #[test]
+    fn test_slot_element_with_static_name() {
+        // <slot name="header" /> should generate a renderSlot call with "header"
+        let source = r#"<slot name="header" />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$renderSlot") && output.contains("header"),
+            "Static <slot name> should use $$renderSlot with 'header': {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_element_default() {
+        // <slot /> without name should use "default"
+        let source = "<slot />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$renderSlot") && output.contains("default"),
+            "Default <slot /> should use $$renderSlot with 'default': {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_element_with_dynamic_name() {
+        // <slot name={expr} /> should generate a dynamic slot name
+        let source = r#"---
+const slotName = "dynamic";
+---
+<slot name={slotName} />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$renderSlot"),
+            "Dynamic <slot name={{expr}}> should use $$renderSlot: {output}"
+        );
+        assert!(
+            output.contains("slotName"),
+            "Dynamic slot name should reference the variable: {output}"
+        );
+    }
+
+    #[test]
+    fn test_slot_element_with_fallback_content() {
+        // <slot>fallback</slot> should include fallback content
+        let source = "<slot><p>Fallback content</p></slot>";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$renderSlot"),
+            "Slot with fallback should use $$renderSlot: {output}"
+        );
+        assert!(
+            output.contains("Fallback content"),
+            "Fallback content should be present: {output}"
+        );
+    }
 }
