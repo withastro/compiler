@@ -1,6 +1,6 @@
-import type { AstroCompileOptions, NapiHoistedScript } from '@astrojs/compiler-binding';
+import type { AstroCompileOptions, NapiHoistedScript, OxcError } from '@astrojs/compiler-binding';
 import type { HoistedScript, TransformOptions, TransformResult } from './types.js';
-import type { Component } from './types.js';
+import type { CompilerError, Component } from './types.js';
 
 export function mapOptions(options?: TransformOptions): AstroCompileOptions | undefined {
 	if (!options) return undefined;
@@ -8,7 +8,7 @@ export function mapOptions(options?: TransformOptions): AstroCompileOptions | un
 		filename: options.filename,
 		normalizedFilename: options.normalizedFilename,
 		internalUrl: options.internalURL,
-		sourcemap: typeof options.sourcemap === 'boolean' ? options.sourcemap : undefined,
+		sourcemap: options.sourcemap ? true : undefined,
 		astroGlobalArgs: options.astroGlobalArgs,
 		compact: options.compact,
 		resultScopedSlot: options.resultScopedSlot,
@@ -27,22 +27,41 @@ function mapScript(script: NapiHoistedScript): HoistedScript {
 	return { type: 'inline', code: script.code ?? '', map: '' };
 }
 
-export function mapResult(result: {
-	code: string;
-	map: string;
-	scope: string;
-	css: string[];
-	scripts: NapiHoistedScript[];
-	hydratedComponents: Component[];
-	clientOnlyComponents: Component[];
-	serverComponents: Component[];
-	containsHead: boolean;
-	propagation: boolean;
-	styleError: string[];
-}): TransformResult {
+export function mapResult(
+	result: {
+		code: string;
+		map: string;
+		scope: string;
+		css: string[];
+		scripts: NapiHoistedScript[];
+		hydratedComponents: Component[];
+		clientOnlyComponents: Component[];
+		serverComponents: Component[];
+		containsHead: boolean;
+		propagation: boolean;
+		styleError: string[];
+		errors: OxcError[];
+	},
+	sourcemapOption?: TransformOptions['sourcemap'],
+): TransformResult {
+	let code = result.code;
+
+	// IMPORTANT: Read result.map exactly once into a local variable.
+	// The NAPI binding uses mem::take() getters, so each property read
+	// moves the value out — a second read returns an empty string.
+	const map = result.map;
+
+	// When 'both' or 'inline' sourcemap mode is requested, append an inline
+	// sourcemap comment so downstream consumers (e.g. esbuild, Vite module
+	// runner) can pick it up directly from the code string.
+	if ((sourcemapOption === 'both' || sourcemapOption === 'inline') && map) {
+		const base64 = typeof Buffer !== 'undefined' ? Buffer.from(map).toString('base64') : btoa(map);
+		code += `\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,${base64}`;
+	}
+
 	return {
-		code: result.code,
-		map: result.map,
+		code,
+		map: sourcemapOption === 'inline' ? '' : map,
 		scope: result.scope,
 		css: result.css,
 		scripts: result.scripts.map(mapScript),
@@ -53,5 +72,22 @@ export function mapResult(result: {
 		propagation: result.propagation,
 		styleError: result.styleError,
 		diagnostics: [],
+		errors: result.errors.map(mapError),
+	};
+}
+
+function mapError(error: OxcError): CompilerError {
+	return {
+		severity: error.severity,
+		message: error.message,
+		labels: error.labels.map((label) => ({
+			message: label.message,
+			start: label.start,
+			end: label.end,
+			line: label.line,
+			column: label.column,
+		})),
+		helpMessage: error.helpMessage,
+		codeframe: error.codeframe,
 	};
 }

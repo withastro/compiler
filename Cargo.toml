@@ -91,11 +91,14 @@ oxc_ast_visit = { git = "https://github.com/Princesseuh/oxc", branch = "feat/ast
 oxc_codegen = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro", default-features = false }
 oxc_data_structures = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_diagnostics = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
-oxc_parser = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro", features = ["regular_expression"] }
+oxc_parser = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro", features = [
+  "regular_expression",
+] }
 oxc_semantic = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_span = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_syntax = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
 oxc_transformer = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_sourcemap = "6.0.1"
 
 # NAPI
 napi = { version = "3", features = ["tokio_rt"] }

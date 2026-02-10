@@ -9,9 +9,9 @@
 use oxc_ast::ast::*;
 use oxc_codegen::{Codegen, Context, GenExpr};
 
-use super::AstroCodegen;
 use super::escape::{escape_double_quotes, escape_html_attribute};
 use super::runtime;
+use super::AstroCodegen;
 use crate::scanner::get_jsx_attribute_name;
 
 /// Returns `true` for HTML void elements that must not have a closing tag.
@@ -58,6 +58,7 @@ pub(super) fn is_head_element(name: &str) -> bool {
 impl<'a> AstroCodegen<'a> {
     /// Print an HTML (non-component) element.
     pub(super) fn print_html_element(&mut self, el: &JSXElement<'a>, name: &str) {
+        self.add_source_mapping_for_span(el.opening_element.span);
         // Handle <slot> element specially — it's a slot placeholder, not an HTML element.
         // Unless it has `is:inline`, in which case render as raw HTML.
         if name == "slot" && !Self::has_is_inline_attribute(&el.opening_element.attributes) {
@@ -104,8 +105,11 @@ impl<'a> AstroCodegen<'a> {
             ));
             // Mark that head rendering is done — prevents $$maybeRenderHead from being inserted later.
             self.render_head_inserted = true;
-        } else if let Some((directive_type, value, needs_unescape, is_raw_text)) = set_directive {
+        } else if let Some((directive_type, value, needs_unescape, is_raw_text, set_span)) =
+            set_directive
+        {
             // set:html or set:text directive — inject the content
+            self.add_source_mapping_for_span(set_span);
             if is_raw_text {
                 // set:text with string literal — inline raw text without ${}
                 self.print(&value);
@@ -125,6 +129,10 @@ impl<'a> AstroCodegen<'a> {
 
         // Closing tag (skip for void elements like <meta>, <input>, <br>, etc.)
         if !is_void_element(name) {
+            // Map closing tag to its source position so it appears in the sourcemap.
+            if let Some(ref closing) = el.closing_element {
+                self.add_source_mapping_for_span(closing.span);
+            }
             self.print("</");
             self.print(name);
             self.print(">");
@@ -163,6 +171,10 @@ impl<'a> AstroCodegen<'a> {
             self.print("`");
         }
 
+        // Map the closing </slot> tag to its source position (if present).
+        if let Some(ref closing) = el.closing_element {
+            self.add_source_mapping_for_span(closing.span);
+        }
         self.print(")}");
     }
 
@@ -208,11 +220,11 @@ impl<'a> AstroCodegen<'a> {
 
     /// Extract `set:html`/`set:text` directive from HTML element attributes.
     ///
-    /// Returns `(directive_type, value, needs_unescape, is_raw_text)`:
+    /// Returns `(directive_type, value, needs_unescape, is_raw_text, span)`:
     /// - `is_raw_text` is `true` for `set:text` with string literal (should be inlined without `${}`)
     pub(super) fn extract_set_directive(
         attrs: &[JSXAttributeItem<'a>],
-    ) -> Option<(&'static str, String, bool, bool)> {
+    ) -> Option<(&'static str, String, bool, bool, oxc_span::Span)> {
         for attr in attrs {
             if let JSXAttributeItem::Attribute(attr) = attr {
                 let name = get_jsx_attribute_name(&attr.name);
@@ -251,7 +263,13 @@ impl<'a> AstroCodegen<'a> {
                         }
                         _ => ("void 0".to_string(), false, false),
                     };
-                    return Some((directive_type, value, needs_unescape, is_raw_text));
+                    return Some((
+                        directive_type,
+                        value,
+                        needs_unescape,
+                        is_raw_text,
+                        attr.span,
+                    ));
                 }
             }
         }
@@ -266,9 +284,9 @@ impl<'a> AstroCodegen<'a> {
         let mut class_list_expr: Option<&JSXExpressionContainer<'a>> = None;
 
         // Check for transition attributes
-        let mut transition_name: Option<String> = None;
-        let mut transition_animate: Option<String> = None;
-        let mut transition_persist: Option<String> = None;
+        let mut transition_name: Option<(String, oxc_span::Span)> = None;
+        let mut transition_animate: Option<(String, oxc_span::Span)> = None;
+        let mut transition_persist: Option<(String, oxc_span::Span)> = None;
 
         for attr in attrs {
             if let JSXAttributeItem::Attribute(attr) = attr {
@@ -282,11 +300,12 @@ impl<'a> AstroCodegen<'a> {
                         class_list_expr = Some(expr);
                     }
                 } else if name == "transition:name" {
-                    transition_name = Some(Self::get_attr_value_string(attr));
+                    transition_name = Some((Self::get_attr_value_string(attr), attr.span));
                 } else if name == "transition:animate" {
-                    transition_animate = Some(Self::get_attr_value_string(attr));
+                    transition_animate = Some((Self::get_attr_value_string(attr), attr.span));
                 } else if name == "transition:persist" || name == "transition:persist-props" {
-                    transition_persist = Some(Self::get_attr_value_string_or_empty(attr));
+                    transition_persist =
+                        Some((Self::get_attr_value_string_or_empty(attr), attr.span));
                 }
             }
         }
@@ -296,8 +315,9 @@ impl<'a> AstroCodegen<'a> {
 
         // Handle transition:persist — if there's a transition:name, use that for persist value.
         // Otherwise use $$createTransitionScope.
-        if let Some(_persist_val) = &transition_persist {
-            if let Some(name_val) = &transition_name {
+        if let Some((ref _persist_val, persist_span)) = transition_persist {
+            self.add_source_mapping_for_span(persist_span);
+            if let Some((ref name_val, _)) = transition_name {
                 let clean_val = name_val.trim_matches('"');
                 self.print(&format!(" data-astro-transition-persist=\"{clean_val}\""));
             } else {
@@ -314,8 +334,14 @@ impl<'a> AstroCodegen<'a> {
 
         // Handle transition:name and transition:animate together
         if transition_name.is_some() || transition_animate.is_some() {
-            let name_val = transition_name.unwrap_or_else(|| "\"\"".to_string());
-            let animate_val = transition_animate.unwrap_or_else(|| "\"\"".to_string());
+            // Map to whichever transition attribute comes first
+            if let Some((_, span)) = &transition_name {
+                self.add_source_mapping_for_span(*span);
+            } else if let Some((_, span)) = &transition_animate {
+                self.add_source_mapping_for_span(*span);
+            }
+            let name_val = transition_name.map_or_else(|| "\"\"".to_string(), |(v, _)| v);
+            let animate_val = transition_animate.map_or_else(|| "\"\"".to_string(), |(v, _)| v);
             let hash = self.generate_transition_hash();
             self.print(&format!(
                 "${{{}({}({}, \"{}\", {}, {}), \"data-astro-transition-scope\")}}",
@@ -355,6 +381,7 @@ impl<'a> AstroCodegen<'a> {
                     // Handle merged class:list
                     if has_merged_class && name == "class:list" {
                         if let (Some(static_val), Some(expr)) = (static_class, class_list_expr) {
+                            self.add_source_mapping_for_span(attr.span);
                             self.print(&format!("${{{}([", runtime::ADD_ATTRIBUTE));
                             self.print(&format!("\"{}\"", escape_double_quotes(static_val)));
                             self.print(", ");
@@ -366,6 +393,7 @@ impl<'a> AstroCodegen<'a> {
                     self.print_html_attribute(attr);
                 }
                 JSXAttributeItem::SpreadAttribute(spread) => {
+                    self.add_source_mapping_for_span(spread.span);
                     self.print(&format!("${{{}(", runtime::SPREAD_ATTRIBUTES));
                     self.print_expression(&spread.argument);
                     self.print(")}");
@@ -432,6 +460,7 @@ impl<'a> AstroCodegen<'a> {
     /// Print a single HTML attribute (static or dynamic).
     fn print_html_attribute(&mut self, attr: &JSXAttribute<'a>) {
         let name = get_jsx_attribute_name(&attr.name);
+        self.add_source_mapping_for_span(attr.span);
 
         match &attr.value {
             None => {

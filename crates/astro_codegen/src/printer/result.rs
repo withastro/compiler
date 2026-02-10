@@ -41,7 +41,10 @@ pub struct TransformResultHydratedComponent {
 pub struct TransformResult {
     /// The generated JavaScript code.
     pub code: String,
-    /// Source map JSON string (stub: empty string until sourcemap support is implemented).
+    /// Source map JSON string.
+    ///
+    /// Contains a JSON-encoded source map when `TransformOptions::sourcemap` is `true`.
+    /// Empty string when sourcemap generation is disabled.
     pub map: String,
     /// CSS scope hash for the component (e.g., `"astro-XXXXXX"`).
     pub scope: String,

@@ -24,7 +24,7 @@ export interface TransformOptions {
 	resolvePath?: (specifier: string) => Promise<string> | string;
 	preprocessStyle?: (
 		content: string,
-		attrs: Record<string, string>
+		attrs: Record<string, string>,
 	) => null | Promise<PreprocessorResult | PreprocessorError>;
 	annotateSourceFile?: boolean;
 }
@@ -62,6 +62,26 @@ export interface Component {
 	resolvedPath: string;
 }
 
+export interface CompilerErrorLabel {
+	message: string | null;
+	/** Byte offset start in source */
+	start: number;
+	/** Byte offset end in source */
+	end: number;
+	/** 1-based line number in the source */
+	line: number;
+	/** 0-based column number in the source */
+	column: number;
+}
+
+export interface CompilerError {
+	severity: 'Error' | 'Warning' | 'Advice';
+	message: string;
+	labels: CompilerErrorLabel[];
+	helpMessage: string | null;
+	codeframe: string | null;
+}
+
 export interface TransformResult {
 	code: string;
 	map: string;
@@ -69,6 +89,8 @@ export interface TransformResult {
 	styleError: string[];
 	// TODO: Currently always empty on the Rust compiler
 	diagnostics: any[];
+	/** Compilation errors from the Rust compiler (oxc-based). */
+	errors: CompilerError[];
 	css: string[];
 	scripts: HoistedScript[];
 	hydratedComponents: Component[];
@@ -93,12 +115,12 @@ export type TSXResult = any;
 
 export declare function transform(
 	input: string,
-	options?: TransformOptions
+	options?: TransformOptions,
 ): Promise<TransformResult>;
 
 export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
 
 export declare function convertToTSX(
 	input: string,
-	options?: ConvertToTSXOptions
+	options?: ConvertToTSXOptions,
 ): Promise<TSXResult>;

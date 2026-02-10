@@ -44,7 +44,8 @@ pub struct AstroCompileOptions {
     pub internal_url: Option<String>,
 
     /// Whether to generate a source map.
-    /// **Stub**: not yet implemented.
+    /// When `true`, the `map` field in the result will contain a JSON-encoded
+    /// source map that maps the generated JavaScript back to the original `.astro` source.
     ///
     /// @default false
     pub sourcemap: Option<bool>,
@@ -153,7 +154,8 @@ impl AstroCompileResult {
         mem::take(&mut self.code)
     }
 
-    /// Source map JSON string (empty until sourcemap support is implemented).
+    /// Source map JSON string. Contains a JSON-encoded source map when
+    /// `sourcemap: true` was passed in options. Empty string otherwise.
     #[napi(getter)]
     pub fn map(&mut self) -> String {
         mem::take(&mut self.map)

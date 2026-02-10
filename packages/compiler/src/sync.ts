@@ -7,7 +7,7 @@ type UnwrappedPromise<T> = T extends (...params: any) => Promise<infer Return>
 	: T;
 
 export const transform: UnwrappedPromise<typeof types.transform> = (input, options) => {
-	const result = mapResult(compileAstroSync(input, mapOptions(options)));
+	const result = mapResult(compileAstroSync(input, mapOptions(options)), options?.sourcemap);
 
 	// Post-process: call resolvePath for each component specifier if provided
 	if (typeof options?.resolvePath === 'function') {

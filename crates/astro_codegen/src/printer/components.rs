@@ -84,6 +84,7 @@ impl<'a> AstroCodegen<'a> {
 
     /// Print a component element via `$$renderComponent`.
     pub(super) fn print_component_element(&mut self, el: &JSXElement<'a>, name: &str) {
+        self.add_source_mapping_for_span(el.opening_element.span);
         // Check for client:* directives
         let mut hydration_info = Self::extract_hydration_info(&el.opening_element.attributes);
 
@@ -167,7 +168,8 @@ impl<'a> AstroCodegen<'a> {
         self.print("}");
 
         // For set:html or set:text, create a default slot with the content
-        if let Some((value, is_html, needs_unescape, is_raw_text)) = set_directive {
+        if let Some((value, is_html, needs_unescape, is_raw_text, set_span)) = set_directive {
+            self.add_source_mapping_for_span(set_span);
             let async_prefix = self.get_async_prefix();
             let slot_params = self.get_slot_params();
             self.print(&format!(",{{\"default\": {async_prefix}{slot_params}"));
@@ -203,18 +205,23 @@ impl<'a> AstroCodegen<'a> {
             }
         }
 
+        // Map the closing tag (e.g. </Card>) to the `)` that closes
+        // $$renderComponent(...) — the semantic equivalent in generated code.
+        if let Some(ref closing) = el.closing_element {
+            self.add_source_mapping_for_span(closing.span);
+        }
         self.print(")}");
     }
 
     /// Extract `set:html` or `set:text` value from component attributes.
     ///
-    /// Returns `(value_string, is_html, needs_unescape, is_raw_text)`:
+    /// Returns `(value_string, is_html, needs_unescape, is_raw_text, span)`:
     /// - `is_html` is `true` for `set:html`, `false` for `set:text`
     /// - `needs_unescape` is `true` for expressions (need `$$unescapeHTML`), `false` for literals
     /// - `is_raw_text` is `true` for `set:text` with string literal (should be inlined without `${}`)
     pub(super) fn extract_set_html_value(
         attrs: &[JSXAttributeItem<'a>],
-    ) -> Option<(String, bool, bool, bool)> {
+    ) -> Option<(String, bool, bool, bool, oxc_span::Span)> {
         for attr in attrs {
             if let JSXAttributeItem::Attribute(attr) = attr {
                 let name = get_jsx_attribute_name(&attr.name);
@@ -257,6 +264,7 @@ impl<'a> AstroCodegen<'a> {
                                                 is_html,
                                                 false,
                                                 false,
+                                                attr.span,
                                             ));
                                         }
                                     } else {
@@ -280,13 +288,14 @@ impl<'a> AstroCodegen<'a> {
                                     is_html,
                                     needs_unescape,
                                     false,
+                                    attr.span,
                                 ));
                             }
                             (None, true, false)
                         }
                         _ => (None, false, false),
                     };
-                    return value.map(|v| (v, is_html, needs_unescape, is_raw_text));
+                    return value.map(|v| (v, is_html, needs_unescape, is_raw_text, attr.span));
                 }
             }
         }
@@ -303,22 +312,22 @@ impl<'a> AstroCodegen<'a> {
         let mut first = true;
 
         // Pre-scan for transition attributes
-        let mut transition_name: Option<String> = None;
-        let mut transition_animate: Option<String> = None;
-        let mut transition_persist = false;
-        let mut transition_persist_props: Option<String> = None;
+        let mut transition_name: Option<(String, oxc_span::Span)> = None;
+        let mut transition_animate: Option<(String, oxc_span::Span)> = None;
+        let mut transition_persist: Option<oxc_span::Span> = None;
+        let mut transition_persist_props: Option<(String, oxc_span::Span)> = None;
 
         for attr in attrs {
             if let JSXAttributeItem::Attribute(attr) = attr {
                 let name = get_jsx_attribute_name(&attr.name);
                 if name == "transition:name" {
-                    transition_name = Some(Self::get_attr_value_string(attr));
+                    transition_name = Some((Self::get_attr_value_string(attr), attr.span));
                 } else if name == "transition:animate" {
-                    transition_animate = Some(Self::get_attr_value_string(attr));
+                    transition_animate = Some((Self::get_attr_value_string(attr), attr.span));
                 } else if name == "transition:persist" {
-                    transition_persist = true;
+                    transition_persist = Some(attr.span);
                 } else if name == "transition:persist-props" {
-                    transition_persist_props = Some(Self::get_attr_value_string(attr));
+                    transition_persist_props = Some((Self::get_attr_value_string(attr), attr.span));
                 }
             }
         }
@@ -361,6 +370,7 @@ impl<'a> AstroCodegen<'a> {
                     }
                     first = false;
 
+                    self.add_source_mapping_for_span(attr.span);
                     self.print("\"");
                     self.print(&name);
                     self.print("\":");
@@ -399,6 +409,7 @@ impl<'a> AstroCodegen<'a> {
                         self.print(",");
                     }
                     first = false;
+                    self.add_source_mapping_for_span(spread.span);
                     self.print("...(");
                     self.print_expression(&spread.argument);
                     self.print(")");
@@ -412,8 +423,14 @@ impl<'a> AstroCodegen<'a> {
                 self.print(",");
             }
             first = false;
-            let name_val = transition_name.unwrap_or_else(|| "\"\"".to_string());
-            let animate_val = transition_animate.unwrap_or_else(|| "\"\"".to_string());
+            // Map to whichever transition attribute comes first
+            if let Some((_, span)) = &transition_name {
+                self.add_source_mapping_for_span(*span);
+            } else if let Some((_, span)) = &transition_animate {
+                self.add_source_mapping_for_span(*span);
+            }
+            let name_val = transition_name.map_or_else(|| "\"\"".to_string(), |(v, _)| v);
+            let animate_val = transition_animate.map_or_else(|| "\"\"".to_string(), |(v, _)| v);
             let hash = self.generate_transition_hash();
             self.print(&format!(
                 "\"data-astro-transition-scope\":({}({}, \"{}\", {}, {}))",
@@ -426,21 +443,23 @@ impl<'a> AstroCodegen<'a> {
         }
 
         // Print transition:persist-props as a data attribute if present
-        if let Some(props_val) = &transition_persist_props {
+        if let Some((props_val, persist_props_span)) = &transition_persist_props {
             if !first {
                 self.print(",");
             }
             first = false;
+            self.add_source_mapping_for_span(*persist_props_span);
             self.print(&format!(
                 "\"data-astro-transition-persist-props\":{props_val}"
             ));
         }
 
-        if transition_persist {
+        if let Some(persist_span) = transition_persist {
             if !first {
                 self.print(",");
             }
             first = false;
+            self.add_source_mapping_for_span(persist_span);
             let hash = self.generate_transition_hash();
             self.print(&format!(
                 "\"data-astro-transition-persist\":({}({}, \"{}\"))",

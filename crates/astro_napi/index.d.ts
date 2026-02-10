@@ -4,7 +4,10 @@
 export declare class AstroCompileResult {
   /** The generated JavaScript code. */
   get code(): string
-  /** Source map JSON string (empty until sourcemap support is implemented). */
+  /**
+   * Source map JSON string. Contains a JSON-encoded source map when
+   * `sourcemap: true` was passed in options. Empty string otherwise.
+   */
   get map(): string
   /** CSS scope hash for the component. */
   get scope(): string
@@ -33,7 +36,6 @@ export declare class AstroCompileResult {
 /**
  * Options for compiling Astro files to JavaScript.
  *
- * Matches the Go compiler's `TransformOptions` from `@astrojs/compiler`.
  * Some fields (such as `sourcemap`, `compact`, CSS scoping) are stubs accepted for API compatibility.
  */
 export interface AstroCompileOptions {
@@ -54,7 +56,8 @@ export interface AstroCompileOptions {
   internalUrl?: string
   /**
    * Whether to generate a source map.
-   * **Stub**: not yet implemented.
+   * When `true`, the `map` field in the result will contain a JSON-encoded
+   * source map that maps the generated JavaScript back to the original `.astro` source.
    *
    * @default false
    */
@@ -173,6 +176,10 @@ export interface ErrorLabel {
   message: string | null
   start: number
   end: number
+  /** 1-based line number in the source. */
+  line: number
+  /** 0-based column number in the source. */
+  column: number
 }
 
 /** A hoisted script extracted from an Astro component. */

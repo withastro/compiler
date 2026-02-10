@@ -33,8 +33,9 @@ pub struct TransformOptions {
 
     /// Whether to generate a source map.
     ///
-    /// **Stub**: source map generation is not yet implemented; this field
-    /// is accepted for API compatibility.
+    /// When `true`, the `map` field in `TransformResult` will contain a
+    /// JSON-encoded source map that maps the generated JavaScript back to
+    /// the original `.astro` source file.
     pub sourcemap: bool,
 
     /// Arguments passed to `$$createAstro` when the Astro global is used.
@@ -174,7 +175,7 @@ impl TransformOptions {
         self
     }
 
-    /// Enable or disable source map generation (stub).
+    /// Enable or disable source map generation.
     #[must_use]
     pub fn with_sourcemap(mut self, enabled: bool) -> Self {
         self.sourcemap = enabled;

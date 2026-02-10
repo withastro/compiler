@@ -1,4 +1,6 @@
 export type {
+	CompilerError,
+	CompilerErrorLabel,
 	HoistedScript,
 	ParseOptions,
 	ParseResult,
@@ -11,7 +13,7 @@ import { compileAstro } from '@astrojs/compiler-binding';
 import { mapOptions, mapResult } from './shared.js';
 
 export const transform: typeof types.transform = async (input, options) => {
-	const result = mapResult(await compileAstro(input, mapOptions(options)));
+	const result = mapResult(await compileAstro(input, mapOptions(options)), options?.sourcemap);
 
 	// Post-process: call resolvePath for each component specifier if provided
 	if (typeof options?.resolvePath === 'function') {

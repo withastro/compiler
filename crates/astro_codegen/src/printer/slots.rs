@@ -12,6 +12,7 @@
 
 use oxc_ast::ast::*;
 use oxc_codegen::{Codegen, Context, Gen, GenExpr};
+use oxc_span::GetSpan;
 
 use super::AstroCodegen;
 use super::escape::escape_double_quotes;
@@ -22,8 +23,8 @@ use super::runtime;
 pub(super) enum SlotValue {
     /// Static slot name like `slot="header"`.
     Static(String),
-    /// Dynamic slot name like `slot={name}` — stores the expression as a string.
-    Dynamic(String),
+    /// Dynamic slot name like `slot={name}` — stores the expression as a string and the attribute span.
+    Dynamic(String, oxc_span::Span),
 }
 
 /// Extract the static slot name from a JSX element's attributes.
@@ -62,7 +63,7 @@ pub(super) fn get_slot_attribute_value(attrs: &[JSXAttributeItem<'_>]) -> Option
                             oxc_syntax::precedence::Precedence::Lowest,
                             Context::default().with_typescript(),
                         );
-                        return Some(SlotValue::Dynamic(codegen.into_source_text()));
+                        return Some(SlotValue::Dynamic(codegen.into_source_text(), attr.span));
                     }
                 }
                 _ => {}
@@ -284,7 +285,7 @@ impl<'a> AstroCodegen<'a> {
         let mut conditional_slots: Vec<&JSXExpressionContainer<'a>> = Vec::new();
 
         // Also track dynamic slots separately (elements with slot={expr})
-        let mut dynamic_slots: Vec<(String, Vec<&JSXChild<'a>>)> = Vec::new();
+        let mut dynamic_slots: Vec<(String, oxc_span::Span, Vec<&JSXChild<'a>>)> = Vec::new();
 
         for child in children {
             // Skip HTML comments in slots if configured
@@ -306,9 +307,9 @@ impl<'a> AstroCodegen<'a> {
                                 named_slots.push((slot_name.leak(), vec![child]));
                             }
                         }
-                        Some(SlotValue::Dynamic(expr)) => {
+                        Some(SlotValue::Dynamic(expr, span)) => {
                             // Dynamic slot: slot={expr}
-                            dynamic_slots.push((expr, vec![child]));
+                            dynamic_slots.push((expr, span, vec![child]));
                         }
                         None => {
                             default_children.push(child);
@@ -395,7 +396,8 @@ impl<'a> AstroCodegen<'a> {
         }
 
         // Print dynamic slots (elements with slot={expr}) using computed property syntax
-        for (expr, slot_children) in &dynamic_slots {
+        for (expr, span, slot_children) in &dynamic_slots {
+            self.add_source_mapping_for_span(*span);
             let async_prefix = self.get_async_prefix();
             let slot_params = self.get_slot_params();
             self.print("[");
@@ -435,6 +437,7 @@ impl<'a> AstroCodegen<'a> {
     fn print_conditional_slot_expr(&mut self, expr: &JSXExpression<'a>) {
         match expr {
             JSXExpression::ConditionalExpression(cond) => {
+                self.add_source_mapping_for_span(cond.span);
                 self.print_expression(&cond.test);
                 self.print(" ? ");
                 self.print_conditional_slot_branch(&cond.consequent);
@@ -442,6 +445,7 @@ impl<'a> AstroCodegen<'a> {
                 self.print_conditional_slot_branch(&cond.alternate);
             }
             JSXExpression::ArrowFunctionExpression(arrow) => {
+                self.add_source_mapping_for_span(arrow.span);
                 self.print_slot_aware_arrow_function(arrow);
             }
             _ => {
@@ -458,9 +462,11 @@ impl<'a> AstroCodegen<'a> {
     fn print_conditional_slot_branch_expr(&mut self, expr: &Expression<'a>) {
         match expr {
             Expression::ArrowFunctionExpression(arrow) => {
+                self.add_source_mapping_for_span(arrow.span);
                 self.print_slot_aware_arrow_function(arrow);
             }
             Expression::ConditionalExpression(cond) => {
+                self.add_source_mapping_for_span(cond.span);
                 self.print_expression(&cond.test);
                 self.print(" ? ");
                 self.print_conditional_slot_branch(&cond.consequent);
@@ -481,6 +487,7 @@ impl<'a> AstroCodegen<'a> {
         &mut self,
         arrow: &oxc_ast::ast::ArrowFunctionExpression<'a>,
     ) {
+        self.add_source_mapping_for_span(arrow.span);
         if arrow.r#async {
             self.print("async ");
         }
@@ -537,6 +544,7 @@ impl<'a> AstroCodegen<'a> {
         use oxc_ast::ast::Statement;
         match stmt {
             Statement::ReturnStatement(ret) => {
+                self.add_source_mapping_for_span(ret.span);
                 self.print("return ");
                 if let Some(arg) = &ret.argument {
                     self.print_conditional_slot_branch(arg);
@@ -544,10 +552,12 @@ impl<'a> AstroCodegen<'a> {
                 self.print("\n");
             }
             Statement::SwitchStatement(switch_stmt) => {
+                self.add_source_mapping_for_span(switch_stmt.span);
                 self.print("switch (");
                 self.print_expression(&switch_stmt.discriminant);
                 self.print(") {\n");
                 for case in &switch_stmt.cases {
+                    self.add_source_mapping_for_span(case.span);
                     if let Some(test) = &case.test {
                         self.print("case ");
                         self.print_expression(test);
@@ -563,6 +573,7 @@ impl<'a> AstroCodegen<'a> {
                 self.print("}");
             }
             Statement::BlockStatement(block) => {
+                self.add_source_mapping_for_span(block.span);
                 self.print("{\n");
                 for s in &block.body {
                     self.print_slot_aware_statement(s);
@@ -570,6 +581,7 @@ impl<'a> AstroCodegen<'a> {
                 self.print("}");
             }
             Statement::IfStatement(if_stmt) => {
+                self.add_source_mapping_for_span(if_stmt.span);
                 self.print("if (");
                 self.print_expression(&if_stmt.test);
                 self.print(") ");
@@ -580,6 +592,7 @@ impl<'a> AstroCodegen<'a> {
                 }
             }
             _ => {
+                self.add_source_mapping_for_span(stmt.span());
                 let mut codegen = Codegen::new();
                 stmt.print(&mut codegen, Context::default().with_typescript());
                 let code = codegen.into_source_text();
@@ -592,6 +605,7 @@ impl<'a> AstroCodegen<'a> {
     pub(super) fn print_conditional_slot_branch(&mut self, expr: &Expression<'a>) {
         match expr {
             Expression::JSXElement(el) => {
+                self.add_source_mapping_for_span(el.span);
                 // Extract slot name
                 if let Some(slot_name) = get_slot_attribute(&el.opening_element.attributes) {
                     let async_prefix = self.get_async_prefix();
@@ -619,6 +633,7 @@ impl<'a> AstroCodegen<'a> {
             }
             Expression::ConditionalExpression(cond) => {
                 // Nested ternary
+                self.add_source_mapping_for_span(cond.span);
                 self.print_expression(&cond.test);
                 self.print(" ? ");
                 self.print_conditional_slot_branch(&cond.consequent);

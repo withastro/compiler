@@ -35,34 +35,35 @@ impl OxcError {
         let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
         diagnostics
             .into_iter()
-            .map(|e| Self::from_diagnostic(&source, e))
+            .map(|e| Self::from_diagnostic(source_text, &source, e))
             .collect()
     }
 
     pub fn from_diagnostic(
+        source_text: &str,
         named_source: &Arc<NamedSource<String>>,
         diagnostic: OxcDiagnostic,
     ) -> Self {
-        let mut error = Self::from(&diagnostic);
-        let codeframe = diagnostic.with_source_code(Arc::clone(named_source));
-        error.codeframe = Some(format!("{codeframe:?}"));
-        error
-    }
-}
-
-impl From<&OxcDiagnostic> for OxcError {
-    fn from(diagnostic: &OxcDiagnostic) -> Self {
+        let severity = Severity::from(diagnostic.severity);
+        let message = diagnostic.message.to_string();
+        let help_message = diagnostic.help.as_ref().map(ToString::to_string);
         let labels = diagnostic
             .labels
             .as_ref()
-            .map(|labels| labels.iter().map(ErrorLabel::from).collect::<Vec<_>>())
+            .map(|labels| {
+                labels
+                    .iter()
+                    .map(|label| ErrorLabel::new(label, source_text))
+                    .collect::<Vec<_>>()
+            })
             .unwrap_or_default();
+        let codeframe = diagnostic.with_source_code(Arc::clone(named_source));
         Self {
-            severity: Severity::from(diagnostic.severity),
-            message: diagnostic.message.to_string(),
+            severity,
+            message,
             labels,
-            help_message: diagnostic.help.as_ref().map(ToString::to_string),
-            codeframe: None,
+            help_message,
+            codeframe: Some(format!("{codeframe:?}")),
         }
     }
 }
@@ -72,17 +73,45 @@ pub struct ErrorLabel {
     pub message: Option<String>,
     pub start: u32,
     pub end: u32,
+    /// 1-based line number in the source.
+    pub line: u32,
+    /// 0-based column number in the source.
+    pub column: u32,
 }
 
-impl From<&LabeledSpan> for ErrorLabel {
+impl ErrorLabel {
     #[expect(clippy::cast_possible_truncation)]
-    fn from(label: &LabeledSpan) -> Self {
+    pub fn new(label: &LabeledSpan, source_text: &str) -> Self {
+        let start = label.offset();
+        let end = start + label.len();
+        let (line, column) = byte_offset_to_line_column(source_text, start);
         Self {
             message: label.label().map(ToString::to_string),
-            start: label.offset() as u32,
-            end: (label.offset() + label.len()) as u32,
+            start: start as u32,
+            end: end as u32,
+            line,
+            column,
         }
     }
+}
+
+/// Convert a UTF-8 byte offset to a 1-based line and 0-based column.
+#[expect(clippy::cast_possible_truncation)]
+fn byte_offset_to_line_column(source: &str, offset: usize) -> (u32, u32) {
+    let mut line = 1u32;
+    let mut col = 0u32;
+    for (i, ch) in source.char_indices() {
+        if i >= offset {
+            break;
+        }
+        if ch == '\n' {
+            line += 1;
+            col = 0;
+        } else {
+            col += 1;
+        }
+    }
+    (line, col)
 }
 
 #[napi(string_enum)]
