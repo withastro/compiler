@@ -236,6 +236,25 @@ Attributes can use backticks for interpolation without opening an expression:
 <Component attribute=`hello ${value}` />
 ```
 
+#### Empty expressions inside attributes
+
+Empty expressions `{}` inside attributes are allowed:
+
+```astro
+<Component attribute={} />
+```
+
+#### Comments inside opening tags
+
+Comments are allowed inside the opening tag of an element:
+
+```astro
+<div
+	{/* Hello */}
+	class="my-class"
+></div>
+```
+
 #### Less-than signs in text nodes
 
 Less-than signs `<` in text nodes are parsed following HTML rules, meaning they do not need to be escaped:
