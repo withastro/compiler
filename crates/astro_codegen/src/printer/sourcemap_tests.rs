@@ -1,6 +1,12 @@
 // --- Sourcemap tests ---
 
-use crate::{printer::tests::compile_astro_with_options, TransformOptions, TransformResult};
+// Test sources are small; line/column counts never exceed u32.
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
+
+use crate::{TransformOptions, TransformResult, printer::tests::compile_astro_with_options};
 
 fn compile_astro_with_sourcemap(source: &str) -> TransformResult {
     compile_astro_with_options(
@@ -101,12 +107,12 @@ const name = "World";
 
 #[test]
 fn test_sourcemap_with_expressions() {
-    let source = r#"---
+    let source = r"---
 const items = [1, 2, 3];
 ---
 <ul>
 {items.map(i => <li>{i}</li>)}
-</ul>"#;
+</ul>";
     let result = compile_astro_with_sourcemap(source);
 
     assert!(!result.map.is_empty(), "sourcemap should be non-empty");
@@ -114,9 +120,8 @@ const items = [1, 2, 3];
         .expect("should parse as valid sourcemap");
 
     // Should have at least some tokens mapping back to the source
-    let tokens: Vec<_> = sm.get_tokens().collect();
     assert!(
-        !tokens.is_empty(),
+        sm.get_tokens().next().is_some(),
         "sourcemap should contain at least one mapping token"
     );
 }
@@ -133,19 +138,18 @@ import MyComponent from './MyComponent.astro';
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map)
         .expect("should parse as valid sourcemap");
 
-    let tokens: Vec<_> = sm.get_tokens().collect();
     assert!(
-        !tokens.is_empty(),
+        sm.get_tokens().next().is_some(),
         "sourcemap should contain mapping tokens for component"
     );
 }
 
 #[test]
 fn test_sourcemap_points_to_original_lines() {
-    let source = r#"---
+    let source = r"---
 const x = 1;
 ---
-<div>hello</div>"#;
+<div>hello</div>";
     let result = compile_astro_with_sourcemap(source);
 
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map)
@@ -208,13 +212,13 @@ const name = "World";
 
 #[test]
 fn test_sourcemap_with_typescript_stripping() {
-    let source = r#"---
+    let source = r"---
 interface Props {
 title: string;
 }
 const props: Props = Astro.props;
 ---
-<h1>{props.title}</h1>"#;
+<h1>{props.title}</h1>";
     let result = compile_astro_with_sourcemap(source);
 
     // TypeScript should be stripped
@@ -228,15 +232,14 @@ const props: Props = Astro.props;
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map)
         .expect("sourcemap should be valid JSON after TS stripping");
 
-    let tokens: Vec<_> = sm.get_tokens().collect();
     assert!(
-        !tokens.is_empty(),
+        sm.get_tokens().next().is_some(),
         "sourcemap should have tokens after TS stripping"
     );
 
     // Should still map back to the original .astro source
     assert_eq!(
-        sm.get_sources().next().map(|s| s.as_ref()),
+        sm.get_sources().next().map(std::convert::AsRef::as_ref),
         Some("test.astro")
     );
 }
@@ -248,6 +251,7 @@ const props: Props = Astro.props;
 /// Change `source` to whatever `.astro` content you want to inspect.
 #[test]
 #[ignore = "opens a browser — run manually"]
+#[expect(clippy::print_stderr)]
 fn test_sourcemap_open_visualizer() {
     let source = r#"---
 console.log(
@@ -327,10 +331,10 @@ fn source_line(source: &str, line: u32) -> &str {
 fn test_sourcemap_tokens_never_point_past_source() {
     // Regression: make sure no token points to a line/col beyond the
     // original source boundaries.
-    let source = r#"---
+    let source = r"---
 const a = 1;
 ---
-<p>hi</p>"#;
+<p>hi</p>";
     let result = compile_astro_with_sourcemap(source);
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map).unwrap();
 
@@ -361,10 +365,10 @@ const a = 1;
 
 #[test]
 fn test_sourcemap_tokens_never_point_past_generated() {
-    let source = r#"---
+    let source = r"---
 const x = 42;
 ---
-<div>{x}</div>"#;
+<div>{x}</div>";
     let result = compile_astro_with_sourcemap(source);
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map).unwrap();
 
@@ -684,7 +688,7 @@ fn assert_tokens_in_bounds(source: &str, result: &TransformResult) {
 fn test_sourcemap_closing_tags_have_mappings() {
     // Every closing tag (</h1>, </p>, </ul>, </li>, </div>) should have
     // a dedicated mapping pointing to its source position.
-    let source = r#"---
+    let source = r"---
 const x = 1;
 ---
 <div>
@@ -693,7 +697,7 @@ const x = 1;
 <ul>
 <li>item</li>
 </ul>
-</div>"#;
+</div>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -723,10 +727,10 @@ const x = 1;
 #[test]
 fn test_sourcemap_conditional_closing_tags() {
     // Both branches of a ternary produce closing tags that should be mapped.
-    let source = r#"---
+    let source = r"---
 const x = true;
 ---
-{x ? <p>yes</p> : <p>no</p>}"#;
+{x ? <p>yes</p> : <p>no</p>}";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map).unwrap();
@@ -753,7 +757,7 @@ const x = true;
 
 #[test]
 fn test_sourcemap_deeply_nested_html() {
-    let source = r#"<div>
+    let source = r"<div>
 <section>
 <article>
   <header>
@@ -762,7 +766,7 @@ fn test_sourcemap_deeply_nested_html() {
   <p>Content</p>
 </article>
 </section>
-</div>"#;
+</div>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map).unwrap();
@@ -845,10 +849,10 @@ const id = 42;
 
 #[test]
 fn test_sourcemap_html_comments() {
-    let source = r#"<div>
+    let source = r"<div>
 <!-- This is a comment -->
 <p>After comment</p>
-</div>"#;
+</div>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -1099,14 +1103,14 @@ fn test_sourcemap_void_elements_no_closing_mapping() {
 
 #[test]
 fn test_sourcemap_logical_and_expression() {
-    let source = r#"---
+    let source = r"---
 const show = true;
 const items = [1, 2];
 ---
 <div>
 {show && <p>Shown</p>}
 {items.length > 0 && <ul>{items.map(i => <li>{i}</li>)}</ul>}
-</div>"#;
+</div>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -1502,12 +1506,12 @@ fn test_sourcemap_slot_element() {
 
 #[test]
 fn test_sourcemap_chained_methods() {
-    let source = r#"---
+    let source = r"---
 const data = [1, 2, 3, 4, 5];
 ---
 <ul>
 {data.filter(n => n > 2).map(n => <li>{n}</li>)}
-</ul>"#;
+</ul>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -1532,7 +1536,7 @@ const data = [1, 2, 3, 4, 5];
 
 #[test]
 fn test_sourcemap_arrow_block_body() {
-    let source = r#"---
+    let source = r"---
 const items = [1, 2, 3];
 ---
 <ul>
@@ -1540,7 +1544,7 @@ const items = [1, 2, 3];
 const doubled = item * 2;
 return <li>{doubled}</li>;
 })}
-</ul>"#;
+</ul>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -1667,7 +1671,7 @@ fn test_sourcemap_static_html_attribute() {
 #[test]
 fn test_sourcemap_boolean_html_attribute() {
     // Boolean attributes on HTML elements should have sourcemap mappings.
-    let source = r#"<input disabled readonly />"#;
+    let source = r"<input disabled readonly />";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -1719,7 +1723,7 @@ const cls = "active";
 fn test_sourcemap_switch_case_labels_in_jsx() {
     // Individual case labels inside switch statements within JSX-aware
     // arrow function bodies should have sourcemap mappings.
-    let source = r#"---
+    let source = r"---
 const items = [1, 2, 3];
 ---
 <ul>
@@ -1733,7 +1737,7 @@ default:
 return <li>other</li>;
 }
 })}
-</ul>"#;
+</ul>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -1837,11 +1841,10 @@ fn test_sourcemap_hoisted_script_nested_maps_to_render_script() {
     // containing "$$renderScript".
     let gen_lines: Vec<&str> = result.code.lines().collect();
     let maps_to_render_script = tokens.iter().any(|t| {
-        if t.get_src_line() == 1 && t.get_src_col() == 0 {
-            if let Some(line) = gen_lines.get(t.get_dst_line() as usize) {
+        if t.get_src_line() == 1 && t.get_src_col() == 0
+            && let Some(line) = gen_lines.get(t.get_dst_line() as usize) {
                 return line.contains("$$renderScript");
             }
-        }
         false
     });
     assert!(
@@ -1910,9 +1913,8 @@ fn test_sourcemap_inline_script_has_mappings() {
     );
 
     // There should be at least one mapping for source line 1 (the script line).
-    let line1_tokens: Vec<_> = tokens.iter().filter(|t| t.get_src_line() == 1).collect();
     assert!(
-        !line1_tokens.is_empty(),
+        tokens.iter().any(|t| t.get_src_line() == 1),
         "inline script line should have at least one sourcemap token. All tokens: {tokens:?}"
     );
 
@@ -1954,13 +1956,13 @@ fn test_sourcemap_inline_script_has_mappings() {
 fn test_sourcemap_multiline_frontmatter_per_line_mapping() {
     // Multi-line frontmatter: each source line of the statement should map
     // back to its own line, not all collapse to the statement-start line.
-    let source = r#"---
+    let source = r"---
 console.log(
 	'Hello from Astro!',
 )();
 ---
 
-<h1>Astro</h1>"#;
+<h1>Astro</h1>";
     let result = compile_astro_with_sourcemap(source);
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map)
         .expect("should parse as valid sourcemap");
@@ -2001,7 +2003,7 @@ console.log(
     let unique_src_lines: std::collections::HashSet<u32> = tokens
         .iter()
         .filter(|t| t.get_src_line() >= 1 && t.get_src_line() <= 3)
-        .map(|t| t.get_src_line())
+        .map(oxc_sourcemap::Token::get_src_line)
         .collect();
     assert!(
         unique_src_lines.len() >= 2,
@@ -2014,7 +2016,7 @@ console.log(
 fn test_sourcemap_multiline_frontmatter_with_typescript() {
     // Ensure TypeScript in multi-line frontmatter is stripped by Phase 2,
     // and sourcemap still has per-line mappings.
-    let source = r#"---
+    let source = r"---
 interface Props {
 title: string;
 }
@@ -2023,7 +2025,7 @@ const msg: string = `Hello ${
 props.title
 }`;
 ---
-<h1>{msg}</h1>"#;
+<h1>{msg}</h1>";
     let result = compile_astro_with_sourcemap(source);
 
     // TypeScript should be stripped
@@ -2164,7 +2166,7 @@ const showA = true;
 fn test_sourcemap_jsx_aware_block_body_statements() {
     // Statements inside arrow function block bodies used in JSX expressions
     // (print_jsx_aware_statement) should have sourcemap mappings.
-    let source = r#"---
+    let source = r"---
 const items = [1, 2, 3];
 ---
 <ul>
@@ -2172,7 +2174,7 @@ const items = [1, 2, 3];
 const doubled = item * 2;
 return <li>{doubled}</li>;
 })}
-</ul>"#;
+</ul>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -2209,11 +2211,11 @@ return <li>{doubled}</li>;
 fn test_sourcemap_slot_element_closing_tag() {
     // The closing </slot> tag should get a sourcemap mapping, similar
     // to regular HTML element closing tags.
-    let source = r#"<div>
+    let source = r"<div>
 <slot>
 <p>fallback</p>
 </slot>
-</div>"#;
+</div>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -2348,9 +2350,8 @@ const content = "<em>bold</em>";
     );
 
     // Verify the source text at the mapped position points to "set:html" or "<div"
-    let line3_tokens: Vec<_> = tokens.iter().filter(|t| t.2 == 3).collect();
     assert!(
-        !line3_tokens.is_empty(),
+        tokens.iter().any(|t| t.2 == 3),
         "should have tokens pointing to line 3"
     );
 }
@@ -2406,7 +2407,7 @@ fn test_sourcemap_transition_name_on_html_element() {
 #[test]
 fn test_sourcemap_transition_persist_on_html_element() {
     // transition:persist on an HTML element should have a sourcemap mapping.
-    let source = r#"<div transition:persist>content</div>"#;
+    let source = r"<div transition:persist>content</div>";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);
@@ -2523,10 +2524,10 @@ import Widget from './Widget.astro';
 #[test]
 fn test_sourcemap_transition_persist_on_component() {
     // transition:persist on a component should have a sourcemap mapping.
-    let source = r#"---
+    let source = r"---
 import Counter from './Counter.astro';
 ---
-<Counter transition:persist />"#;
+<Counter transition:persist />";
     let result = compile_astro_with_sourcemap(source);
     assert_tokens_in_bounds(source, &result);
     let tokens = token_tuples(&result.map);

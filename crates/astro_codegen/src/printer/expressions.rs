@@ -6,11 +6,11 @@
 //! JavaScript expressions and JSX are interleaved.
 
 use oxc_ast::ast::*;
-use oxc_codegen::{Codegen, Context, Gen, GenExpr};
 use oxc_span::GetSpan;
 
 use super::AstroCodegen;
 use super::runtime;
+use super::{expr_to_string, gen_to_string};
 
 impl<'a> AstroCodegen<'a> {
     pub(super) fn print_jsx_fragment(&mut self, frag: &JSXFragment<'a>) {
@@ -180,13 +180,7 @@ impl<'a> AstroCodegen<'a> {
             _ => {
                 self.add_source_mapping_for_span(expr.span());
                 // For all other expressions, use regular codegen
-                let mut codegen = Codegen::new();
-                expr.print_expr(
-                    &mut codegen,
-                    oxc_syntax::precedence::Precedence::Lowest,
-                    Context::default().with_typescript(),
-                );
-                let code = codegen.into_source_text();
+                let code = expr_to_string(expr);
                 // Use multiline-aware print so that each line of the expanded
                 // expression gets a Phase 1 mapping.  Without this, lines like
                 // `1,` / `2,` / `3` from `[1, 2, 3]` would have no Phase 1
@@ -273,42 +267,7 @@ impl<'a> AstroCodegen<'a> {
         &mut self,
         arrow: &oxc_ast::ast::ArrowFunctionExpression<'a>,
     ) {
-        if arrow.r#async {
-            self.print("async ");
-        }
-        // Print parameters
-        // Single simple identifier param doesn't need parens, but destructuring patterns do
-        let needs_parens = arrow.params.items.len() != 1
-            || arrow.params.rest.is_some()
-            || !matches!(
-                arrow.params.items.first().map(|p| &p.pattern),
-                Some(oxc_ast::ast::BindingPattern::BindingIdentifier(_))
-            );
-
-        if needs_parens {
-            self.print("(");
-        }
-
-        let mut first = true;
-        for param in &arrow.params.items {
-            if !first {
-                self.print(", ");
-            }
-            first = false;
-            self.print_binding_pattern(&param.pattern);
-        }
-        if let Some(rest) = &arrow.params.rest {
-            if !first {
-                self.print(", ");
-            }
-            self.print("...");
-            self.print_binding_pattern(&rest.rest.argument);
-        }
-
-        if needs_parens {
-            self.print(")");
-        }
-        self.print(" => ");
+        self.print_arrow_params(arrow);
 
         // Print body
         if arrow.expression {
@@ -352,9 +311,7 @@ impl<'a> AstroCodegen<'a> {
             Statement::VariableDeclaration(decl) => {
                 self.add_source_mapping_for_span(decl.span);
                 // Use regular codegen for variable declarations
-                let mut codegen = Codegen::new();
-                decl.print(&mut codegen, Context::default().with_typescript());
-                let code = codegen.into_source_text();
+                let code = gen_to_string(decl.as_ref());
                 self.print(&code);
                 self.print("\n");
             }
@@ -401,9 +358,7 @@ impl<'a> AstroCodegen<'a> {
             _ => {
                 self.add_source_mapping_for_span(stmt.span());
                 // For other statements, use regular codegen
-                let mut codegen = Codegen::new();
-                stmt.print(&mut codegen, Context::default().with_typescript());
-                let code = codegen.into_source_text();
+                let code = gen_to_string(stmt);
                 self.print(&code);
                 self.print("\n");
             }
@@ -415,9 +370,7 @@ impl<'a> AstroCodegen<'a> {
             self.print(ident.name.as_str());
         } else {
             // For complex patterns, use regular codegen
-            let mut codegen = Codegen::new();
-            pattern.print(&mut codegen, Context::default().with_typescript());
-            let code = codegen.into_source_text();
+            let code = gen_to_string(pattern);
             self.print(&code);
         }
     }

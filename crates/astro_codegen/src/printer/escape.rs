@@ -5,6 +5,7 @@
 //! and quoted strings.
 
 use cow_utils::CowUtils;
+use oxc_syntax::xml_entities::XML_ENTITIES;
 
 /// Escape a string for safe embedding inside a JavaScript template literal.
 ///
@@ -28,11 +29,18 @@ pub fn escape_template_literal(s: &str) -> String {
 }
 
 /// Escape double quotes for embedding inside a `"..."` string.
+///
+/// Only escapes `"` — backslashes are not escaped because the inputs are
+/// HTML attribute values or AST string literals, which don't contain
+/// escape sequences. Matches the Go compiler's `escapeDoubleQuote`.
 pub fn escape_double_quotes(s: &str) -> String {
     s.cow_replace('"', "\\\"").into_owned()
 }
 
 /// Escape single quotes for embedding inside a `'...'` string.
+///
+/// Only escapes `'` — see [`escape_double_quotes`] for rationale on
+/// why backslashes are not escaped.
 pub fn escape_single_quote(s: &str) -> String {
     s.cow_replace('\'', "\\'").into_owned()
 }
@@ -59,24 +67,26 @@ fn escape_ampersands(s: &str) -> std::borrow::Cow<'_, str> {
     }
 
     let mut result = String::with_capacity(s.len());
-    let chars: Vec<char> = s.chars().collect();
     let mut i = 0;
+    let bytes = s.as_bytes();
 
-    while i < chars.len() {
-        if chars[i] == '&' {
+    while i < bytes.len() {
+        if bytes[i] == b'&' {
             // Check if this is part of a valid HTML entity
-            let remaining: String = chars[i..].iter().collect();
-            if is_html_entity_start(&remaining) {
+            if is_html_entity_start(&s[i..]) {
                 // Keep the & as-is (part of an entity)
                 result.push('&');
             } else {
                 // Escape the &
                 result.push_str("&amp;");
             }
+            i += 1;
         } else {
-            result.push(chars[i]);
+            // Advance by one character (may be multi-byte UTF-8)
+            let c = s[i..].chars().next().unwrap();
+            result.push(c);
+            i += c.len_utf8();
         }
-        i += 1;
     }
 
     std::borrow::Cow::Owned(result)
@@ -124,6 +134,9 @@ pub fn decode_html_entities(s: &str) -> String {
 }
 
 /// Decode a single HTML entity like `&lt;` → `<` or `&#x3C;` → `<`.
+///
+/// Uses [`oxc_syntax::xml_entities::XML_ENTITIES`] for named entity lookup,
+/// which covers all 252 standard HTML/XML entities.
 fn decode_entity(entity: &str) -> Option<char> {
     if !entity.starts_with('&') || !entity.ends_with(';') {
         return None;
@@ -142,23 +155,19 @@ fn decode_entity(entity: &str) -> Option<char> {
         return dec.parse::<u32>().ok().and_then(char::from_u32);
     }
 
-    // Named entities
-    match inner {
-        "lt" => Some('<'),
-        "gt" => Some('>'),
-        "amp" => Some('&'),
-        "quot" => Some('"'),
-        "apos" => Some('\''),
-        "nbsp" => Some('\u{00A0}'),
-        _ => None,
-    }
+    // Named entities — look up in the comprehensive XML_ENTITIES map
+    XML_ENTITIES.get(inner).copied()
 }
 
 /// Check if a string starting with `&` is a valid HTML entity start.
 ///
 /// Used by [`escape_ampersands`] to distinguish standalone `&` characters
-/// (which should be escaped to `&amp;`) from `&` that begins a real entity
-/// (which should be preserved).
+/// (which should be escaped to `&amp;`) from `&` that begins something that
+/// *looks like* an entity reference (which should be preserved as-is).
+///
+/// This check is intentionally permissive: `&word` (without a trailing `;`)
+/// is treated as a potential entity to avoid over-escaping content like URL
+/// query parameters (e.g. `&q=75`).
 fn is_html_entity_start(s: &str) -> bool {
     let Some(rest) = s.strip_prefix('&') else {
         return false;
@@ -187,8 +196,8 @@ fn is_html_entity_start(s: &str) -> bool {
             .is_some_and(|c| c.is_ascii_digit());
     }
 
-    // Named entity: & followed by alphanumeric, eventually ending with ;
-    // Check if the next char is alphanumeric (common named entities like &quot;, &amp;, etc.)
+    // Named entity: & followed by alphanumeric (common entities like &quot;, &amp;, etc.)
+    // Intentionally permissive — also matches URL query params like &q=75
     rest.chars()
         .next()
         .is_some_and(|c| c.is_ascii_alphanumeric())

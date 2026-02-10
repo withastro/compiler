@@ -14,11 +14,14 @@ use oxc_span::Span;
 ///
 /// Tracks the mapping between positions in the generated JavaScript output
 /// and positions in the original `.astro` source file.
-pub struct AstroSourcemapBuilder {
+///
+/// The lifetime `'a` ties this builder to the original source text, avoiding
+/// the need for `unsafe` transmutes or `'static` references.
+pub struct AstroSourcemapBuilder<'a> {
     /// The source id assigned by the inner sourcemap builder.
     source_id: u32,
     /// The original `.astro` source text (used for byte-offset → line/column conversion).
-    original_source: &'static str,
+    original_source: &'a str,
     /// Line offset table for the original source: `line_starts[i]` is the byte offset
     /// of the first character on line `i` (0-indexed).
     line_starts: Vec<u32>,
@@ -36,26 +39,20 @@ pub struct AstroSourcemapBuilder {
     last_position: Option<u32>,
 }
 
-impl AstroSourcemapBuilder {
+impl<'a> AstroSourcemapBuilder<'a> {
     /// Create a new sourcemap builder.
     ///
     /// `source_path` is the filename used in the sourcemap's `sources` array.
-    /// `source_text` is the original `.astro` source text.
-    ///
-    /// # Safety / Lifetime
-    /// The `source_text` reference is transmuted to `'static` to avoid lifetime
-    /// infection throughout `AstroCodegen`. The caller must ensure the source text
-    /// outlives this builder (which it does — both live for the duration of `build()`).
-    pub fn new(source_path: &Path, source_text: &str) -> Self {
+    /// `source_text` is the original `.astro` source text, which must outlive
+    /// this builder.
+    pub fn new(source_path: &Path, source_text: &'a str) -> Self {
         let mut inner = oxc_sourcemap::SourceMapBuilder::default();
-        // SAFETY: source_text is borrowed from the allocator which outlives the builder.
-        let static_source: &'static str = unsafe { std::mem::transmute(source_text) };
         let source_id =
-            inner.set_source_and_content(source_path.to_string_lossy().as_ref(), static_source);
+            inner.set_source_and_content(source_path.to_string_lossy().as_ref(), source_text);
         let line_starts = Self::compute_line_starts(source_text);
         Self {
             source_id,
-            original_source: static_source,
+            original_source: source_text,
             line_starts,
             inner,
             last_generated_update: 0,
@@ -77,17 +74,6 @@ impl AstroSourcemapBuilder {
     /// `original_position` is a byte offset into the original `.astro` source text.
     pub fn add_source_mapping(&mut self, output: &[u8], original_position: u32) {
         self.add_source_mapping_impl(output, original_position, None);
-    }
-
-    /// Add a source mapping with an optional name.
-    #[expect(dead_code)]
-    pub fn add_source_mapping_with_name(
-        &mut self,
-        output: &[u8],
-        original_position: u32,
-        name: &str,
-    ) {
-        self.add_source_mapping_impl(output, original_position, Some(name));
     }
 
     /// Add a source mapping, bypassing the consecutive-position dedup check.

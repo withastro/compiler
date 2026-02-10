@@ -5,21 +5,16 @@
 //! `client:visible`, `client:only`, etc.) and `set:html`/`set:text` on components.
 
 use oxc_ast::ast::*;
-use oxc_codegen::{Codegen, Context, GenExpr};
-
 use super::AstroCodegen;
 use super::escape::{decode_html_entities, escape_double_quotes};
+use super::expr_to_string;
 use super::runtime;
 use crate::scanner::{get_jsx_attribute_name, is_custom_element};
 
 /// A client hydration directive parsed from a component's attributes.
-// `framework` is parsed and stored for future use
 pub(super) enum HydrationDirective {
     /// `client:only="framework"` — component is not rendered server-side.
-    ClientOnly {
-        #[expect(dead_code)]
-        framework: Option<String>,
-    },
+    ClientOnly,
     /// Any other `client:*` directive (e.g. `load`, `idle`, `visible`, `media`).
     Other(String),
 }
@@ -28,13 +23,13 @@ impl HydrationDirective {
     /// The directive name as it appears after `client:` (e.g. `"only"`, `"load"`).
     pub fn name(&self) -> &str {
         match self {
-            Self::ClientOnly { .. } => "only",
+            Self::ClientOnly => "only",
             Self::Other(name) => name,
         }
     }
 
     pub fn is_client_only(&self) -> bool {
-        matches!(self, Self::ClientOnly { .. })
+        matches!(self, Self::ClientOnly)
     }
 }
 
@@ -61,13 +56,7 @@ impl<'a> AstroCodegen<'a> {
 
                 if let Some(d) = name.strip_prefix("client:") {
                     directive = Some(if d == "only" {
-                        let framework =
-                            if let Some(JSXAttributeValue::StringLiteral(lit)) = &attr.value {
-                                Some(lit.value.to_string())
-                            } else {
-                                None
-                            };
-                        HydrationDirective::ClientOnly { framework }
+                        HydrationDirective::ClientOnly
                     } else {
                         HydrationDirective::Other(d.to_string())
                     });
@@ -277,14 +266,9 @@ impl<'a> AstroCodegen<'a> {
                                         }
                                     }
                                 }
-                                let mut codegen = Codegen::new();
-                                e.print_expr(
-                                    &mut codegen,
-                                    oxc_syntax::precedence::Precedence::Lowest,
-                                    Context::default().with_typescript(),
-                                );
+                                let code = expr_to_string(e);
                                 return Some((
-                                    codegen.into_source_text(),
+                                    code,
                                     is_html,
                                     needs_unescape,
                                     false,

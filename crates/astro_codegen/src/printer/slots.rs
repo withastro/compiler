@@ -11,12 +11,12 @@
 //!    `print_conditional_slot_*`, etc.).
 
 use oxc_ast::ast::*;
-use oxc_codegen::{Codegen, Context, Gen, GenExpr};
 use oxc_span::GetSpan;
 
 use super::AstroCodegen;
 use super::escape::escape_double_quotes;
 use super::runtime;
+use super::{expr_to_string, gen_to_string};
 
 /// Represents a slot attribute value — either a static string or a dynamic expression.
 #[derive(Debug, Clone)]
@@ -57,13 +57,7 @@ pub(super) fn get_slot_attribute_value(attrs: &[JSXAttributeItem<'_>]) -> Option
                 }
                 Some(JSXAttributeValue::ExpressionContainer(expr)) => {
                     if let Some(e) = expr.expression.as_expression() {
-                        let mut codegen = Codegen::new();
-                        e.print_expr(
-                            &mut codegen,
-                            oxc_syntax::precedence::Precedence::Lowest,
-                            Context::default().with_typescript(),
-                        );
-                        return Some(SlotValue::Dynamic(codegen.into_source_text(), attr.span));
+                        return Some(SlotValue::Dynamic(expr_to_string(e), attr.span));
                     }
                 }
                 _ => {}
@@ -75,14 +69,13 @@ pub(super) fn get_slot_attribute_value(attrs: &[JSXAttributeItem<'_>]) -> Option
 
 /// Information about slots found within an expression container.
 #[derive(Debug)]
-#[expect(dead_code)] // `Multiple` variant contents aren't read yet
 pub(super) enum ExpressionSlotInfo<'a> {
     /// No slotted elements found — treat as default slot.
     None,
     /// Single slot found — use that slot name for the entire expression.
     Single(&'a str),
     /// Multiple different slots found — requires `$$mergeSlots`.
-    Multiple(Vec<&'a str>),
+    Multiple,
 }
 
 /// Extract slot information from a JSX expression.
@@ -102,7 +95,7 @@ pub(super) fn extract_slots_from_expression<'a>(
             if slots.iter().all(|s| *s == slots[0]) {
                 ExpressionSlotInfo::Single(slots[0])
             } else {
-                ExpressionSlotInfo::Multiple(slots)
+                ExpressionSlotInfo::Multiple
             }
         }
     }
@@ -250,15 +243,24 @@ impl<'a> AstroCodegen<'a> {
         }
     }
 
+    /// Print the opening of a slot render function: ` async? () => $$render\``.
+    ///
+    /// This is the common suffix after a slot key. After calling this, the
+    /// caller should print the slot body and then close with `` \` ``.
+    fn print_slot_fn_open(&mut self) {
+        let async_prefix = self.get_async_prefix();
+        let slot_params = self.get_slot_params();
+        self.print(async_prefix);
+        self.print(slot_params);
+        self.print(runtime::RENDER);
+        self.print("`");
+    }
+
     /// Print all children as a single default slot, preserving slot attributes.
     /// Used for custom elements (web components) where the browser handles slots.
     pub(super) fn print_component_default_slot_only(&mut self, children: &[JSXChild<'a>]) {
-        let async_prefix = self.get_async_prefix();
-        let slot_params = self.get_slot_params();
         self.print("{\"default\": ");
-        self.print(&format!("{async_prefix}{slot_params}"));
-        self.print(runtime::RENDER);
-        self.print("`");
+        self.print_slot_fn_open();
 
         // DO NOT set skip_slot_attribute — we want to preserve slot="..." for custom elements
         for child in children {
@@ -280,7 +282,7 @@ impl<'a> AstroCodegen<'a> {
         // 3. expression_slots — expressions containing single slotted element
         // 4. conditional_slots — expressions with multiple different slots (need $$mergeSlots)
         let mut default_children: Vec<&JSXChild<'a>> = Vec::new();
-        let mut named_slots: Vec<(&str, Vec<&JSXChild<'a>>)> = Vec::new();
+        let mut named_slots: Vec<(String, Vec<&JSXChild<'a>>)> = Vec::new();
         let mut expression_slots: Vec<(&str, &JSXChild<'a>)> = Vec::new();
         let mut conditional_slots: Vec<&JSXExpressionContainer<'a>> = Vec::new();
 
@@ -300,11 +302,11 @@ impl<'a> AstroCodegen<'a> {
                         Some(SlotValue::Static(slot_name)) => {
                             // Static slot: slot="name"
                             if let Some((_, slot_children)) =
-                                named_slots.iter_mut().find(|(name, _)| *name == slot_name)
+                                named_slots.iter_mut().find(|(name, _)| name == &slot_name)
                             {
                                 slot_children.push(child);
                             } else {
-                                named_slots.push((slot_name.leak(), vec![child]));
+                                named_slots.push((slot_name, vec![child]));
                             }
                         }
                         Some(SlotValue::Dynamic(expr, span)) => {
@@ -325,7 +327,7 @@ impl<'a> AstroCodegen<'a> {
                         ExpressionSlotInfo::Single(slot_name) => {
                             expression_slots.push((slot_name, child));
                         }
-                        ExpressionSlotInfo::Multiple(_) => {
+                        ExpressionSlotInfo::Multiple => {
                             conditional_slots.push(expr);
                         }
                     }
@@ -351,11 +353,8 @@ impl<'a> AstroCodegen<'a> {
             .iter()
             .any(|c| Self::jsx_child_has_content(c));
         if has_meaningful_content {
-            let async_prefix = self.get_async_prefix();
-            let slot_params = self.get_slot_params();
-            self.print(&format!("\"default\": {async_prefix}{slot_params}"));
-            self.print(runtime::RENDER);
-            self.print("`");
+            self.print("\"default\": ");
+            self.print_slot_fn_open();
             for child in &default_children {
                 self.print_jsx_child(child);
             }
@@ -364,13 +363,10 @@ impl<'a> AstroCodegen<'a> {
 
         // Print named slots (direct elements with slot attribute)
         for (name, slot_children) in &named_slots {
-            let async_prefix = self.get_async_prefix();
-            let slot_params = self.get_slot_params();
             self.print("\"");
             self.print(&escape_double_quotes(name));
-            self.print(&format!("\": {async_prefix}{slot_params}"));
-            self.print(runtime::RENDER);
-            self.print("`");
+            self.print("\": ");
+            self.print_slot_fn_open();
             // Skip slot attribute when printing these children
             self.skip_slot_attribute = true;
             for child in slot_children {
@@ -382,13 +378,10 @@ impl<'a> AstroCodegen<'a> {
 
         // Print expression slots (expressions with single slot)
         for (name, child) in &expression_slots {
-            let async_prefix = self.get_async_prefix();
-            let slot_params = self.get_slot_params();
             self.print("\"");
             self.print(&escape_double_quotes(name));
-            self.print(&format!("\": {async_prefix}{slot_params}"));
-            self.print(runtime::RENDER);
-            self.print("`");
+            self.print("\": ");
+            self.print_slot_fn_open();
             self.skip_slot_attribute = true;
             self.print_jsx_child(child);
             self.skip_slot_attribute = false;
@@ -398,13 +391,10 @@ impl<'a> AstroCodegen<'a> {
         // Print dynamic slots (elements with slot={expr}) using computed property syntax
         for (expr, span, slot_children) in &dynamic_slots {
             self.add_source_mapping_for_span(*span);
-            let async_prefix = self.get_async_prefix();
-            let slot_params = self.get_slot_params();
             self.print("[");
             self.print(expr);
-            self.print(&format!("]: {async_prefix}{slot_params}"));
-            self.print(runtime::RENDER);
-            self.print("`");
+            self.print("]: ");
+            self.print_slot_fn_open();
             self.skip_slot_attribute = true;
             for child in slot_children {
                 self.print_jsx_child(child);
@@ -488,39 +478,7 @@ impl<'a> AstroCodegen<'a> {
         arrow: &oxc_ast::ast::ArrowFunctionExpression<'a>,
     ) {
         self.add_source_mapping_for_span(arrow.span);
-        if arrow.r#async {
-            self.print("async ");
-        }
-        // Print parameters
-        let needs_parens = arrow.params.items.len() != 1
-            || arrow.params.rest.is_some()
-            || !matches!(
-                arrow.params.items.first().map(|p| &p.pattern),
-                Some(oxc_ast::ast::BindingPattern::BindingIdentifier(_))
-            );
-
-        if needs_parens {
-            self.print("(");
-        }
-        let mut first = true;
-        for param in &arrow.params.items {
-            if !first {
-                self.print(", ");
-            }
-            first = false;
-            self.print_binding_pattern(&param.pattern);
-        }
-        if let Some(rest) = &arrow.params.rest {
-            if !first {
-                self.print(", ");
-            }
-            self.print("...");
-            self.print_binding_pattern(&rest.rest.argument);
-        }
-        if needs_parens {
-            self.print(")");
-        }
-        self.print(" => ");
+        self.print_arrow_params(arrow);
 
         if arrow.expression {
             // Expression body
@@ -593,9 +551,7 @@ impl<'a> AstroCodegen<'a> {
             }
             _ => {
                 self.add_source_mapping_for_span(stmt.span());
-                let mut codegen = Codegen::new();
-                stmt.print(&mut codegen, Context::default().with_typescript());
-                let code = codegen.into_source_text();
+                let code = gen_to_string(stmt);
                 self.print(&code);
                 self.print("\n");
             }
@@ -608,25 +564,18 @@ impl<'a> AstroCodegen<'a> {
                 self.add_source_mapping_for_span(el.span);
                 // Extract slot name
                 if let Some(slot_name) = get_slot_attribute(&el.opening_element.attributes) {
-                    let async_prefix = self.get_async_prefix();
-                    let slot_params = self.get_slot_params();
                     self.print("{\"");
                     self.print(&escape_double_quotes(slot_name));
-                    self.print(&format!("\": {async_prefix}{slot_params}"));
-                    self.print(runtime::RENDER);
-                    self.print("`");
+                    self.print("\": ");
+                    self.print_slot_fn_open();
                     self.skip_slot_attribute = true;
                     self.print_jsx_element(el);
                     self.skip_slot_attribute = false;
                     self.print("`}");
                 } else {
                     // No slot attribute — print as default
-                    let async_prefix = self.get_async_prefix();
-                    let slot_params = self.get_slot_params();
                     self.print("{\"default\": ");
-                    self.print(&format!("{async_prefix}{slot_params}"));
-                    self.print(runtime::RENDER);
-                    self.print("`");
+                    self.print_slot_fn_open();
                     self.print_jsx_element(el);
                     self.print("`}");
                 }

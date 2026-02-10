@@ -96,7 +96,6 @@ impl ErrorLabel {
 }
 
 /// Convert a UTF-8 byte offset to a 1-based line and 0-based column.
-#[expect(clippy::cast_possible_truncation)]
 fn byte_offset_to_line_column(source: &str, offset: usize) -> (u32, u32) {
     let mut line = 1u32;
     let mut col = 0u32;

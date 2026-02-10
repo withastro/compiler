@@ -6,13 +6,11 @@
 //! attributes, and element classification helpers (`is_void_element`,
 //! `is_head_element`).
 
-use oxc_ast::ast::*;
-use oxc_codegen::{Codegen, Context, GenExpr};
-
 use super::escape::{escape_double_quotes, escape_html_attribute};
 use super::runtime;
-use super::AstroCodegen;
+use super::{expr_to_string, AstroCodegen};
 use crate::scanner::get_jsx_attribute_name;
+use oxc_ast::ast::*;
 
 /// Returns `true` for HTML void elements that must not have a closing tag.
 pub(super) fn is_void_element(name: &str) -> bool {
@@ -189,15 +187,12 @@ impl<'a> AstroCodegen<'a> {
                     }
                     if let Some(JSXAttributeValue::ExpressionContainer(expr)) = &attr.value {
                         // Dynamic slot name
-                        let mut codegen = Codegen::new();
-                        if let Some(e) = expr.expression.as_expression() {
-                            e.print_expr(
-                                &mut codegen,
-                                oxc_syntax::precedence::Precedence::Lowest,
-                                Context::default().with_typescript(),
-                            );
-                        }
-                        return format!("\" + {} + \"", codegen.into_source_text());
+                        let expr_str = expr
+                            .expression
+                            .as_expression()
+                            .map(expr_to_string)
+                            .unwrap_or_default();
+                        return format!("\" + {expr_str} + \"");
                     }
                 }
             }
@@ -245,21 +240,17 @@ impl<'a> AstroCodegen<'a> {
                             }
                         }
                         Some(JSXAttributeValue::ExpressionContainer(expr)) => {
-                            let mut codegen = Codegen::new();
+                            let mut value_str = String::new();
                             let mut is_literal = false;
                             if let Some(e) = expr.expression.as_expression() {
                                 is_literal = matches!(
                                     e,
                                     Expression::StringLiteral(_) | Expression::TemplateLiteral(_)
                                 );
-                                e.print_expr(
-                                    &mut codegen,
-                                    oxc_syntax::precedence::Precedence::Lowest,
-                                    Context::default().with_typescript(),
-                                );
+                                value_str = expr_to_string(e);
                             }
                             let needs_unescape = directive_type == "html" && !is_literal;
-                            (codegen.into_source_text(), needs_unescape, false)
+                            (value_str, needs_unescape, false)
                         }
                         _ => ("void 0".to_string(), false, false),
                     };
@@ -410,13 +401,7 @@ impl<'a> AstroCodegen<'a> {
             }
             Some(JSXAttributeValue::ExpressionContainer(expr)) => {
                 if let Some(e) = expr.expression.as_expression() {
-                    let mut codegen = Codegen::new();
-                    e.print_expr(
-                        &mut codegen,
-                        oxc_syntax::precedence::Precedence::Lowest,
-                        Context::default().with_typescript(),
-                    );
-                    let source = codegen.into_source_text();
+                    let source = expr_to_string(e);
                     // Template literals don't need parens, but other expressions do
                     if matches!(e, Expression::TemplateLiteral(_)) {
                         source

@@ -14,10 +14,11 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_data_structures::code_buffer::CodeBuffer;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_codegen::CodegenOptions;
+use oxc_codegen::{Codegen, CodegenOptions, Context, Gen, GenExpr};
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::precedence::Precedence;
 
 use crate::TransformOptions;
 use crate::scanner::{
@@ -52,6 +53,32 @@ use elements::is_head_element;
 
 // Bring sourcemap builder into scope.
 use sourcemap_builder::AstroSourcemapBuilder;
+
+// --- Codegen helpers ---
+//
+// These free functions wrap `oxc_codegen::Codegen` to convert AST nodes into
+// source-text strings.  They replace the repetitive
+//     `Codegen::new()` → `print_expr` / `print` → `into_source_text()`
+// pattern that was duplicated 10+ times across the printer submodules.
+
+/// Convert an expression AST node to a JavaScript source string.
+pub fn expr_to_string(expr: &(impl GenExpr + ?Sized)) -> String {
+    let mut codegen = Codegen::new();
+    expr.print_expr(
+        &mut codegen,
+        Precedence::Lowest,
+        Context::default().with_typescript(),
+    );
+    codegen.into_source_text()
+}
+
+/// Convert an AST node that implements [`Gen`] (e.g. `Statement`,
+/// `VariableDeclaration`, `BindingPattern`) to a JavaScript source string.
+pub fn gen_to_string(node: &(impl Gen + ?Sized)) -> String {
+    let mut codegen = Codegen::new();
+    node.print(&mut codegen, Context::default().with_typescript());
+    codegen.into_source_text()
+}
 
 /// Runtime function names used in generated code.
 mod runtime {
@@ -133,7 +160,7 @@ pub struct AstroCodegen<'a> {
     /// Base hash for the source file (computed once)
     source_hash: String,
     /// Sourcemap builder (present when `options.sourcemap` is true)
-    sourcemap_builder: Option<AstroSourcemapBuilder>,
+    sourcemap_builder: Option<AstroSourcemapBuilder<'a>>,
 }
 
 /// Information about an imported module for metadata.
@@ -232,8 +259,7 @@ impl<'a> AstroCodegen<'a> {
         &self,
         component_name: &str,
     ) -> Option<TransformResultHydratedComponent> {
-        if component_name.contains('.') {
-            let dot_pos = component_name.find('.').unwrap();
+        if let Some(dot_pos) = component_name.find('.') {
             let root = &component_name[..dot_pos];
             let rest = &component_name[dot_pos + 1..];
 
@@ -295,6 +321,51 @@ impl<'a> AstroCodegen<'a> {
         self.code.print_char('\n');
     }
 
+    // --- Shared arrow-function helpers ---
+
+    /// Print arrow function parameters including parentheses and the `=>` arrow.
+    ///
+    /// Prints the async prefix (if applicable), the parameter list (with
+    /// optional parentheses for single-identifier params), and ` => `.
+    /// The caller is responsible for printing the body.
+    fn print_arrow_params(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        if arrow.r#async {
+            self.print("async ");
+        }
+        // Single simple identifier param doesn't need parens, but destructuring patterns do
+        let needs_parens = arrow.params.items.len() != 1
+            || arrow.params.rest.is_some()
+            || !matches!(
+                arrow.params.items.first().map(|p| &p.pattern),
+                Some(BindingPattern::BindingIdentifier(_))
+            );
+
+        if needs_parens {
+            self.print("(");
+        }
+
+        let mut first = true;
+        for param in &arrow.params.items {
+            if !first {
+                self.print(", ");
+            }
+            first = false;
+            self.print_binding_pattern(&param.pattern);
+        }
+        if let Some(rest) = &arrow.params.rest {
+            if !first {
+                self.print(", ");
+            }
+            self.print("...");
+            self.print_binding_pattern(&rest.rest.argument);
+        }
+
+        if needs_parens {
+            self.print(")");
+        }
+        self.print(" => ");
+    }
+
     // --- Sourcemap helpers ---
 
     /// Record a sourcemap mapping for a `Span` (uses `span.start`).
@@ -344,7 +415,6 @@ impl<'a> AstroCodegen<'a> {
     ///
     /// Panics if the intermediate or final code exceeds `isize::MAX` lines
     /// (impossible in practice for source files).
-    #[expect(clippy::items_after_statements)]
     pub fn build(mut self, root: &'a AstroRoot<'a>) -> TransformResult {
         self.print_astro_root(root);
 
@@ -402,458 +472,16 @@ impl<'a> AstroCodegen<'a> {
         let scope = self.source_hash.clone();
         let intermediate_code = self.code.into_string();
         let phase1_sourcemap = self.sourcemap_builder.take();
-        let generate_sourcemap = self.options.sourcemap;
+        let source_path = self.options.filename.as_deref().unwrap_or("<stdin>");
 
-        // Strip TypeScript from the generated code, optionally producing a sourcemap.
-        let (code, map) = strip_typescript(self.allocator, &intermediate_code, generate_sourcemap);
-
-        // Compose sourcemaps if both phases produced one.
-        //
-        // Phase 1 maps intermediate positions → original .astro positions.
-        // Phase 2 maps final positions → intermediate positions.
-        // Composition gives us final positions → original .astro positions.
-        //
-        // However, Phase 2 (oxc_codegen re-emit) only produces tokens at AST
-        // node boundaries.  The template literal `$$render\`...\`` is one AST
-        // node, so all the fine-grained Phase 1 tokens *inside* it are lost
-        // during naïve composition.
-        //
-        // Fix: after composing the two maps, carry forward any Phase 1 tokens
-        // that were not covered by Phase 2 by computing the line-offset
-        // between the intermediate and final code and adjusting their
-        // generated positions.
-        // Token struct used to collect, sort, and deduplicate all
-        // mappings before feeding them to the builder (which requires
-        // tokens in ascending generated-position order).
-        struct RawToken {
-            dst_line: u32,
-            dst_col: u32,
-            src_line: u32,
-            src_col: u32,
-            name: Option<String>,
-        }
-
-        let map = if let (Some(phase2_map), Some(phase1_sm)) = (map, phase1_sourcemap) {
-            let phase1_map = phase1_sm.into_sourcemap();
-            let source_path = self.options.filename.as_deref().unwrap_or("<stdin>");
-            let composed = sourcemap_builder::remap_sourcemap(
-                &phase2_map,
-                &phase1_map,
-                source_path,
-                self.source_text,
-            );
-
-            // Supplement: carry forward Phase 1 template-literal tokens,
-            // but ONLY on lines where the intermediate and final content
-            // match (same text, possibly differing only in leading whitespace).
-            //
-            // Phase 2 (oxc_codegen) reformats expressions inside template
-            // literal interpolations (e.g. adds parens, changes indentation),
-            // so columns on those lines differ between intermediate and final.
-            // Supplementing such lines with Phase 1 column positions produces
-            // wrong mappings.
-            //
-            // However, oxc_codegen commonly adds a leading tab to lines inside
-            // function bodies while leaving the rest of the line identical.
-            // We detect this case and adjust column offsets accordingly, so
-            // Phase 1 tokens on those lines are preserved with correct columns.
-            //
-            // For lines that truly differ (reformatted expressions, added
-            // parens, etc.), composition (Phase 2 → Phase 1 lookup) already
-            // provides correct mappings at AST-node granularity.
-            let inter_lines: Vec<&str> = intermediate_code.lines().collect();
-            let final_lines: Vec<&str> = code.lines().collect();
-
-            let inter_template_line = inter_lines
-                .iter()
-                .position(|l| l.contains("return $$render`"));
-            let final_template_line = final_lines
-                .iter()
-                .position(|l| l.contains("return $$render`"));
-
-            let composed = if let (Some(i_line), Some(f_line)) =
-                (inter_template_line, final_template_line)
-            {
-
-                // For each intermediate line, compute the column adjustment
-                // needed to map intermediate columns to final columns.
-                //
-                // - If the lines match exactly: delta is 0.
-                // - If they differ only in leading whitespace: uniform delta.
-                // - If they differ due to `</` → `<\/` escaping (template
-                //   literal safety): leading-ws delta plus per-position
-                //   adjustments for each inserted backslash.
-                //
-                // `None` means the lines genuinely differ and supplementing
-                // is not safe.
-                //
-                // The value is (ws_delta, escape_insert_positions) where
-                // escape_insert_positions lists intermediate columns where
-                // a `\` was inserted in the final text (empty for exact or
-                // whitespace-only matches).
-                let line_col_info: rustc_hash::FxHashMap<usize, (i64, Vec<usize>)> = (i_line
-                    ..inter_lines.len())
-                    .filter_map(|il| {
-                        // il >= i_line is guaranteed by the range, so this
-                        // never underflows.  f_line + (il - i_line) is the
-                        // corresponding final line index.
-                        let fl = il - i_line + f_line;
-                        if fl >= final_lines.len() {
-                            return None;
-                        }
-                        let i_text = inter_lines[il];
-                        let f_text = final_lines[fl];
-
-                        // Fast path: lines are identical.
-                        if i_text == f_text {
-                            return Some((il, (0i64, Vec::new())));
-                        }
-
-                        // Check if lines differ only in leading whitespace
-                        // (and/or template literal escaping like <\/ vs </).
-                        let i_trimmed = i_text.trim_start();
-                        let f_trimmed = f_text.trim_start();
-
-                        // Leading whitespace counts are bounded by line
-                        // length which is bounded by file size — always
-                        // representable as i64.
-                        let i_ws_len = i64::try_from(i_text.len() - i_trimmed.len())
-                            .expect("whitespace length exceeds i64");
-                        let f_ws_len = i64::try_from(f_text.len() - f_trimmed.len())
-                            .expect("whitespace length exceeds i64");
-                        let ws_delta = f_ws_len - i_ws_len;
-
-                        if i_trimmed == f_trimmed {
-                            return Some((il, (ws_delta, Vec::new())));
-                        }
-
-                        // Normalize template literal escapes: oxc_codegen
-                        // escapes `</` as `<\/` inside template literals for
-                        // HTML safety.  We treat these as matching, but track
-                        // the insertion positions for column adjustment.
-                        let i_norm = i_trimmed.replace("<\\/", "</");
-                        let f_norm = f_trimmed.replace("<\\/", "</");
-                        if i_norm != f_norm {
-                            return None; // Content genuinely differs.
-                        }
-
-                        // Find positions in the intermediate trimmed text
-                        // where `</` occurs — these correspond to `<\/` in
-                        // the final text, meaning a `\` was inserted after
-                        // the `<`.  We record the intermediate column (in
-                        // the full line, not trimmed) of the `/` char, which
-                        // is where the shift starts.
-                        //
-                        // We search `i_trimmed` (intermediate) for `</`
-                        // rather than `f_trimmed` for `<\/`, because the
-                        // intermediate positions are what we need and
-                        // searching the final text would give wrong offsets
-                        // for the 2nd+ escape on the same line (each `<\/`
-                        // is 3 chars in final but only 2 in intermediate,
-                        // causing a cumulative +1 error per prior escape).
-                        let mut escape_positions = Vec::new();
-                        let i_ws = i_text.len() - i_trimmed.len();
-                        let mut search_start = 0;
-                        let search_text = i_trimmed;
-                        while let Some(pos) = search_text[search_start..].find("</") {
-                            let trimmed_pos = search_start + pos;
-                            // The `\` is inserted at trimmed_pos + 1 (after `<`).
-                            // In intermediate line coords, this corresponds to
-                            // i_ws + trimmed_pos + 1 (the `/` in intermediate).
-                            escape_positions.push(i_ws + trimmed_pos + 1);
-                            search_start = trimmed_pos + 2; // skip past `</`
-                        }
-
-                        Some((il, (ws_delta, escape_positions)))
-                    })
-                    .collect();
-
-                // Collect the composed tokens into a set of (dst_line, dst_col)
-                // so we can skip Phase 1 tokens that were already covered.
-                let composed_positions: rustc_hash::FxHashSet<(u32, u32)> = composed
-                    .get_tokens()
-                    .map(|t| (t.get_dst_line(), t.get_dst_col()))
-                    .collect();
-
-                // Build Phase-2 anchor index for DIFFER lines.
-                //
-                // Phase 2 tokens provide (inter_col → final_line, final_col)
-                // pairs.  On DIFFER lines (where Phase 2 reformatted JS
-                // expressions but left template quasi text intact), we can use
-                // the nearest anchor to compute the column offset for Phase-1
-                // tokens that sit inside quasi text regions.
-                //
-                // Keyed by intermediate line → vec of (inter_col, final_line,
-                // final_col), sorted by inter_col ascending.
-                let phase2_anchors: rustc_hash::FxHashMap<u32, Vec<(u32, u32, u32)>> = {
-                    let mut map: rustc_hash::FxHashMap<u32, Vec<(u32, u32, u32)>> =
-                        rustc_hash::FxHashMap::default();
-                    for t in phase2_map.get_tokens() {
-                        map.entry(t.get_src_line()).or_default().push((
-                            t.get_src_col(),
-                            t.get_dst_line(),
-                            t.get_dst_col(),
-                        ));
-                    }
-                    for v in map.values_mut() {
-                        v.sort_by_key(|&(ic, _, _)| ic);
-                    }
-                    map
-                };
-
-                let mut all_tokens: Vec<RawToken> = Vec::new();
-
-                // 1. Existing composed tokens.
-                for t in composed.get_tokens() {
-                    let name = t
-                        .get_name_id()
-                        .and_then(|id| composed.get_name(id))
-                        .map(std::string::ToString::to_string);
-                    all_tokens.push(RawToken {
-                        dst_line: t.get_dst_line(),
-                        dst_col: t.get_dst_col(),
-                        src_line: t.get_src_line(),
-                        src_col: t.get_src_col(),
-                        name,
-                    });
-                }
-
-                // 2. Phase 1 tokens inside the template literal, on lines
-                //    where the content matches (exactly or after leading
-                //    whitespace adjustment), OR on DIFFER lines where the
-                //    token sits inside a quasi text region that is identical
-                //    between intermediate and final code.
-                for t in phase1_map.get_tokens() {
-                    let gen_line = t.get_dst_line() as usize;
-                    // Only consider tokens at or after the template start.
-                    if gen_line < i_line {
-                        continue;
-                    }
-
-                    let token_col = t.get_dst_col();
-
-                    // Try the matched-line path first (exact, leading-ws,
-                    // or escape-normalized match).  If absent, fall through
-                    // to anchor-based supplementing for DIFFER lines.
-                    let (adjusted_line, adjusted_col) =
-                        if let Some((ws_delta, escape_positions)) = line_col_info.get(&gen_line) {
-                            // gen_line >= i_line (checked above), so this
-                            // never underflows.
-                            let al = u32::try_from(gen_line - i_line + f_line)
-                                .expect("adjusted line exceeds u32");
-
-                            // Count how many escape insertions occur at or
-                            // before this token's column.  Each `<\/` escape
-                            // adds 1 byte (the `\`) that shifts subsequent
-                            // columns.
-                            let tc = token_col as usize;
-                            let escape_shift = i64::try_from(
-                                escape_positions.iter().filter(|&&pos| pos <= tc).count(),
-                            )
-                            .expect("escape count exceeds i64");
-
-                            let ac = u32::try_from(
-                                (i64::from(token_col) + ws_delta + escape_shift).max(0),
-                            )
-                            .expect("adjusted column exceeds u32");
-                            (al, ac)
-                        } else {
-                            // DIFFER line — try anchor-based supplementing.
-                            //
-                            // Phase 2 reformats JS expressions inside ${}
-                            // (adds spaces, parens, etc.) but leaves template
-                            // quasi text identical.  Phase-1 tokens inside
-                            // quasi regions can be carried forward by using
-                            // the nearest Phase-2 token as a column anchor
-                            // and verifying the text matches at the computed
-                            // final position.
-                            let Ok(gen_line_u32) = u32::try_from(gen_line) else {
-                                continue;
-                            };
-
-                            if let Some(anchors) = phase2_anchors.get(&gen_line_u32) {
-                                // Find the nearest anchor with inter_col <=
-                                // token_col (the last one in sorted order that
-                                // doesn't exceed it).
-                                let nearest =
-                                    anchors.iter().rev().find(|&&(ic, _, _)| ic <= token_col);
-                                if let Some(&(anchor_ic, anchor_fl, anchor_fc)) = nearest {
-                                    let delta = i64::from(anchor_fc) - i64::from(anchor_ic);
-                                    let candidate_col = u32::try_from(
-                                        (i64::from(token_col) + delta).max(0),
-                                    )
-                                    .expect("candidate column exceeds u32");
-
-                                    // Verify: the text at the candidate final
-                                    // position must match the intermediate text at
-                                    // the token position.  This confirms we are in
-                                    // a quasi region (not a reformatted expression).
-                                    let i_text =
-                                        inter_lines.get(gen_line).copied().unwrap_or("");
-                                    let f_text = final_lines
-                                        .get(anchor_fl as usize)
-                                        .copied()
-                                        .unwrap_or("");
-                                    let tc = token_col as usize;
-                                    let cc = candidate_col as usize;
-                                    // Use a short verification window; 2 bytes is
-                                    // enough to confirm we're at the same quasi
-                                    // text (e.g. "<p", "</", etc.).
-                                    let verify_len = 2;
-                                    let text_matches = tc + verify_len <= i_text.len()
-                                        && cc + verify_len <= f_text.len()
-                                        && i_text.as_bytes()[tc..tc + verify_len]
-                                            == f_text.as_bytes()[cc..cc + verify_len];
-
-                                    if text_matches {
-                                        (anchor_fl, candidate_col)
-                                    } else {
-                                        continue;
-                                    }
-                                } else {
-                                    continue;
-                                }
-                            } else {
-                                // No Phase-2 anchors for this intermediate line.
-                                //
-                                // This happens for lines that are pure template
-                                // literal quasi text (no JS expressions).  Phase-2
-                                // reformatting may shift these lines by inserting
-                                // extra lines for object literal properties, but
-                                // the text content remains identical.
-                                //
-                                // Search a window of final lines around the
-                                // expected position for a line containing the same
-                                // text at the token's column.
-                                let i_text =
-                                    inter_lines.get(gen_line).copied().unwrap_or("");
-                                let tc = token_col as usize;
-                                let verify_len = 2;
-                                if tc + verify_len > i_text.len() {
-                                    continue;
-                                }
-                                let needle = &i_text.as_bytes()[tc..tc + verify_len];
-
-                                // Expected final line based on the template offset.
-                                // gen_line >= i_line (checked at loop top).
-                                let expected_fl = gen_line - i_line + f_line;
-                                // Search ±5 lines around expected position to
-                                // account for Phase-2 reformatting inserting a
-                                // few extra lines.
-                                let search_start = expected_fl.saturating_sub(5);
-                                let search_end =
-                                    (expected_fl + 6).min(final_lines.len());
-
-                                let mut found = None;
-                                for (fl, f_text) in final_lines
-                                    .iter()
-                                    .enumerate()
-                                    .take(search_end)
-                                    .skip(search_start)
-                                {
-                                    // Check same column (the text is quasi literal,
-                                    // so the column should be identical).
-                                    if tc + verify_len <= f_text.len()
-                                        && &f_text.as_bytes()[tc..tc + verify_len]
-                                            == needle
-                                    {
-                                        let fl_u32 = u32::try_from(fl)
-                                            .expect("final line exceeds u32");
-                                        found = Some((fl_u32, token_col));
-                                        break;
-                                    }
-                                    // Also check with leading whitespace adjustment:
-                                    // Phase-2 may have added or removed leading ws.
-                                    let f_trimmed = f_text.trim_start();
-                                    let i_trimmed = i_text.trim_start();
-                                    let f_ws =
-                                        i64::try_from(f_text.len() - f_trimmed.len())
-                                            .unwrap_or(0);
-                                    let i_ws =
-                                        i64::try_from(i_text.len() - i_trimmed.len())
-                                            .unwrap_or(0);
-                                    let ws_adj = f_ws - i_ws;
-                                    let adj_col_i64 =
-                                        (i64::from(token_col) + ws_adj).max(0);
-                                    let adj_col = usize::try_from(adj_col_i64)
-                                        .expect("adjusted column exceeds usize");
-                                    if adj_col + verify_len <= f_text.len()
-                                        && &f_text.as_bytes()
-                                            [adj_col..adj_col + verify_len]
-                                            == needle
-                                    {
-                                        let fl_u32 = u32::try_from(fl)
-                                            .expect("final line exceeds u32");
-                                        let ac = u32::try_from(adj_col)
-                                            .expect("adjusted col exceeds u32");
-                                        found = Some((fl_u32, ac));
-                                        break;
-                                    }
-                                }
-
-                                let Some((fl, fc)) = found else {
-                                    continue;
-                                };
-                                (fl, fc)
-                            }
-                        };
-
-                    // Skip if already covered by composition.
-                    if composed_positions.contains(&(adjusted_line, adjusted_col)) {
-                        continue;
-                    }
-
-                    // Skip if beyond final code.
-                    if (adjusted_line as usize) >= final_lines.len() {
-                        continue;
-                    }
-
-                    let name = t
-                        .get_name_id()
-                        .and_then(|id| phase1_map.get_name(id))
-                        .map(std::string::ToString::to_string);
-
-                    all_tokens.push(RawToken {
-                        dst_line: adjusted_line,
-                        dst_col: adjusted_col,
-                        src_line: t.get_src_line(),
-                        src_col: t.get_src_col(),
-                        name,
-                    });
-                }
-
-                // Sort by generated position (line first, then column).
-                all_tokens
-                    .sort_by(|a, b| a.dst_line.cmp(&b.dst_line).then(a.dst_col.cmp(&b.dst_col)));
-
-                // Deduplicate tokens at the same generated position.
-                all_tokens.dedup_by(|a, b| a.dst_line == b.dst_line && a.dst_col == b.dst_col);
-
-                // Build the final sourcemap in sorted order.
-                let mut builder = oxc_sourcemap::SourceMapBuilder::default();
-                let src_id = builder.set_source_and_content(source_path, self.source_text);
-
-                for t in &all_tokens {
-                    let name_id = t.name.as_deref().map(|n| builder.add_name(n));
-                    builder.add_token(
-                        t.dst_line,
-                        t.dst_col,
-                        t.src_line,
-                        t.src_col,
-                        Some(src_id),
-                        name_id,
-                    );
-                }
-
-                builder.into_sourcemap()
-            } else {
-                composed
-            };
-
-            composed.to_json_string()
-        } else {
-            String::new()
-        };
+        // Strip TypeScript and compose sourcemaps.
+        let (code, map) = strip_and_compose_sourcemaps(
+            self.allocator,
+            &intermediate_code,
+            phase1_sourcemap,
+            source_path,
+            self.source_text,
+        );
 
         TransformResult {
             code,
@@ -978,18 +606,21 @@ impl<'a> AstroCodegen<'a> {
             return;
         }
 
-        let imports: Vec<_> = self.module_imports.clone();
-        for import in imports {
-            if import.assertion == "{}" {
-                self.println(&format!(
+        for i in 0..self.module_imports.len() {
+            if self.module_imports[i].assertion == "{}" {
+                let line = format!(
                     "import * as {} from \"{}\";",
-                    import.namespace_var, import.specifier
-                ));
+                    self.module_imports[i].namespace_var, self.module_imports[i].specifier
+                );
+                self.println(&line);
             } else {
-                self.println(&format!(
+                let line = format!(
                     "import * as {} from \"{}\" assert {};",
-                    import.namespace_var, import.specifier, import.assertion
-                ));
+                    self.module_imports[i].namespace_var,
+                    self.module_imports[i].specifier,
+                    self.module_imports[i].assertion
+                );
+                self.println(&line);
             }
         }
         self.println("");
@@ -1049,19 +680,18 @@ impl<'a> AstroCodegen<'a> {
             if scan_client_only.is_empty() {
                 "[]".to_string()
             } else {
-                let mut seen = Vec::new();
+                let mut seen = FxHashSet::default();
                 let mut items = Vec::new();
                 for h in scan_client_only {
-                    let root = if h.name.contains('.') {
-                        &h.name[..h.name.find('.').unwrap()]
+                    let root = if let Some(dot_pos) = h.name.find('.') {
+                        &h.name[..dot_pos]
                     } else {
                         h.name.as_str()
                     };
                     if let Some(info) = self.component_imports.get(root)
-                        && !seen.contains(&info.specifier)
+                        && seen.insert(info.specifier.clone())
                     {
                         items.push(format!("\"{}\"", info.specifier));
-                        seen.push(info.specifier.clone());
                     }
                 }
                 format!("[{}]", items.join(", "))
@@ -1656,6 +1286,490 @@ fn get_component_name(filename: Option<&str>) -> String {
     }
 
     format!("$${pascal}")
+}
+
+/// A sourcemap token used to collect, sort, and deduplicate all mappings
+/// before feeding them to the sourcemap builder (which requires tokens in
+/// ascending generated-position order).
+struct RawToken {
+    dst_line: u32,
+    dst_col: u32,
+    src_line: u32,
+    src_col: u32,
+    name: Option<String>,
+}
+
+/// Strip TypeScript from `intermediate_code` and compose the resulting
+/// sourcemap with the Phase 1 sourcemap from Astro codegen.
+///
+/// Phase 1 maps intermediate positions → original `.astro` positions.
+/// Phase 2 (TypeScript stripping / oxc_codegen re-emit) maps final positions
+/// → intermediate positions.  Composition gives us final positions → original
+/// `.astro` positions.
+///
+/// However, Phase 2 only produces tokens at AST node boundaries.  The template
+/// literal `$$render\`...\`` is one AST node, so all the fine-grained Phase 1
+/// tokens *inside* it are lost during naïve composition.  After composing, this
+/// function carries forward Phase 1 tokens that were not covered by Phase 2 by
+/// computing line/column adjustments between the intermediate and final code.
+///
+/// Returns `(final_code, sourcemap_json)` where `sourcemap_json` is empty if
+/// no sourcemap was requested.
+///
+/// # Panics
+///
+/// Panics if line or column values exceed `u32` or `i64` (impossible in
+/// practice for source files).
+fn strip_and_compose_sourcemaps(
+    allocator: &Allocator,
+    intermediate_code: &str,
+    phase1_sourcemap: Option<AstroSourcemapBuilder<'_>>,
+    source_path: &str,
+    source_text: &str,
+) -> (String, String) {
+    let generate_sourcemap = phase1_sourcemap.is_some();
+    let (code, phase2_map) = strip_typescript(allocator, intermediate_code, generate_sourcemap);
+
+    let map = if let (Some(phase2_map), Some(phase1_sm)) = (phase2_map, phase1_sourcemap) {
+        let phase1_map = phase1_sm.into_sourcemap();
+        let composed = sourcemap_builder::remap_sourcemap(
+            &phase2_map,
+            &phase1_map,
+            source_path,
+            source_text,
+        );
+
+        // Supplement: carry forward Phase 1 template-literal tokens,
+        // but ONLY on lines where the intermediate and final content
+        // match (same text, possibly differing only in leading whitespace).
+        //
+        // Phase 2 (oxc_codegen) reformats expressions inside template
+        // literal interpolations (e.g. adds parens, changes indentation),
+        // so columns on those lines differ between intermediate and final.
+        // Supplementing such lines with Phase 1 column positions produces
+        // wrong mappings.
+        //
+        // However, oxc_codegen commonly adds a leading tab to lines inside
+        // function bodies while leaving the rest of the line identical.
+        // We detect this case and adjust column offsets accordingly, so
+        // Phase 1 tokens on those lines are preserved with correct columns.
+        //
+        // For lines that truly differ (reformatted expressions, added
+        // parens, etc.), composition (Phase 2 → Phase 1 lookup) already
+        // provides correct mappings at AST-node granularity.
+        let inter_lines: Vec<&str> = intermediate_code.lines().collect();
+        let final_lines: Vec<&str> = code.lines().collect();
+
+        let inter_template_line = inter_lines
+            .iter()
+            .position(|l| l.contains("return $$render`"));
+        let final_template_line = final_lines
+            .iter()
+            .position(|l| l.contains("return $$render`"));
+
+        let composed = if let (Some(i_line), Some(f_line)) =
+            (inter_template_line, final_template_line)
+        {
+            // For each intermediate line, compute the column adjustment
+            // needed to map intermediate columns to final columns.
+            //
+            // - If the lines match exactly: delta is 0.
+            // - If they differ only in leading whitespace: uniform delta.
+            // - If they differ due to `</` → `<\/` escaping (template
+            //   literal safety): leading-ws delta plus per-position
+            //   adjustments for each inserted backslash.
+            //
+            // `None` means the lines genuinely differ and supplementing
+            // is not safe.
+            //
+            // The value is (ws_delta, escape_insert_positions) where
+            // escape_insert_positions lists intermediate columns where
+            // a `\` was inserted in the final text (empty for exact or
+            // whitespace-only matches).
+            let line_col_info: FxHashMap<usize, (i64, Vec<usize>)> = (i_line
+                ..inter_lines.len())
+                .filter_map(|il| {
+                    // il >= i_line is guaranteed by the range, so this
+                    // never underflows.  f_line + (il - i_line) is the
+                    // corresponding final line index.
+                    let fl = il - i_line + f_line;
+                    if fl >= final_lines.len() {
+                        return None;
+                    }
+                    let i_text = inter_lines[il];
+                    let f_text = final_lines[fl];
+
+                    // Fast path: lines are identical.
+                    if i_text == f_text {
+                        return Some((il, (0i64, Vec::new())));
+                    }
+
+                    // Check if lines differ only in leading whitespace
+                    // (and/or template literal escaping like <\/ vs </).
+                    let i_trimmed = i_text.trim_start();
+                    let f_trimmed = f_text.trim_start();
+
+                    // Leading whitespace counts are bounded by line
+                    // length which is bounded by file size — always
+                    // representable as i64.
+                    let i_ws_len = i64::try_from(i_text.len() - i_trimmed.len())
+                        .expect("whitespace length exceeds i64");
+                    let f_ws_len = i64::try_from(f_text.len() - f_trimmed.len())
+                        .expect("whitespace length exceeds i64");
+                    let ws_delta = f_ws_len - i_ws_len;
+
+                    if i_trimmed == f_trimmed {
+                        return Some((il, (ws_delta, Vec::new())));
+                    }
+
+                    // Normalize template literal escapes: oxc_codegen
+                    // escapes `</` as `<\/` inside template literals for
+                    // HTML safety.  We treat these as matching, but track
+                    // the insertion positions for column adjustment.
+                    let i_norm = i_trimmed.replace("<\\/", "</");
+                    let f_norm = f_trimmed.replace("<\\/", "</");
+                    if i_norm != f_norm {
+                        return None; // Content genuinely differs.
+                    }
+
+                    // Find positions in the intermediate trimmed text
+                    // where `</` occurs — these correspond to `<\/` in
+                    // the final text, meaning a `\` was inserted after
+                    // the `<`.  We record the intermediate column (in
+                    // the full line, not trimmed) of the `/` char, which
+                    // is where the shift starts.
+                    //
+                    // We search `i_trimmed` (intermediate) for `</`
+                    // rather than `f_trimmed` for `<\/`, because the
+                    // intermediate positions are what we need and
+                    // searching the final text would give wrong offsets
+                    // for the 2nd+ escape on the same line (each `<\/`
+                    // is 3 chars in final but only 2 in intermediate,
+                    // causing a cumulative +1 error per prior escape).
+                    let mut escape_positions = Vec::new();
+                    let i_ws = i_text.len() - i_trimmed.len();
+                    let mut search_start = 0;
+                    let search_text = i_trimmed;
+                    while let Some(pos) = search_text[search_start..].find("</") {
+                        let trimmed_pos = search_start + pos;
+                        // The `\` is inserted at trimmed_pos + 1 (after `<`).
+                        // In intermediate line coords, this corresponds to
+                        // i_ws + trimmed_pos + 1 (the `/` in intermediate).
+                        escape_positions.push(i_ws + trimmed_pos + 1);
+                        search_start = trimmed_pos + 2; // skip past `</`
+                    }
+
+                    Some((il, (ws_delta, escape_positions)))
+                })
+                .collect();
+
+            // Collect the composed tokens into a set of (dst_line, dst_col)
+            // so we can skip Phase 1 tokens that were already covered.
+            let composed_positions: FxHashSet<(u32, u32)> = composed
+                .get_tokens()
+                .map(|t| (t.get_dst_line(), t.get_dst_col()))
+                .collect();
+
+            // Build Phase-2 anchor index for DIFFER lines.
+            //
+            // Phase 2 tokens provide (inter_col → final_line, final_col)
+            // pairs.  On DIFFER lines (where Phase 2 reformatted JS
+            // expressions but left template quasi text intact), we can use
+            // the nearest anchor to compute the column offset for Phase-1
+            // tokens that sit inside quasi text regions.
+            //
+            // Keyed by intermediate line → vec of (inter_col, final_line,
+            // final_col), sorted by inter_col ascending.
+            let phase2_anchors: FxHashMap<u32, Vec<(u32, u32, u32)>> = {
+                let mut map: FxHashMap<u32, Vec<(u32, u32, u32)>> = FxHashMap::default();
+                for t in phase2_map.get_tokens() {
+                    map.entry(t.get_src_line()).or_default().push((
+                        t.get_src_col(),
+                        t.get_dst_line(),
+                        t.get_dst_col(),
+                    ));
+                }
+                for v in map.values_mut() {
+                    v.sort_by_key(|&(ic, _, _)| ic);
+                }
+                map
+            };
+
+            let ctx = SupplementContext {
+                inter_lines,
+                final_lines,
+                i_line,
+                f_line,
+                phase2_anchors,
+                line_col_info,
+                composed_positions,
+            };
+
+            let mut all_tokens: Vec<RawToken> = Vec::new();
+
+            // 1. Existing composed tokens.
+            for t in composed.get_tokens() {
+                let name = t
+                    .get_name_id()
+                    .and_then(|id| composed.get_name(id))
+                    .map(std::string::ToString::to_string);
+                all_tokens.push(RawToken {
+                    dst_line: t.get_dst_line(),
+                    dst_col: t.get_dst_col(),
+                    src_line: t.get_src_line(),
+                    src_col: t.get_src_col(),
+                    name,
+                });
+            }
+
+            // 2. Phase 1 tokens inside the template literal, on lines
+            //    where the content matches (exactly or after leading
+            //    whitespace adjustment), OR on DIFFER lines where the
+            //    token sits inside a quasi text region that is identical
+            //    between intermediate and final code.
+            supplement_phase1_tokens(&phase1_map, &ctx, &mut all_tokens);
+
+            // Sort by generated position (line first, then column).
+            all_tokens
+                .sort_by(|a, b| a.dst_line.cmp(&b.dst_line).then(a.dst_col.cmp(&b.dst_col)));
+
+            // Deduplicate tokens at the same generated position.
+            all_tokens.dedup_by(|a, b| a.dst_line == b.dst_line && a.dst_col == b.dst_col);
+
+            // Build the final sourcemap in sorted order.
+            let mut builder = oxc_sourcemap::SourceMapBuilder::default();
+            let src_id = builder.set_source_and_content(source_path, source_text);
+
+            for t in &all_tokens {
+                let name_id = t.name.as_deref().map(|n| builder.add_name(n));
+                builder.add_token(
+                    t.dst_line,
+                    t.dst_col,
+                    t.src_line,
+                    t.src_col,
+                    Some(src_id),
+                    name_id,
+                );
+            }
+
+            builder.into_sourcemap()
+        } else {
+            composed
+        };
+
+        composed.to_json_string()
+    } else {
+        String::new()
+    };
+
+    (code, map)
+}
+
+/// Shared context for the intermediate-to-final line mapping used by the
+/// sourcemap supplementing logic.
+struct SupplementContext<'a> {
+    /// Lines of the intermediate (Phase 1) code.
+    inter_lines: Vec<&'a str>,
+    /// Lines of the final (Phase 2) code.
+    final_lines: Vec<&'a str>,
+    /// Line index of `return $$render\`` in the intermediate code.
+    i_line: usize,
+    /// Line index of `return $$render\`` in the final code.
+    f_line: usize,
+    /// Phase-2 anchor index: intermediate line → vec of
+    /// `(inter_col, final_line, final_col)`, sorted by `inter_col` ascending.
+    phase2_anchors: FxHashMap<u32, Vec<(u32, u32, u32)>>,
+    /// Per-line column adjustment info for matched lines.
+    /// Key: intermediate line index.
+    /// Value: `(ws_delta, escape_insert_positions)`.
+    line_col_info: FxHashMap<usize, (i64, Vec<usize>)>,
+    /// Set of `(dst_line, dst_col)` already covered by Phase 2 composition.
+    composed_positions: FxHashSet<(u32, u32)>,
+}
+
+/// Carry forward Phase 1 tokens inside the template literal region that
+/// were not covered by Phase 2 composition.
+///
+/// For matched lines (exact, leading-whitespace, or escape-normalized), the
+/// token column is adjusted by the whitespace delta and escape shift.
+///
+/// For DIFFER lines (where Phase 2 reformatted JS expressions), tokens in
+/// quasi text regions are carried forward using the nearest Phase-2 anchor
+/// to compute the column offset, with a text-verification check.
+///
+/// For lines with no Phase-2 anchors (pure template quasi text), a small
+/// window search finds the matching final line.
+fn supplement_phase1_tokens(
+    phase1_map: &oxc_sourcemap::SourceMap,
+    ctx: &SupplementContext<'_>,
+    all_tokens: &mut Vec<RawToken>,
+) {
+    for t in phase1_map.get_tokens() {
+        let gen_line = t.get_dst_line() as usize;
+        // Only consider tokens at or after the template start.
+        if gen_line < ctx.i_line {
+            continue;
+        }
+
+        let token_col = t.get_dst_col();
+
+        // Try the matched-line path first (exact, leading-ws,
+        // or escape-normalized match).  If absent, fall through
+        // to anchor-based supplementing for DIFFER lines.
+        let (adjusted_line, adjusted_col) =
+            if let Some((ws_delta, escape_positions)) = ctx.line_col_info.get(&gen_line) {
+                // gen_line >= i_line (checked above), so this
+                // never underflows.
+                let al = u32::try_from(gen_line - ctx.i_line + ctx.f_line)
+                    .expect("adjusted line exceeds u32");
+
+                // Count how many escape insertions occur at or
+                // before this token's column.  Each `<\/` escape
+                // adds 1 byte (the `\`) that shifts subsequent
+                // columns.
+                let tc = token_col as usize;
+                let escape_shift = i64::try_from(
+                    escape_positions.iter().filter(|&&pos| pos <= tc).count(),
+                )
+                .expect("escape count exceeds i64");
+
+                let ac = u32::try_from(
+                    (i64::from(token_col) + ws_delta + escape_shift).max(0),
+                )
+                .expect("adjusted column exceeds u32");
+                (al, ac)
+            } else if let Some(result) = try_anchor_supplement(token_col, gen_line, ctx) {
+                result
+            } else {
+                continue;
+            };
+
+        // Skip if already covered by composition.
+        if ctx.composed_positions.contains(&(adjusted_line, adjusted_col)) {
+            continue;
+        }
+
+        // Skip if beyond final code.
+        if (adjusted_line as usize) >= ctx.final_lines.len() {
+            continue;
+        }
+
+        let name = t
+            .get_name_id()
+            .and_then(|id| phase1_map.get_name(id))
+            .map(std::string::ToString::to_string);
+
+        all_tokens.push(RawToken {
+            dst_line: adjusted_line,
+            dst_col: adjusted_col,
+            src_line: t.get_src_line(),
+            src_col: t.get_src_col(),
+            name,
+        });
+    }
+}
+
+/// Try to supplement a Phase 1 token on a DIFFER line using Phase-2 anchors,
+/// or by searching a window of final lines for pure quasi text.
+///
+/// Returns `Some((final_line, final_col))` if supplementing is possible,
+/// `None` if the token should be skipped.
+fn try_anchor_supplement(
+    token_col: u32,
+    gen_line: usize,
+    ctx: &SupplementContext<'_>,
+) -> Option<(u32, u32)> {
+    let gen_line_u32 = u32::try_from(gen_line).ok()?;
+
+    if let Some(anchors) = ctx.phase2_anchors.get(&gen_line_u32) {
+        // Find the nearest anchor with inter_col <= token_col
+        // (the last one in sorted order that doesn't exceed it).
+        let nearest = anchors.iter().rev().find(|&&(ic, _, _)| ic <= token_col);
+        let &(anchor_ic, anchor_fl, anchor_fc) = nearest?;
+        let delta = i64::from(anchor_fc) - i64::from(anchor_ic);
+        let candidate_col =
+            u32::try_from((i64::from(token_col) + delta).max(0)).expect("candidate col exceeds u32");
+
+        // Verify: the text at the candidate final position must match the
+        // intermediate text at the token position.  This confirms we are in
+        // a quasi region (not a reformatted expression).
+        let i_text = ctx.inter_lines.get(gen_line).copied().unwrap_or("");
+        let f_text = ctx.final_lines.get(anchor_fl as usize).copied().unwrap_or("");
+        let tc = token_col as usize;
+        let cc = candidate_col as usize;
+        // Use a short verification window; 2 bytes is enough to confirm
+        // we're at the same quasi text (e.g. "<p", "</", etc.).
+        let verify_len = 2;
+        let text_matches = tc + verify_len <= i_text.len()
+            && cc + verify_len <= f_text.len()
+            && i_text.as_bytes()[tc..tc + verify_len] == f_text.as_bytes()[cc..cc + verify_len];
+
+        if text_matches {
+            Some((anchor_fl, candidate_col))
+        } else {
+            None
+        }
+    } else {
+        // No Phase-2 anchors for this intermediate line.
+        //
+        // This happens for lines that are pure template literal quasi text
+        // (no JS expressions).  Phase-2 reformatting may shift these lines
+        // by inserting extra lines for object literal properties, but the
+        // text content remains identical.
+        //
+        // Search a window of final lines around the expected position for
+        // a line containing the same text at the token's column.
+        let i_text = ctx.inter_lines.get(gen_line).copied().unwrap_or("");
+        let tc = token_col as usize;
+        let verify_len = 2;
+        if tc + verify_len > i_text.len() {
+            return None;
+        }
+        let needle = &i_text.as_bytes()[tc..tc + verify_len];
+
+        // Expected final line based on the template offset.
+        // gen_line >= i_line (checked by caller).
+        let expected_fl = gen_line - ctx.i_line + ctx.f_line;
+        // Search ±5 lines around expected position to account for
+        // Phase-2 reformatting inserting a few extra lines.
+        let search_start = expected_fl.saturating_sub(5);
+        let search_end = (expected_fl + 6).min(ctx.final_lines.len());
+
+        for (fl, f_text) in ctx.final_lines
+            .iter()
+            .enumerate()
+            .take(search_end)
+            .skip(search_start)
+        {
+            // Check same column (the text is quasi literal,
+            // so the column should be identical).
+            if tc + verify_len <= f_text.len()
+                && &f_text.as_bytes()[tc..tc + verify_len] == needle
+            {
+                let fl_u32 = u32::try_from(fl).expect("final line exceeds u32");
+                return Some((fl_u32, token_col));
+            }
+            // Also check with leading whitespace adjustment:
+            // Phase-2 may have added or removed leading ws.
+            let f_trimmed = f_text.trim_start();
+            let i_trimmed = i_text.trim_start();
+            let f_ws = i64::try_from(f_text.len() - f_trimmed.len()).unwrap_or(0);
+            let i_ws = i64::try_from(i_text.len() - i_trimmed.len()).unwrap_or(0);
+            let ws_adj = f_ws - i_ws;
+            let adj_col_i64 = (i64::from(token_col) + ws_adj).max(0);
+            let adj_col =
+                usize::try_from(adj_col_i64).expect("adjusted column exceeds usize");
+            if adj_col + verify_len <= f_text.len()
+                && &f_text.as_bytes()[adj_col..adj_col + verify_len] == needle
+            {
+                let fl_u32 = u32::try_from(fl).expect("final line exceeds u32");
+                let ac = u32::try_from(adj_col).expect("adjusted col exceeds u32");
+                return Some((fl_u32, ac));
+            }
+        }
+
+        None
+    }
 }
 
 /// Strip TypeScript syntax from generated code.
