@@ -227,7 +227,9 @@ impl<'a> AstroCodegen<'a> {
     // --- Scan result accessors ---
 
     fn scan(&self) -> &ScanResult {
-        self.scan_result.as_ref().expect("scanner must run before printing")
+        self.scan_result
+            .as_ref()
+            .expect("scanner must run before printing")
     }
 
     fn uses_astro_global(&self) -> bool {
@@ -271,7 +273,10 @@ impl<'a> AstroCodegen<'a> {
     /// - `import * as Two from '...'` + `<Two.someName />` → export_name = `"someName"`
     /// - `import * as four from '...'` + `<four.nested.deep.Component />` → export_name = `"nested.deep.Component"`
     /// - `import Foo from '...'` + `<Foo.Bar />` → export_name = `"default.Bar"`
-    fn resolve_component_metadata(&self, component_name: &str) -> Option<TransformResultHydratedComponent> {
+    fn resolve_component_metadata(
+        &self,
+        component_name: &str,
+    ) -> Option<TransformResultHydratedComponent> {
         if component_name.contains('.') {
             // Dot-notation: split into root and rest
             let dot_pos = component_name.find('.').unwrap();
@@ -326,7 +331,11 @@ impl<'a> AstroCodegen<'a> {
     /// When `resultScopedSlot` is enabled, slots receive the `$$result` render context
     /// parameter: `($$result) => ...`. Otherwise, they use an empty parameter list: `() => ...`.
     fn get_slot_params(&self) -> &'static str {
-        if self.options.result_scoped_slot { "($$result) => " } else { "() => " }
+        if self.options.result_scoped_slot {
+            "($$result) => "
+        } else {
+            "() => "
+        }
     }
 
     /// Build the JavaScript output from an Astro AST.
@@ -362,18 +371,14 @@ impl<'a> AstroCodegen<'a> {
         let hydrated_components = self
             .hydrated_components()
             .iter()
-            .filter_map(|h| {
-                self.resolve_component_metadata(&h.name)
-            })
+            .filter_map(|h| self.resolve_component_metadata(&h.name))
             .collect();
 
         // Build public client-only components from scanner's full names
         let client_only_components = self
             .scanned_client_only_components()
             .iter()
-            .filter_map(|h| {
-                self.resolve_component_metadata(&h.name)
-            })
+            .filter_map(|h| self.resolve_component_metadata(&h.name))
             .collect();
 
         // Build public server components from internal representation
@@ -480,19 +485,43 @@ impl<'a> AstroCodegen<'a> {
         self.println(&format!("  {},", runtime::FRAGMENT));
         self.println(&format!("  render as {},", runtime::RENDER));
         self.println(&format!("  createAstro as {},", runtime::CREATE_ASTRO));
-        self.println(&format!("  createComponent as {},", runtime::CREATE_COMPONENT));
-        self.println(&format!("  renderComponent as {},", runtime::RENDER_COMPONENT));
+        self.println(&format!(
+            "  createComponent as {},",
+            runtime::CREATE_COMPONENT
+        ));
+        self.println(&format!(
+            "  renderComponent as {},",
+            runtime::RENDER_COMPONENT
+        ));
         self.println(&format!("  renderHead as {},", runtime::RENDER_HEAD));
-        self.println(&format!("  maybeRenderHead as {},", runtime::MAYBE_RENDER_HEAD));
+        self.println(&format!(
+            "  maybeRenderHead as {},",
+            runtime::MAYBE_RENDER_HEAD
+        ));
         self.println(&format!("  unescapeHTML as {},", runtime::UNESCAPE_HTML));
         self.println(&format!("  renderSlot as {},", runtime::RENDER_SLOT));
         self.println(&format!("  mergeSlots as {},", runtime::MERGE_SLOTS));
         self.println(&format!("  addAttribute as {},", runtime::ADD_ATTRIBUTE));
-        self.println(&format!("  spreadAttributes as {},", runtime::SPREAD_ATTRIBUTES));
-        self.println(&format!("  defineStyleVars as {},", runtime::DEFINE_STYLE_VARS));
-        self.println(&format!("  defineScriptVars as {},", runtime::DEFINE_SCRIPT_VARS));
-        self.println(&format!("  renderTransition as {},", runtime::RENDER_TRANSITION));
-        self.println(&format!("  createTransitionScope as {},", runtime::CREATE_TRANSITION_SCOPE));
+        self.println(&format!(
+            "  spreadAttributes as {},",
+            runtime::SPREAD_ATTRIBUTES
+        ));
+        self.println(&format!(
+            "  defineStyleVars as {},",
+            runtime::DEFINE_STYLE_VARS
+        ));
+        self.println(&format!(
+            "  defineScriptVars as {},",
+            runtime::DEFINE_SCRIPT_VARS
+        ));
+        self.println(&format!(
+            "  renderTransition as {},",
+            runtime::RENDER_TRANSITION
+        ));
+        self.println(&format!(
+            "  createTransitionScope as {},",
+            runtime::CREATE_TRANSITION_SCOPE
+        ));
         self.println(&format!("  renderScript as {},", runtime::RENDER_SCRIPT));
         // Only import $$createMetadata when no custom resolvePath is provided
         // (needed for runtime $$metadata.resolvePath() fallback)
@@ -616,8 +645,11 @@ impl<'a> AstroCodegen<'a> {
         let directives_str = if self.hydration_directives().is_empty() {
             "new Set([])".to_string()
         } else {
-            let items: Vec<String> =
-                self.hydration_directives().iter().map(|s| format!("\"{s}\"")).collect();
+            let items: Vec<String> = self
+                .hydration_directives()
+                .iter()
+                .map(|s| format!("\"{s}\""))
+                .collect();
             format!("new Set([{}])", items.join(", "))
         };
 
@@ -678,10 +710,17 @@ impl<'a> AstroCodegen<'a> {
 
     fn print_top_level_astro(&mut self) {
         // Get the Astro global args from options, default to standard URL
-        let astro_global_args =
-            self.options.astro_global_args.as_deref().unwrap_or("\"https://astro.build\"");
+        let astro_global_args = self
+            .options
+            .astro_global_args
+            .as_deref()
+            .unwrap_or("\"https://astro.build\"");
 
-        self.println(&format!("const $$Astro = {}({});", runtime::CREATE_ASTRO, astro_global_args));
+        self.println(&format!(
+            "const $$Astro = {}({});",
+            runtime::CREATE_ASTRO,
+            astro_global_args
+        ));
         self.println("const Astro = $$Astro;");
     }
 
@@ -692,7 +731,11 @@ impl<'a> AstroCodegen<'a> {
     fn split_frontmatter<'b>(
         &mut self,
         frontmatter: Option<&'b AstroFrontmatter<'a>>,
-    ) -> (Vec<&'b Statement<'a>>, Vec<&'b Statement<'a>>, Vec<&'b Statement<'a>>)
+    ) -> (
+        Vec<&'b Statement<'a>>,
+        Vec<&'b Statement<'a>>,
+        Vec<&'b Statement<'a>>,
+    )
     where
         'a: 'b,
     {
@@ -720,7 +763,11 @@ impl<'a> AstroCodegen<'a> {
                     let source = import.source.value.as_str();
 
                     // Extract component names from the import specifiers
-                    if import.import_kind != ImportOrExportKind::Type {
+                    if import.import_kind == ImportOrExportKind::Type {
+                        // Type-only imports (`import type { ... }`) are emitted so
+                        // that `strip_typescript` can see and remove them.
+                        imports.push(stmt);
+                    } else {
                         if let Some(specifiers) = &import.specifiers {
                             for spec in specifiers {
                                 match spec {
@@ -789,15 +836,14 @@ impl<'a> AstroCodegen<'a> {
                         };
 
                         // Skip bare CSS imports from $$module re-imports
-                        let is_bare_css_import = import.specifiers.is_none()
-                            && is_css_specifier(source);
+                        let is_bare_css_import =
+                            import.specifiers.is_none() && is_css_specifier(source);
 
                         if is_client_only_import {
                             // Client:only component imports are not needed at runtime
                             // on the server — the component reference is `null` in
                             // renderComponent(). Don't emit the import at all so we
                             // don't pull client-side framework code into the SSR bundle.
-                            continue;
                         } else if is_bare_css_import {
                             // Bare CSS imports don't need metadata tracking, but the
                             // import itself should still be emitted.
@@ -836,10 +882,6 @@ impl<'a> AstroCodegen<'a> {
                             });
                             module_counter += 1;
                         }
-                    } else {
-                        // Type-only imports (`import type { ... }`) are emitted so
-                        // that `strip_typescript` can see and remove them.
-                        imports.push(stmt);
                     }
                 } else {
                     other.push(stmt);
@@ -906,7 +948,11 @@ impl<'a> AstroCodegen<'a> {
         // Check if we need to insert $$maybeRenderHead at the start of the template
         // This is needed when there's no explicit <head> element and we have body content
         if self.needs_maybe_render_head_at_start(body) {
-            self.print(&format!("${{{}({})}}", runtime::MAYBE_RENDER_HEAD, runtime::RESULT));
+            self.print(&format!(
+                "${{{}({})}}",
+                runtime::MAYBE_RENDER_HEAD,
+                runtime::RESULT
+            ));
             self.render_head_inserted = true;
         }
 
@@ -923,7 +969,11 @@ impl<'a> AstroCodegen<'a> {
             None => "undefined".to_string(),
         };
         // Third argument: "self" when transitions are used, undefined otherwise
-        let propagation = if self.uses_transitions() { "\"self\"" } else { "undefined" };
+        let propagation = if self.uses_transitions() {
+            "\"self\""
+        } else {
+            "undefined"
+        };
         self.println(&format!("}}, {filename_part}, {propagation});"));
     }
 
@@ -985,7 +1035,10 @@ impl<'a> AstroCodegen<'a> {
                     }
                     // Skip <script> elements with AstroScript children (they're hoisted, not rendered)
                     if name == "script"
-                        && el.children.iter().any(|c| matches!(c, JSXChild::AstroScript(_)))
+                        && el
+                            .children
+                            .iter()
+                            .any(|c| matches!(c, JSXChild::AstroScript(_)))
                     {
                         continue;
                     }
@@ -1036,7 +1089,11 @@ impl<'a> AstroCodegen<'a> {
     /// Insert `$$maybeRenderHead` if needed before an HTML element.
     fn maybe_insert_render_head(&mut self, name: &str) {
         if self.needs_render_head(name) {
-            self.print(&format!("${{{}({})}}", runtime::MAYBE_RENDER_HEAD, runtime::RESULT));
+            self.print(&format!(
+                "${{{}({})}}",
+                runtime::MAYBE_RENDER_HEAD,
+                runtime::RESULT
+            ));
             self.render_head_inserted = true;
         }
     }
@@ -1143,13 +1200,21 @@ impl<'a> AstroCodegen<'a> {
         }
 
         // Check if it has AstroScript child (parsed content)
-        if el.children.iter().any(|child| matches!(child, JSXChild::AstroScript(_))) {
+        if el
+            .children
+            .iter()
+            .any(|child| matches!(child, JSXChild::AstroScript(_)))
+        {
             return true;
         }
 
         // Check if it has non-empty text content
         let has_text_content = el.children.iter().any(|child| {
-            if let JSXChild::Text(text) = child { !text.value.trim().is_empty() } else { false }
+            if let JSXChild::Text(text) = child {
+                !text.value.trim().is_empty()
+            } else {
+                false
+            }
         });
 
         // Check for src attribute (external scripts are hoisted even without content)
@@ -1237,7 +1302,11 @@ impl<'a> AstroCodegen<'a> {
         self.print_component_attributes_filtered(
             &el.opening_element.attributes,
             &hydration_info,
-            if set_directive.is_some() { Some(&["set:html", "set:text"]) } else { None },
+            if set_directive.is_some() {
+                Some(&["set:html", "set:text"])
+            } else {
+                None
+            },
         );
 
         self.skip_slot_attribute = prev_skip_slot;
@@ -1526,7 +1595,9 @@ impl<'a> AstroCodegen<'a> {
                 self.print(",");
             }
             first = false;
-            self.print(&format!("\"data-astro-transition-persist-props\":{props_val}"));
+            self.print(&format!(
+                "\"data-astro-transition-persist-props\":{props_val}"
+            ));
         }
 
         if transition_persist {
@@ -1618,7 +1689,11 @@ impl<'a> AstroCodegen<'a> {
                 self.print_jsx_child(child);
             }
             // Insert renderHead before closing head tag
-            self.print(&format!("${{{}({})}}", runtime::RENDER_HEAD, runtime::RESULT));
+            self.print(&format!(
+                "${{{}({})}}",
+                runtime::RENDER_HEAD,
+                runtime::RESULT
+            ));
             // Mark that head rendering is done - prevents $$maybeRenderHead from being inserted later
             // This matches the Go compiler behavior where printedMaybeHead is set when </head> is printed
             self.render_head_inserted = true;
@@ -2131,8 +2206,9 @@ impl<'a> AstroCodegen<'a> {
         self.print("{");
 
         // Print default slot only if there are children with actual content
-        let has_meaningful_content =
-            default_children.iter().any(|c| Self::jsx_child_has_content(c));
+        let has_meaningful_content = default_children
+            .iter()
+            .any(|c| Self::jsx_child_has_content(c));
         if has_meaningful_content {
             let async_prefix = self.get_async_prefix();
             let slot_params = self.get_slot_params();
@@ -2500,7 +2576,9 @@ impl<'a> AstroCodegen<'a> {
                     self.print(runtime::RENDER);
                     self.print("`${");
                     self.print(runtime::RENDER_COMPONENT);
-                    self.print(&format!("($$result,\"Fragment\",Fragment,{{}},{{\"default\":{slot_params}"));
+                    self.print(&format!(
+                        "($$result,\"Fragment\",Fragment,{{}},{{\"default\":{slot_params}"
+                    ));
                     self.print(runtime::RENDER);
                     self.print("`");
                     for child in &frag.children {
@@ -3199,7 +3277,10 @@ fn decode_entity(entity: &str) -> Option<char> {
     let inner = &entity[1..entity.len() - 1];
 
     // Numeric entities
-    if let Some(hex) = inner.strip_prefix("#x").or_else(|| inner.strip_prefix("#X")) {
+    if let Some(hex) = inner
+        .strip_prefix("#x")
+        .or_else(|| inner.strip_prefix("#X"))
+    {
         return u32::from_str_radix(hex, 16).ok().and_then(char::from_u32);
     }
     if let Some(dec) = inner.strip_prefix('#') {
@@ -3231,18 +3312,27 @@ fn is_html_entity_start(s: &str) -> bool {
     // Numeric entity: &#x... (hex) or &#... (decimal)
     if let Some(after_hash) = rest.strip_prefix('#') {
         // Hex: &#x followed by hex digits
-        if let Some(hex_part) =
-            after_hash.strip_prefix('x').or_else(|| after_hash.strip_prefix('X'))
+        if let Some(hex_part) = after_hash
+            .strip_prefix('x')
+            .or_else(|| after_hash.strip_prefix('X'))
         {
-            return hex_part.chars().next().is_some_and(|c| c.is_ascii_hexdigit());
+            return hex_part
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_hexdigit());
         }
         // Decimal: &# followed by digits
-        return after_hash.chars().next().is_some_and(|c| c.is_ascii_digit());
+        return after_hash
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_digit());
     }
 
     // Named entity: & followed by alphanumeric, eventually ending with ;
     // Check if the next char is alphanumeric (common named entities like &quot;, &amp;, etc.)
-    rest.chars().next().is_some_and(|c| c.is_ascii_alphanumeric())
+    rest.chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_alphanumeric())
 }
 
 /// Derive the component variable name from the filename.
@@ -3337,11 +3427,13 @@ fn strip_typescript(allocator: &Allocator, code: &str) -> String {
         single_quote: false,
         ..oxc_codegen::CodegenOptions::default()
     };
-    oxc_codegen::Codegen::new().with_options(codegen_options).build(&program).code
+    oxc_codegen::Codegen::new()
+        .with_options(codegen_options)
+        .build(&program)
+        .code
 }
 
 #[cfg(test)]
-#[expect(clippy::needless_raw_string_hashes, clippy::uninlined_format_args, clippy::print_stderr)]
 mod tests {
     use super::*;
     use oxc_allocator::Allocator;
@@ -3349,7 +3441,11 @@ mod tests {
     use oxc_span::SourceType;
 
     fn compile_astro(source: &str) -> String {
-        compile_astro_with_options(source, TransformOptions::new().with_internal_url("http://localhost:3000/")).code
+        compile_astro_with_options(
+            source,
+            TransformOptions::new().with_internal_url("http://localhost:3000/"),
+        )
+        .code
     }
 
     fn compile_astro_with_options(source: &str, options: TransformOptions) -> TransformResult {
@@ -3375,28 +3471,40 @@ mod tests {
 
     #[test]
     fn test_basic_with_frontmatter() {
-        let source = r#"---
+        let source = r"---
 const href = '/about';
 ---
-<a href={href}>About</a>"#;
+<a href={href}>About</a>";
         let output = compile_astro(source);
 
         // Note: codegen normalizes strings to double quotes
-        assert!(output.contains("const href = \"/about\""), "Missing const declaration");
-        assert!(output.contains("$$addAttribute(href, \"href\")"), "Missing $$addAttribute");
+        assert!(
+            output.contains("const href = \"/about\""),
+            "Missing const declaration"
+        );
+        assert!(
+            output.contains("$$addAttribute(href, \"href\")"),
+            "Missing $$addAttribute"
+        );
     }
 
     #[test]
     fn test_component_rendering() {
-        let source = r#"---
+        let source = r"---
 import Component from 'test';
 ---
-<Component />"#;
+<Component />";
         let output = compile_astro(source);
 
         // Note: codegen normalizes strings to double quotes
-        assert!(output.contains("import Component from \"test\""), "Missing import");
-        assert!(output.contains("$$renderComponent"), "Missing $$renderComponent");
+        assert!(
+            output.contains("import Component from \"test\""),
+            "Missing import"
+        );
+        assert!(
+            output.contains("$$renderComponent"),
+            "Missing $$renderComponent"
+        );
         assert!(output.contains("\"Component\""), "Missing component name");
     }
 
@@ -3407,7 +3515,10 @@ import Component from 'test';
 
         // Doctype is stripped in output, only the div appears in the template
         assert!(output.contains("<div></div>"), "Missing div element");
-        assert!(output.contains("$$maybeRenderHead"), "Missing maybeRenderHead");
+        assert!(
+            output.contains("$$maybeRenderHead"),
+            "Missing maybeRenderHead"
+        );
     }
 
     #[test]
@@ -3415,7 +3526,10 @@ import Component from 'test';
         let source = "<><div>1</div><div>2</div></>";
         let output = compile_astro(source);
 
-        assert!(output.contains("$$renderComponent"), "Missing renderComponent");
+        assert!(
+            output.contains("$$renderComponent"),
+            "Missing renderComponent"
+        );
         assert!(output.contains("Fragment"), "Missing Fragment reference");
         assert!(output.contains("<div>1</div>"), "Missing first div");
         assert!(output.contains("<div>2</div>"), "Missing second div");
@@ -3423,18 +3537,21 @@ import Component from 'test';
 
     #[test]
     fn test_html_head_body() {
-        let source = r#"<html>
+        let source = r"<html>
   <head>
     <title>Test</title>
   </head>
   <body>
     <h1>Hello</h1>
   </body>
-</html>"#;
+</html>";
         let output = compile_astro(source);
 
         // Should have renderHead in head, not maybeRenderHead
-        assert!(output.contains("$$renderHead($$result)"), "Missing renderHead in head");
+        assert!(
+            output.contains("$$renderHead($$result)"),
+            "Missing renderHead in head"
+        );
         assert!(output.contains("<title>Test</title>"), "Missing title");
         assert!(output.contains("<h1>Hello</h1>"), "Missing h1");
     }
@@ -3447,8 +3564,14 @@ const src = "image.png";
 <img src={src} alt="test" />"#;
         let output = compile_astro(source);
 
-        assert!(output.contains("$$addAttribute(src, \"src\")"), "Missing dynamic src attribute");
-        assert!(output.contains("alt=\"test\""), "Missing static alt attribute");
+        assert!(
+            output.contains("$$addAttribute(src, \"src\")"),
+            "Missing dynamic src attribute"
+        );
+        assert!(
+            output.contains("alt=\"test\""),
+            "Missing static alt attribute"
+        );
     }
 
     #[test]
@@ -3459,7 +3582,10 @@ const name = "World";
 <h1>Hello {name}!</h1>"#;
         let output = compile_astro(source);
 
-        assert!(output.contains("Hello ${name}!"), "Missing interpolated expression");
+        assert!(
+            output.contains("Hello ${name}!"),
+            "Missing interpolated expression"
+        );
     }
 
     #[test]
@@ -3489,8 +3615,14 @@ import Component from "test";
         // Should have "test" slot, not "default"
         assert!(output.contains("\"test\":"), "Missing named slot 'test'");
         // The slot attribute should be removed from the element
-        assert!(!output.contains("slot=\"test\""), "Slot attribute should be removed from element");
-        assert!(output.contains("<div>foo</div>"), "Missing div element without slot attr");
+        assert!(
+            !output.contains("slot=\"test\""),
+            "Slot attribute should be removed from element"
+        );
+        assert!(
+            output.contains("<div>foo</div>"),
+            "Missing div element without slot attr"
+        );
     }
 
     #[test]
@@ -3506,18 +3638,20 @@ import Component from "test";
         assert!(output.contains("\"a\":"), "Missing named slot 'a'");
         assert!(output.contains("\"b\":"), "Missing named slot 'b'");
         // Neither should be default
-        assert!(!output.contains("\"default\":"), "Should not have default slot");
+        assert!(
+            !output.contains("\"default\":"),
+            "Should not have default slot"
+        );
     }
 
     #[test]
     fn test_client_load_directive() {
-        let source = r#"---
+        let source = r"---
 import Component from 'test';
 ---
-<Component client:load />"#;
+<Component client:load />";
         let output = compile_astro(source);
 
-        eprintln!("OUTPUT:\n{output}");
         assert!(
             output.contains("client:component-hydration") && output.contains("load"),
             "Missing hydration directive"
@@ -3531,8 +3665,14 @@ import Component from 'test';
         let output = compile_astro(source);
 
         // Should contain opening tags
-        assert!(output.contains("<meta charset=\"utf-8\">"), "Missing meta tag");
-        assert!(output.contains("<input type=\"text\">"), "Missing input tag");
+        assert!(
+            output.contains("<meta charset=\"utf-8\">"),
+            "Missing meta tag"
+        );
+        assert!(
+            output.contains("<input type=\"text\">"),
+            "Missing input tag"
+        );
         assert!(output.contains("<br>"), "Missing br tag");
         assert!(output.contains("<img"), "Missing img tag");
         assert!(output.contains("<link"), "Missing link tag");
@@ -3569,7 +3709,7 @@ import Component from 'test';
     fn test_no_maybe_render_head_with_explicit_head() {
         // When there's an explicit <head> element, $$renderHead is used inside head
         // and $$maybeRenderHead should NOT be inserted in the body
-        let source = r#"<html>
+        let source = r"<html>
   <head>
     <title>Test</title>
   </head>
@@ -3578,19 +3718,21 @@ import Component from 'test';
       <h1>Hello</h1>
     </main>
   </body>
-</html>"#;
+</html>";
         let output = compile_astro(source);
 
         // Should have $$renderHead inside head (before closing tag, possibly with whitespace)
-        assert!(output.contains("$$renderHead($$result)"), "Missing $$renderHead in head");
+        assert!(
+            output.contains("$$renderHead($$result)"),
+            "Missing $$renderHead in head"
+        );
 
         // Should NOT have $$maybeRenderHead in the body
         // Count occurrences of $$maybeRenderHead - should only appear in import
         let maybe_render_head_count = output.matches("$$maybeRenderHead").count();
         assert_eq!(
             maybe_render_head_count, 1,
-            "$$maybeRenderHead should only appear once (in import), found {} times. Body should not have $$maybeRenderHead when explicit <head> exists",
-            maybe_render_head_count
+            "$$maybeRenderHead should only appear once (in import), found {maybe_render_head_count} times. Body should not have $$maybeRenderHead when explicit <head> exists"
         );
     }
 
@@ -3602,16 +3744,21 @@ import Component from 'test';
         let output = compile_astro(source);
 
         // Should have the elements rendered
-        assert!(output.contains("<link href=\"style.css\">"), "Missing link element");
-        assert!(output.contains("<meta charset=\"utf-8\">"), "Missing meta element");
+        assert!(
+            output.contains("<link href=\"style.css\">"),
+            "Missing link element"
+        );
+        assert!(
+            output.contains("<meta charset=\"utf-8\">"),
+            "Missing meta element"
+        );
 
         // Should NOT have $$maybeRenderHead before these head elements
         // Only the import should have $$maybeRenderHead
         let maybe_render_head_count = output.matches("$$maybeRenderHead").count();
         assert_eq!(
             maybe_render_head_count, 1,
-            "$$maybeRenderHead should only appear once (in import), found {} times. Head elements should not trigger $$maybeRenderHead",
-            maybe_render_head_count
+            "$$maybeRenderHead should only appear once (in import), found {maybe_render_head_count} times. Head elements should not trigger $$maybeRenderHead"
         );
     }
 
@@ -3655,14 +3802,24 @@ import Component from 'test';
 <link rel="icon" href="/favicon.ico" />"#;
         let output = compile_astro(source);
 
-        eprintln!("Output: {}", output);
-
         // HTML comments should be preserved
-        assert!(output.contains("<!-- Global Metadata -->"), "Missing first HTML comment");
-        assert!(output.contains("<!-- Another comment -->"), "Missing second HTML comment");
+        assert!(
+            output.contains("<!-- Global Metadata -->"),
+            "Missing first HTML comment"
+        );
+        assert!(
+            output.contains("<!-- Another comment -->"),
+            "Missing second HTML comment"
+        );
         // Elements should also be present
-        assert!(output.contains("<meta charset=\"utf-8\">"), "Missing meta tag");
-        assert!(output.contains("<link rel=\"icon\" href=\"/favicon.ico\">"), "Missing link tag");
+        assert!(
+            output.contains("<meta charset=\"utf-8\">"),
+            "Missing meta tag"
+        );
+        assert!(
+            output.contains("<link rel=\"icon\" href=\"/favicon.ico\">"),
+            "Missing link tag"
+        );
     }
 
     // === Metadata tests ===
@@ -3783,8 +3940,7 @@ import * as Five from "../components/five.jsx";
 <Five.someName client:only />"#;
         let result = compile_astro_with_options(
             source,
-            TransformOptions::new()
-                .with_filename("/users/astro/apps/pacman/src/pages/index.astro"),
+            TransformOptions::new().with_filename("/users/astro/apps/pacman/src/pages/index.astro"),
         );
 
         assert_eq!(result.client_only_components.len(), 1);
@@ -3801,8 +3957,7 @@ import * as eight from "../components/eight.jsx";
 <eight.nested.deep.Component client:only />"#;
         let result = compile_astro_with_options(
             source,
-            TransformOptions::new()
-                .with_filename("/users/astro/apps/pacman/src/pages/index.astro"),
+            TransformOptions::new().with_filename("/users/astro/apps/pacman/src/pages/index.astro"),
         );
 
         assert_eq!(result.client_only_components.len(), 1);
@@ -3842,10 +3997,10 @@ import { Other } from "../components/Other.jsx";
 
     #[test]
     fn test_contains_head_metadata() {
-        let source = r#"<html>
+        let source = r"<html>
 <head><title>Test</title></head>
 <body><p>content</p></body>
-</html>"#;
+</html>";
         let result = compile_astro_with_options(
             source,
             TransformOptions::new().with_internal_url("http://localhost:3000/"),
@@ -3862,7 +4017,10 @@ import { Other } from "../components/Other.jsx";
             TransformOptions::new().with_internal_url("http://localhost:3000/"),
         );
 
-        assert!(!result.contains_head, "Should not detect <head> when absent");
+        assert!(
+            !result.contains_head,
+            "Should not detect <head> when absent"
+        );
     }
 
     #[test]
@@ -3905,9 +4063,18 @@ import Counter from "../components/Counter.jsx";
         assert_eq!(c.resolved_path, "/resolved../components/Counter.jsx");
 
         // Code should NOT contain $$createMetadata when resolvePath is provided
-        assert!(!result.code.contains("$$createMetadata"), "Should skip $$createMetadata");
-        assert!(!result.code.contains("$$metadata"), "Should skip $$metadata export");
-        assert!(!result.code.contains("$$module1"), "Should skip $$module imports");
+        assert!(
+            !result.code.contains("$$createMetadata"),
+            "Should skip $$createMetadata"
+        );
+        assert!(
+            !result.code.contains("$$metadata"),
+            "Should skip $$metadata export"
+        );
+        assert!(
+            !result.code.contains("$$module1"),
+            "Should skip $$module imports"
+        );
     }
 
     #[test]
@@ -3930,47 +4097,61 @@ import Counter from "some-package";
 
     #[test]
     fn test_server_defer_skips_attribute() {
-        let source = r#"---
-import Avatar from "./Avatar.jsx";
+        let source = r"---
+import Avatar from './Avatar.jsx';
 ---
-<Avatar server:defer />"#;
+<Avatar server:defer />";
         let result = compile_astro_with_options(
             source,
             TransformOptions::new().with_internal_url("http://localhost:3000/"),
         );
 
         // server:defer should not appear as a rendered prop
-        assert!(!result.code.contains("\"server:defer\""), "server:defer should be stripped from props");
+        assert!(
+            !result.code.contains("\"server:defer\""),
+            "server:defer should be stripped from props"
+        );
     }
 
     #[test]
     fn test_typescript_satisfies_stripped() {
-        let source = r#"---
+        let source = r"---
 interface SEOProps { title: string; }
 const seo = { title: 'Hello' } satisfies SEOProps;
 ---
-<h1>{seo.title}</h1>"#;
+<h1>{seo.title}</h1>";
         let output = compile_astro(source);
 
         // `satisfies` is TypeScript-only syntax — must be stripped
-        assert!(!output.contains("satisfies"), "satisfies keyword should be stripped: {}", output);
+        assert!(
+            !output.contains("satisfies"),
+            "satisfies keyword should be stripped: {output}"
+        );
         // The interface should also be stripped
-        assert!(!output.contains("interface SEOProps"), "interface should be stripped: {}", output);
+        assert!(
+            !output.contains("interface SEOProps"),
+            "interface should be stripped: {output}"
+        );
         // The value expression should remain
-        assert!(output.contains("title: \"Hello\"") || output.contains("title: 'Hello'"),
-            "value expression should remain: {}", output);
+        assert!(
+            output.contains("title: \"Hello\"") || output.contains("title: 'Hello'"),
+            "value expression should remain: {output}"
+        );
     }
 
     #[test]
     fn test_type_only_import_stripped() {
-        let source = r#"---
+        let source = r"---
 import type { Props } from './types';
 const x: Props = { title: 'hi' };
 ---
-<h1>{x.title}</h1>"#;
+<h1>{x.title}</h1>";
         let output = compile_astro(source);
 
         // `import type` should be stripped by strip_typescript
-        assert!(!output.contains("import type"), "import type should be stripped: {}", output);
+        assert!(
+            !output.contains("import type"),
+            "import type should be stripped: {output}"
+        );
     }
 }
