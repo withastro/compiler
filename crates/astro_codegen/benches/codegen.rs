@@ -1,4 +1,4 @@
-use astro_codegen::{AstroCodegen, TransformOptions};
+use astro_codegen::{TransformOptions, transform};
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
@@ -20,10 +20,7 @@ fn bench_codegen(bencher: divan::Bencher<'_, '_>, source: &str) {
         .with_options(ParseOptions::default())
         .parse_astro();
 
-    bencher.bench_local(|| {
-        let codegen = AstroCodegen::new(&allocator, source, default_options());
-        codegen.build(&ret.root)
-    });
+    bencher.bench_local(|| transform(&allocator, source, default_options(), &ret.root));
 }
 
 #[divan::bench]

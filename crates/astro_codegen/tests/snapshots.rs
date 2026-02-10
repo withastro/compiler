@@ -5,7 +5,7 @@
 
 use std::fs;
 
-use astro_codegen::{AstroCodegen, AstroCodegenOptions};
+use astro_codegen::{TransformOptions, transform};
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -21,12 +21,11 @@ fn compile_astro(source: &str) -> String {
         return format!("Parse errors:\n{}", errors.join("\n"));
     }
 
-    let options = AstroCodegenOptions::new()
+    let options = TransformOptions::new()
         .with_internal_url("http://localhost:3000/")
         .with_astro_global_args("\"https://astro.build\"");
 
-    let codegen = AstroCodegen::new(&allocator, source, options);
-    codegen.build(&ret.root).code
+    transform(&allocator, source, options, &ret.root).code
 }
 
 #[test]

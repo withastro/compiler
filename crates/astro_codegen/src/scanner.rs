@@ -13,7 +13,6 @@ use oxc_allocator::Allocator;
 
 /// Information about an imported component.
 #[derive(Debug, Clone)]
-#[expect(dead_code)]
 pub struct ComponentImportInfo {
     /// The import specifier (e.g., "../components")
     pub specifier: String,
@@ -161,7 +160,10 @@ impl<'a> AstroScanner<'a> {
                 // Detect server:defer components
                 if attr_name == "server:defer"
                     && (is_component || is_custom)
-                    && !self.server_deferred_components.iter().any(|c| c.name == name)
+                    && !self
+                        .server_deferred_components
+                        .iter()
+                        .any(|c| c.name == name)
                 {
                     self.server_deferred_components.push(HydratedComponent {
                         name: name.clone(),
@@ -175,7 +177,8 @@ impl<'a> AstroScanner<'a> {
                         // Store the namespace root (or simple name) for import-level checks
                         if name.contains('.') {
                             if let Some(namespace) = name.split('.').next() {
-                                self.client_only_component_names.insert(namespace.to_string());
+                                self.client_only_component_names
+                                    .insert(namespace.to_string());
                             }
                         } else {
                             self.client_only_component_names.insert(name.clone());
@@ -199,8 +202,10 @@ impl<'a> AstroScanner<'a> {
                         if (is_component || is_custom)
                             && !self.hydrated_components.iter().any(|c| c.name == name)
                         {
-                            self.hydrated_components
-                                .push(HydratedComponent { name, is_custom_element: is_custom });
+                            self.hydrated_components.push(HydratedComponent {
+                                name,
+                                is_custom_element: is_custom,
+                            });
                         }
                     }
                     break; // Only process first client:* directive
@@ -329,7 +334,11 @@ impl<'a> AstroScanner<'a> {
             let content: String = children
                 .iter()
                 .filter_map(|child| {
-                    if let JSXChild::Text(text) = child { Some(text.value.as_str()) } else { None }
+                    if let JSXChild::Text(text) = child {
+                        Some(text.value.as_str())
+                    } else {
+                        None
+                    }
                 })
                 .collect::<Vec<_>>()
                 .join("");
@@ -428,7 +437,6 @@ pub fn is_custom_element(name: &str) -> bool {
 }
 
 pub fn should_hoist_script(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>) -> bool {
-    let mut has_hoist = false;
     let mut has_type_module = false;
     let mut is_inline = false;
 
@@ -436,7 +444,6 @@ pub fn should_hoist_script(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>)
         if let JSXAttributeItem::Attribute(attr) = attr {
             let attr_name = get_jsx_attribute_name(&attr.name);
             match attr_name.as_str() {
-                "hoist" => has_hoist = true,
                 "is:inline" => is_inline = true,
                 "define:vars" => return true,
                 "type" => {
@@ -455,9 +462,8 @@ pub fn should_hoist_script(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>)
         return false;
     }
 
-    // Scripts with no attributes at all, or with just `type="module"`, or with `hoist`
-    // are hoistable. This matches the Go compiler's IsHoistable logic.
-    attrs.is_empty() || has_hoist || has_type_module || no_meaningful_attrs(attrs)
+    // Scripts with no attributes at all, or with just `type="module"`, are hoistable.
+    attrs.is_empty() || has_type_module || no_meaningful_attrs(attrs)
 }
 
 fn no_meaningful_attrs(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>) -> bool {
@@ -466,7 +472,7 @@ fn no_meaningful_attrs(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>) -> 
             let name = get_jsx_attribute_name(&attr.name);
             match name.as_str() {
                 "src" => return true, // src-only scripts are hoistable
-                "type" | "hoist" | "is:inline" | "define:vars" => {}
+                "type" | "is:inline" | "define:vars" => {}
                 _ => return false,
             }
         }

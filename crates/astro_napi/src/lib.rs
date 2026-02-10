@@ -16,18 +16,17 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 use std::mem;
 
-use napi::{bindgen_prelude::AsyncTask, Task};
+use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use crate::error::OxcError;
-use astro_codegen::{AstroCodegen, HoistedScriptType, TransformOptions};
+use astro_codegen::{HoistedScriptType, TransformOptions, transform};
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
 /// Options for compiling Astro files to JavaScript.
 ///
-/// Matches the Go compiler's `TransformOptions` from `@astrojs/compiler`.
 /// Some fields (such as `sourcemap`, `compact`, CSS scoping) are stubs accepted for API compatibility.
 #[napi(object)]
 #[derive(Default)]
@@ -289,8 +288,7 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
     };
 
     // Generate JavaScript code
-    let codegen = AstroCodegen::new(&allocator, source_text, codegen_options);
-    let result = codegen.build(&ret.root);
+    let result = transform(&allocator, source_text, codegen_options, &ret.root);
 
     // Convert internal types to NAPI types
     let scripts = result

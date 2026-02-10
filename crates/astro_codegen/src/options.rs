@@ -1,8 +1,7 @@
 //! Options for Astro codegen.
 //!
-//! These options mirror the Go Astro compiler's `TransformOptions` from
-//! `@astrojs/compiler`. Some fields (such as `compact`, `sourcemap`, CSS scoping)
-//! are accepted but stubbed for API compatibility.
+//! Some fields (such as `compact`, `sourcemap`, CSS scoping) are accepted but
+//! stubbed for API compatibility.
 
 /// Scoped style strategy for CSS scoping.
 ///
@@ -19,8 +18,6 @@ pub enum ScopedStyleStrategy {
 }
 
 /// Options for Astro code generation.
-///
-/// Matches the Go compiler's `TransformOptions` shape from `@astrojs/compiler`.
 pub struct TransformOptions {
     /// The filename of the Astro component being compiled.
     /// Used in `$$createComponent` for debugging and scope hash computation.
@@ -35,10 +32,6 @@ pub struct TransformOptions {
     pub internal_url: Option<String>,
 
     /// Whether to generate a source map.
-    ///
-    /// Accepts `true`/`false`. In the Go compiler this also accepts
-    /// `"inline"`, `"external"`, `"both"` — we currently only support
-    /// a boolean (any truthy value enables source map generation).
     ///
     /// **Stub**: source map generation is not yet implemented; this field
     /// is accepted for API compatibility.
@@ -68,7 +61,6 @@ pub struct TransformOptions {
     pub scoped_style_strategy: ScopedStyleStrategy,
 
     /// URL for the view transitions animation CSS.
-    /// Defaults to `"astro/components/viewtransitions.css"` in the Go compiler.
     ///
     /// **Stub**: accepted for API compatibility.
     pub transitions_animation_url: Option<String>,
@@ -81,8 +73,7 @@ pub struct TransformOptions {
     /// Whether to strip HTML comments from component slot children.
     ///
     /// When `true` (default), HTML comments inside component children are not
-    /// included in slot content. This matches the Go compiler behavior which
-    /// explicitly excludes `CommentNode` from slots.
+    /// included in slot content.
     ///
     /// When `false`, HTML comments are preserved in slot content.
     ///
@@ -101,8 +92,6 @@ pub struct TransformOptions {
     ///
     /// Note: `has_resolve_path()` (used to skip `$$metadata` emission) is true
     /// when either this field is `Some` or `resolve_path_provided` is `true`.
-    ///
-    /// This mirrors the Go compiler's `ResolvePath func(string) string` option.
     #[expect(clippy::type_complexity)]
     pub resolve_path: Option<Box<dyn Fn(&str) -> String + Send + Sync>>,
 
@@ -128,7 +117,7 @@ impl Default for TransformOptions {
             scoped_style_strategy: ScopedStyleStrategy::default(),
             transitions_animation_url: None,
             annotate_source_file: false,
-            strip_slot_comments: true, // Match Go compiler behavior by default
+            strip_slot_comments: true,
             resolve_path: None,
             resolve_path_provided: false,
         }
@@ -236,7 +225,7 @@ impl TransformOptions {
 
     /// Set whether to strip HTML comments from component slot children.
     ///
-    /// When `true` (default), matches Go compiler behavior by excluding comments from slots.
+    /// When `true` (default), excludes comments from slots.
     /// When `false`, preserves HTML comments in slot content.
     #[must_use]
     pub fn with_strip_slot_comments(mut self, strip: bool) -> Self {
@@ -319,7 +308,3 @@ fn normalize_path(path: &std::path::Path) -> String {
     // Normalize to forward slashes for consistency
     s.replace('\\', "/")
 }
-
-// Keep the old name as a type alias during migration
-/// Deprecated: Use [`TransformOptions`] instead.
-pub type AstroCodegenOptions = TransformOptions;
