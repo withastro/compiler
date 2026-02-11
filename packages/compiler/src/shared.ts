@@ -1,8 +1,16 @@
 import type { AstroCompileOptions, NapiHoistedScript, OxcError } from '@astrojs/compiler-binding';
-import type { HoistedScript, TransformOptions, TransformResult } from './types.js';
+import type {
+	AsyncTransformOptions,
+	HoistedScript,
+	ParseResult,
+	TransformOptions,
+	TransformResult,
+} from './types.js';
 import type { CompilerError, Component } from './types.js';
 
-export function mapOptions(options?: TransformOptions): AstroCompileOptions | undefined {
+export function mapOptions(
+	options?: TransformOptions | AsyncTransformOptions
+): AstroCompileOptions | undefined {
 	if (!options) return undefined;
 	return {
 		filename: options.filename,
@@ -42,13 +50,9 @@ export function mapResult(
 		styleError: string[];
 		errors: OxcError[];
 	},
-	sourcemapOption?: TransformOptions['sourcemap'],
+	sourcemapOption?: TransformOptions['sourcemap']
 ): TransformResult {
 	let code = result.code;
-
-	// IMPORTANT: Read result.map exactly once into a local variable.
-	// The NAPI binding uses mem::take() getters, so each property read
-	// moves the value out — a second read returns an empty string.
 	const map = result.map;
 
 	// When 'both' or 'inline' sourcemap mode is requested, append an inline
@@ -72,6 +76,13 @@ export function mapResult(
 		propagation: result.propagation,
 		styleError: result.styleError,
 		diagnostics: [],
+		errors: result.errors.map(mapError),
+	};
+}
+
+export function mapParseResult(result: { ast: string; errors: OxcError[] }): ParseResult {
+	return {
+		ast: JSON.parse(result.ast),
 		errors: result.errors.map(mapError),
 	};
 }

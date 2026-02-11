@@ -5,6 +5,7 @@ use napi_derive::napi;
 use oxc_diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic};
 
 #[napi(object, use_nullable = true)]
+#[derive(Clone)]
 pub struct OxcError {
     pub severity: Severity,
     pub message: String,
@@ -69,6 +70,7 @@ impl OxcError {
 }
 
 #[napi(object, use_nullable = true)]
+#[derive(Clone)]
 pub struct ErrorLabel {
     pub message: Option<String>,
     pub start: u32,
@@ -114,6 +116,7 @@ fn byte_offset_to_line_column(source: &str, offset: usize) -> (u32, u32) {
 }
 
 #[napi(string_enum)]
+#[derive(Clone)]
 pub enum Severity {
     Error,
     Warning,

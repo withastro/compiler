@@ -21,12 +21,17 @@ export interface TransformOptions {
 	resultScopedSlot?: boolean;
 	scopedStyleStrategy?: 'where' | 'class' | 'attribute';
 	transitionsAnimationURL?: string;
-	resolvePath?: (specifier: string) => Promise<string> | string;
+	resolvePath?: (specifier: string) => string;
 	preprocessStyle?: (
 		content: string,
-		attrs: Record<string, string>,
+		attrs: Record<string, string>
 	) => null | Promise<PreprocessorResult | PreprocessorError>;
 	annotateSourceFile?: boolean;
+}
+
+/** TransformOptions variant for the async entrypoint, where resolvePath may return a Promise. */
+export interface AsyncTransformOptions extends Omit<TransformOptions, 'resolvePath'> {
+	resolvePath?: (specifier: string) => Promise<string> | string;
 }
 
 export type ConvertToTSXOptions = Pick<
@@ -109,18 +114,19 @@ export interface SourceMap {
 	version: number;
 }
 
-// TODO: Stub until these are implemented in the Rust compiler
-export type ParseResult = any;
+/** Result of parsing an Astro file into an AST. */
+export interface ParseResult {
+	/** The oxc AST in ESTree-compatible JSON format. */
+	ast: Record<string, any>;
+	/** Parse errors encountered. */
+	errors: CompilerError[];
+}
+
+// TODO: Stub until TSX is implemented in the Rust compiler
 export type TSXResult = any;
 
-export declare function transform(
-	input: string,
-	options?: TransformOptions,
-): Promise<TransformResult>;
+export declare function transform(input: string, options?: TransformOptions): TransformResult;
 
-export declare function parse(input: string, options?: ParseOptions): Promise<ParseResult>;
+export declare function parse(input: string, options?: ParseOptions): ParseResult;
 
-export declare function convertToTSX(
-	input: string,
-	options?: ConvertToTSXOptions,
-): Promise<TSXResult>;
+export declare function convertToTSX(input: string, options?: ConvertToTSXOptions): TSXResult;

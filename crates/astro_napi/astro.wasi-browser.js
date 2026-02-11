@@ -56,7 +56,8 @@ const {
   },
 })
 export default __napiModule.exports
-export const AstroCompileResult = __napiModule.exports.AstroCompileResult
 export const compileAstro = __napiModule.exports.compileAstro
 export const compileAstroSync = __napiModule.exports.compileAstroSync
+export const parseAstro = __napiModule.exports.parseAstro
+export const parseAstroSync = __napiModule.exports.parseAstroSync
 export const Severity = __napiModule.exports.Severity

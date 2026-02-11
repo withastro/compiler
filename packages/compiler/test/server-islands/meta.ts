@@ -1,7 +1,7 @@
+import assert from 'node:assert/strict';
+import { before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { transform } from '@astrojs/compiler';
-import { describe, it, before } from 'node:test';
-import assert from 'node:assert/strict';
 
 const FIXTURE = `
 ---
@@ -18,7 +18,7 @@ let result: Awaited<ReturnType<typeof transform>>;
 describe('server-islands/meta', () => {
 	before(async () => {
 		result = await transform(FIXTURE, {
-			resolvePath: async (s: string) => {
+			resolvePath: (s: string) => {
 				const out = new URL(s, import.meta.url);
 				return fileURLToPath(out);
 			},

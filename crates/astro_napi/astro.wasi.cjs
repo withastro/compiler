@@ -108,7 +108,8 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
-module.exports.AstroCompileResult = __napiModule.exports.AstroCompileResult
 module.exports.compileAstro = __napiModule.exports.compileAstro
 module.exports.compileAstroSync = __napiModule.exports.compileAstroSync
+module.exports.parseAstro = __napiModule.exports.parseAstro
+module.exports.parseAstroSync = __napiModule.exports.parseAstroSync
 module.exports.Severity = __napiModule.exports.Severity

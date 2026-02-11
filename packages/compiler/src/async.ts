@@ -5,15 +5,18 @@ export type {
 	ParseOptions,
 	ParseResult,
 	PreprocessorResult,
-	TransformOptions,
 	TransformResult,
 } from './types.js';
-import { compileAstroSync, parseAstroSync } from '@astrojs/compiler-binding';
+export type { AsyncTransformOptions as TransformOptions } from './types.js';
+import { compileAstro, parseAstro } from '@astrojs/compiler-binding';
 import { mapOptions, mapParseResult, mapResult } from './shared.js';
-import type { Component, ParseResult, TransformOptions, TransformResult } from './types.js';
+import type { AsyncTransformOptions, Component, ParseResult, TransformResult } from './types.js';
 
-export function transform(input: string, options?: TransformOptions): TransformResult {
-	const result = mapResult(compileAstroSync(input, mapOptions(options)), options?.sourcemap);
+export async function transform(
+	input: string,
+	options?: AsyncTransformOptions
+): Promise<TransformResult> {
+	const result = mapResult(await compileAstro(input, mapOptions(options)), options?.sourcemap);
 
 	// Post-process: call resolvePath for each component specifier if provided.
 	// The Rust codegen emits raw specifiers in the code string since the
@@ -28,7 +31,7 @@ export function transform(input: string, options?: TransformOptions): TransformR
 			...result.serverComponents,
 		];
 		for (const c of allComponents) {
-			c.resolvedPath = resolve(c.specifier);
+			c.resolvedPath = await resolve(c.specifier);
 		}
 
 		// Rewrite client:component-path values in the generated code
@@ -46,10 +49,10 @@ export function transform(input: string, options?: TransformOptions): TransformR
 	return result;
 }
 
-export function parse(input: string): ParseResult {
-	return mapParseResult(parseAstroSync(input));
+export async function parse(input: string): Promise<ParseResult> {
+	return mapParseResult(await parseAstro(input));
 }
 
-export function convertToTSX(_input: string): never {
+export async function convertToTSX(_input: string): Promise<never> {
 	throw new Error('convertToTSX() is not yet implemented in the Rust compiler');
 }

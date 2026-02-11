@@ -19,7 +19,7 @@
     "dist",
     "types.d.ts",
     "utils.d.ts",
-    "sync.d.ts"
+    "async.d.ts"
   ],
   "exports": {
     ".": {
@@ -28,11 +28,11 @@
       "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     },
-    "./sync": {
-      "types": "./dist/sync.d.ts",
-      "import": "./dist/sync.js",
-      "require": "./dist/sync.cjs",
-      "default": "./dist/sync.js"
+    "./async": {
+      "types": "./dist/async.d.ts",
+      "import": "./dist/async.js",
+      "require": "./dist/async.cjs",
+      "default": "./dist/async.js"
     },
     "./utils": {
       "types": "./dist/utils.d.ts",

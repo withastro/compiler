@@ -22,6 +22,8 @@ use napi_derive::napi;
 use crate::error::OxcError;
 use astro_codegen::{HoistedScriptType, TransformOptions, transform};
 use oxc_allocator::Allocator;
+use oxc_estree::CompactTSSerializer;
+use oxc_estree::ESTree;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -105,6 +107,7 @@ pub struct AstroCompileOptions {
 
 /// A hoisted script extracted from an Astro component.
 #[napi(object)]
+#[derive(Clone)]
 pub struct NapiHoistedScript {
     /// The script type: `"inline"` or `"external"`.
     #[napi(js_name = "type")]
@@ -117,6 +120,7 @@ pub struct NapiHoistedScript {
 
 /// A hydrated component reference found in the template.
 #[napi(object)]
+#[derive(Clone)]
 pub struct NapiHydratedComponent {
     /// The export name from the module (e.g., `"default"`).
     pub export_name: String,
@@ -129,103 +133,35 @@ pub struct NapiHydratedComponent {
 }
 
 /// Result of compiling an Astro file.
-#[napi]
+#[napi(object)]
 pub struct AstroCompileResult {
-    code: String,
-    map: String,
-    scope: String,
-    css: Vec<String>,
-    scripts: Vec<NapiHoistedScript>,
-    hydrated_components: Vec<NapiHydratedComponent>,
-    client_only_components: Vec<NapiHydratedComponent>,
-    server_components: Vec<NapiHydratedComponent>,
-    contains_head: bool,
-    propagation: bool,
-    style_error: Vec<String>,
-    diagnostics: Vec<String>,
-    errors: Vec<OxcError>,
-}
-
-#[napi]
-impl AstroCompileResult {
     /// The generated JavaScript code.
-    #[napi(getter)]
-    pub fn code(&mut self) -> String {
-        mem::take(&mut self.code)
-    }
-
+    pub code: String,
     /// Source map JSON string. Contains a JSON-encoded source map when
     /// `sourcemap: true` was passed in options. Empty string otherwise.
-    #[napi(getter)]
-    pub fn map(&mut self) -> String {
-        mem::take(&mut self.map)
-    }
-
+    pub map: String,
     /// CSS scope hash for the component.
-    #[napi(getter)]
-    pub fn scope(&mut self) -> String {
-        mem::take(&mut self.scope)
-    }
-
+    pub scope: String,
     /// Extracted CSS from `<style>` tags (empty until CSS support).
-    #[napi(getter)]
-    pub fn css(&mut self) -> Vec<String> {
-        mem::take(&mut self.css)
-    }
-
+    pub css: Vec<String>,
     /// Hoisted scripts extracted from the template.
-    #[napi(getter)]
-    pub fn scripts(&mut self) -> Vec<NapiHoistedScript> {
-        mem::take(&mut self.scripts)
-    }
-
+    pub scripts: Vec<NapiHoistedScript>,
     /// Components with `client:*` hydration directives (except `client:only`).
-    #[napi(getter)]
-    pub fn hydrated_components(&mut self) -> Vec<NapiHydratedComponent> {
-        mem::take(&mut self.hydrated_components)
-    }
-
+    pub hydrated_components: Vec<NapiHydratedComponent>,
     /// Components with `client:only` directive.
-    #[napi(getter)]
-    pub fn client_only_components(&mut self) -> Vec<NapiHydratedComponent> {
-        mem::take(&mut self.client_only_components)
-    }
-
+    pub client_only_components: Vec<NapiHydratedComponent>,
     /// Components with `server:defer` directive.
-    #[napi(getter)]
-    pub fn server_components(&mut self) -> Vec<NapiHydratedComponent> {
-        mem::take(&mut self.server_components)
-    }
-
+    pub server_components: Vec<NapiHydratedComponent>,
     /// Whether the template contains an explicit `<head>` element.
-    #[napi(getter)]
-    pub fn contains_head(&self) -> bool {
-        self.contains_head
-    }
-
+    pub contains_head: bool,
     /// Whether the component propagates head content.
-    #[napi(getter)]
-    pub fn propagation(&self) -> bool {
-        self.propagation
-    }
-
+    pub propagation: bool,
     /// Style processing errors (stub: always empty).
-    #[napi(getter)]
-    pub fn style_error(&mut self) -> Vec<String> {
-        mem::take(&mut self.style_error)
-    }
-
+    pub style_error: Vec<String>,
     /// Diagnostic messages (stub: always empty).
-    #[napi(getter, js_name = "diagnostics")]
-    pub fn diagnostics(&mut self) -> Vec<String> {
-        mem::take(&mut self.diagnostics)
-    }
-
+    pub diagnostics: Vec<String>,
     /// Any compilation errors encountered (oxc-specific).
-    #[napi(getter)]
-    pub fn errors(&mut self) -> Vec<OxcError> {
-        mem::take(&mut self.errors)
-    }
+    pub errors: Vec<OxcError>,
 }
 
 fn parse_scoped_style_strategy(s: Option<&str>) -> astro_codegen::ScopedStyleStrategy {
@@ -440,4 +376,85 @@ pub fn compile_astro(
         source_text,
         options,
     })
+}
+
+/// Result of parsing an Astro file into an AST.
+#[napi(object)]
+pub struct AstroParseResult {
+    /// The AST serialized as a JSON string (ESTree-compatible format from oxc).
+    /// Call `JSON.parse()` on this to get the AST object.
+    pub ast: String,
+    /// Any parse errors encountered.
+    pub errors: Vec<OxcError>,
+}
+
+fn parse_astro_impl(source_text: &str) -> AstroParseResult {
+    let allocator = Allocator::default();
+    let source_type = SourceType::astro();
+
+    let ret = Parser::new(&allocator, source_text, source_type)
+        .with_options(ParseOptions::default())
+        .parse_astro();
+
+    let errors = if ret.errors.is_empty() {
+        Vec::new()
+    } else {
+        OxcError::from_diagnostics("", source_text, ret.errors)
+    };
+
+    // Serialize the AST to JSON using the ESTree serializer
+    let mut serializer = CompactTSSerializer::new(false);
+    ret.root.serialize(&mut serializer);
+    let ast = serializer.into_string();
+
+    AstroParseResult { ast, errors }
+}
+
+/// Parse an Astro file into an AST synchronously.
+///
+/// Returns the oxc AST in ESTree-compatible JSON format.
+///
+/// @example
+/// ```javascript
+/// import { parseAstroSync } from '@astrojs/compiler';
+///
+/// const { ast } = parseAstroSync(`---
+/// const name = "World";
+/// ---
+/// <h1>Hello {name}!</h1>`);
+///
+/// const tree = JSON.parse(ast);
+/// console.log(tree.type); // "AstroRoot"
+/// ```
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub fn parse_astro_sync(source_text: String) -> AstroParseResult {
+    parse_astro_impl(&source_text)
+}
+
+pub struct AstroParseTask {
+    source_text: String,
+}
+
+#[napi]
+impl Task for AstroParseTask {
+    type JsValue = AstroParseResult;
+    type Output = AstroParseResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        let source_text = mem::take(&mut self.source_text);
+        Ok(parse_astro_impl(&source_text))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Parse an Astro file into an AST asynchronously on a separate thread.
+///
+/// Returns the oxc AST in ESTree-compatible JSON format.
+#[napi]
+pub fn parse_astro(source_text: String) -> AsyncTask<AstroParseTask> {
+    AsyncTask::new(AstroParseTask { source_text })
 }
