@@ -1,4 +1,4 @@
-# The `.astro` File Format — Syntax Specification
+# The `.astro` File Format - Syntax Specification
 
 **Version:** 1.0
 **Status:** Draft
@@ -33,7 +33,7 @@ An `.astro` file is composed of up to two sections described below. All are opti
 ### 1.1 Minimal examples
 
 ```astro
-<!-- no script, no style — just HTML -->
+<!-- A comment! -->
 <h1>Hello, World!</h1>
 ```
 
@@ -296,9 +296,25 @@ HTML void elements do not need to be self-closed:
 <img src="image.png">
 ```
 
-#### All HTML tags are supported
+#### Element-specific parsing rules
 
-Astro supports all HTML tags, including `<script>` and `<style>` and foreign elements like `<math>` or `<svg>`.
+Certain HTML elements have special parsing rules that differ from the general rules outlined above. These include:
+
+- `<script>` - contains JavaScript/TypeScript (see §5)
+- `<style>` - contains CSS (see §4)
+
+##### Elements that disable expression parsing
+
+The following elements disable expression parsing entirely. Inside these elements and their descendants, curly braces `{` and `}` are treated as literal text characters, not expression delimiters:
+
+- `<math>`
+- `<iframe>`
+- `<noembed>`
+- `<noframes>`
+- `<plaintext>`
+- `<xmp>`
+
+Example with `<math>`:
 
 ```astro
 <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -310,7 +326,20 @@ Astro supports all HTML tags, including `<script>` and `<style>` and foreign ele
 </math>
 ```
 
-In this example, `{R}` and `{2x}` are treated as text, not expressions.
+In this example, `{R}` and `{2x}` are treated as literal text, not expressions.
+
+##### Raw text elements that still support expressions
+
+The `<title>` and `<textarea>` elements have special parsing where HTML tags inside them are treated as literal text rather than elements, but expressions still work.
+
+```astro
+<title>{pageTitle} - Site with <b>bold</b></title>
+<textarea>{defaultValue} with <div>tags</div></textarea>
+```
+
+In this example:
+- `{pageTitle}` and `{defaultValue}` are expressions that will be evaluated
+- The `<b>bold</b>` and `<div>tags</div>` are treated as literal text, not HTML elements
 
 ---
 
