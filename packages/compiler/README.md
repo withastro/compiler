@@ -1,6 +1,6 @@
 # Astro Compiler
 
-Astro’s [Go](https://golang.org/) + WASM compiler.
+Astro's compiler, written in Rust with [NAPI-RS](https://napi.rs/) bindings for Node.js.
 
 ## Install
 
@@ -10,63 +10,53 @@ npm install @astrojs/compiler
 
 ## Usage
 
-#### Transform `.astro` to valid TypeScript
+#### Transform `.astro` to JavaScript
 
-The Astro compiler can convert `.astro` syntax to a TypeScript Module whose default export generates HTML.
-
-**Some notes**...
-
-- TypeScript is valid `.astro` syntax! The output code may need an additional post-processing step to generate valid JavaScript.
-- `.astro` files rely on a server implementation exposed as `astro/runtime/server/index.js` in the Node ecosystem. Other runtimes currently need to bring their own rendering implementation and reference it via `internalURL`. This is a pain point we're looking into fixing.
+The Astro compiler transforms `.astro` component files into JavaScript modules whose default export generates HTML.
 
 ```js
-import { transform, type TransformResult } from "@astrojs/compiler";
+import { transform } from "@astrojs/compiler";
 
-const result = await transform(source, {
+const result = transform(source, {
   filename: "/Users/astro/Code/project/src/pages/index.astro",
   sourcemap: "both",
-  internalURL: "astro/runtime/server/index.js",
 });
 ```
 
 #### Parse `.astro` and return an AST
 
-The Astro compiler can emit an AST using the `parse` method.
-
-**Some notes**...
-
-- Position data is currently incomplete and in some cases incorrect. We're working on it!
-- A `TextNode` can represent both HTML `text` and JavaScript/TypeScript source code.
-- The `@astrojs/compiler/utils` entrypoint exposes `walk` and `walkAsync` functions that can be used to traverse the AST. It also exposes the `is` helper which can be used as guards to derive the proper types for each `node`.
+The compiler can emit an ESTree-compatible AST using the `parse` method.
 
 ```js
 import { parse } from "@astrojs/compiler";
-import { walk, walkAsync, is } from "@astrojs/compiler/utils";
 
-const result = await parse(source, {
-  position: false, // defaults to `true`
-});
+const result = parse(source);
 
-walk(result.ast, (node) => {
-  // `tag` nodes are `element` | `custom-element` | `component`
-  if (is.tag(node)) {
-    console.log(node.name);
-  }
-});
-
-await walkAsync(result.ast, async (node) => {
-  if (is.tag(node)) {
-    node.value = await expensiveCalculation(node)
-  }
-});
+console.log(JSON.stringify(result.ast, null, 2));
 ```
-
-## Develop
-
-### VSCode / CodeSpaces
-
-A `devcontainer` configuration is available for use with VSCode's [Remote Development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) and GitHub CodeSpaces.
 
 ## Contributing
 
-[CONTRIBUTING.md](/CONTRIBUTING.md)
+**New contributors welcome!** Check out our [Contributors Guide](CONTRIBUTING.md) for help getting started.
+
+Join us on [Discord](https://astro.build/chat) to meet other maintainers. We'll help you get your first contribution in no time!
+
+## Links
+
+- [License (MIT)](LICENSE)
+- [Code of Conduct](https://github.com/withastro/.github/blob/main/CODE_OF_CONDUCT.md)
+- [Open Governance & Voting](https://github.com/withastro/.github/blob/main/GOVERNANCE.md)
+- [Project Funding](https://github.com/withastro/.github/blob/main/FUNDING.md)
+- [Website](https://astro.build/)
+
+## Sponsors
+
+Astro is free, open source software made possible by these wonderful sponsors.
+
+[❤️ Sponsor Astro! ❤️](https://github.com/withastro/.github/blob/main/FUNDING.md)
+
+<p align="center">
+  <a target="_blank" href="https://opencollective.com/astrodotbuild">
+    <img src="https://astro.build/sponsors.png" alt="Sponsor logos including the current Astro Sponsors, Gold Sponsors, and Exclusive Partner Sponsors: Netlify, Sentry, and Project IDX." />
+  </a>
+</p>

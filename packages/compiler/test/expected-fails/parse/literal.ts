@@ -11,8 +11,16 @@ describe('parse/literal', { skip: true }, () => {
 
 		const lastChildren = ast.children.at(-1) as ElementNode;
 
-		assert.deepStrictEqual(lastChildren.type, 'element', 'Expected last child node to be of type "element"');
-		assert.deepStrictEqual(lastChildren.name, 'style', 'Expected last child node to be of type "style"');
+		assert.deepStrictEqual(
+			lastChildren.type,
+			'element',
+			'Expected last child node to be of type "element"',
+		);
+		assert.deepStrictEqual(
+			lastChildren.name,
+			'style',
+			'Expected last child node to be of type "style"',
+		);
 	});
 
 	it('preserve style tag position II', async () => {
@@ -22,8 +30,16 @@ describe('parse/literal', { skip: true }, () => {
 
 		const lastChildren = ast.children.at(-1) as ElementNode;
 
-		assert.deepStrictEqual(lastChildren.type, 'element', 'Expected last child node to be of type "element"');
-		assert.deepStrictEqual(lastChildren.name, 'style', 'Expected last child node to be of type "style"');
+		assert.deepStrictEqual(
+			lastChildren.type,
+			'element',
+			'Expected last child node to be of type "element"',
+		);
+		assert.deepStrictEqual(
+			lastChildren.name,
+			'style',
+			'Expected last child node to be of type "style"',
+		);
 	});
 
 	it('preserve style tag position III', async () => {
@@ -33,12 +49,20 @@ describe('parse/literal', { skip: true }, () => {
 
 		const lastChildren = ast.children.at(-1) as ElementNode;
 
-		assert.deepStrictEqual(lastChildren.type, 'element', 'Expected last child node to be of type "element"');
-		assert.deepStrictEqual(lastChildren.name, 'style', 'Expected last child node to be of type "style"');
+		assert.deepStrictEqual(
+			lastChildren.type,
+			'element',
+			'Expected last child node to be of type "element"',
+		);
+		assert.deepStrictEqual(
+			lastChildren.name,
+			'style',
+			'Expected last child node to be of type "style"',
+		);
 		assert.deepStrictEqual(
 			lastChildren.children[0].type,
 			'text',
-			'Expected last child node to be of type "text"'
+			'Expected last child node to be of type "text"',
 		);
 	});
 
@@ -49,12 +73,20 @@ describe('parse/literal', { skip: true }, () => {
 
 		const lastChildren = ast.children.at(-1) as ElementNode;
 
-		assert.deepStrictEqual(lastChildren.type, 'element', 'Expected last child node to be of type "element"');
-		assert.deepStrictEqual(lastChildren.name, 'style', 'Expected last child node to be of type "style"');
+		assert.deepStrictEqual(
+			lastChildren.type,
+			'element',
+			'Expected last child node to be of type "element"',
+		);
+		assert.deepStrictEqual(
+			lastChildren.name,
+			'style',
+			'Expected last child node to be of type "style"',
+		);
 		assert.deepStrictEqual(
 			lastChildren.children[0].type,
 			'text',
-			'Expected last child node to be of type "text"'
+			'Expected last child node to be of type "text"',
 		);
 	});
 
@@ -65,8 +97,20 @@ describe('parse/literal', { skip: true }, () => {
 		const firstChild = ast.children.at(0) as ElementNode;
 		const lastChild = firstChild.children.at(-1) as ElementNode;
 
-		assert.deepStrictEqual(lastChild.type, 'element', 'Expected last child node to be of type "element"');
-		assert.deepStrictEqual(lastChild.name, 'style', 'Expected last child node to be of type "style"');
-		assert.deepStrictEqual(lastChild.children[0].type, 'text', 'Expected last child node to be of type "text"');
+		assert.deepStrictEqual(
+			lastChild.type,
+			'element',
+			'Expected last child node to be of type "element"',
+		);
+		assert.deepStrictEqual(
+			lastChild.name,
+			'style',
+			'Expected last child node to be of type "style"',
+		);
+		assert.deepStrictEqual(
+			lastChild.children[0].type,
+			'text',
+			'Expected last child node to be of type "text"',
+		);
 	});
 });

@@ -20,7 +20,11 @@ describe('parse/ast', { skip: true }, () => {
 
 	it('ast', () => {
 		assert.strictEqual(typeof result, 'object', `Expected "parse" to return an object!`);
-		assert.deepStrictEqual(result.ast.type, 'root', `Expected "ast" root node to be of type "root"`);
+		assert.deepStrictEqual(
+			result.ast.type,
+			'root',
+			`Expected "ast" root node to be of type "root"`,
+		);
 	});
 
 	it('frontmatter', () => {
@@ -28,22 +32,34 @@ describe('parse/ast', { skip: true }, () => {
 		assert.deepStrictEqual(
 			frontmatter.type,
 			'frontmatter',
-			`Expected first child node to be of type "frontmatter"`
+			`Expected first child node to be of type "frontmatter"`,
 		);
 	});
 
 	it('element', () => {
 		const [, element] = result.ast.children;
-		assert.deepStrictEqual(element.type, 'element', `Expected first child node to be of type "element"`);
+		assert.deepStrictEqual(
+			element.type,
+			'element',
+			`Expected first child node to be of type "element"`,
+		);
 	});
 
 	it('element with no attributes', () => {
 		const [, , , element] = result.ast.children as ElementNode[];
-		assert.deepStrictEqual(element.attributes, [], `Expected the "attributes" property to be an empty array`);
+		assert.deepStrictEqual(
+			element.attributes,
+			[],
+			`Expected the "attributes" property to be an empty array`,
+		);
 	});
 
 	it('element with no children', () => {
 		const [, , , element] = result.ast.children as ElementNode[];
-		assert.deepStrictEqual(element.children, [], `Expected the "children" property to be an empty array`);
+		assert.deepStrictEqual(
+			element.children,
+			[],
+			`Expected the "children" property to be an empty array`,
+		);
 	});
 });

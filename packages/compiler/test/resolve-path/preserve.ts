@@ -27,7 +27,7 @@ describe('resolve-path/preserve', () => {
 		assert.match(result.code, /"client:load": true[\s\S]*"client:component-path": "\.\/Foo\.jsx"/);
 		assert.match(
 			result.code,
-			/"client:only": "react"[\s\S]*"client:component-path": "\.\/Foo\.jsx"/
+			/"client:only": "react"[\s\S]*"client:component-path": "\.\/Foo\.jsx"/,
 		);
 	});
 

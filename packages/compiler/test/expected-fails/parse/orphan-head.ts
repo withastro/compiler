@@ -29,7 +29,15 @@ describe('parse/orphan-head', { skip: true }, () => {
 
 		const [doctype, html, ...others] = result.ast.children;
 		assert.deepStrictEqual(others.length, 1, 'Expected only three child nodes!');
-		assert.deepStrictEqual(doctype.type, 'doctype', `Expected first child node to be of type "doctype"`);
-		assert.deepStrictEqual(html.type, 'element', `Expected first child node to be of type "element"`);
+		assert.deepStrictEqual(
+			doctype.type,
+			'doctype',
+			`Expected first child node to be of type "doctype"`,
+		);
+		assert.deepStrictEqual(
+			html.type,
+			'element',
+			`Expected first child node to be of type "element"`,
+		);
 	});
 });

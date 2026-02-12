@@ -54,7 +54,7 @@ describe('parse', () => {
 
 	it('elements have attributes', () => {
 		const div = result.ast.body.find(
-			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'div'
+			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'div',
 		);
 		assert.ok(div);
 		assert.equal(div.openingElement.attributes.length, 1);
@@ -63,13 +63,13 @@ describe('parse', () => {
 
 	it('elements have children', () => {
 		const div = result.ast.body.find(
-			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'div'
+			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'div',
 		);
 		assert.ok(div);
 		// <p> plus surrounding whitespace text nodes
 		assert.ok(div.children.length > 0);
 		const p = div.children.find(
-			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'p'
+			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'p',
 		);
 		assert.ok(p);
 	});
@@ -82,7 +82,7 @@ describe('parse', () => {
 
 	it('expression containers are parsed', () => {
 		const h1 = result.ast.body.find(
-			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'h1'
+			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'h1',
 		);
 		assert.ok(h1);
 		const expr = h1.children.find((n: any) => n.type === 'JSXExpressionContainer');
@@ -119,7 +119,7 @@ describe('parse: script tags', () => {
 	it('parses script elements as JSXElement', async () => {
 		const { ast } = await parse('<script>const x = 1;</script>');
 		const script = ast.body.find(
-			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'script'
+			(n: any) => n.type === 'JSXElement' && n.openingElement.name.name === 'script',
 		);
 		assert.ok(script);
 	});

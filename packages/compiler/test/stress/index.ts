@@ -190,7 +190,7 @@ import CartItems from './CartItems.astro';
 </section>`,
 		{
 			sourcemap: true,
-		}
+		},
 	);
 }
 
@@ -205,7 +205,6 @@ async function test() {
 	for (let i = 0; i < MAX_RENDERS; i++) {
 		tests.push(() => {
 			if (i % 1000 === 0) {
-				console.log(`Test ${i}`);
 			}
 			return run();
 		});

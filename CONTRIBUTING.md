@@ -8,8 +8,6 @@ Contributions are welcome to the Astro compiler!
 
 [Rust][rust] is needed to work with this repo. Install it via [rustup][rustup].
 
-The workspace uses oxc crates (parser, AST, etc.) as git dependencies.
-
 ### Node
 
 You will also need [Node.js][node] installed, as well as pnpm (`npm i -g pnpm`). Run `pnpm install` to install dependencies.

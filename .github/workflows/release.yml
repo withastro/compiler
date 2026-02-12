@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, feat/rust]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    env:
+      APP_NAME: astro
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: latest
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Download artifacts from CI
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create npm dirs
+        run: pnpm napi create-npm-dirs
+        working-directory: crates/astro_napi
+
+      - name: Move artifacts
+        run: pnpm artifacts
+        working-directory: crates/astro_napi
+
+      - name: List packages
+        run: ls -R ./npm
+        shell: bash
+        working-directory: crates/astro_napi
+
+      - name: Build @astrojs/compiler
+        run: pnpm run build:compiler
+
+      # Check if this is a version PR merge by looking at the commit message.
+      # The changesets action creates PRs titled "Version Packages", so the
+      # merge commit will contain that string.
+      - name: Check if version PR merge
+        id: check
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          echo "commit_message=$COMMIT_MSG"
+          if echo "$COMMIT_MSG" | grep -q "Version Packages"; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      # NAPI platform packages (e.g. @astrojs/compiler-binding-darwin-arm64)
+      # live under crates/astro_napi/npm/ and are NOT pnpm workspace packages.
+      # They must be published before the main @astrojs/compiler-binding
+      # package, since it lists them as optionalDependencies.
+      # We use `napi version` to stamp the current version into all platform
+      # package.json files before publishing them.
+      - name: Publish NAPI platform packages
+        if: steps.check.outputs.is_release == 'true'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          npm config set provenance true
+          pnpm napi version
+          for dir in ./npm/*/; do
+            if [ -f "$dir/package.json" ]; then
+              echo "Publishing $(basename "$dir")..."
+              npm publish "$dir" --access public --provenance || echo "Skipped (may already exist)"
+            fi
+          done
+        working-directory: crates/astro_napi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create Release PR or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          publish: pnpm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true

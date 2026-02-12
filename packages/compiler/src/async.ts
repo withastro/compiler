@@ -14,7 +14,7 @@ import type { AsyncTransformOptions, Component, ParseResult, TransformResult } f
 
 export async function transform(
 	input: string,
-	options?: AsyncTransformOptions
+	options?: AsyncTransformOptions,
 ): Promise<TransformResult> {
 	const result = mapResult(await compileAstro(input, mapOptions(options)), options?.sourcemap);
 

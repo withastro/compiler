@@ -22,7 +22,7 @@ describe('static-extraction/css', { skip: true }, () => {
 		assert.deepStrictEqual(
 			result.css.length,
 			1,
-			`Incorrect CSS returned. Expected a length of 1 and got ${result.css.length}`
+			`Incorrect CSS returned. Expected a length of 1 and got ${result.css.length}`,
 		);
 	});
 

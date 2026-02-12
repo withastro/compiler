@@ -38,6 +38,8 @@ let color = 'red';
 <style define:vars={{ color }}></style>
 `;
 		const result = await transform(input);
-		assert.ok(result.code.includes(`$$addAttribute([{ color: 'var(--color)' },$$definedVars], "style")`));
+		assert.ok(
+			result.code.includes(`$$addAttribute([{ color: 'var(--color)' },$$definedVars], "style")`),
+		);
 	});
 });

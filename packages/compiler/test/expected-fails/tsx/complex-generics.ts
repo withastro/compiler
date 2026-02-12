@@ -37,7 +37,7 @@ describe('tsx/complex-generics', { skip: true }, () => {
 		let error = 0;
 		try {
 			await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-		} catch (e) {
+		} catch (_e) {
 			error = 1;
 		}
 		assert.deepStrictEqual(error, 0, 'compiler should not have panicked');

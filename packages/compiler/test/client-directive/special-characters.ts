@@ -29,7 +29,9 @@ import RemoteComponent from 'https://test.com/components/with-[wacky-brackets}()
 describe('client-directive/special-characters', () => {
 	let result: TransformResult;
 	before(async () => {
-		result = await transform(FIXTURE, { filename: '/users/astro/apps/pacman/src/pages/index.astro' });
+		result = await transform(FIXTURE, {
+			filename: '/users/astro/apps/pacman/src/pages/index.astro',
+		});
 	});
 
 	it('does not panic', () => {
@@ -42,7 +44,7 @@ describe('client-directive/special-characters', () => {
 		assert.deepStrictEqual(components[0].specifier, '../components/^--with-carets/Counter');
 		assert.deepStrictEqual(
 			components[0].resolvedPath,
-			'/users/astro/apps/pacman/src/components/^--with-carets/Counter'
+			'/users/astro/apps/pacman/src/components/^--with-carets/Counter',
 		);
 	});
 
@@ -52,7 +54,7 @@ describe('client-directive/special-characters', () => {
 		assert.deepStrictEqual(components[1].specifier, '../components/and-rockets-🚀/Counter');
 		assert.deepStrictEqual(
 			components[1].resolvedPath,
-			'/users/astro/apps/pacman/src/components/and-rockets-🚀/Counter'
+			'/users/astro/apps/pacman/src/components/and-rockets-🚀/Counter',
 		);
 	});
 
@@ -62,7 +64,7 @@ describe('client-directive/special-characters', () => {
 		assert.deepStrictEqual(components[2].specifier, '../components/now-100%-better/Counter');
 		assert.deepStrictEqual(
 			components[2].resolvedPath,
-			'/users/astro/apps/pacman/src/components/now-100%-better/Counter'
+			'/users/astro/apps/pacman/src/components/now-100%-better/Counter',
 		);
 	});
 
@@ -72,7 +74,7 @@ describe('client-directive/special-characters', () => {
 		assert.deepStrictEqual(components[3].specifier, '../components/with some spaces/Counter');
 		assert.deepStrictEqual(
 			components[3].resolvedPath,
-			'/users/astro/apps/pacman/src/components/with some spaces/Counter'
+			'/users/astro/apps/pacman/src/components/with some spaces/Counter',
 		);
 	});
 
@@ -82,7 +84,7 @@ describe('client-directive/special-characters', () => {
 		assert.deepStrictEqual(components[4].specifier, '../components/with-(round-brackets)/Counter');
 		assert.deepStrictEqual(
 			components[4].resolvedPath,
-			'/users/astro/apps/pacman/src/components/with-(round-brackets)/Counter'
+			'/users/astro/apps/pacman/src/components/with-(round-brackets)/Counter',
 		);
 	});
 
@@ -92,7 +94,7 @@ describe('client-directive/special-characters', () => {
 		assert.deepStrictEqual(components[5].specifier, '../components/with-[square-brackets]/Counter');
 		assert.deepStrictEqual(
 			components[5].resolvedPath,
-			'/users/astro/apps/pacman/src/components/with-[square-brackets]/Counter'
+			'/users/astro/apps/pacman/src/components/with-[square-brackets]/Counter',
 		);
 	});
 
@@ -101,11 +103,11 @@ describe('client-directive/special-characters', () => {
 		assert.deepStrictEqual(components[6].exportName, 'default');
 		assert.deepStrictEqual(
 			components[6].specifier,
-			'https://test.com/components/with-[wacky-brackets}()10%-cooler/Counter'
+			'https://test.com/components/with-[wacky-brackets}()10%-cooler/Counter',
 		);
 		assert.deepStrictEqual(
 			components[6].resolvedPath,
-			'https://test.com/components/with-[wacky-brackets}()10%-cooler/Counter'
+			'https://test.com/components/with-[wacky-brackets}()10%-cooler/Counter',
 		);
 	});
 });

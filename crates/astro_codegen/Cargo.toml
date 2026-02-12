@@ -9,9 +9,6 @@ rust-version.workspace = true
 publish = false
 description = "Astro code generation - transforms Astro AST into JavaScript"
 
-[lints]
-workspace = true
-
 [lib]
 doctest = true
 

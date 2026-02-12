@@ -10,7 +10,7 @@ export type {
 } from './types.js';
 import { compileAstroSync, parseAstroSync } from '@astrojs/compiler-binding';
 import { mapOptions, mapParseResult, mapResult } from './shared.js';
-import type { Component, ParseResult, TransformOptions, TransformResult } from './types.js';
+import type { Component, ConvertToTSXOptions, ParseResult, TransformOptions, TransformResult } from './types.js';
 
 export function transform(input: string, options?: TransformOptions): TransformResult {
 	const result = mapResult(compileAstroSync(input, mapOptions(options)), options?.sourcemap);
@@ -50,6 +50,6 @@ export function parse(input: string): ParseResult {
 	return mapParseResult(parseAstroSync(input));
 }
 
-export function convertToTSX(_input: string): never {
+export function convertToTSX(_input: string, _options: ConvertToTSXOptions): never {
 	throw new Error('convertToTSX() is not yet implemented in the Rust compiler');
 }

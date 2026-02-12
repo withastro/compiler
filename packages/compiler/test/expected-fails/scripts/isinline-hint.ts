@@ -11,7 +11,6 @@ describe('scripts/isinline-hint', { skip: true }, () => {
 
 	it('does not report a diagnostic for the src attribute', async () => {
 		const result = await transform(`<script src="/external.js"></script>`);
-		console.log(result.diagnostics);
 		assert.deepStrictEqual(result.diagnostics.length, 0);
 	});
 });

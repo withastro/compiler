@@ -72,12 +72,12 @@ Hello world!`;
 		assert.deepStrictEqual(
 			li.position.start,
 			{ line: 3, column: 1, offset: 26 },
-			'Expected serialized output to contain a start position'
+			'Expected serialized output to contain a start position',
 		);
 		assert.deepStrictEqual(
 			li.position.end,
 			{ line: 3, column: 6, offset: 31 },
-			'Expected serialized output to contain an end position'
+			'Expected serialized output to contain an end position',
 		);
 	});
 
@@ -95,12 +95,12 @@ Hello world!`;
 		assert.deepStrictEqual(
 			li.position.start,
 			{ line: 3, column: 1, offset: 26 },
-			'Expected serialized output to contain a start position'
+			'Expected serialized output to contain a start position',
 		);
 		assert.deepStrictEqual(
 			li.position.end,
 			{ line: 3, column: 10, offset: 35 },
-			'Expected serialized output to contain an end position'
+			'Expected serialized output to contain an end position',
 		);
 	});
 
@@ -111,18 +111,21 @@ Hello world!`;
 
 		const frontmatter = ast.children[0] as FrontmatterNode;
 		assert.strictEqual(frontmatter.type, 'frontmatter');
-		assert.ok(frontmatter.position?.start, 'Expected serialized output to contain a start position');
+		assert.ok(
+			frontmatter.position?.start,
+			'Expected serialized output to contain a start position',
+		);
 		assert.ok(frontmatter.position.end, 'Expected serialized output to contain an end position');
 
 		assert.deepStrictEqual(
 			frontmatter.position.start,
 			{ line: 1, column: 1, offset: 0 },
-			'Expected serialized output to contain a start position'
+			'Expected serialized output to contain a start position',
 		);
 		assert.deepStrictEqual(
 			frontmatter.position.end,
 			{ line: 2, column: 4, offset: 7 },
-			'Expected serialized output to contain an end position'
+			'Expected serialized output to contain an end position',
 		);
 	});
 });

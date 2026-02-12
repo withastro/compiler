@@ -1,67 +1,67 @@
 {
-	"name": "@astrojs/compiler-binding",
-	"version": "0.1.0",
-	"description": "Astro Compiler",
-	"keywords": [
-		"astro",
-		"compiler",
-		"javascript",
-		"typescript"
-	],
-	"homepage": "https://astro.build",
-	"bugs": "https://github.com/withastro/compiler/issues",
-	"license": "MIT",
-	"author": "Astro contributors",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/withastro/compiler.git",
-		"directory": "crates/astro_napi"
-	},
-	"files": [
-		"index.d.ts",
-		"index.js",
-		"browser.js"
-	],
-	"type": "module",
-	"main": "index.js",
-	"publishConfig": {
-		"access": "public",
-		"registry": "https://registry.npmjs.org/"
-	},
-	"scripts": {
-		"artifacts": "napi artifacts",
-		"build-dev": "napi build --esm --platform",
-		"build-test": "pnpm run build-dev",
-		"build": "pnpm run build-dev --features allocator --release",
-		"prepublishOnly": "napi prepublish -t npm",
-		"test": "node --import tsx --test ./test/*.test.ts",
-		"version": "napi version"
-	},
-	"devDependencies": {
-		"@napi-rs/cli": "^3",
-		"@types/node": "^22"
-	},
-	"napi": {
-		"binaryName": "astro",
-		"packageName": "@astrojs/compiler-binding",
-		"targets": [
-			"aarch64-apple-darwin",
-			"aarch64-pc-windows-msvc",
-			"aarch64-unknown-linux-gnu",
-			"aarch64-unknown-linux-musl",
-			"wasm32-wasip1-threads",
-			"x86_64-apple-darwin",
-			"x86_64-pc-windows-msvc",
-			"x86_64-unknown-linux-gnu",
-			"x86_64-unknown-linux-musl"
-		],
-		"wasm": {
-			"browser": {
-				"fs": false
-			}
-		}
-	},
-	"engines": {
-		"node": "^20.19.0 || >=22.12.0"
-	}
+  "name": "@astrojs/compiler-binding",
+  "version": "0.1.0",
+  "description": "Astro Compiler",
+  "keywords": [
+    "astro",
+    "compiler",
+    "javascript",
+    "typescript"
+  ],
+  "homepage": "https://astro.build",
+  "bugs": "https://github.com/withastro/compiler/issues",
+  "license": "MIT",
+  "author": "Astro contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/withastro/compiler.git",
+    "directory": "crates/astro_napi"
+  },
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "browser.js"
+  ],
+  "type": "module",
+  "main": "index.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build-dev": "napi build --esm --platform",
+    "build-test": "pnpm run build-dev",
+    "build": "pnpm run build-dev --features allocator --release",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "node --import tsx --test ./test/*.test.ts",
+    "version": "napi version"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3",
+    "@types/node": "^22"
+  },
+  "napi": {
+    "binaryName": "astro",
+    "packageName": "@astrojs/compiler-binding",
+    "targets": [
+      "aarch64-apple-darwin",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "wasm32-wasip1-threads",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
+    ],
+    "wasm": {
+      "browser": {
+        "fs": false
+      }
+    }
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
 }

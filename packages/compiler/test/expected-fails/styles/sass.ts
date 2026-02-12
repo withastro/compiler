@@ -44,7 +44,7 @@ describe('styles/sass', { skip: true }, () => {
 	it('transforms scss two', () => {
 		assert.ok(
 			result.css[result.css.length - 1].includes('color:green'),
-			'Expected "color:green" to be present.'
+			'Expected "color:green" to be present.',
 		);
 	});
 });

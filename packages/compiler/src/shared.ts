@@ -9,7 +9,7 @@ import type {
 import type { CompilerError, Component } from './types.js';
 
 export function mapOptions(
-	options?: TransformOptions | AsyncTransformOptions
+	options?: TransformOptions | AsyncTransformOptions,
 ): AstroCompileOptions | undefined {
 	if (!options) return undefined;
 	return {
@@ -50,7 +50,7 @@ export function mapResult(
 		styleError: string[];
 		errors: OxcError[];
 	},
-	sourcemapOption?: TransformOptions['sourcemap']
+	sourcemapOption?: TransformOptions['sourcemap'],
 ): TransformResult {
 	let code = result.code;
 	const map = result.map;

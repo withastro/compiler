@@ -9,7 +9,7 @@ describe('tsx/line-terminator', { skip: true }, () => {
 		for (const input of inputs) {
 			try {
 				await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-			} catch (e) {
+			} catch (_e) {
 				err = 1;
 			}
 		}

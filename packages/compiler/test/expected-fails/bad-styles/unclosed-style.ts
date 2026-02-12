@@ -10,7 +10,7 @@ describe('bad-styles/unclosed-style', { skip: true }, () => {
 
 		try {
 			result = await parse('<style>');
-		} catch (e) {
+		} catch (_e) {
 			error = 1;
 		}
 

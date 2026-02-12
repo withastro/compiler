@@ -31,9 +31,7 @@ describe('parse/serialize', { skip: true }, () => {
 		const { ast } = await parse(FIXTURE);
 		try {
 			result = serialize(ast);
-		} catch (e) {
-			// eslint-disable-next-line no-console
-			console.log(e);
+		} catch (_e) {
 		}
 	});
 
@@ -47,7 +45,11 @@ describe('parse/serialize', { skip: true }, () => {
 		const { ast } = await parse(input);
 		const output = serialize(ast, { selfClose: false });
 		const selfClosedOutput = serialize(ast);
-		assert.deepStrictEqual(output, '<div></div>', 'Expected serialized output to equal <div></div>');
+		assert.deepStrictEqual(
+			output,
+			'<div></div>',
+			'Expected serialized output to equal <div></div>',
+		);
 		assert.deepStrictEqual(selfClosedOutput, input, `Expected serialized output to equal ${input}`);
 	});
 

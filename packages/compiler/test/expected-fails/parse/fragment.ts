@@ -19,7 +19,11 @@ describe('parse/fragment', { skip: true }, () => {
 
 	it('fragment literal', () => {
 		const [, second] = result.ast.children as FragmentNode[];
-		assert.deepStrictEqual(second.type, 'fragment', 'Expected second child to be of type "fragment"');
+		assert.deepStrictEqual(
+			second.type,
+			'fragment',
+			'Expected second child to be of type "fragment"',
+		);
 		assert.deepStrictEqual(second.name, 'Fragment', 'Expected second child to have name of ""');
 	});
 });

@@ -7,7 +7,7 @@ describe('scripts/order', { skip: true }, () => {
 		const result = await transform(
 			`
     <script>console.log(1)</script>
-    <script>console.log(2)</script>`
+    <script>console.log(2)</script>`,
 		);
 
 		const scripts = result.scripts;

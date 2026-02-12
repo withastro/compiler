@@ -11,13 +11,13 @@ describe('compact/minify', { skip: true }, () => {
 	it('basic', async () => {
 		assert.ok(
 			(await minify('    <div>Hello {value}!</div>      ')).includes(
-				'$$render`<div>Hello ${value}!</div>`'
-			)
+				'$$render`<div>Hello ${value}!</div>`',
+			),
 		);
 		assert.ok(
 			(await minify('    <div> Hello {value}! </div>      ')).includes(
-				'$$render`<div> Hello ${value}! </div>`'
-			)
+				'$$render`<div> Hello ${value}! </div>`',
+			),
 		);
 	});
 
@@ -31,13 +31,13 @@ describe('compact/minify', { skip: true }, () => {
 		assert.ok((await minify('<span> inline </span>')).includes('$$render`<span> inline </span>`'));
 		assert.ok(
 			(await minify('<span>\n inline \t{\t expression \t}</span>')).includes(
-				'$$render`<span>\ninline ${expression}</span>`'
-			)
+				'$$render`<span>\ninline ${expression}</span>`',
+			),
 		);
 		assert.ok(
 			(await minify('<span> inline { expression }</span>')).includes(
-				'$$render`<span> inline ${expression}</span>`'
-			)
+				'$$render`<span> inline ${expression}</span>`',
+			),
 		);
 	});
 
@@ -45,12 +45,14 @@ describe('compact/minify', { skip: true }, () => {
 		assert.ok((await minify('<p title="bar">foo</p>')).includes('<p title="bar">foo</p>'));
 		assert.ok((await minify('<img src="test"/>')).includes('<img src="test">'));
 		assert.ok((await minify('<p title = "bar">foo</p>')).includes('<p title="bar">foo</p>'));
-		assert.ok((await minify('<p title\n\n\t  =\n     "bar">foo</p>')).includes('<p title="bar">foo</p>'));
+		assert.ok(
+			(await minify('<p title\n\n\t  =\n     "bar">foo</p>')).includes('<p title="bar">foo</p>'),
+		);
 		assert.ok((await minify('<img src="test" \n\t />')).includes('<img src="test">'));
 		assert.ok(
 			(await minify('<input title="bar"       id="boo"    value="hello world">')).includes(
-				'<input title="bar" id="boo" value="hello world">'
-			)
+				'<input title="bar" id="boo" value="hello world">',
+			),
 		);
 	});
 
@@ -64,34 +66,42 @@ describe('compact/minify', { skip: true }, () => {
 		assert.ok((await minify('<p>foo<wbr>bar</p>')).includes('<p>foo<wbr>bar</p>'));
 		assert.ok((await minify('<p>foo <wbr>bar</p>')).includes('<p>foo <wbr>bar</p>'));
 		assert.ok((await minify('<p>foo<wbr> bar</p>')).includes('<p>foo<wbr> bar</p>'));
-		assert.ok((await minify('<p>foo <wbr baz moo=""> bar</p>')).includes('<p>foo <wbr baz moo=""> bar</p>'));
-		assert.ok((await minify('<p>foo<wbr baz moo="">bar</p>')).includes('<p>foo<wbr baz moo="">bar</p>'));
-		assert.ok((await minify('<p>foo <wbr baz moo="">bar</p>')).includes('<p>foo <wbr baz moo="">bar</p>'));
-		assert.ok((await minify('<p>foo<wbr baz moo=""> bar</p>')).includes('<p>foo<wbr baz moo=""> bar</p>'));
+		assert.ok(
+			(await minify('<p>foo <wbr baz moo=""> bar</p>')).includes('<p>foo <wbr baz moo=""> bar</p>'),
+		);
+		assert.ok(
+			(await minify('<p>foo<wbr baz moo="">bar</p>')).includes('<p>foo<wbr baz moo="">bar</p>'),
+		);
+		assert.ok(
+			(await minify('<p>foo <wbr baz moo="">bar</p>')).includes('<p>foo <wbr baz moo="">bar</p>'),
+		);
+		assert.ok(
+			(await minify('<p>foo<wbr baz moo=""> bar</p>')).includes('<p>foo<wbr baz moo=""> bar</p>'),
+		);
 		assert.ok(
 			(await minify('<p>  <a href="#">  <code>foo</code></a> bar</p>')).includes(
-				'<p> <a href="#"> <code>foo</code></a> bar</p>'
-			)
+				'<p> <a href="#"> <code>foo</code></a> bar</p>',
+			),
 		);
 		assert.ok(
 			(await minify('<p><a href="#"><code>foo  </code></a> bar</p>')).includes(
-				'<p><a href="#"><code>foo </code></a> bar</p>'
-			)
+				'<p><a href="#"><code>foo </code></a> bar</p>',
+			),
 		);
 		assert.ok(
 			(await minify('<p>  <a href="#">  <code>   foo</code></a> bar   </p>')).includes(
-				'<p> <a href="#"> <code> foo</code></a> bar </p>'
-			)
+				'<p> <a href="#"> <code> foo</code></a> bar </p>',
+			),
 		);
 		assert.ok(
 			(await minify('<div> Empty <!-- or --> not </div>')).includes(
-				'<div> Empty <!-- or --> not </div>'
-			)
+				'<div> Empty <!-- or --> not </div>',
+			),
 		);
 		assert.ok(
 			(await minify('<div> a <input><!-- b --> c </div>')).includes(
-				'<div> a <input><!-- b --> c </div>'
-			)
+				'<div> a <input><!-- b --> c </div>',
+			),
 		);
 		await Promise.all(
 			[
@@ -121,111 +131,141 @@ describe('compact/minify', { skip: true }, () => {
 				'var',
 			].map(async (el) => {
 				const [open, close] = [`<${el}>`, `</${el}>`];
-				assert.ok((await minify(`foo ${open}baz${close} bar`)).includes(`foo ${open}baz${close} bar`));
+				assert.ok(
+					(await minify(`foo ${open}baz${close} bar`)).includes(`foo ${open}baz${close} bar`),
+				);
 				assert.ok((await minify(`foo${open}baz${close}bar`)).includes(`foo${open}baz${close}bar`));
-				assert.ok((await minify(`foo ${open}baz${close}bar`)).includes(`foo ${open}baz${close}bar`));
-				assert.ok((await minify(`foo${open}baz${close} bar`)).includes(`foo${open}baz${close} bar`));
-				assert.ok((await minify(`foo ${open} baz ${close} bar`)).includes(`foo ${open} baz ${close} bar`));
-				assert.ok((await minify(`foo${open} baz ${close}bar`)).includes(`foo${open} baz ${close}bar`));
-				assert.ok((await minify(`foo ${open} baz ${close}bar`)).includes(`foo ${open} baz ${close}bar`));
-				assert.ok((await minify(`foo${open} baz ${close} bar`)).includes(`foo${open} baz ${close} bar`));
+				assert.ok(
+					(await minify(`foo ${open}baz${close}bar`)).includes(`foo ${open}baz${close}bar`),
+				);
+				assert.ok(
+					(await minify(`foo${open}baz${close} bar`)).includes(`foo${open}baz${close} bar`),
+				);
+				assert.ok(
+					(await minify(`foo ${open} baz ${close} bar`)).includes(`foo ${open} baz ${close} bar`),
+				);
+				assert.ok(
+					(await minify(`foo${open} baz ${close}bar`)).includes(`foo${open} baz ${close}bar`),
+				);
+				assert.ok(
+					(await minify(`foo ${open} baz ${close}bar`)).includes(`foo ${open} baz ${close}bar`),
+				);
+				assert.ok(
+					(await minify(`foo${open} baz ${close} bar`)).includes(`foo${open} baz ${close} bar`),
+				);
 				assert.ok(
 					(await minify(`<div>foo ${open}baz${close} bar</div>`)).includes(
-						`<div>foo ${open}baz${close} bar</div>`
-					)
+						`<div>foo ${open}baz${close} bar</div>`,
+					),
 				);
 				assert.ok(
 					(await minify(`<div>foo${open}baz${close}bar</div>`)).includes(
-						`<div>foo${open}baz${close}bar</div>`
-					)
+						`<div>foo${open}baz${close}bar</div>`,
+					),
 				);
 				assert.ok(
 					(await minify(`<div>foo ${open}baz${close}bar</div>`)).includes(
-						`<div>foo ${open}baz${close}bar</div>`
-					)
+						`<div>foo ${open}baz${close}bar</div>`,
+					),
 				);
 				assert.ok(
 					(await minify(`<div>foo${open}baz${close} bar</div>`)).includes(
-						`<div>foo${open}baz${close} bar</div>`
-					)
+						`<div>foo${open}baz${close} bar</div>`,
+					),
 				);
 				assert.ok(
 					(await minify(`<div>foo ${open} baz ${close} bar</div>`)).includes(
-						`<div>foo ${open} baz ${close} bar</div>`
-					)
+						`<div>foo ${open} baz ${close} bar</div>`,
+					),
 				);
 				assert.ok(
 					(await minify(`<div>foo${open} baz ${close}bar</div>`)).includes(
-						`<div>foo${open} baz ${close}bar</div>`
-					)
+						`<div>foo${open} baz ${close}bar</div>`,
+					),
 				);
 				assert.ok(
 					(await minify(`<div>foo ${open} baz ${close}bar</div>`)).includes(
-						`<div>foo ${open} baz ${close}bar</div>`
-					)
+						`<div>foo ${open} baz ${close}bar</div>`,
+					),
 				);
 				assert.ok(
 					(await minify(`<div>foo${open} baz ${close} bar</div>`)).includes(
-						`<div>foo${open} baz ${close} bar</div>`
-					)
+						`<div>foo${open} baz ${close} bar</div>`,
+					),
 				);
-			})
+			}),
 		);
 		// Don't trim whitespace around element, but do trim within
 		await Promise.all(
 			['bdi', 'bdo', 'button', 'cite', 'code', 'dfn', 'math', 'q', 'rt', 'rtc', 'ruby', 'svg'].map(
 				async (el) => {
 					const [open, close] = [`<${el}>`, `</${el}>`];
-					assert.ok((await minify(`foo ${open}baz${close} bar`)).includes(`foo ${open}baz${close} bar`));
-					assert.ok((await minify(`foo${open}baz${close}bar`)).includes(`foo${open}baz${close}bar`));
-					assert.ok((await minify(`foo ${open}baz${close}bar`)).includes(`foo ${open}baz${close}bar`));
-					assert.ok((await minify(`foo${open}baz${close} bar`)).includes(`foo${open}baz${close} bar`));
-					assert.ok((await minify(`foo ${open} baz ${close} bar`)).includes(`foo ${open} baz ${close} bar`));
-					assert.ok((await minify(`foo${open} baz ${close}bar`)).includes(`foo${open} baz ${close}bar`));
-					assert.ok((await minify(`foo ${open} baz ${close}bar`)).includes(`foo ${open} baz ${close}bar`));
-					assert.ok((await minify(`foo${open} baz ${close} bar`)).includes(`foo${open} baz ${close} bar`));
+					assert.ok(
+						(await minify(`foo ${open}baz${close} bar`)).includes(`foo ${open}baz${close} bar`),
+					);
+					assert.ok(
+						(await minify(`foo${open}baz${close}bar`)).includes(`foo${open}baz${close}bar`),
+					);
+					assert.ok(
+						(await minify(`foo ${open}baz${close}bar`)).includes(`foo ${open}baz${close}bar`),
+					);
+					assert.ok(
+						(await minify(`foo${open}baz${close} bar`)).includes(`foo${open}baz${close} bar`),
+					);
+					assert.ok(
+						(await minify(`foo ${open} baz ${close} bar`)).includes(`foo ${open} baz ${close} bar`),
+					);
+					assert.ok(
+						(await minify(`foo${open} baz ${close}bar`)).includes(`foo${open} baz ${close}bar`),
+					);
+					assert.ok(
+						(await minify(`foo ${open} baz ${close}bar`)).includes(`foo ${open} baz ${close}bar`),
+					);
+					assert.ok(
+						(await minify(`foo${open} baz ${close} bar`)).includes(`foo${open} baz ${close} bar`),
+					);
 					assert.ok(
 						(await minify(`<div>foo ${open}baz${close} bar</div>`)).includes(
-							`<div>foo ${open}baz${close} bar</div>`
-						)
+							`<div>foo ${open}baz${close} bar</div>`,
+						),
 					);
 					assert.ok(
 						(await minify(`<div>foo${open}baz${close}bar</div>`)).includes(
-							`<div>foo${open}baz${close}bar</div>`
-						)
+							`<div>foo${open}baz${close}bar</div>`,
+						),
 					);
 					assert.ok(
 						(await minify(`<div>foo ${open}baz${close}bar</div>`)).includes(
-							`<div>foo ${open}baz${close}bar</div>`
-						)
+							`<div>foo ${open}baz${close}bar</div>`,
+						),
 					);
 					assert.ok(
 						(await minify(`<div>foo${open}baz${close} bar</div>`)).includes(
-							`<div>foo${open}baz${close} bar</div>`
-						)
+							`<div>foo${open}baz${close} bar</div>`,
+						),
 					);
 					assert.ok(
 						(await minify(`<div>foo ${open} baz ${close} bar</div>`)).includes(
-							`<div>foo ${open} baz ${close} bar</div>`
-						)
+							`<div>foo ${open} baz ${close} bar</div>`,
+						),
 					);
 					assert.ok(
 						(await minify(`<div>foo${open} baz ${close}bar</div>`)).includes(
-							`<div>foo${open} baz ${close}bar</div>`
-						)
+							`<div>foo${open} baz ${close}bar</div>`,
+						),
 					);
 					assert.ok(
 						(await minify(`<div>foo ${open} baz ${close}bar</div>`)).includes(
-							`<div>foo ${open} baz ${close}bar</div>`
-						)
+							`<div>foo ${open} baz ${close}bar</div>`,
+						),
 					);
 					assert.ok(
 						(await minify(`<div>foo${open} baz ${close} bar</div>`)).includes(
-							`<div>foo${open} baz ${close} bar</div>`
-						)
+							`<div>foo${open} baz ${close} bar</div>`,
+						),
 					);
-				}
-			)
+				},
+			),
 		);
 		await Promise.all(
 			[
@@ -253,7 +293,7 @@ describe('compact/minify', { skip: true }, () => {
 				['a <nobr> b </nobr> c', 'a <nobr> b </nobr> c'],
 			].map(async ([input, output]) => {
 				assert.ok((await minify(input)).includes(output));
-			})
+			}),
 		);
 	});
 

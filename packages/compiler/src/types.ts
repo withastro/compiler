@@ -24,7 +24,7 @@ export interface TransformOptions {
 	resolvePath?: (specifier: string) => string;
 	preprocessStyle?: (
 		content: string,
-		attrs: Record<string, string>
+		attrs: Record<string, string>,
 	) => null | Promise<PreprocessorResult | PreprocessorError>;
 	annotateSourceFile?: boolean;
 }
