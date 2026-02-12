@@ -1,0 +1,6 @@
+---
+source: crates/oxc_astro_codegen/tests/snapshots.rs
+input_file: crates/oxc_astro_codegen/tests/fixtures/nested_expressions_vii.astro
+---
+Parse errors:
+Expected `}` but found `<`

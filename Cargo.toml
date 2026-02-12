@@ -1,0 +1,144 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+authors = ["Astro contributors"]
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/withastro/compiler"
+rust-version = "1.91.0"
+
+[workspace.lints.rust]
+absolute_paths_not_starting_with_crate = "warn"
+non_ascii_idents = "warn"
+unit-bindings = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
+tail_expr_drop_order = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_unsafe = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+dbg_macro = "warn"
+todo = "warn"
+unimplemented = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+allow_attributes = "warn"
+clone_on_ref_ptr = "warn"
+self_named_module_files = "warn"
+empty_drop = "warn"
+empty_structs_with_brackets = "warn"
+exit = "warn"
+filetype_is_file = "warn"
+get_unwrap = "warn"
+rc_buffer = "warn"
+rc_mutex = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+unnecessary_safety_comment = "warn"
+undocumented_unsafe_blocks = "warn"
+infinite_loop = "warn"
+map_with_unused_argument_over_ranges = "warn"
+unused_result_ok = "warn"
+pathbuf_init_then_push = "warn"
+pub_underscore_fields = "warn"
+non_zero_suggestions = "warn"
+precedence_bits = "warn"
+pedantic = { level = "warn", priority = -1 }
+struct_excessive_bools = "allow"
+too_many_lines = "allow"
+must_use_candidate = "allow"
+wildcard_imports = "allow"
+doc_markdown = "allow"
+similar_names = "allow"
+fn_params_excessive_bools = "allow"
+complexity = { level = "warn", priority = -1 }
+too_many_arguments = "allow"
+non_std_lazy_statics = "allow"
+nursery = { level = "warn", priority = -1 }
+missing_const_for_fn = "allow"
+option_if_let_else = "allow"
+or_fun_call = "allow"
+cognitive_complexity = "allow"
+non_send_fields_in_send_ty = "allow"
+use_self = "allow"
+significant_drop_tightening = "allow"
+branches_sharing_code = "allow"
+fallible_impl_from = "allow"
+useless_let_if_seq = "allow"
+impl_trait_in_params = "allow"
+significant_drop_in_scrutinee = "warn"
+iter_on_single_items = "warn"
+unused_peekable = "warn"
+too_long_first_doc_paragraph = "warn"
+suspicious_operation_groupings = "warn"
+redundant_clone = "warn"
+cargo = { level = "warn", priority = -1 }
+multiple_crate_versions = "allow"
+
+[workspace.dependencies]
+# Local crates
+astro_codegen = { path = "crates/astro_codegen" }
+
+# oxc dependencies via git
+# All must come from the same git source to avoid duplicate crate issues.
+# Crates with Astro-specific changes: oxc_ast, oxc_ast_visit, oxc_codegen, oxc_parser, oxc_span
+# Crates without changes (but must match source): oxc_allocator, oxc_data_structures, oxc_diagnostics, oxc_syntax
+oxc_allocator = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_ast = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_estree = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_ast_visit = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_codegen = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro", default-features = false }
+oxc_data_structures = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_diagnostics = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_parser = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro", features = [
+  "regular_expression",
+] }
+oxc_semantic = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_span = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_syntax = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_transformer = { git = "https://github.com/Princesseuh/oxc", branch = "feat/astro" }
+oxc_sourcemap = "6.0.1"
+
+# NAPI
+napi = { version = "3", features = ["tokio_rt"] }
+napi-build = "2"
+napi-derive = "3"
+
+# External
+cow-utils = "0.1.3"
+divan = "0.1"
+rustc-hash = "2"
+insta = "1.43.2"
+mimalloc-safe = "0.1.56"
+
+# Temporary local override for testing oxc changes
+[patch."https://github.com/Princesseuh/oxc"]
+oxc_allocator = { path = "../oxc/crates/oxc_allocator" }
+oxc_ast = { path = "../oxc/crates/oxc_ast" }
+oxc_ast_visit = { path = "../oxc/crates/oxc_ast_visit" }
+oxc_codegen = { path = "../oxc/crates/oxc_codegen" }
+oxc_compat = { path = "../oxc/crates/oxc_compat" }
+oxc_data_structures = { path = "../oxc/crates/oxc_data_structures" }
+oxc_diagnostics = { path = "../oxc/crates/oxc_diagnostics" }
+oxc_ecmascript = { path = "../oxc/crates/oxc_ecmascript" }
+oxc_estree = { path = "../oxc/crates/oxc_estree" }
+oxc_parser = { path = "../oxc/crates/oxc_parser" }
+oxc_regular_expression = { path = "../oxc/crates/oxc_regular_expression" }
+oxc_semantic = { path = "../oxc/crates/oxc_semantic" }
+oxc_span = { path = "../oxc/crates/oxc_span" }
+oxc_syntax = { path = "../oxc/crates/oxc_syntax" }
+oxc_transformer = { path = "../oxc/crates/oxc_transformer" }
+oxc_traverse = { path = "../oxc/crates/oxc_traverse" }
+
+[profile.dev]
+debug = false
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+debug = false
+panic = "abort"

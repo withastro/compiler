@@ -1,7 +1,7 @@
+import assert from 'node:assert/strict';
+import { before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { transform } from '@astrojs/compiler';
-import { test } from 'uvu';
-import * as assert from 'uvu/assert';
 
 const FIXTURE = `
 ---
@@ -14,36 +14,37 @@ import {Other} from './Other.astro';
 `;
 
 let result: Awaited<ReturnType<typeof transform>>;
-test.before(async () => {
-	result = await transform(FIXTURE, {
-		resolvePath: async (s: string) => {
-			const out = new URL(s, import.meta.url);
-			return fileURLToPath(out);
-		},
+
+describe('server-islands/meta', () => {
+	before(async () => {
+		result = await transform(FIXTURE, {
+			resolvePath: (s: string) => {
+				const out = new URL(s, import.meta.url);
+				return fileURLToPath(out);
+			},
+		});
+	});
+
+	it('component metadata added', () => {
+		assert.deepStrictEqual(result.serverComponents.length, 2);
+	});
+
+	it('component should contain head propagation', () => {
+		assert.deepStrictEqual(result.propagation, true);
+	});
+
+	it('path resolved to the filename', () => {
+		const m = result.serverComponents[0];
+		assert.ok(m.specifier !== m.resolvedPath);
+	});
+
+	it('localName is the name used in the template', () => {
+		assert.deepStrictEqual(result.serverComponents[0].localName, 'Avatar');
+		assert.deepStrictEqual(result.serverComponents[1].localName, 'Other');
+	});
+
+	it('exportName is the export name of the imported module', () => {
+		assert.deepStrictEqual(result.serverComponents[0].exportName, 'default');
+		assert.deepStrictEqual(result.serverComponents[1].exportName, 'Other');
 	});
 });
-
-test('component metadata added', () => {
-	assert.equal(result.serverComponents.length, 2);
-});
-
-test('component should contain head propagation', () => {
-	assert.equal(result.propagation, true);
-});
-
-test('path resolved to the filename', () => {
-	const m = result.serverComponents[0];
-	assert.ok(m.specifier !== m.resolvedPath);
-});
-
-test('localName is the name used in the template', () => {
-	assert.equal(result.serverComponents[0].localName, 'Avatar');
-	assert.equal(result.serverComponents[1].localName, 'Other');
-});
-
-test('exportName is the export name of the imported module', () => {
-	assert.equal(result.serverComponents[0].exportName, 'default');
-	assert.equal(result.serverComponents[1].exportName, 'Other');
-});
-
-test.run();

@@ -1,0 +1,46 @@
+---
+source: crates/astro_codegen/tests/snapshots.rs
+input_file: crates/astro_codegen/tests/fixtures/no_extra_script_tag.astro
+---
+import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
+export const $$metadata = $$createMetadata(import.meta.url, {
+	modules: [],
+	hydratedComponents: [],
+	clientOnlyComponents: [],
+	hydrationDirectives: new Set([]),
+	hoisted: [{
+		type: "external",
+		src: "/make-scrollable-code-focusable.js"
+	}]
+});
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+	return $$render`<!-- Global Metadata -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="alternate icon" type="image/x-icon" href="/favicon.ico">
+
+<link rel="sitemap" href="/sitemap.xml">
+
+<!-- Global CSS -->
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/code.css">
+<link rel="stylesheet" href="/index.css">
+
+<!-- Preload Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital@0;1&display=swap" rel="stylesheet">
+
+<!-- Scrollable a11y code helper -->
+<script>const root = document.documentElement;
+  const theme = localStorage.getItem('theme');
+  if (theme === 'dark' || (!theme) && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    root.classList.add('theme-dark');
+  } else {
+    root.classList.remove('theme-dark');
+  }
+<\/script>`;
+}, undefined, undefined);
+export default $$Component;

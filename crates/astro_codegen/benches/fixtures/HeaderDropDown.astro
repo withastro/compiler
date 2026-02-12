@@ -1,0 +1,86 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+	label: string;
+	items: Array<{
+		href: string;
+		icon: string;
+		label: string;
+		prefetch?: boolean;
+		badge?: string;
+	}>;
+}
+---
+
+<header-drop-down>
+	<details class="group relative">
+		<summary class="accordion link flex cursor-pointer items-center gap-2">
+			{Astro.props.label}
+			<Icon
+				name="chevron"
+				class="inline-block size-3 rotate-0 transition-transform group-open:-rotate-180 duration-500"
+				aria-hidden="true"
+			/>
+		</summary>
+		<ul
+			class:list={[
+				// flex
+				'flex flex-col',
+
+				// positioning
+				'absolute left-0 top-full translate-y-2',
+
+				// panel styling
+				'min-w-44 rounded-xl bg-black p-1 text-astro-gray-200 shadow-lg border border-astro-dark-100/10',
+
+				// transitioning
+				'invisible group-open:visible',
+				'origin-top scale-95 group-open:scale-100',
+				'opacity-0 group-open:opacity-100',
+				'transition-all duration-500',
+			]}
+		>
+			<slot />
+			{
+				Astro.props.items.map(({ href, icon, label, prefetch, badge }) => (
+					<li>
+						<a
+							{href}
+							data-astro-prefetch={prefetch ? '' : undefined}
+							class="flex items-center gap-2 rounded-md p-3 leading-none transition hover:bg-astro-gray-700 hover:text-white"
+						>
+							<Icon name={icon} size="16" /> {label}
+							{badge && (
+								<span class="text-xs leading-none font-mono py-1 px-1.5 rounded bg-astro-blue/40 border border-astro-blue">
+									{badge}
+								</span>
+							)}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</details>
+</header-drop-down>
+
+<script>
+	customElements.define(
+		'header-drop-down',
+		class HeaderDropDown extends HTMLElement {
+			connectedCallback() {
+				const menu = this.querySelector('details');
+				if (menu) {
+					menu.addEventListener('focusout', () => {
+						if (!menu.matches(':focus-within')) {
+							// delay the transition on focusout so the menu doesn't immediately disappear
+							setTimeout(() => {
+								menu.open = false;
+							}, 200);
+						}
+					});
+				}
+			}
+		},
+	);
+</script>

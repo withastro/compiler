@@ -1,0 +1,33 @@
+---
+source: crates/astro_codegen/tests/snapshots.rs
+input_file: crates/astro_codegen/tests/fixtures/script_in__head_.astro
+---
+import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
+import Widget from "../components/Widget.astro";
+import Widget2 from "../components/Widget2.astro";
+import * as $$module1 from "../components/Widget.astro";
+import * as $$module2 from "../components/Widget2.astro";
+export const $$metadata = $$createMetadata(import.meta.url, {
+	modules: [{
+		module: $$module1,
+		specifier: "../components/Widget.astro",
+		assert: {}
+	}, {
+		module: $$module2,
+		specifier: "../components/Widget2.astro",
+		assert: {}
+	}],
+	hydratedComponents: [],
+	clientOnlyComponents: [],
+	hydrationDirectives: new Set([]),
+	hoisted: [{
+		type: "external",
+		src: "/regular_script.js"
+	}]
+});
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
+	return $$render`<html lang="en">
+  <head>
+    ${$$renderScript($$result, "/src/pages/index.astro?astro&type=script&index=0&lang.ts")}${$$renderHead($$result)}</head></html>`;
+}, undefined, undefined);
+export default $$Component;
