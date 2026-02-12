@@ -34,7 +34,7 @@ export const $$metadata = $$createMetadata("/projects/app/src/pages/page.astro",
 
 const $$Page = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`${$$renderComponent($$result,'Layout',Layout,{})}`;
+return $$render`${$$renderScript($$result,"/projects/app/src/pages/page.astro?astro&type=script&index=0&lang.ts")}${$$renderComponent($$result,'Layout',Layout,{})}`;
 }, '/projects/app/src/pages/page.astro', undefined);
 export default $$Page;
 ```

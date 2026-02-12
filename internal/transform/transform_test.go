@@ -250,6 +250,7 @@ func TestFullTransform(t *testing.T) {
 			source: `<Component><h1>Hello world</h1></Component><style>:root{}</style>`,
 			want:   `<Component><h1>Hello world</h1></Component>`,
 		},
+
 		{
 			name:   "Component before html I",
 			source: `<Navigation /><html><body><h1>Astro</h1></body></html>`,
@@ -339,7 +340,13 @@ func TestTransformTrailingSpace(t *testing.T) {
 			source: "<html><body>\n\n\n</body></html>",
 			want:   "<html><body>\n\n\n</body></html>",
 		},
+		{
+			name:   "trailing whitespace before style is removed",
+			source: "<html><head></head><body><slot />\n<style>div { color: red; }</style></body></html>",
+			want:   "<html><head></head><body><slot></slot></body></html>",
+		},
 	}
+
 	var b strings.Builder
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -390,8 +397,8 @@ func TestCompactTransform(t *testing.T) {
 		},
 		{
 			name:   "remove whitespace only",
-			source: `<head>  <script>console.log("hoisted")</script>  <head>`,
-			want:   `<head></head>`,
+			source: `<head>  <script>console.log("test")</script>  <head>`,
+			want:   `<head><script>console.log("test")</script></head>`,
 		},
 		{
 			name:   "collapse surrounding whitespace",

@@ -34,8 +34,6 @@ type TransformOptions struct {
 	ResolvePath             func(string) string
 	PreprocessStyle         interface{}
 	AnnotateSourceFile      bool
-	RenderScript            bool
-	ExperimentalScriptOrder bool
 }
 
 func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astro.Node {
@@ -88,13 +86,6 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 	}
 	NormalizeSetDirectives(doc, h)
 
-	// Important! Remove scripts from original location *after* walking the doc
-	if !opts.RenderScript {
-		for _, script := range doc.Scripts {
-			script.Parent.RemoveChild(script)
-		}
-	}
-
 	// If we've emptied out all the nodes, this was a Fragment that only contained hoisted elements
 	// Add an empty FrontmatterNode to allow the empty component to be printed
 	if doc.FirstChild == nil {
@@ -128,17 +119,42 @@ func ExtractStyles(doc *astro.Node, opts *TransformOptions) {
 				return
 			}
 			// append node to maintain authored order
-			if opts.ExperimentalScriptOrder {
-				doc.Styles = append(doc.Styles, n)
-			} else {
-				doc.Styles = append([]*astro.Node{n}, doc.Styles...)
-			}
+			doc.Styles = append(doc.Styles, n)
 		}
 	})
 	// Important! Remove styles from original location *after* walking the doc
 	for _, style := range doc.Styles {
-		style.Parent.RemoveChild(style)
+		removeNodeWithTrailingWhitespace(style)
 	}
+}
+
+// removeNodeWithTrailingWhitespace removes a node and also removes any preceding
+// whitespace-only text node if it would become trailing whitespace after removal.
+// This prevents orphaned whitespace when extracting style/script tags.
+func removeNodeWithTrailingWhitespace(n *astro.Node) {
+	prev := n.PrevSibling
+	next := n.NextSibling
+
+	// Check if we should remove preceding whitespace:
+	// 1. There is a previous sibling
+	// 2. It's a whitespace-only text node
+	// 3. After removing n, this whitespace would be trailing (no more non-whitespace siblings after)
+	if prev != nil && prev.Type == astro.TextNode && strings.TrimSpace(prev.Data) == "" {
+		// Check if there are any non-whitespace siblings after n
+		hasNonWhitespaceAfter := false
+		for sib := next; sib != nil; sib = sib.NextSibling {
+			if sib.Type != astro.TextNode || strings.TrimSpace(sib.Data) != "" {
+				hasNonWhitespaceAfter = true
+				break
+			}
+		}
+		// If no non-whitespace content follows, remove the preceding whitespace
+		if !hasNonWhitespaceAfter {
+			prev.Parent.RemoveChild(prev)
+		}
+	}
+
+	n.Parent.RemoveChild(n)
 }
 
 func NormalizeSetDirectives(doc *astro.Node, h *handler.Handler) {
@@ -409,8 +425,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 			return
 		}
 		// Ignore scripts in svg/noscript/etc
-		// In expressions ignore scripts, unless `RenderScript` is true
-		if !IsHoistable(n, opts.RenderScript) {
+		if !IsHoistable(n, true) {
 			return
 		}
 
@@ -443,11 +458,7 @@ func ExtractScript(doc *astro.Node, n *astro.Node, opts *TransformOptions, h *ha
 
 			// append node to maintain authored order
 			if shouldAdd {
-				if opts.ExperimentalScriptOrder {
-					doc.Scripts = append(doc.Scripts, n)
-				} else {
-					doc.Scripts = append([]*astro.Node{n}, doc.Scripts...)
-				}
+				doc.Scripts = append(doc.Scripts, n)
 				n.HandledScript = true
 			}
 		} else {
