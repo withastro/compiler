@@ -149,7 +149,7 @@ The [HTML doctype declaration](https://html.spec.whatwg.org/multipage/syntax.htm
 
 ##### Top-level text nodes
 
-Top level text inside the template is treated as text nodes.
+Top-level text inside the template is treated as text nodes.
 
 ```astro
 Hello, World!
@@ -157,7 +157,7 @@ Hello, World!
 
 #### Whitespace in expressions
 
-Whitespace inside expressions `{ }` is preserved as text nodes, unlike JSX where whitespace inside expression containers is ignored:
+Whitespace inside expressions `{ }` is preserved as text nodes, unlike JSX, where whitespace inside expression containers is ignored:
 
 ```astro
 <!-- Whitespace around element -->
@@ -172,7 +172,7 @@ Whitespace inside expressions `{ }` is preserved as text nodes, unlike JSX where
 {   }
 ```
 
-In Astro, all of these produce text nodes for the whitespace whereas in JSX:
+In Astro, all of these produce text nodes for the whitespace, whereas in JSX:
 
 - Whitespace around elements inside `{ }` is ignored
 - Whitespace-only expressions result in an empty expression, with no text nodes.
@@ -202,7 +202,7 @@ Attribute names [follow the HTML conventions](https://html.spec.whatwg.org/multi
 <div @click="handler" x.data="value" :class="my-class" />
 ```
 
-#### Namespace in component names are not supported
+#### Namespace in component names is not supported
 
 Colons in component names are not treated as namespace separators. For example:
 
