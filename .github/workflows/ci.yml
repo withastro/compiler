@@ -132,7 +132,7 @@ jobs:
           # -- Linux GNU --
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm run build --target x86_64-unknown-linux-gnu -x
+            build: pnpm run build --target x86_64-unknown-linux-gnu
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             build: pnpm run build --target aarch64-unknown-linux-gnu -x
@@ -159,6 +159,7 @@ jobs:
       - name: Enable long paths on Windows
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
+        working-directory: ${{ runner.temp }}
 
       - uses: actions/checkout@v6
 
