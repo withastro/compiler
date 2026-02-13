@@ -320,6 +320,7 @@ func (p *parser) parseListOfDeclarations() (list []css_ast.Rule) {
 func (p *parser) shouldParseNestedSelector() bool {
 	clone := *p
 	clone.log = logger.Log{AddMsg: func(msg logger.Msg) {}}
+	// Peek ahead to treat declarations that actually start a nested rule as selector rules.
 	if _, ok := clone.parseSelectorList(parseSelectorOpts{allowNesting: true}); !ok {
 		return false
 	}
