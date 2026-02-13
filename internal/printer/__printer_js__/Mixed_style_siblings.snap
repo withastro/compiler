@@ -42,7 +42,6 @@ const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 return $$render`<head>
 
 
-
 ${$$renderHead($$result)}</head>
 <div class="astro-lasntlja"></div>`;
 }, undefined, undefined);

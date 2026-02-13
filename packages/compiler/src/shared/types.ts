@@ -59,13 +59,6 @@ export interface TransformOptions {
 		attrs: Record<string, string>
 	) => null | Promise<PreprocessorResult | PreprocessorError>;
 	annotateSourceFile?: boolean;
-	/**
-	 * Render script tags to be processed (e.g. script tags that have no attributes or only a `src` attribute)
-	 * using a `renderScript` function from `internalURL`, instead of stripping the script entirely.
-	 * @experimental
-	 */
-	renderScript?: boolean;
-	experimentalScriptOrder?: boolean;
 }
 
 export type ConvertToTSXOptions = Pick<

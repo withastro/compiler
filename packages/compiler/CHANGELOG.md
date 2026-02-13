@@ -1,5 +1,28 @@
 # @astrojs/compiler
 
+## 3.0.0-beta.0
+
+### Major Changes
+
+- c05e16e: Removes the first argument of `$$result.createAstro()`
+
+  `$$result.createAstro()` does not accept an `AstroGlobalPartial` as the first argument anymore:
+
+  ```diff
+  -const Astro = $$result.createAstro($$Astro, $$props, $$slots);
+  +const Astro = $$result.createAstro($$props, $$slots);
+  ```
+
+- c05e16e: Removes `renderScript` from `TransformOptions`. It is now the default and only behavior
+- c05e16e: Removes `experimentalScriptOrder` from `TransformOptions`. It is now the default and only behavior
+
+## 2.13.1
+
+### Patch Changes
+
+- 357b8fe: Fixes a panic when parsing files with a closing frontmatter fence (---) but no opening fence. The compiler now returns a helpful diagnostic error instead of crashing.
+- cba568f: Fixes the "Unterminated string literal" error when using multiline attribute values on components.
+
 ## 2.13.0
 
 ### Minor Changes

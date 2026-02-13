@@ -1,0 +1,12 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@astrojs/compiler": "2.13.1"
+  },
+  "changesets": [
+    "little-spoons-search",
+    "neat-camels-raise",
+    "silver-deers-buy"
+  ]
+}
