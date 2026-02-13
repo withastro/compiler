@@ -132,10 +132,10 @@ jobs:
           # -- Linux GNU --
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm run build --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: pnpm run build --target x86_64-unknown-linux-gnu -x
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: pnpm run build --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: pnpm run build --target aarch64-unknown-linux-gnu -x
 
           # -- Linux musl --
           - host: ubuntu-latest
@@ -189,13 +189,13 @@ jobs:
           key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
 
       - uses: mlugg/setup-zig@v2
-        if: ${{ contains(matrix.settings.target, 'musl') }}
+        if: ${{ contains(matrix.settings.target, 'linux') }}
         with:
           version: 0.15.2
 
       - name: Install cargo-zigbuild
         uses: taiki-e/install-action@v2
-        if: ${{ contains(matrix.settings.target, 'musl') }}
+        if: ${{ contains(matrix.settings.target, 'linux') }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
