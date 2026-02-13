@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { transform, preprocessStyles } from '@astrojs/compiler';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -15,15 +15,16 @@ const FIXTURE = `
 </style>
 `;
 
-describe('bad-styles/sass', { skip: true }, () => {
+describe('bad-styles/sass', () => {
 	it('it works', async () => {
-		const result = await transform(FIXTURE, {
+		const preprocessedStyles = await preprocessStyles(FIXTURE, async () => {
+			return {
+				error: new Error('Unable to convert').message,
+			};
+		});
+		const result = transform(FIXTURE, {
 			filename: '/users/astro/apps/pacman/src/pages/index.astro',
-			async preprocessStyle() {
-				return {
-					error: new Error('Unable to convert').message,
-				};
-			},
+			preprocessedStyles,
 		});
 		assert.deepStrictEqual(result.styleError.length, 2);
 		assert.deepStrictEqual(result.styleError[0], 'Unable to convert');

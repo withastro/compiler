@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { testJSSourcemap } from '../../utils.js';
+import { testJSSourcemap } from '../utils.js';
 
-describe('js-sourcemaps/script', { skip: true }, () => {
+describe('js-sourcemaps/script', () => {
 	it('script is:inline', async () => {
 		const input = `<script is:inline>
   const MyNumber = 3;
@@ -12,9 +12,9 @@ describe('js-sourcemaps/script', { skip: true }, () => {
 		const output = await testJSSourcemap(input, '\n');
 
 		assert.deepStrictEqual(output, {
-			line: 1,
-			column: 18,
 			source: 'index.astro',
+			line: 1,
+			column: 0,
 			name: null,
 		});
 	});

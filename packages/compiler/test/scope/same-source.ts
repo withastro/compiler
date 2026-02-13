@@ -25,7 +25,7 @@ function grabAstroScope(code: string) {
 	return null;
 }
 
-describe('scope/same-source', { skip: true }, () => {
+describe('scope/same-source', () => {
 	it('Similar components have different scoped class names', async () => {
 		let result = await transform(FIXTURE, {
 			normalizedFilename: '/src/pages/index.astro',

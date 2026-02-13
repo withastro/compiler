@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
-import { type TransformResult, transform } from '@astrojs/compiler';
-import { preprocessStyle } from '../../utils.js';
+import { type TransformResult, transform, preprocessStyles } from '@astrojs/compiler';
+import { preprocessStyle } from '../utils.js';
 
 const FIXTURE = `
 ---
@@ -28,23 +28,24 @@ div {
 </style>
 `;
 
-describe('styles/sass', { skip: true }, () => {
+describe('styles/sass', () => {
 	let result: TransformResult;
 	before(async () => {
-		result = await transform(FIXTURE, {
+		const preprocessedStyles = await preprocessStyles(FIXTURE, preprocessStyle);
+		result = transform(FIXTURE, {
 			sourcemap: true,
-			preprocessStyle,
+			preprocessedStyles,
 		});
 	});
 
 	it('transforms scss one', () => {
-		assert.ok(result.css[0].includes('color:red'), 'Expected "color:red" to be present.');
+		assert.ok(result.css[0].includes('color: red'), 'Expected "color: red" to be present.');
 	});
 
 	it('transforms scss two', () => {
 		assert.ok(
-			result.css[result.css.length - 1].includes('color:green'),
-			'Expected "color:green" to be present.',
+			result.css[result.css.length - 1].includes('color: green'),
+			'Expected "color: green" to be present.',
 		);
 	});
 });

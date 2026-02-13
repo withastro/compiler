@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { testJSSourcemap } from '../../utils.js';
+import { testJSSourcemap } from '../utils.js';
 
-describe('js-sourcemaps/error', { skip: true }, () => {
+describe('js-sourcemaps/error', () => {
 	it('svelte error', async () => {
 		const input = `---
 import SvelteOptionalProps from "./SvelteOptionalProps.svelte"
@@ -12,9 +12,9 @@ import SvelteOptionalProps from "./SvelteOptionalProps.svelte"
 		const output = await testJSSourcemap(input, '<SvelteOptionalProps>');
 
 		assert.deepStrictEqual(output, {
-			line: 5,
-			column: 1,
 			source: 'index.astro',
+			line: 5,
+			column: 0,
 			name: null,
 		});
 	});
@@ -30,18 +30,18 @@ import VueError from "./VueError.vue"
 		const svelte = await testJSSourcemap(input, '<SvelteError>');
 
 		assert.deepStrictEqual(svelte, {
-			line: 6,
-			column: 1,
 			source: 'index.astro',
+			line: 6,
+			column: 0,
 			name: null,
 		});
 
 		const vue = await testJSSourcemap(input, '<VueError>');
 
 		assert.deepStrictEqual(vue, {
-			line: 7,
-			column: 1,
 			source: 'index.astro',
+			line: 7,
+			column: 0,
 			name: null,
 		});
 	});

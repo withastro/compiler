@@ -1,6 +1,6 @@
 import { convertToTSX, transform } from '@astrojs/compiler';
 import { TraceMap, generatedPositionFor, originalPositionFor } from '@jridgewell/trace-mapping';
-import sass, { type CompileResult } from 'sass';
+import sass from 'sass';
 
 export async function preprocessStyle(value: any, attrs: any): Promise<any> {
 	if (!attrs.lang) {
@@ -12,8 +12,9 @@ export async function preprocessStyle(value: any, attrs: any): Promise<any> {
 	return null;
 }
 
-export function transformSass(value: string): CompileResult {
-	return sass.compileString(value);
+export function transformSass(value: string): { code: string } {
+	const result = sass.compileString(value);
+	return { code: result.css };
 }
 
 export function getPositionFor(input: string, snippet: string) {
@@ -27,8 +28,9 @@ export function getPositionFor(input: string, snippet: string) {
 		if (c === '\n') {
 			line++;
 			column = 0;
+		} else {
+			column++;
 		}
-		column++;
 		index++;
 	}
 	return null;

@@ -4,22 +4,31 @@ export type {
 	HoistedScript,
 	ParseOptions,
 	ParseResult,
+	PreprocessedStyles,
+	PreprocessorError,
 	PreprocessorResult,
 	TransformOptions,
 	TransformResult,
 } from './types.js';
 import { compileAstroSync, parseAstroSync } from '@astrojs/compiler-binding';
 import { mapOptions, mapParseResult, mapResult } from './shared.js';
-import type { Component, ConvertToTSXOptions, ParseResult, TransformOptions, TransformResult } from './types.js';
+export { preprocessStyles } from './shared.js';
+import type {
+	Component,
+	ConvertToTSXOptions,
+	ParseResult,
+	TransformOptions,
+	TransformResult,
+} from './types.js';
 
 export function transform(input: string, options?: TransformOptions): TransformResult {
-	const result = mapResult(compileAstroSync(input, mapOptions(options)), options?.sourcemap);
+	const result = mapResult(
+		compileAstroSync(input, mapOptions(options)),
+		options?.sourcemap,
+		options?.preprocessedStyles,
+	);
 
 	// Post-process: call resolvePath for each component specifier if provided.
-	// The Rust codegen emits raw specifiers in the code string since the
-	// resolvePath callback cannot cross the NAPI boundary. We resolve paths
-	// on the metadata objects and also rewrite client:component-path values
-	// in the generated code so the Astro runtime sees the resolved paths.
 	if (typeof options?.resolvePath === 'function') {
 		const resolve = options.resolvePath;
 		const allComponents: Component[] = [
@@ -51,5 +60,5 @@ export function parse(input: string): ParseResult {
 }
 
 export function convertToTSX(_input: string, _options: ConvertToTSXOptions): never {
-	throw new Error('convertToTSX() is not yet implemented in the Rust compiler');
+	throw new Error('convertToTSX() is not yet implemented');
 }

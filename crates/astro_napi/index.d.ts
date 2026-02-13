@@ -89,6 +89,18 @@ export interface AstroCompileOptions {
    * @default false
    */
   resolvePathProvided?: boolean
+  /**
+   * Preprocessed style content, indexed by extractable style order.
+   *
+   * When provided, the codegen uses these strings as CSS content instead
+   * of reading from the AST's `<style>` text children. Each entry
+   * corresponds to an extractable style in document order (matching the
+   * indices from `extractStylesSync`).
+   *
+   * An entry of `undefined` means "use the original content from the AST".
+   * An entry of `""` means "style had a preprocessing error — use empty content".
+   */
+  preprocessedStyles?: Array<string | undefined | null>
 }
 
 /** Result of compiling an Astro file. */
@@ -193,6 +205,17 @@ export interface ErrorLabel {
   column: number
 }
 
+/**
+ * Extract style block metadata from an Astro source without performing compilation.
+ *
+ * Returns an array of style blocks in document order. Each block contains the
+ * text content and attributes of an extractable `<style>` element.
+ *
+ * This is the first step in the "Rust extract → TS preprocess → Rust compile"
+ * pipeline for `preprocessStyle` support.
+ */
+export declare function extractStylesSync(sourceText: string): Array<NapiStyleBlock>
+
 /** A hoisted script extracted from an Astro component. */
 export interface NapiHoistedScript {
   /** The script type: `"inline"` or `"external"`. */
@@ -213,6 +236,25 @@ export interface NapiHydratedComponent {
   specifier: string
   /** The resolved path (empty string if unresolved). */
   resolvedPath: string
+}
+
+/**
+ * An extractable `<style>` block from an Astro component.
+ *
+ * Returned by `extractStylesSync` for each `<style>` element that would be
+ * extracted and processed during compilation.
+ */
+export interface NapiStyleBlock {
+  /** Zero-based index of this style block among all extractable styles. */
+  index: number
+  /** The CSS/preprocessor text content between `<style>` and `</style>`. */
+  content: string
+  /**
+   * The element's attributes as key-value pairs.
+   * Only quoted and empty (boolean) attributes are included — expression
+   * attributes (like `define:vars={...}`) are omitted.
+   */
+  attrs: Record<string, string>
 }
 
 export interface OxcError {

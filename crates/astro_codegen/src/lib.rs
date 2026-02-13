@@ -18,13 +18,14 @@
 //! export default $$Component;
 //! ```
 
+pub mod css_scoping;
 mod options;
 mod printer;
 pub mod scanner;
 
 pub use options::{ScopedStyleStrategy, TransformOptions};
 pub use printer::{
-    AstroCodegen, HoistedScriptType, TransformResult, TransformResultHoistedScript,
-    TransformResultHydratedComponent, transform,
+    AstroCodegen, HoistedScriptType, StyleBlock, TransformResult, TransformResultHoistedScript,
+    TransformResultHydratedComponent, extract_styles, transform,
 };
 pub use scanner::{AstroScanner, ScanResult};

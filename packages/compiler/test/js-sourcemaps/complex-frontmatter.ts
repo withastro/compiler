@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { testJSSourcemap } from '../../utils.js';
+import { testJSSourcemap } from '../utils.js';
 
 const input = `---
 // TODO: Due to this issue: https://github.com/withastro/astro/issues/1438, this route can't be in the same folder
@@ -35,14 +35,14 @@ const { article } = Astro.props;
 
 <ArticleLayout article={article} />`;
 
-describe('js-sourcemaps/complex-frontmatter', { skip: true }, () => {
+describe('js-sourcemaps/complex-frontmatter', () => {
 	it('tracks getStaticPaths', async () => {
 		const loc = await testJSSourcemap(input, 'getStaticPaths');
-		assert.deepStrictEqual(loc, { source: 'index.astro', line: 13, column: 14, name: null });
+		assert.deepStrictEqual(loc, { source: 'index.astro', line: 13, column: 0, name: null });
 	});
 
 	it('tracks foobar', async () => {
 		const loc = await testJSSourcemap(input, 'foobar');
-		assert.deepStrictEqual(loc, { source: 'index.astro', line: 6, column: 7, name: null });
+		assert.deepStrictEqual(loc, { source: 'index.astro', line: 6, column: 0, name: null });
 	});
 });

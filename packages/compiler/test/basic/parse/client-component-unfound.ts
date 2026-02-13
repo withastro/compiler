@@ -16,7 +16,7 @@ const FIXTURE = `{
 }
 `;
 
-describe('parse/client-component-unfound', { skip: true }, () => {
+describe('parse/client-component-unfound', () => {
 	it('unfound client component', async () => {
 		const result = await parse(FIXTURE);
 		assert.ok(result.ast, 'Expected an AST to be generated');

@@ -3,6 +3,7 @@ source: crates/astro_codegen/tests/snapshots.rs
 input_file: crates/astro_codegen/tests/fixtures/react_framework_example.astro
 ---
 import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
+import "<stdin>?astro&type=style&index=0&lang.css";
 import Counter from "../components/Counter.jsx";
 import * as $$module1 from "../components/Counter.jsx";
 export const $$metadata = $$createMetadata(import.meta.url, {
@@ -18,40 +19,24 @@ export const $$metadata = $$createMetadata(import.meta.url, {
 });
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 	const someProps = { count: 0 };
-	return $$render`<html lang="en">
+	return $$render`<html lang="en" class="astro-s65tyoou">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <style>
-      :global(:root) {
-        font-family: system-ui;
-        padding: 2em 0;
-      }
-      :global(.counter) {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        place-items: center;
-        font-size: 2em;
-        margin-top: 2em;
-      }
-      :global(.children) {
-        display: grid;
-        place-items: center;
-        margin-bottom: 2em;
-      }
-    </style>
+    
   ${$$renderHead($$result)}</head>
-  <body>
-    <main>
+  <body class="astro-s65tyoou">
+    <main class="astro-s65tyoou">
       ${$$renderComponent($$result, "Counter", Counter, {
 		...someProps,
 		"client:visible": true,
+		"class": "astro-s65tyoou",
 		"client:component-hydration": "visible",
 		"client:component-path": "../components/Counter.jsx",
 		"client:component-export": "default"
 	}, { "default": () => $$render`
-        <h1>Hello React!</h1>
+        <h1 class="astro-s65tyoou">Hello React!</h1>
       ` })}
     </main>
   </body>

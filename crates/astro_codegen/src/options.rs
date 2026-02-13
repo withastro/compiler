@@ -103,6 +103,17 @@ pub struct TransformOptions {
     /// when `resolve_path` is `Some`, but will still use the filepath.Join
     /// fallback for populating `resolved_path` on metadata structs.
     pub resolve_path_provided: bool,
+
+    /// Preprocessed style content, indexed by extractable style order.
+    ///
+    /// When provided, the codegen uses these strings as CSS content instead
+    /// of reading from the AST's `<style>` text children. Each entry
+    /// corresponds to an extractable style in document order (matching the
+    /// indices from [`extract_styles`]).
+    ///
+    /// An entry of `None` means "use the original content from the AST".
+    /// An entry of `Some("")` means "style had a preprocessing error — use empty content".
+    pub preprocessed_styles: Option<Vec<Option<String>>>,
 }
 
 impl Default for TransformOptions {
@@ -121,6 +132,7 @@ impl Default for TransformOptions {
             strip_slot_comments: true,
             resolve_path: None,
             resolve_path_provided: false,
+            preprocessed_styles: None,
         }
     }
 }
@@ -273,6 +285,11 @@ impl TransformOptions {
         } else {
             specifier.to_string()
         }
+    }
+
+    /// Get the configured scoped style strategy.
+    pub fn scoped_style_strategy(&self) -> ScopedStyleStrategy {
+        self.scoped_style_strategy
     }
 
     /// Get the internal URL, with default fallback.

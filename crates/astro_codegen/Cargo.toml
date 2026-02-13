@@ -27,7 +27,9 @@ oxc_transformer = { workspace = true }
 oxc_sourcemap = { workspace = true }
 
 cow-utils = { workspace = true }
+lightningcss = { workspace = true }
 rustc-hash = { workspace = true }
+smallvec = "1"
 
 [dev-dependencies]
 divan = { workspace = true }

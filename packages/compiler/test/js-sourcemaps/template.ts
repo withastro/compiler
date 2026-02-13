@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { testJSSourcemap } from '../../utils.js';
+import { testJSSourcemap } from '../utils.js';
 
-describe('js-sourcemaps/template', { skip: true }, () => {
+describe('js-sourcemaps/template', () => {
 	it('template expression basic', async () => {
 		const input = '<div>{nonexistent}</div>';
 
@@ -10,7 +10,7 @@ describe('js-sourcemaps/template', { skip: true }, () => {
 		assert.deepStrictEqual(output, {
 			source: 'index.astro',
 			line: 1,
-			column: 6,
+			column: 5,
 			name: null,
 		});
 	});
@@ -21,7 +21,7 @@ describe('js-sourcemaps/template', { skip: true }, () => {
 		assert.deepStrictEqual(output, {
 			source: 'index.astro',
 			line: 1,
-			column: 14,
+			column: 6,
 			name: null,
 		});
 	});
@@ -32,7 +32,7 @@ describe('js-sourcemaps/template', { skip: true }, () => {
 		assert.deepStrictEqual(output, {
 			source: 'index.astro',
 			line: 1,
-			column: 11,
+			column: 1,
 			name: null,
 		});
 	});
@@ -65,7 +65,7 @@ return <div>{ITEMS}</div>
 			source: 'index.astro',
 			name: null,
 			line: 3,
-			column: 14,
+			column: 12,
 		});
 	});
 

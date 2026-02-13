@@ -34,7 +34,7 @@ const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital@0;1&display=swap" rel="stylesheet">
 
 <!-- Scrollable a11y code helper -->
-<script>const root = document.documentElement;
+${$$renderScript($$result, "/src/pages/index.astro?astro&type=script&index=0&lang.ts")}<script>const root = document.documentElement;
   const theme = localStorage.getItem('theme');
   if (theme === 'dark' || (!theme) && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     root.classList.add('theme-dark');

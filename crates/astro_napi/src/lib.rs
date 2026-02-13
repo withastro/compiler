@@ -19,8 +19,10 @@ use std::mem;
 use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
+use std::collections::HashMap;
+
 use crate::error::OxcError;
-use astro_codegen::{HoistedScriptType, TransformOptions, transform};
+use astro_codegen::{HoistedScriptType, TransformOptions, extract_styles, transform};
 use oxc_allocator::Allocator;
 use oxc_estree::CompactTSSerializer;
 use oxc_estree::ESTree;
@@ -103,6 +105,17 @@ pub struct AstroCompileOptions {
     ///
     /// @default false
     pub resolve_path_provided: Option<bool>,
+
+    /// Preprocessed style content, indexed by extractable style order.
+    ///
+    /// When provided, the codegen uses these strings as CSS content instead
+    /// of reading from the AST's `<style>` text children. Each entry
+    /// corresponds to an extractable style in document order (matching the
+    /// indices from `extractStylesSync`).
+    ///
+    /// An entry of `undefined` means "use the original content from the AST".
+    /// An entry of `""` means "style had a preprocessing error — use empty content".
+    pub preprocessed_styles: Option<Vec<Option<String>>>,
 }
 
 /// A hoisted script extracted from an Astro component.
@@ -164,6 +177,55 @@ pub struct AstroCompileResult {
     pub errors: Vec<OxcError>,
 }
 
+/// An extractable `<style>` block from an Astro component.
+///
+/// Returned by `extractStylesSync` for each `<style>` element that would be
+/// extracted and processed during compilation.
+#[napi(object)]
+#[derive(Clone)]
+pub struct NapiStyleBlock {
+    /// Zero-based index of this style block among all extractable styles.
+    pub index: u32,
+    /// The CSS/preprocessor text content between `<style>` and `</style>`.
+    pub content: String,
+    /// The element's attributes as key-value pairs.
+    /// Only quoted and empty (boolean) attributes are included — expression
+    /// attributes (like `define:vars={...}`) are omitted.
+    pub attrs: HashMap<String, String>,
+}
+
+/// Extract style block metadata from an Astro source without performing compilation.
+///
+/// Returns an array of style blocks in document order. Each block contains the
+/// text content and attributes of an extractable `<style>` element.
+///
+/// This is the first step in the "Rust extract → TS preprocess → Rust compile"
+/// pipeline for `preprocessStyle` support.
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub fn extract_styles_sync(source_text: String) -> Vec<NapiStyleBlock> {
+    let allocator = Allocator::default();
+    let source_type = SourceType::astro();
+
+    let ret = Parser::new(&allocator, &source_text, source_type)
+        .with_options(ParseOptions::default())
+        .parse_astro();
+
+    if !ret.errors.is_empty() {
+        return Vec::new();
+    }
+
+    let blocks = extract_styles(&ret.root);
+    blocks
+        .into_iter()
+        .map(|b| NapiStyleBlock {
+            index: b.index as u32,
+            content: b.content,
+            attrs: b.attrs.into_iter().collect(),
+        })
+        .collect()
+}
+
 fn parse_scoped_style_strategy(s: Option<&str>) -> astro_codegen::ScopedStyleStrategy {
     match s {
         Some("class") => astro_codegen::ScopedStyleStrategy::Class,
@@ -223,6 +285,7 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
         // but still uses filepath.Join fallback for resolved_path. The real
         // resolution happens post-compilation in the TS wrapper layer.
         resolve_path_provided,
+        preprocessed_styles: options.preprocessed_styles.clone(),
     };
 
     // Generate JavaScript code

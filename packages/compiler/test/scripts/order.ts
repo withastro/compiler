@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { transform } from '@astrojs/compiler';
 
-describe('scripts/order', { skip: true }, () => {
+describe('scripts/order', () => {
 	it('outputs scripts in expected order', async () => {
 		const result = await transform(
 			`

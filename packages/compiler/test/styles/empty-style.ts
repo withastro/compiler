@@ -1,7 +1,7 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
+import { type TransformResult, transform, preprocessStyles } from '@astrojs/compiler';
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { preprocessStyle } from '../../utils.js';
+import { preprocessStyle } from '../utils.js';
 
 const FIXTURE = `
 ---
@@ -15,12 +15,13 @@ let value = 'world';
 <div>Ahhh</div>
 `;
 
-describe('styles/empty-style', { skip: true }, () => {
+describe('styles/empty-style', () => {
 	let result: TransformResult;
 	before(async () => {
-		result = await transform(FIXTURE, {
+		const preprocessedStyles = await preprocessStyles(FIXTURE, preprocessStyle);
+		result = transform(FIXTURE, {
 			sourcemap: true,
-			preprocessStyle,
+			preprocessedStyles,
 		});
 	});
 

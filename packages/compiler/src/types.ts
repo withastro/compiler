@@ -7,6 +7,20 @@ export interface PreprocessorError {
 	error: string;
 }
 
+/**
+ * Result of preprocessing `<style>` blocks via {@link preprocessStyles}.
+ *
+ * This is an opaque value — pass it to `transform()` via the
+ * `preprocessedStyles` option. Do not inspect or modify it.
+ */
+export interface PreprocessedStyles {
+	/** Preprocessed CSS per extractable `<style>`, in document order.
+	 *  `undefined` = use original content, `""` = error (empty). */
+	styles: (string | undefined)[];
+	/** Error messages from the preprocessor. */
+	styleError: string[];
+}
+
 export interface ParseOptions {
 	position?: boolean;
 }
@@ -22,10 +36,13 @@ export interface TransformOptions {
 	scopedStyleStrategy?: 'where' | 'class' | 'attribute';
 	transitionsAnimationURL?: string;
 	resolvePath?: (specifier: string) => string;
-	preprocessStyle?: (
-		content: string,
-		attrs: Record<string, string>,
-	) => null | Promise<PreprocessorResult | PreprocessorError>;
+	/**
+	 * Preprocessed style content from {@link preprocessStyles}.
+	 *
+	 * When provided, the compiler uses these preprocessed CSS strings
+	 * instead of the raw `<style>` content from the template.
+	 */
+	preprocessedStyles?: PreprocessedStyles;
 	annotateSourceFile?: boolean;
 }
 
@@ -124,6 +141,21 @@ export interface ParseResult {
 
 // TODO: Stub until TSX is implemented in the Rust compiler
 export type TSXResult = any;
+
+export declare function preprocessStyles(
+	input: string,
+	preprocessStyle: (
+		content: string,
+		attrs: Record<string, string>,
+	) => null | PreprocessorResult | PreprocessorError,
+): PreprocessedStyles;
+export declare function preprocessStyles(
+	input: string,
+	preprocessStyle: (
+		content: string,
+		attrs: Record<string, string>,
+	) => Promise<PreprocessorResult | PreprocessorError | null>,
+): Promise<PreprocessedStyles>;
 
 export declare function transform(input: string, options?: TransformOptions): TransformResult;
 

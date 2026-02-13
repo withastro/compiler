@@ -21,6 +21,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
 use crate::TransformOptions;
+use crate::css_scoping;
 use crate::scanner::{
     AstroScanner, HoistedScriptType as InternalHoistedScriptType, ScanResult,
     get_jsx_attribute_name, get_jsx_element_name, is_component_name, is_custom_element,
@@ -126,6 +127,125 @@ pub fn transform<'a>(
     codegen.build(root)
 }
 
+/// Metadata about an extractable `<style>` block in an Astro component.
+///
+/// Returned by [`extract_styles`] so that callers (e.g. the TS wrapper) can
+/// preprocess style content before compilation.
+#[derive(Debug, Clone)]
+pub struct StyleBlock {
+    /// Zero-based index of this style block among all extractable styles.
+    pub index: usize,
+    /// The CSS/preprocessor text content between `<style>` and `</style>`.
+    pub content: String,
+    /// The element's attributes as key-value pairs.
+    /// Only quoted and empty (boolean) attributes are included — expression
+    /// attributes (like `define:vars={...}`) are omitted, matching the Go
+    /// compiler's `GetAttrs` behavior.
+    pub attrs: Vec<(String, String)>,
+}
+
+/// Extract style block metadata from an Astro AST without performing compilation.
+///
+/// This walks the template to find all extractable `<style>` elements (i.e.
+/// those that are **not** `is:inline`, `set:html`, `set:text`, or inside
+/// non-hoistable contexts like `<svg>`/`<noscript>`/`<template>`).
+///
+/// For each extractable style, it returns a [`StyleBlock`] with the text
+/// content and attributes. The blocks are returned in document order and
+/// their `index` fields are sequential (0, 1, 2, …).
+///
+/// This is the first step in the "Rust extract → TS preprocess → Rust compile"
+/// pipeline for `preprocessStyle` support.
+pub fn extract_styles<'a>(root: &'a AstroRoot<'a>) -> Vec<StyleBlock> {
+    let mut blocks = Vec::new();
+    extract_styles_from_children(&root.body, false, &mut blocks);
+    blocks
+}
+
+fn extract_styles_from_children<'a>(
+    children: &[JSXChild<'a>],
+    in_non_hoistable: bool,
+    blocks: &mut Vec<StyleBlock>,
+) {
+    for child in children {
+        match child {
+            JSXChild::Element(el) => {
+                let name = get_jsx_element_name(&el.opening_element.name);
+                if name == "style" && !in_non_hoistable && should_extract_style_element(el) {
+                    // Extract content and attrs
+                    let content = extract_style_text(el);
+                    let attrs = extract_style_attrs(el);
+                    blocks.push(StyleBlock {
+                        index: blocks.len(),
+                        content,
+                        attrs,
+                    });
+                } else {
+                    let non_hoistable = in_non_hoistable
+                        || matches!(name.as_str(), "svg" | "noscript" | "template");
+                    extract_styles_from_children(&el.children, non_hoistable, blocks);
+                }
+            }
+            JSXChild::Fragment(frag) => {
+                extract_styles_from_children(&frag.children, in_non_hoistable, blocks);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Check if a `<style>` element should be extracted (same logic as
+/// `AstroCodegen::should_extract_style` but as a free function).
+fn should_extract_style_element(el: &JSXElement<'_>) -> bool {
+    let attrs = &el.opening_element.attributes;
+    for attr in attrs {
+        if let JSXAttributeItem::Attribute(attr) = attr {
+            let name = get_jsx_attribute_name(&attr.name);
+            if name == "is:inline" || name == "set:html" || name == "set:text" {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+/// Extract the text content of a `<style>` element.
+fn extract_style_text(el: &JSXElement<'_>) -> String {
+    let mut text = String::new();
+    for child in &el.children {
+        if let JSXChild::Text(t) = child {
+            text.push_str(t.value.as_str());
+        }
+    }
+    text
+}
+
+/// Extract quoted and empty (boolean) attributes from a `<style>` element.
+/// Expression attributes (like `define:vars={...}`) are omitted, matching
+/// the Go compiler's `GetAttrs` behavior.
+fn extract_style_attrs(el: &JSXElement<'_>) -> Vec<(String, String)> {
+    let mut attrs = Vec::new();
+    for attr_item in &el.opening_element.attributes {
+        if let JSXAttributeItem::Attribute(attr) = attr_item {
+            let name = get_jsx_attribute_name(&attr.name);
+            match &attr.value {
+                None => {
+                    // Boolean/empty attribute (e.g. `is:global`)
+                    attrs.push((name, String::new()));
+                }
+                Some(JSXAttributeValue::StringLiteral(lit)) => {
+                    // Quoted attribute (e.g. `lang="scss"`)
+                    attrs.push((name, lit.value.as_str().to_string()));
+                }
+                _ => {
+                    // Expression attributes are skipped
+                }
+            }
+        }
+    }
+    attrs
+}
+
 /// Astro code generator.
 ///
 /// Transforms an `AstroRoot` AST into JavaScript code that can be executed
@@ -161,6 +281,22 @@ pub struct AstroCodegen<'a> {
     source_hash: String,
     /// Sourcemap builder (present when `options.sourcemap` is true)
     sourcemap_builder: Option<AstroSourcemapBuilder<'a>>,
+    /// Collected CSS strings from extracted `<style>` elements (scoped).
+    /// Each entry corresponds to one `<style>` tag.
+    extracted_css: Vec<String>,
+    /// Whether any style was scoped (i.e., at least one non-global, non-inline style exists).
+    has_scoped_styles: bool,
+    /// Tracks whether we're inside an element that prevents style hoisting
+    /// (svg, noscript, template).
+    in_non_hoistable: bool,
+    /// Collected `define:vars` expression values from `<style>` elements.
+    /// Each entry is the raw JS expression string (e.g., `{color:'green'}`).
+    define_vars_values: Vec<String>,
+    /// Whether any element has received `$$definedVars` style injection.
+    define_vars_injected: bool,
+    /// Counter for the current extractable style index during prescan.
+    /// Used to look up preprocessed style content from `options.preprocessed_styles`.
+    style_extraction_index: usize,
 }
 
 /// Information about an imported module for metadata.
@@ -195,8 +331,17 @@ impl<'a> AstroCodegen<'a> {
         options: TransformOptions,
         scan_result: ScanResult,
     ) -> Self {
-        // Compute base hash for the source file
-        let source_hash = Self::compute_source_hash(source_text);
+        // Compute base hash for the source file.
+        // Use normalizedFilename (like Go's compiler) so that different files
+        // with identical content get different scope hashes.  Fall back to
+        // source text only when no filename is supplied (i.e. "<stdin>").
+        let hash_input = options
+            .normalized_filename
+            .as_deref()
+            .or(options.filename.as_deref())
+            .filter(|s| *s != "<stdin>")
+            .unwrap_or(source_text);
+        let source_hash = Self::compute_source_hash(hash_input);
 
         // Initialize sourcemap builder if requested
         let sourcemap_builder = if options.sourcemap {
@@ -226,6 +371,12 @@ impl<'a> AstroCodegen<'a> {
             transition_counter: 0,
             source_hash,
             sourcemap_builder,
+            extracted_css: Vec::new(),
+            has_scoped_styles: false,
+            in_non_hoistable: false,
+            define_vars_values: Vec::new(),
+            define_vars_injected: false,
+            style_extraction_index: 0,
         }
     }
 
@@ -483,13 +634,15 @@ impl<'a> AstroCodegen<'a> {
             self.source_text,
         );
 
+        let css = std::mem::take(&mut self.extracted_css);
+
         TransformResult {
             code,
             map,
             scope,
             style_error: Vec::new(),
             diagnostics: Vec::new(),
-            css: Vec::new(),
+            css,
             scripts,
             hydrated_components,
             client_only_components,
@@ -502,8 +655,16 @@ impl<'a> AstroCodegen<'a> {
     // --- Orchestration / top-level printing ---
 
     fn print_astro_root(&mut self, root: &'a AstroRoot<'a>) {
+        // Pre-scan: extract styles from the template so we know the CSS count
+        // before printing. This walks the AST to find <style> elements,
+        // extracts their CSS, applies scoping, and stores in self.extracted_css.
+        self.prescan_styles(&root.body);
+
         // 1. Print internal imports
         self.print_internal_imports();
+
+        // 1b. Print CSS imports (one per extracted style)
+        self.print_css_imports();
 
         // 2. Extract and print user imports from frontmatter
         let (imports, exports, other_statements) =
@@ -598,6 +759,58 @@ impl<'a> AstroCodegen<'a> {
 
         if self.scan_result.uses_transitions {
             self.println("import \"transitions.css\";");
+        }
+    }
+
+    /// Pre-scan the template body to extract `<style>` elements.
+    /// This populates `self.extracted_css` and `self.has_scoped_styles`
+    /// before any printing happens.
+    fn prescan_styles(&mut self, body: &[JSXChild<'a>]) {
+        for child in body {
+            self.prescan_styles_child(child, false);
+        }
+    }
+
+    fn prescan_styles_child(&mut self, child: &JSXChild<'a>, in_non_hoistable: bool) {
+        match child {
+            JSXChild::Element(el) => {
+                let name = get_jsx_element_name(&el.opening_element.name);
+                if name == "style" && !in_non_hoistable && self.should_extract_style(el) {
+                    self.extract_style_element(el);
+                } else {
+                    // Mark descendant context as non-hoistable for svg/noscript/template
+                    let non_hoistable = in_non_hoistable
+                        || matches!(name.as_str(), "svg" | "noscript" | "template");
+                    for c in &el.children {
+                        self.prescan_styles_child(c, non_hoistable);
+                    }
+                }
+            }
+            JSXChild::Fragment(frag) => {
+                for c in &frag.children {
+                    self.prescan_styles_child(c, in_non_hoistable);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Print CSS import statements, one per extracted `<style>` tag.
+    /// Format: `import "filename?astro&type=style&index=N&lang.css";`
+    fn print_css_imports(&mut self) {
+        if self.extracted_css.is_empty() {
+            return;
+        }
+        let filename = self
+            .options
+            .filename
+            .clone()
+            .unwrap_or_else(|| "<stdin>".to_string());
+
+        for i in 0..self.extracted_css.len() {
+            self.println(&format!(
+                "import \"{filename}?astro&type=style&index={i}&lang.css\";"
+            ));
         }
     }
 
@@ -994,6 +1207,16 @@ impl<'a> AstroCodegen<'a> {
             self.println("");
         }
 
+        // Emit $$definedVars declaration if define:vars is present on any <style>
+        if !self.define_vars_values.is_empty() {
+            let joined = self.define_vars_values.join(",");
+            self.println(&format!(
+                "const $$definedVars = {}([{}]);",
+                runtime::DEFINE_STYLE_VARS,
+                joined
+            ));
+        }
+
         self.print("return ");
         self.print(runtime::RENDER);
         self.print("`");
@@ -1166,28 +1389,33 @@ impl<'a> AstroCodegen<'a> {
     fn print_jsx_element(&mut self, el: &JSXElement<'a>) {
         let name = get_jsx_element_name(&el.opening_element.name);
 
+        // Handle <style> elements — extract CSS, skip from template output
+        // (only if not inside svg/noscript/template)
+        if name == "style" && !self.in_non_hoistable && self.should_extract_style(el) {
+            // Style was already extracted during prescan — just skip it from template
+            return;
+        }
+
         // Handle <script> elements that should be hoisted
         if name == "script" && Self::is_hoisted_script(el) {
-            if self.element_depth > 0 {
-                self.add_source_mapping_for_span(el.opening_element.span);
-                let filename = self
-                    .options
-                    .filename
-                    .clone()
-                    .unwrap_or_else(|| "/src/pages/index.astro".to_string());
-                let index = self.script_index;
-                self.script_index += 1;
+            self.add_source_mapping_for_span(el.opening_element.span);
+            let filename = self
+                .options
+                .filename
+                .clone()
+                .unwrap_or_else(|| "/src/pages/index.astro".to_string());
+            let index = self.script_index;
+            self.script_index += 1;
 
-                self.print("${");
-                self.print(runtime::RENDER_SCRIPT);
-                self.print("(");
-                self.print(runtime::RESULT);
-                self.print(",\"");
-                self.print(&filename);
-                self.print("?astro&type=script&index=");
-                self.print(&index.to_string());
-                self.print("&lang.ts\")}");
-            }
+            self.print("${");
+            self.print(runtime::RENDER_SCRIPT);
+            self.print("(");
+            self.print(runtime::RESULT);
+            self.print(",\"");
+            self.print(&filename);
+            self.print("?astro&type=script&index=");
+            self.print(&index.to_string());
+            self.print("&lang.ts\")}");
             return;
         }
 
@@ -1203,6 +1431,125 @@ impl<'a> AstroCodegen<'a> {
         }
 
         self.element_depth -= 1;
+    }
+
+    /// Check if a `<style>` element should be extracted (removed from template
+    /// and its CSS emitted separately).
+    ///
+    /// A `<style>` is extracted unless:
+    /// - It has `is:inline` (render as raw HTML)
+    /// - It has `set:html` or `set:text` (directive-driven content)
+    /// - It is inside an `<svg>`, `<noscript>`, or other non-hoistable context
+    ///   (approximated by checking element_depth — styles at depth 0 are always
+    ///   hoisted; the Go compiler has a more precise `IsHoistable` check)
+    fn should_extract_style(&self, el: &JSXElement<'a>) -> bool {
+        let attrs = &el.opening_element.attributes;
+
+        // Don't extract if has is:inline
+        if Self::has_is_inline_attribute(attrs) {
+            return false;
+        }
+
+        // Don't extract if has set:html or set:text
+        if Self::extract_set_directive(attrs).is_some() {
+            return false;
+        }
+
+        true
+    }
+
+    /// Extract a `<style>` element: collect its CSS content, apply scoping,
+    /// and skip the element from the template output.
+    fn extract_style_element(&mut self, el: &JSXElement<'a>) {
+        // Capture the current extraction index and bump it for the next style
+        let current_index = self.style_extraction_index;
+        self.style_extraction_index += 1;
+
+        // Check for is:global attribute
+        let is_global = el.opening_element.attributes.iter().any(|attr| {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                get_jsx_attribute_name(&attr.name) == "is:global"
+            } else {
+                false
+            }
+        });
+
+        // Check for define:vars attribute and collect its value
+        let has_define_vars = self.collect_define_vars(el);
+
+        // Get CSS content: use preprocessed content if available, otherwise read from AST.
+        let css_content = if let Some(preprocessed) = self
+            .options
+            .preprocessed_styles
+            .as_ref()
+            .and_then(|styles| styles.get(current_index))
+            .and_then(|entry| entry.as_ref())
+        {
+            preprocessed.clone()
+        } else {
+            self.extract_style_text_content(el)
+        };
+        let css_trimmed = css_content.trim();
+
+        if css_trimmed.is_empty() {
+            // Empty style — still counts for scoping purposes if not global
+            // or if it has define:vars
+            if !is_global || has_define_vars {
+                self.has_scoped_styles = true;
+            }
+            return;
+        }
+
+        // Apply CSS scoping (unless is:global)
+        let scoped_css = if is_global {
+            css_trimmed.to_string()
+        } else {
+            self.has_scoped_styles = true;
+            css_scoping::scope_css(
+                css_trimmed,
+                &self.source_hash,
+                self.options.scoped_style_strategy(),
+            )
+        };
+
+        self.extracted_css.push(scoped_css);
+    }
+
+    /// Check for `define:vars` attribute on a `<style>` element and collect its value.
+    /// Returns `true` if `define:vars` was found.
+    fn collect_define_vars(&mut self, el: &JSXElement<'a>) -> bool {
+        for attr in &el.opening_element.attributes {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                let name = get_jsx_attribute_name(&attr.name);
+                if name == "define:vars" {
+                    match &attr.value {
+                        Some(JSXAttributeValue::StringLiteral(lit)) => {
+                            self.define_vars_values
+                                .push(format!("'{}'", lit.value.as_str()));
+                        }
+                        Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                            if let Some(e) = expr.expression.as_expression() {
+                                self.define_vars_values.push(expr_to_string(e));
+                            }
+                        }
+                        _ => {}
+                    }
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Extract the text content of a `<style>` element.
+    fn extract_style_text_content(&self, el: &JSXElement<'a>) -> String {
+        let mut text = String::new();
+        for child in &el.children {
+            if let JSXChild::Text(t) = child {
+                text.push_str(t.value.as_str());
+            }
+        }
+        text
     }
 
     /// Check if a script element should be hoisted.
@@ -1332,12 +1679,8 @@ fn strip_and_compose_sourcemaps(
 
     let map = if let (Some(phase2_map), Some(phase1_sm)) = (phase2_map, phase1_sourcemap) {
         let phase1_map = phase1_sm.into_sourcemap();
-        let composed = sourcemap_builder::remap_sourcemap(
-            &phase2_map,
-            &phase1_map,
-            source_path,
-            source_text,
-        );
+        let composed =
+            sourcemap_builder::remap_sourcemap(&phase2_map, &phase1_map, source_path, source_text);
 
         // Supplement: carry forward Phase 1 template-literal tokens,
         // but ONLY on lines where the intermediate and final content
@@ -1386,8 +1729,7 @@ fn strip_and_compose_sourcemaps(
             // escape_insert_positions lists intermediate columns where
             // a `\` was inserted in the final text (empty for exact or
             // whitespace-only matches).
-            let line_col_info: FxHashMap<usize, (i64, Vec<usize>)> = (i_line
-                ..inter_lines.len())
+            let line_col_info: FxHashMap<usize, (i64, Vec<usize>)> = (i_line..inter_lines.len())
                 .filter_map(|il| {
                     // il >= i_line is guaranteed by the range, so this
                     // never underflows.  f_line + (il - i_line) is the
@@ -1530,8 +1872,7 @@ fn strip_and_compose_sourcemaps(
             supplement_phase1_tokens(&phase1_map, &ctx, &mut all_tokens);
 
             // Sort by generated position (line first, then column).
-            all_tokens
-                .sort_by(|a, b| a.dst_line.cmp(&b.dst_line).then(a.dst_col.cmp(&b.dst_col)));
+            all_tokens.sort_by(|a, b| a.dst_line.cmp(&b.dst_line).then(a.dst_col.cmp(&b.dst_col)));
 
             // Deduplicate tokens at the same generated position.
             all_tokens.dedup_by(|a, b| a.dst_line == b.dst_line && a.dst_col == b.dst_col);
@@ -1628,15 +1969,12 @@ fn supplement_phase1_tokens(
                 // adds 1 byte (the `\`) that shifts subsequent
                 // columns.
                 let tc = token_col as usize;
-                let escape_shift = i64::try_from(
-                    escape_positions.iter().filter(|&&pos| pos <= tc).count(),
-                )
-                .expect("escape count exceeds i64");
+                let escape_shift =
+                    i64::try_from(escape_positions.iter().filter(|&&pos| pos <= tc).count())
+                        .expect("escape count exceeds i64");
 
-                let ac = u32::try_from(
-                    (i64::from(token_col) + ws_delta + escape_shift).max(0),
-                )
-                .expect("adjusted column exceeds u32");
+                let ac = u32::try_from((i64::from(token_col) + ws_delta + escape_shift).max(0))
+                    .expect("adjusted column exceeds u32");
                 (al, ac)
             } else if let Some(result) = try_anchor_supplement(token_col, gen_line, ctx) {
                 result
@@ -1645,7 +1983,10 @@ fn supplement_phase1_tokens(
             };
 
         // Skip if already covered by composition.
-        if ctx.composed_positions.contains(&(adjusted_line, adjusted_col)) {
+        if ctx
+            .composed_positions
+            .contains(&(adjusted_line, adjusted_col))
+        {
             continue;
         }
 
@@ -1687,14 +2028,18 @@ fn try_anchor_supplement(
         let nearest = anchors.iter().rev().find(|&&(ic, _, _)| ic <= token_col);
         let &(anchor_ic, anchor_fl, anchor_fc) = nearest?;
         let delta = i64::from(anchor_fc) - i64::from(anchor_ic);
-        let candidate_col =
-            u32::try_from((i64::from(token_col) + delta).max(0)).expect("candidate col exceeds u32");
+        let candidate_col = u32::try_from((i64::from(token_col) + delta).max(0))
+            .expect("candidate col exceeds u32");
 
         // Verify: the text at the candidate final position must match the
         // intermediate text at the token position.  This confirms we are in
         // a quasi region (not a reformatted expression).
         let i_text = ctx.inter_lines.get(gen_line).copied().unwrap_or("");
-        let f_text = ctx.final_lines.get(anchor_fl as usize).copied().unwrap_or("");
+        let f_text = ctx
+            .final_lines
+            .get(anchor_fl as usize)
+            .copied()
+            .unwrap_or("");
         let tc = token_col as usize;
         let cc = candidate_col as usize;
         // Use a short verification window; 2 bytes is enough to confirm
@@ -1735,7 +2080,8 @@ fn try_anchor_supplement(
         let search_start = expected_fl.saturating_sub(5);
         let search_end = (expected_fl + 6).min(ctx.final_lines.len());
 
-        for (fl, f_text) in ctx.final_lines
+        for (fl, f_text) in ctx
+            .final_lines
             .iter()
             .enumerate()
             .take(search_end)
@@ -1743,8 +2089,7 @@ fn try_anchor_supplement(
         {
             // Check same column (the text is quasi literal,
             // so the column should be identical).
-            if tc + verify_len <= f_text.len()
-                && &f_text.as_bytes()[tc..tc + verify_len] == needle
+            if tc + verify_len <= f_text.len() && &f_text.as_bytes()[tc..tc + verify_len] == needle
             {
                 let fl_u32 = u32::try_from(fl).expect("final line exceeds u32");
                 return Some((fl_u32, token_col));
@@ -1757,8 +2102,7 @@ fn try_anchor_supplement(
             let i_ws = i64::try_from(i_text.len() - i_trimmed.len()).unwrap_or(0);
             let ws_adj = f_ws - i_ws;
             let adj_col_i64 = (i64::from(token_col) + ws_adj).max(0);
-            let adj_col =
-                usize::try_from(adj_col_i64).expect("adjusted column exceeds usize");
+            let adj_col = usize::try_from(adj_col_i64).expect("adjusted column exceeds usize");
             if adj_col + verify_len <= f_text.len()
                 && &f_text.as_bytes()[adj_col..adj_col + verify_len] == needle
             {
@@ -2876,7 +3220,8 @@ const items = ["a", "b", "c"];
         let output = compile_astro(source);
 
         assert!(
-            output.contains("data-astro-transition-persist") || output.contains("$$createTransitionScope"),
+            output.contains("data-astro-transition-persist")
+                || output.contains("$$createTransitionScope"),
             "Should handle transition:persist: {output}"
         );
     }

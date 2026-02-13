@@ -12,7 +12,7 @@ const FIXTURE = `
 </style>
 `;
 
-describe('static-extraction/css', { skip: true }, () => {
+describe('static-extraction/css', () => {
 	let result: TransformResult;
 	before(async () => {
 		result = await transform(FIXTURE);
@@ -27,7 +27,7 @@ describe('static-extraction/css', { skip: true }, () => {
 	});
 
 	it('escape url with space', () => {
-		assert.ok(result.css[0].includes('background:url(/white\\ space.png)'));
+		assert.ok(result.css[0].includes('background: url("/white space.png")'));
 	});
 
 	it('escape css syntax', () => {

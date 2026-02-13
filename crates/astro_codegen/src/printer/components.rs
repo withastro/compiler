@@ -4,12 +4,15 @@
 //! via `$$renderComponent`, including hydration directives (`client:load`,
 //! `client:visible`, `client:only`, etc.) and `set:html`/`set:text` on components.
 
-use oxc_ast::ast::*;
 use super::AstroCodegen;
+use super::elements::ScopeId;
 use super::escape::{decode_html_entities, escape_double_quotes};
 use super::expr_to_string;
 use super::runtime;
+use crate::css_scoping;
+use crate::options::ScopedStyleStrategy;
 use crate::scanner::{get_jsx_attribute_name, is_custom_element};
+use oxc_ast::ast::*;
 
 /// A client hydration directive parsed from a component's attributes.
 pub(super) enum HydrationDirective {
@@ -136,6 +139,19 @@ impl<'a> AstroCodegen<'a> {
 
         self.print(",{");
 
+        // Determine if this component should receive a scope identifier.
+        // Like the Go compiler, inject scope into all components (PascalCase and custom elements)
+        // that are not in the NeverScopedElements list.
+        let scope_id = if self.has_scoped_styles && css_scoping::should_scope_element(name) {
+            let hash = &self.source_hash;
+            match self.options.scoped_style_strategy() {
+                ScopedStyleStrategy::Attribute => Some(ScopeId::DataAttribute(hash.clone())),
+                _ => Some(ScopeId::Class(format!("astro-{hash}"))),
+            }
+        } else {
+            None
+        };
+
         // Components always receive slot as a prop.
         // Only HTML elements have the slot attribute stripped when inside named slots.
         let prev_skip_slot = self.skip_slot_attribute;
@@ -150,6 +166,7 @@ impl<'a> AstroCodegen<'a> {
             } else {
                 None
             },
+            scope_id.as_ref(),
         );
 
         self.skip_slot_attribute = prev_skip_slot;
@@ -267,13 +284,7 @@ impl<'a> AstroCodegen<'a> {
                                     }
                                 }
                                 let code = expr_to_string(e);
-                                return Some((
-                                    code,
-                                    is_html,
-                                    needs_unescape,
-                                    false,
-                                    attr.span,
-                                ));
+                                return Some((code, is_html, needs_unescape, false, attr.span));
                             }
                             (None, true, false)
                         }
@@ -292,6 +303,7 @@ impl<'a> AstroCodegen<'a> {
         attrs: &[JSXAttributeItem<'a>],
         hydration: Option<&HydrationInfo>,
         skip_names: Option<&[&str]>,
+        scope_id: Option<&ScopeId>,
     ) {
         let mut first = true;
 
@@ -451,6 +463,23 @@ impl<'a> AstroCodegen<'a> {
                 runtime::RESULT,
                 hash
             ));
+        }
+
+        // Add scope identifier as a prop (matches Go compiler behavior).
+        // For attribute strategy: "data-astro-cid-HASH": true
+        // For class/where strategy: "class": "astro-HASH"
+        if let Some(sid) = scope_id {
+            if !first {
+                self.print(",");
+            }
+            first = false;
+            if sid.is_attribute_strategy() {
+                let attr_name = sid.data_attr_name();
+                self.print(&format!("\"{attr_name}\":true"));
+            } else {
+                let sc = sid.class_value();
+                self.print(&format!("\"class\":\"{sc}\""));
+            }
         }
 
         // Add hydration attributes if present

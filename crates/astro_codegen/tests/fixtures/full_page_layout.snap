@@ -3,6 +3,7 @@ source: crates/astro_codegen/tests/snapshots.rs
 input_file: crates/astro_codegen/tests/fixtures/full_page_layout.astro
 ---
 import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
+import "<stdin>?astro&type=style&index=0&lang.css";
 import BaseHead from "~/components/BaseHead.astro";
 import Footer from "~/components/Footer.astro";
 import Header from "~/components/Header.astro";
@@ -60,63 +61,47 @@ const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 	const Astro = $$result.createAstro($$props, $$slots);
 	Astro.self = $$Component;
 	const { bgClass = "bg-black", ...head } = Astro.props;
-	return $$render`<html lang="en"${$$addAttribute([
+	return $$render`<html lang="en"${$$addAttribute([[
 		"astro-gray-700 overflow-x-clip break-words text-astro-gray-100 [color-scheme:dark] [word-break:break-word]",
 		bgClass,
 		Astro.props.class
-	], "class:list")}>
+	], "astro-wxukq3mn"], "class:list")}>
 	<head>
-		${$$renderComponent($$result, "BaseHead", BaseHead, { ...head })}
+		${$$renderComponent($$result, "BaseHead", BaseHead, {
+		...head,
+		"class": "astro-wxukq3mn"
+	})}
 	${$$renderHead($$result)}</head>
-	<body class="flex min-h-screen max-w-screen flex-col overflow-x-clip">
-		${$$renderComponent($$result, "SkipLink", SkipLink, {})}
-		<div id="nav"${$$addAttribute({
+	<body class="flex min-h-screen max-w-screen flex-col overflow-x-clip astro-wxukq3mn">
+		${$$renderComponent($$result, "SkipLink", SkipLink, { "class": "astro-wxukq3mn" })}
+		<div id="nav"${$$addAttribute([{
 		"inset-x-0 top-0 z-20 max-h-screen": true,
 		"bg-black/30": true
-	}, "class:list")}>
-			${$$renderComponent($$result, "Header", Header, {}, {
+	}, "astro-wxukq3mn"], "class:list")}>
+			${$$renderComponent($$result, "Header", Header, { "class": "astro-wxukq3mn" }, {
 		"default": () => $$render`
-				${$$renderComponent($$result, "HeaderNav", HeaderNav, {})}
+				${$$renderComponent($$result, "HeaderNav", HeaderNav, { "class": "astro-wxukq3mn" })}
 				
 			`,
-		"drawer": () => $$render`${$$renderComponent($$result, "HeaderDrawerContent", HeaderDrawerContent, { "slot": "drawer" })}`
+		"drawer": () => $$render`${$$renderComponent($$result, "HeaderDrawerContent", HeaderDrawerContent, {
+			"slot": "drawer",
+			"class": "astro-wxukq3mn"
+		})}`
 	})}
 		</div>
 
 		${$$renderSlot($$result, $$slots["subnav"])}
 
-		<main id="main" class="relative z-10 flex flex-1 flex-col">
+		<main id="main" class="relative z-10 flex flex-1 flex-col astro-wxukq3mn">
 			${$$renderSlot($$result, $$slots["default"])}
 		</main>
-		${$$renderComponent($$result, "Footer", Footer, { "bgClass": bgClass })}
+		${$$renderComponent($$result, "Footer", Footer, {
+		"bgClass": bgClass,
+		"class": "astro-wxukq3mn"
+	})}
 	</body>
 </html>
 
-<style>
-	:root.disclosure-open {
-		overflow-y: hidden;
-	}
-	body::before {
-		content: '';
-		position: fixed;
-		display: block;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		z-index: 11;
-		background: #0d0f14;
-		pointer-events: none;
-		opacity: 0;
-		transition: opacity 400ms cubic-bezier(0.23, 1, 0.32, 1);
-	}
-	:root.disclosure-open body::before {
-		opacity: 1;
-	}
-
-	:root.disclosure-open #nav {
-		overflow-y: auto;
-	}
-</style>`;
+`;
 }, undefined, undefined);
 export default $$Component;
