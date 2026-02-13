@@ -253,8 +253,7 @@ jobs:
             target: x86_64-apple-darwin
             architecture: x64
         node:
-          - "20"
-          - "latest"
+          - "22"
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6
@@ -299,8 +298,7 @@ jobs:
           - aarch64-unknown-linux-gnu
           - aarch64-unknown-linux-musl
         node:
-          - "20"
-          - "latest"
+          - "22"
     runs-on: ${{ contains(matrix.target, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v6
@@ -343,11 +341,14 @@ jobs:
         run: ls -R crates/astro_napi
         shell: bash
       - name: Test bindings
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ${{ steps.docker.outputs.IMAGE }}
-          options: -v ${{ steps.docker.outputs.PNPM_STORE_PATH }}:${{ steps.docker.outputs.PNPM_STORE_PATH }} -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }}/crates/astro_napi --platform ${{ steps.docker.outputs.PLATFORM }}
-          run: npm run test
+        run: |
+          docker run --rm \
+            --platform ${{ steps.docker.outputs.PLATFORM }} \
+            -v ${{ steps.docker.outputs.PNPM_STORE_PATH }}:${{ steps.docker.outputs.PNPM_STORE_PATH }} \
+            -v ${{ github.workspace }}:${{ github.workspace }} \
+            -w ${{ github.workspace }}/crates/astro_napi \
+            ${{ steps.docker.outputs.IMAGE }} \
+            npm run test
 
   test-wasi:
     name: Test WASI target
@@ -363,7 +364,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies

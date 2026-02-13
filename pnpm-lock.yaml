@@ -29,9 +29,15 @@ importers:
 
   crates/astro_napi:
     devDependencies:
+      '@emnapi/runtime':
+        specifier: ^1.8.1
+        version: 1.8.1
       '@napi-rs/cli':
         specifier: ^3
         version: 3.5.1(@emnapi/runtime@1.8.1)(@types/node@22.19.9)(node-addon-api@7.1.1)
+      '@napi-rs/wasm-runtime':
+        specifier: ^1.1.1
+        version: 1.1.1
       '@types/node':
         specifier: ^22
         version: 22.19.9
@@ -2088,17 +2094,14 @@ snapshots:
     dependencies:
       '@emnapi/wasi-threads': 1.1.0
       tslib: 2.8.1
-    optional: true
 
   '@emnapi/runtime@1.8.1':
     dependencies:
       tslib: 2.8.1
-    optional: true
 
   '@emnapi/wasi-threads@1.1.0':
     dependencies:
       tslib: 2.8.1
-    optional: true
 
   '@esbuild/aix-ppc64@0.27.3':
     optional: true
@@ -2595,7 +2598,6 @@ snapshots:
       '@emnapi/core': 1.8.1
       '@emnapi/runtime': 1.8.1
       '@tybys/wasm-util': 0.10.1
-    optional: true
 
   '@napi-rs/wasm-tools-android-arm-eabi@1.0.1':
     optional: true
@@ -2795,7 +2797,6 @@ snapshots:
   '@tybys/wasm-util@0.10.1':
     dependencies:
       tslib: 2.8.1
-    optional: true
 
   '@types/node@12.20.55': {}
 
@@ -3397,8 +3398,7 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  tslib@2.8.1:
-    optional: true
+  tslib@2.8.1: {}
 
   tsup@6.7.0(postcss@8.5.6)(typescript@5.5.4):
     dependencies:
