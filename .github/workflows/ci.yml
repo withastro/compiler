@@ -173,6 +173,9 @@ jobs:
           toolchain: stable
           targets: ${{ matrix.settings.target }}
 
+      - name: Ensure target is installed
+        run: rustup target add ${{ matrix.settings.target }}
+
       - name: Cache cargo
         uses: actions/cache@v5
         with:
