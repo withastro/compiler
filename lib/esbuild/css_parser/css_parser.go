@@ -308,9 +308,22 @@ func (p *parser) parseListOfDeclarations() (list []css_ast.Rule) {
 			list = append(list, p.parseSelectorRuleFrom(p.index, parseSelectorOpts{allowNesting: true}))
 
 		default:
-			list = append(list, p.parseDeclaration())
+			if p.shouldParseNestedSelector() {
+				list = append(list, p.parseSelectorRuleFrom(p.index, parseSelectorOpts{allowNesting: true}))
+			} else {
+				list = append(list, p.parseDeclaration())
+			}
 		}
 	}
+}
+
+func (p *parser) shouldParseNestedSelector() bool {
+	clone := *p
+	clone.log = logger.Log{AddMsg: func(msg logger.Msg) {}}
+	if _, ok := clone.parseSelectorList(parseSelectorOpts{allowNesting: true}); !ok {
+		return false
+	}
+	return clone.peek(css_lexer.TOpenBrace)
 }
 
 func mangleRules(rules []css_ast.Rule) []css_ast.Rule {
