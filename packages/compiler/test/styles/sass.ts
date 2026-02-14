@@ -33,7 +33,7 @@ describe('styles/sass', () => {
 	before(async () => {
 		const preprocessedStyles = await preprocessStyles(FIXTURE, preprocessStyle);
 		result = transform(FIXTURE, {
-			sourcemap: true,
+			sourcemap: 'external',
 			preprocessedStyles,
 		});
 	});

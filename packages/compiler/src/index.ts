@@ -1,6 +1,7 @@
 export type {
 	CompilerError,
 	CompilerErrorLabel,
+	CompileResult,
 	HoistedScript,
 	ParseOptions,
 	ParseResult,
@@ -24,7 +25,6 @@ import type {
 export function transform(input: string, options?: TransformOptions): TransformResult {
 	const result = mapResult(
 		compileAstroSync(input, mapOptions(options)),
-		options?.sourcemap,
 		options?.preprocessedStyles,
 	);
 

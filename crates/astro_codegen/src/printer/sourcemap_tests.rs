@@ -3,14 +3,14 @@
 // Test sources are small; line/column counts never exceed u32.
 #![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 
-use crate::{TransformOptions, TransformResult, printer::tests::compile_astro_with_options};
+use crate::{SourcemapOption, TransformOptions, TransformResult, printer::tests::compile_astro_with_options};
 
 fn compile_astro_with_sourcemap(source: &str) -> TransformResult {
     compile_astro_with_options(
         source,
         TransformOptions::new()
             .with_internal_url("http://localhost:3000/")
-            .with_sourcemap(true)
+            .with_sourcemap(SourcemapOption::External)
             .with_filename("test.astro"),
     )
 }
@@ -35,6 +35,63 @@ fn test_sourcemap_disabled_produces_empty_map() {
     assert!(
         result.map.is_empty(),
         "sourcemap should be empty when disabled"
+    );
+}
+
+#[test]
+fn test_sourcemap_inline_appends_data_url_and_clears_map() {
+    let source = "<h1>Hello</h1>";
+    let result = compile_astro_with_options(
+        source,
+        TransformOptions::new()
+            .with_internal_url("http://localhost:3000/")
+            .with_sourcemap(SourcemapOption::Inline)
+            .with_filename("test.astro"),
+    );
+    assert!(
+        result.code.contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
+        "inline mode should append a sourceMappingURL data URL to code"
+    );
+    assert!(
+        result.map.is_empty(),
+        "inline mode should leave map field empty"
+    );
+}
+
+#[test]
+fn test_sourcemap_both_appends_data_url_and_populates_map() {
+    let source = "<h1>Hello</h1>";
+    let result = compile_astro_with_options(
+        source,
+        TransformOptions::new()
+            .with_internal_url("http://localhost:3000/")
+            .with_sourcemap(SourcemapOption::Both)
+            .with_filename("test.astro"),
+    );
+    assert!(
+        result.code.contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
+        "both mode should append a sourceMappingURL data URL to code"
+    );
+    assert!(
+        !result.map.is_empty(),
+        "both mode should also populate the map field"
+    );
+    // The map field should be valid JSON
+    let _: serde_json::Value =
+        serde_json::from_str(&result.map).expect("map should be valid JSON in both mode");
+}
+
+#[test]
+fn test_sourcemap_external_no_data_url_in_code() {
+    let source = "<h1>Hello</h1>";
+    let result = compile_astro_with_sourcemap(source);
+    assert!(
+        !result.code.contains("sourceMappingURL"),
+        "external mode should not append sourceMappingURL to code"
+    );
+    assert!(
+        !result.map.is_empty(),
+        "external mode should populate the map field"
     );
 }
 
@@ -273,7 +330,7 @@ console.log(
         source,
         TransformOptions::new()
             .with_internal_url("http://localhost:3000/")
-            .with_sourcemap(true)
+            .with_sourcemap(SourcemapOption::External)
             .with_filename("rust-compiler.astro"),
     );
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map)

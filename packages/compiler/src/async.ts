@@ -1,6 +1,7 @@
 export type {
 	CompilerError,
 	CompilerErrorLabel,
+	CompileResult,
 	HoistedScript,
 	ParseOptions,
 	ParseResult,
@@ -21,7 +22,6 @@ export async function transform(
 ): Promise<TransformResult> {
 	const result = mapResult(
 		await compileAstro(input, mapOptions(options)),
-		options?.sourcemap,
 		options?.preprocessedStyles,
 	);
 

@@ -6,15 +6,16 @@ use oxc_diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic};
 
 #[napi(object, use_nullable = true)]
 #[derive(Clone)]
-pub struct OxcError {
+pub struct CompilerError {
+    #[napi(ts_type = "'error' | 'warning' | 'hint'")]
     pub severity: Severity,
     pub message: String,
-    pub labels: Vec<ErrorLabel>,
+    pub labels: Vec<CompilerErrorLabel>,
     pub help_message: Option<String>,
     pub codeframe: Option<String>,
 }
 
-impl OxcError {
+impl CompilerError {
     pub fn new(message: String) -> Self {
         Self {
             severity: Severity::Error,
@@ -54,7 +55,7 @@ impl OxcError {
             .map(|labels| {
                 labels
                     .iter()
-                    .map(|label| ErrorLabel::new(label, source_text))
+                    .map(|label| CompilerErrorLabel::new(label, source_text))
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
@@ -71,7 +72,7 @@ impl OxcError {
 
 #[napi(object, use_nullable = true)]
 #[derive(Clone)]
-pub struct ErrorLabel {
+pub struct CompilerErrorLabel {
     pub message: Option<String>,
     pub start: u32,
     pub end: u32,
@@ -81,8 +82,7 @@ pub struct ErrorLabel {
     pub column: u32,
 }
 
-impl ErrorLabel {
-    #[expect(clippy::cast_possible_truncation)]
+impl CompilerErrorLabel {
     pub fn new(label: &LabeledSpan, source_text: &str) -> Self {
         let start = label.offset();
         let end = start + label.len();
@@ -118,9 +118,12 @@ fn byte_offset_to_line_column(source: &str, offset: usize) -> (u32, u32) {
 #[napi(string_enum)]
 #[derive(Clone)]
 pub enum Severity {
+    #[napi(value = "error")]
     Error,
+    #[napi(value = "warning")]
     Warning,
-    Advice,
+    #[napi(value = "hint")]
+    Hint,
 }
 
 impl From<oxc_diagnostics::Severity> for Severity {
@@ -128,7 +131,7 @@ impl From<oxc_diagnostics::Severity> for Severity {
         match value {
             oxc_diagnostics::Severity::Error => Self::Error,
             oxc_diagnostics::Severity::Warning => Self::Warning,
-            oxc_diagnostics::Severity::Advice => Self::Advice,
+            oxc_diagnostics::Severity::Advice => Self::Hint,
         }
     }
 }

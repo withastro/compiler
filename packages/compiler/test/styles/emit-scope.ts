@@ -17,7 +17,7 @@ let result: TransformResult;
 describe('styles/emit-scope', () => {
 	before(async () => {
 		result = await transform(FIXTURE, {
-			sourcemap: true,
+			sourcemap: 'external',
 		});
 	});
 

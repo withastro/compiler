@@ -3,6 +3,28 @@
 //! Some fields (such as `compact`, `sourcemap`, CSS scoping) are accepted but
 //! stubbed for API compatibility.
 
+/// Controls whether and how source maps are emitted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SourcemapOption {
+    /// Do not generate a source map.
+    #[default]
+    None,
+    /// Generate a source map in the `map` field of the result (default when enabled).
+    External,
+    /// Append an inline `//# sourceMappingURL=data:...` comment to the code.
+    /// The `map` field will be empty.
+    Inline,
+    /// Both: append the inline comment to the code **and** populate the `map` field.
+    Both,
+}
+
+impl SourcemapOption {
+    /// Whether sourcemap generation is enabled (any mode other than `None`).
+    pub fn is_enabled(self) -> bool {
+        self != Self::None
+    }
+}
+
 /// Scoped style strategy for CSS scoping.
 ///
 /// Determines how Astro scopes CSS selectors to components.
@@ -31,12 +53,14 @@ pub struct TransformOptions {
     /// Defaults to `"astro/runtime/server/index.js"`.
     pub internal_url: Option<String>,
 
-    /// Whether to generate a source map.
+    /// Source map generation mode.
     ///
-    /// When `true`, the `map` field in `TransformResult` will contain a
-    /// JSON-encoded source map that maps the generated JavaScript back to
-    /// the original `.astro` source file.
-    pub sourcemap: bool,
+    /// - `None` (default): no source map.
+    /// - `External`: populate the `map` field with a JSON source map.
+    /// - `Inline`: append an inline `//# sourceMappingURL=data:...` comment
+    ///   to the code; `map` will be empty.
+    /// - `Both`: append the inline comment **and** populate `map`.
+    pub sourcemap: SourcemapOption,
 
     /// Arguments passed to `$$createAstro` when the Astro global is used.
     /// Defaults to `"https://astro.build"`.
@@ -123,7 +147,7 @@ impl Default for TransformOptions {
             filename: None,
             normalized_filename: None,
             internal_url: None,
-            sourcemap: false,
+            sourcemap: SourcemapOption::default(),
             astro_global_args: None,
             compact: false,
             result_scoped_slot: false,
@@ -188,10 +212,10 @@ impl TransformOptions {
         self
     }
 
-    /// Enable or disable source map generation.
+    /// Set the source map generation mode.
     #[must_use]
-    pub fn with_sourcemap(mut self, enabled: bool) -> Self {
-        self.sourcemap = enabled;
+    pub fn with_sourcemap(mut self, mode: SourcemapOption) -> Self {
+        self.sourcemap = mode;
         self
     }
 

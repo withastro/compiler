@@ -23,7 +23,7 @@ mod options;
 mod printer;
 pub mod scanner;
 
-pub use options::{ScopedStyleStrategy, TransformOptions};
+pub use options::{ScopedStyleStrategy, SourcemapOption, TransformOptions};
 pub use printer::{
     AstroCodegen, HoistedScriptType, StyleBlock, TransformResult, TransformResultHoistedScript,
     TransformResultHydratedComponent, extract_styles, transform,

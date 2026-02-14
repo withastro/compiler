@@ -20,7 +20,7 @@ describe('styles/empty-style', () => {
 	before(async () => {
 		const preprocessedStyles = await preprocessStyles(FIXTURE, preprocessStyle);
 		result = transform(FIXTURE, {
-			sourcemap: true,
+			sourcemap: 'external',
 			preprocessedStyles,
 		});
 	});

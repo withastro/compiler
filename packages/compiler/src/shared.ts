@@ -1,8 +1,7 @@
-import type { AstroCompileOptions, NapiHoistedScript, OxcError } from '@astrojs/compiler-binding';
+import type { CompileOptions, CompileResult } from '@astrojs/compiler-binding';
 import { extractStylesSync } from '@astrojs/compiler-binding';
 import type {
 	AsyncTransformOptions,
-	HoistedScript,
 	ParseResult,
 	PreprocessedStyles,
 	PreprocessorError,
@@ -10,11 +9,17 @@ import type {
 	TransformOptions,
 	TransformResult,
 } from './types.js';
-import type { CompilerError, Component } from './types.js';
 
+/**
+ * Map public `TransformOptions` to the NAPI `CompileOptions`.
+ *
+ * Handles:
+ * - `resolvePath` callback → `resolvePathProvided` flag
+ * - `preprocessedStyles` opaque type → raw array
+ */
 export function mapOptions(
 	options?: TransformOptions | AsyncTransformOptions,
-): AstroCompileOptions | undefined {
+): CompileOptions | undefined {
 	if (!options) return undefined;
 
 	// Map PreprocessedStyles to the NAPI format
@@ -29,92 +34,49 @@ export function mapOptions(
 	return {
 		filename: options.filename,
 		normalizedFilename: options.normalizedFilename,
-		internalUrl: options.internalURL,
-		sourcemap: options.sourcemap ? true : undefined,
+		internalURL: options.internalURL,
+		sourcemap: options.sourcemap,
 		astroGlobalArgs: options.astroGlobalArgs,
 		compact: options.compact,
 		resultScopedSlot: options.resultScopedSlot,
 		scopedStyleStrategy: options.scopedStyleStrategy,
-		transitionsAnimationUrl: options.transitionsAnimationURL,
+		transitionsAnimationURL: options.transitionsAnimationURL,
 		annotateSourceFile: options.annotateSourceFile,
 		resolvePathProvided: typeof options.resolvePath === 'function' ? true : undefined,
 		preprocessedStyles,
 	};
 }
 
-function mapScript(script: NapiHoistedScript): HoistedScript {
-	if (script.type === 'external') {
-		return { type: 'external', src: script.src ?? '' };
-	}
-	return { type: 'inline', code: script.code ?? '', map: '' };
-}
-
+/**
+ * Map the NAPI `CompileResult` to the public `TransformResult`.
+ *
+ * Merges preprocessed style errors into the result.
+ */
 export function mapResult(
-	result: {
-		code: string;
-		map: string;
-		scope: string;
-		css: string[];
-		scripts: NapiHoistedScript[];
-		hydratedComponents: Component[];
-		clientOnlyComponents: Component[];
-		serverComponents: Component[];
-		containsHead: boolean;
-		propagation: boolean;
-		styleError: string[];
-		errors: OxcError[];
-	},
-	sourcemapOption?: TransformOptions['sourcemap'],
+	result: CompileResult,
 	preprocessedStyles?: PreprocessedStyles,
 ): TransformResult {
-	let code = result.code;
-	const map = result.map;
-
-	// When 'both' or 'inline' sourcemap mode is requested, append an inline
-	// sourcemap comment so downstream consumers (e.g. esbuild, Vite module
-	// runner) can pick it up directly from the code string.
-	if ((sourcemapOption === 'both' || sourcemapOption === 'inline') && map) {
-		const base64 = typeof Buffer !== 'undefined' ? Buffer.from(map).toString('base64') : btoa(map);
-		code += `\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,${base64}`;
+	if (preprocessedStyles?.styleError?.length) {
+		return {
+			...result,
+			styleError: preprocessedStyles.styleError,
+		};
 	}
-
-	return {
-		code,
-		map: sourcemapOption === 'inline' ? '' : map,
-		scope: result.scope,
-		css: result.css,
-		scripts: result.scripts.map(mapScript),
-		hydratedComponents: result.hydratedComponents,
-		clientOnlyComponents: result.clientOnlyComponents,
-		serverComponents: result.serverComponents,
-		containsHead: result.containsHead,
-		propagation: result.propagation,
-		styleError: preprocessedStyles?.styleError ?? result.styleError,
-		diagnostics: [],
-		errors: result.errors.map(mapError),
-	};
+	return result;
 }
 
-export function mapParseResult(result: { ast: string; errors: OxcError[] }): ParseResult {
+/**
+ * Map the NAPI `ParseResult` to the public `ParseResult`.
+ *
+ * The only transformation is parsing the AST JSON string into an object.
+ */
+export function mapParseResult(result: {
+	ast: string;
+	errors: CompileResult['errors'];
+}): ParseResult {
 	return {
 		ast: JSON.parse(result.ast),
-		errors: result.errors.map(mapError),
-	};
-}
-
-function mapError(error: OxcError): CompilerError {
-	return {
-		severity: error.severity,
-		message: error.message,
-		labels: error.labels.map((label) => ({
-			message: label.message,
-			start: label.start,
-			end: label.end,
-			line: label.line,
-			column: label.column,
-		})),
-		helpMessage: error.helpMessage,
-		codeframe: error.codeframe,
+		errors: result.errors,
 	};
 }
 

@@ -20,7 +20,7 @@ use oxc_codegen::{Codegen, CodegenOptions, Context, Gen, GenExpr};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
-use crate::TransformOptions;
+use crate::{SourcemapOption, TransformOptions};
 use crate::css_scoping;
 use crate::scanner::{
     AstroScanner, HoistedScriptType as InternalHoistedScriptType, ScanResult,
@@ -279,7 +279,7 @@ pub struct AstroCodegen<'a> {
     transition_counter: usize,
     /// Base hash for the source file (computed once)
     source_hash: String,
-    /// Sourcemap builder (present when `options.sourcemap` is true)
+    /// Sourcemap builder (present when `options.sourcemap` is enabled)
     sourcemap_builder: Option<AstroSourcemapBuilder<'a>>,
     /// Collected CSS strings from extracted `<style>` elements (scoped).
     /// Each entry corresponds to one `<style>` tag.
@@ -344,7 +344,7 @@ impl<'a> AstroCodegen<'a> {
         let source_hash = Self::compute_source_hash(hash_input);
 
         // Initialize sourcemap builder if requested
-        let sourcemap_builder = if options.sourcemap {
+        let sourcemap_builder = if options.sourcemap.is_enabled() {
             let path = options.filename.as_deref().unwrap_or("<stdin>");
             Some(AstroSourcemapBuilder::new(
                 std::path::Path::new(path),
@@ -626,13 +626,31 @@ impl<'a> AstroCodegen<'a> {
         let source_path = self.options.filename.as_deref().unwrap_or("<stdin>");
 
         // Strip TypeScript and compose sourcemaps.
-        let (code, map) = strip_and_compose_sourcemaps(
+        let (mut code, sourcemap) = strip_and_compose_sourcemaps(
             self.allocator,
             &intermediate_code,
             phase1_sourcemap,
             source_path,
             self.source_text,
         );
+
+        // Apply sourcemap mode: inline, both, or external.
+        let sourcemap_mode = self.options.sourcemap;
+        let map = match (sourcemap, sourcemap_mode) {
+            (Some(sm), SourcemapOption::Inline) => {
+                code.push_str("\n//# sourceMappingURL=");
+                code.push_str(&sm.to_data_url());
+                String::new()
+            }
+            (Some(sm), SourcemapOption::Both) => {
+                let json = sm.to_json_string();
+                code.push_str("\n//# sourceMappingURL=");
+                code.push_str(&sm.to_data_url());
+                json
+            }
+            (Some(sm), _) => sm.to_json_string(),
+            (None, _) => String::new(),
+        };
 
         let css = std::mem::take(&mut self.extracted_css);
 
@@ -1665,7 +1683,7 @@ struct RawToken {
 /// function carries forward Phase 1 tokens that were not covered by Phase 2 by
 /// computing line/column adjustments between the intermediate and final code.
 ///
-/// Returns `(final_code, sourcemap_json)` where `sourcemap_json` is empty if
+/// Returns `(final_code, Option<SourceMap>)` where the sourcemap is `None` if
 /// no sourcemap was requested.
 ///
 /// # Panics
@@ -1678,7 +1696,7 @@ fn strip_and_compose_sourcemaps(
     phase1_sourcemap: Option<AstroSourcemapBuilder<'_>>,
     source_path: &str,
     source_text: &str,
-) -> (String, String) {
+) -> (String, Option<oxc_sourcemap::SourceMap>) {
     let generate_sourcemap = phase1_sourcemap.is_some();
     let (code, phase2_map) = strip_typescript(allocator, intermediate_code, generate_sourcemap);
 
@@ -1903,9 +1921,9 @@ fn strip_and_compose_sourcemaps(
             composed
         };
 
-        composed.to_json_string()
+        Some(composed)
     } else {
-        String::new()
+        None
     };
 
     (code, map)

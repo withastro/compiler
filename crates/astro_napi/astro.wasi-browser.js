@@ -61,4 +61,6 @@ export const compileAstroSync = __napiModule.exports.compileAstroSync
 export const extractStylesSync = __napiModule.exports.extractStylesSync
 export const parseAstro = __napiModule.exports.parseAstro
 export const parseAstroSync = __napiModule.exports.parseAstroSync
+export const ScopedStyleStrategy = __napiModule.exports.ScopedStyleStrategy
 export const Severity = __napiModule.exports.Severity
+export const SourcemapOption = __napiModule.exports.SourcemapOption
