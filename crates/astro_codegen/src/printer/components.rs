@@ -328,6 +328,18 @@ impl<'a> AstroCodegen<'a> {
             }
         }
 
+        // Track whether the scope class was merged into an existing class attribute
+        let mut scope_injected = false;
+
+        // Determine the scope class string (for class/where strategy only)
+        let scope_class = scope_id.and_then(|sid| {
+            if sid.is_attribute_strategy() {
+                None
+            } else {
+                Some(sid.class_value())
+            }
+        });
+
         // Print regular attributes first
         for attr in attrs {
             match attr {
@@ -370,6 +382,41 @@ impl<'a> AstroCodegen<'a> {
                     self.print("\"");
                     self.print(&name);
                     self.print("\":");
+
+                    // Merge scope class into class attribute value (matches Go compiler).
+                    // Static:  class="foo" → "class":"foo astro-HASH"
+                    // Dynamic: class={expr} → "class":(((expr) ?? "") + " astro-HASH")
+                    // Boolean: class        → "class":"astro-HASH"
+                    if name == "class" && scope_class.is_some() {
+                        let sc = scope_class.as_ref().unwrap();
+                        match &attr.value {
+                            None => {
+                                // Boolean class attribute → just the scope class
+                                self.print(&format!("\"{sc}\""));
+                            }
+                            Some(JSXAttributeValue::StringLiteral(lit)) => {
+                                let val = lit.value.as_str();
+                                if val.is_empty() {
+                                    self.print(&format!("\"{sc}\""));
+                                } else {
+                                    self.print(&format!(
+                                        "\"{} {sc}\"",
+                                        escape_double_quotes(val)
+                                    ));
+                                }
+                            }
+                            Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                                self.print("(((");
+                                self.print_jsx_expression(&expr.expression);
+                                self.print(&format!(") ?? \"\") + \" {sc}\")"));
+                            }
+                            _ => {
+                                self.print(&format!("\"{sc}\""));
+                            }
+                        }
+                        scope_injected = true;
+                        continue;
+                    }
 
                     match &attr.value {
                         None => {
@@ -465,18 +512,22 @@ impl<'a> AstroCodegen<'a> {
             ));
         }
 
-        // Add scope identifier as a prop (matches Go compiler behavior).
-        // For attribute strategy: "data-astro-cid-HASH": true
-        // For class/where strategy: "class": "astro-HASH"
+        // Add scope identifier as a prop if not already merged into an existing class attribute.
+        // For attribute strategy: always add "data-astro-cid-HASH": true
+        // For class/where strategy: add "class": "astro-HASH" only if no class attr existed
         if let Some(sid) = scope_id {
-            if !first {
-                self.print(",");
-            }
-            first = false;
             if sid.is_attribute_strategy() {
+                if !first {
+                    self.print(",");
+                }
+                first = false;
                 let attr_name = sid.data_attr_name();
                 self.print(&format!("\"{attr_name}\":true"));
-            } else {
+            } else if !scope_injected {
+                if !first {
+                    self.print(",");
+                }
+                first = false;
                 let sc = sid.class_value();
                 self.print(&format!("\"class\":\"{sc}\""));
             }

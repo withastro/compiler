@@ -738,7 +738,7 @@ impl<'a> AstroCodegen<'a> {
                 // Output: ${$$addAttribute((expr ?? "") + " astro-XXXX", "class")}
                 self.print(&format!("${{{}((", runtime::ADD_ATTRIBUTE));
                 self.print_jsx_expression(&expr.expression);
-                self.print(&format!(") ?? \"\") + \" {scope_class}\", \"class\"}}}}"));
+                self.print(&format!(" ?? \"\") + \" {scope_class}\", \"class\")}}"));
             }
             _ => {
                 // Fallback: just output scope class

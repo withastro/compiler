@@ -2958,6 +2958,110 @@ import Component from "test";
         );
     }
 
+    // === CSS scope injection tests ===
+
+    #[test]
+    fn test_dynamic_class_with_scoped_styles_no_extra_brace() {
+        // When a dynamic class expression is used on an element with scoped styles,
+        // the output should not have an extra closing brace leaking into HTML.
+        // Regression: `class}=""` was produced due to `}}}}` in format string.
+        let source = r#"---
+const myClass = "foo";
+---
+<svg class={myClass}><path d="M0 0"/></svg>
+<style>svg { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        // The template literal expression should end with `)}` not `)}}`
+        assert!(
+            !output.contains("}}"),
+            "Should not have double closing braces in template expression: {output}"
+        );
+        // And there should be no `class}` in the output
+        assert!(
+            !output.contains("class}"),
+            "Should not have malformed class}} attribute: {output}"
+        );
+        // The $$addAttribute call for class should be well-formed
+        assert!(
+            output.contains(r#", "class")"#),
+            "Should have well-formed $$addAttribute call for class: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_static_class_merged_with_scope() {
+        // When a component has a static class="foo" and scoped styles are active,
+        // the scope class should be merged into the value: "class":"foo astro-HASH"
+        // NOT two separate "class" keys (which would lose the first one in JS).
+        let source = r#"---
+import Comp from './Comp.astro';
+---
+<Comp class="hide" />
+<style>div { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        // Should have merged class value like "hide astro-XXXX"
+        assert!(
+            output.contains(r#""hide astro-"#),
+            "Component static class should be merged with scope class: {output}"
+        );
+        // Should NOT have two separate "class" keys
+        let class_count = output.matches(r#""class""#).count();
+        assert_eq!(
+            class_count, 1,
+            "Should have exactly one \"class\" key, got {class_count}: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_dynamic_class_merged_with_scope() {
+        // When a component has a dynamic class={expr} and scoped styles are active,
+        // the scope class should be merged: "class":(((expr) ?? "") + " astro-HASH")
+        let source = r#"---
+import Comp from './Comp.astro';
+const cls = "foo";
+---
+<Comp class={cls} />
+<style>div { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        // Should have the ?? "" + " astro-" pattern
+        assert!(
+            output.contains(r#"?? "") + " astro-"#),
+            "Component dynamic class should use nullish coalescing with scope class: {output}"
+        );
+        // Should NOT have two separate "class" keys
+        let class_count = output.matches(r#""class""#).count();
+        assert_eq!(
+            class_count, 1,
+            "Should have exactly one \"class\" key, got {class_count}: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_no_class_gets_scope_class() {
+        // When a component has no class attribute and scoped styles are active,
+        // a separate "class":"astro-HASH" should be added.
+        let source = r#"---
+import Comp from './Comp.astro';
+---
+<Comp variant="primary" />
+<style>div { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains(r#""astro-"#),
+            "Component without class should get scope class prop: {output}"
+        );
+        // Should have exactly one "class" key
+        let class_count = output.matches(r#""class""#).count();
+        assert_eq!(
+            class_count, 1,
+            "Should have exactly one \"class\" key, got {class_count}: {output}"
+        );
+    }
+
     // === Test 3: Adversarial/edge-case input tests ===
 
     #[test]

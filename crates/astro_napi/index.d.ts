@@ -57,7 +57,7 @@ export interface AstroCompileOptions {
   scopedStyleStrategy?: string
   /**
    * URL for the view transitions animation CSS.
-   * **Stub**: not yet implemented.
+   * When set, replaces the default `"transitions.css"` bare specifier in the emitted import.
    */
   transitionsAnimationUrl?: string
   /**
