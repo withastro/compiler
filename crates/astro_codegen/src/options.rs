@@ -63,7 +63,8 @@ pub struct TransformOptions {
 
     /// URL for the view transitions animation CSS.
     ///
-    /// **Stub**: accepted for API compatibility.
+    /// When set, the compiler emits `import "<url>";` instead of the default
+    /// `import "transitions.css";` for components that use transition directives.
     pub transitions_animation_url: Option<String>,
 
     /// Whether to annotate generated code with the source file path.
@@ -222,7 +223,7 @@ impl TransformOptions {
         self
     }
 
-    /// Set the view transitions animation URL (stub).
+    /// Set the view transitions animation URL.
     #[must_use]
     pub fn with_transitions_animation_url(mut self, url: impl Into<String>) -> Self {
         self.transitions_animation_url = Some(url.into());

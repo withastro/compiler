@@ -758,7 +758,12 @@ impl<'a> AstroCodegen<'a> {
         self.println(&format!("}} from \"{url}\";"));
 
         if self.scan_result.uses_transitions {
-            self.println("import \"transitions.css\";");
+            let url = self
+                .options
+                .transitions_animation_url
+                .as_deref()
+                .unwrap_or("transitions.css");
+            self.println(&format!("import \"{url}\";"));
         }
     }
 
@@ -2914,6 +2919,42 @@ import Component from "test";
         assert!(
             output.contains("data-astro-transition-persist-props"),
             "Should rename transition:persist-props: {output}"
+        );
+    }
+
+    #[test]
+    fn test_transitions_animation_url_option() {
+        // When transitionsAnimationURL is provided, the compiler should use it
+        // instead of the default "transitions.css" bare specifier.
+        let source = r#"<div transition:persist>content</div>"#;
+        let result = compile_astro_with_options(
+            source,
+            TransformOptions::new()
+                .with_internal_url("http://localhost:3000/")
+                .with_transitions_animation_url("astro/transitions.css"),
+        );
+
+        assert!(
+            result.code.contains(r#"import "astro/transitions.css";"#),
+            "Should use the provided transitionsAnimationURL: {}",
+            result.code
+        );
+        assert!(
+            !result.code.contains(r#"import "transitions.css";"#),
+            "Should NOT use the default transitions.css when URL is provided: {}",
+            result.code
+        );
+    }
+
+    #[test]
+    fn test_transitions_default_url_without_option() {
+        // When transitionsAnimationURL is NOT provided, fall back to "transitions.css".
+        let source = r#"<div transition:persist>content</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains(r#"import "transitions.css";"#),
+            "Should use default transitions.css when no URL option is provided: {output}"
         );
     }
 

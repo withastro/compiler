@@ -16,13 +16,13 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 use std::mem;
 
-use napi::{Task, bindgen_prelude::AsyncTask};
+use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
 
 use std::collections::HashMap;
 
 use crate::error::OxcError;
-use astro_codegen::{HoistedScriptType, TransformOptions, extract_styles, transform};
+use astro_codegen::{extract_styles, transform, HoistedScriptType, TransformOptions};
 use oxc_allocator::Allocator;
 use oxc_estree::CompactTSSerializer;
 use oxc_estree::ESTree;
@@ -77,7 +77,7 @@ pub struct AstroCompileOptions {
     pub scoped_style_strategy: Option<String>,
 
     /// URL for the view transitions animation CSS.
-    /// **Stub**: not yet implemented.
+    /// When set, replaces the default `"transitions.css"` bare specifier in the emitted import.
     pub transitions_animation_url: Option<String>,
 
     /// Whether to annotate generated code with the source file path.
