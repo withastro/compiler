@@ -16,13 +16,13 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 use std::mem;
 
-use napi::{Task, bindgen_prelude::AsyncTask};
+use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
 
 use std::collections::HashMap;
 
 use crate::error::DiagnosticMessage;
-use astro_codegen::{Diagnostic, HoistedScriptType, TransformOptions, extract_styles, transform};
+use astro_codegen::{extract_styles, transform, Diagnostic, HoistedScriptType, TransformOptions};
 use oxc_allocator::Allocator;
 use oxc_estree::CompactTSSerializer;
 use oxc_estree::ESTree;
@@ -284,7 +284,7 @@ fn compile_astro_impl(source_text: &str, options: &CompileOptions) -> CompileRes
 
     // If there are parse errors, return them as diagnostics
     if !ret.errors.is_empty() {
-        let diagnostics = Diagnostic::from_oxc_list(&ret.errors);
+        let diagnostics = Diagnostic::from_oxc_list(source_text, &ret.errors);
         let diagnostics = DiagnosticMessage::from_codegen_list(diagnostics);
         return CompileResult {
             code: String::new(),
@@ -475,7 +475,7 @@ fn parse_astro_impl(source_text: &str) -> ParseResult {
     let diagnostics = if ret.errors.is_empty() {
         Vec::new()
     } else {
-        let diags = Diagnostic::from_oxc_list(&ret.errors);
+        let diags = Diagnostic::from_oxc_list(source_text, &ret.errors);
         DiagnosticMessage::from_codegen_list(diags)
     };
 

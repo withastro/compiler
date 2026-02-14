@@ -2,6 +2,31 @@ use napi_derive::napi;
 
 use astro_codegen::Diagnostic;
 
+/// Severity level for a diagnostic message.
+#[napi(string_enum)]
+#[derive(Clone)]
+pub enum DiagnosticSeverity {
+    #[napi(value = "error")]
+    Error,
+    #[napi(value = "warning")]
+    Warning,
+    #[napi(value = "information")]
+    Information,
+    #[napi(value = "hint")]
+    Hint,
+}
+
+impl From<astro_codegen::DiagnosticSeverity> for DiagnosticSeverity {
+    fn from(s: astro_codegen::DiagnosticSeverity) -> Self {
+        match s {
+            astro_codegen::DiagnosticSeverity::Error => Self::Error,
+            astro_codegen::DiagnosticSeverity::Warning => Self::Warning,
+            astro_codegen::DiagnosticSeverity::Information => Self::Information,
+            astro_codegen::DiagnosticSeverity::Hint => Self::Hint,
+        }
+    }
+}
+
 /// A labeled source span within a diagnostic.
 #[napi(object, use_nullable = true)]
 #[derive(Clone)]
@@ -12,14 +37,18 @@ pub struct DiagnosticLabel {
     pub start: u32,
     /// Byte offset of the span end (exclusive).
     pub end: u32,
+    /// 1-based line number.
+    pub line: u32,
+    /// 0-based column number.
+    pub column: u32,
 }
 
 /// A diagnostic message produced by the compiler.
 #[napi(object)]
 #[derive(Clone)]
 pub struct DiagnosticMessage {
-    /// Severity level: 1 = error, 2 = warning, 3 = information, 4 = hint.
-    pub severity: u32,
+    #[napi(ts_type = "'error' | 'warning' | 'information' | 'hint'")]
+    pub severity: DiagnosticSeverity,
     /// Human-readable message text.
     pub text: String,
     /// Optional hint/suggestion for fixing the issue.
@@ -31,7 +60,7 @@ pub struct DiagnosticMessage {
 impl From<Diagnostic> for DiagnosticMessage {
     fn from(d: Diagnostic) -> Self {
         Self {
-            severity: d.severity as u32,
+            severity: DiagnosticSeverity::from(d.severity),
             text: d.text,
             hint: d.hint,
             labels: d
@@ -41,6 +70,8 @@ impl From<Diagnostic> for DiagnosticMessage {
                     text: l.text,
                     start: l.start,
                     end: l.end,
+                    line: l.line,
+                    column: l.column,
                 })
                 .collect(),
         }

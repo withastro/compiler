@@ -192,18 +192,29 @@ export interface DiagnosticLabel {
   start: number
   /** Byte offset of the span end (exclusive). */
   end: number
+  /** 1-based line number. */
+  line: number
+  /** 0-based column number. */
+  column: number
 }
 
 /** A diagnostic message produced by the compiler. */
 export interface DiagnosticMessage {
-  /** Severity level: 1 = error, 2 = warning, 3 = information, 4 = hint. */
-  severity: number
+  severity: 'error' | 'warning' | 'information' | 'hint'
   /** Human-readable message text. */
   text: string
   /** Optional hint/suggestion for fixing the issue. */
   hint: string
   /** Labeled source spans. */
   labels: Array<DiagnosticLabel>
+}
+
+/** Severity level for a diagnostic message. */
+export declare const enum DiagnosticSeverity {
+  Error = 'error',
+  Warning = 'warning',
+  Information = 'information',
+  Hint = 'hint'
 }
 
 /**

@@ -2,6 +2,7 @@ export type {
 	CompileResult,
 	DiagnosticLabel,
 	DiagnosticMessage,
+	DiagnosticSeverity,
 	HoistedScript,
 	ParseOptions,
 	ParseResult,

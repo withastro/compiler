@@ -11,6 +11,9 @@ export type {
 } from '@astrojs/compiler-binding';
 import type { CompileOptions, CompileResult } from '@astrojs/compiler-binding';
 
+/** Severity level for a diagnostic message. */
+export type DiagnosticSeverity = 'error' | 'warning' | 'information' | 'hint';
+
 // ---- TS-only types (not expressible in the NAPI layer) ----
 
 export interface PreprocessorResult {
