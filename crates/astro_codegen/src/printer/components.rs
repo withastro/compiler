@@ -387,8 +387,9 @@ impl<'a> AstroCodegen<'a> {
                     // Static:  class="foo" → "class":"foo astro-HASH"
                     // Dynamic: class={expr} → "class":(((expr) ?? "") + " astro-HASH")
                     // Boolean: class        → "class":"astro-HASH"
-                    if name == "class" && scope_class.is_some() {
-                        let sc = scope_class.as_ref().unwrap();
+                    if name == "class"
+                        && let Some(sc) = &scope_class
+                    {
                         match &attr.value {
                             None => {
                                 // Boolean class attribute → just the scope class
@@ -399,10 +400,7 @@ impl<'a> AstroCodegen<'a> {
                                 if val.is_empty() {
                                     self.print(&format!("\"{sc}\""));
                                 } else {
-                                    self.print(&format!(
-                                        "\"{} {sc}\"",
-                                        escape_double_quotes(val)
-                                    ));
+                                    self.print(&format!("\"{} {sc}\"", escape_double_quotes(val)));
                                 }
                             }
                             Some(JSXAttributeValue::ExpressionContainer(expr)) => {
