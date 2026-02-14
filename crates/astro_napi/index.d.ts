@@ -141,24 +141,6 @@ export interface CompileOptions {
   preprocessedStyles?: Array<string | undefined | null>
 }
 
-export interface CompilerError {
-  severity: 'error' | 'warning' | 'hint'
-  message: string
-  labels: Array<CompilerErrorLabel>
-  helpMessage: string | null
-  codeframe: string | null
-}
-
-export interface CompilerErrorLabel {
-  message: string | null
-  start: number
-  end: number
-  /** 1-based line number in the source. */
-  line: number
-  /** 0-based column number in the source. */
-  column: number
-}
-
 /** Result of compiling an Astro file. */
 export interface CompileResult {
   /** The generated JavaScript code. */
@@ -186,10 +168,8 @@ export interface CompileResult {
   propagation: boolean
   /** Style processing errors. */
   styleError: Array<string>
-  /** Diagnostic messages. */
-  diagnostics: Array<string>
-  /** Any compilation errors encountered. */
-  errors: Array<CompilerError>
+  /** Diagnostic messages (errors, warnings, hints). */
+  diagnostics: Array<DiagnosticMessage>
 }
 
 /** A component reference found in the template (hydrated, client-only, or server-deferred). */
@@ -202,6 +182,28 @@ export interface Component {
   specifier: string
   /** The resolved path (empty string if unresolved). */
   resolvedPath: string
+}
+
+/** A labeled source span within a diagnostic. */
+export interface DiagnosticLabel {
+  /** Optional label text (e.g. "expected closing tag here"). */
+  text: string | null
+  /** Byte offset of the span start. */
+  start: number
+  /** Byte offset of the span end (exclusive). */
+  end: number
+}
+
+/** A diagnostic message produced by the compiler. */
+export interface DiagnosticMessage {
+  /** Severity level: 1 = error, 2 = warning, 3 = information, 4 = hint. */
+  severity: number
+  /** Human-readable message text. */
+  text: string
+  /** Optional hint/suggestion for fixing the issue. */
+  hint: string
+  /** Labeled source spans. */
+  labels: Array<DiagnosticLabel>
 }
 
 /**
@@ -259,8 +261,8 @@ export interface ParseResult {
    * Call `JSON.parse()` on this to get the AST object.
    */
   ast: string
-  /** Any parse errors encountered. */
-  errors: Array<CompilerError>
+  /** Diagnostic messages (parse errors, warnings). */
+  diagnostics: Array<DiagnosticMessage>
 }
 
 /**
@@ -275,12 +277,6 @@ export declare const enum ScopedStyleStrategy {
   Class = 'class',
   /** Use `[data-astro-cid-XXXX]` attribute selector. */
   Attribute = 'attribute'
-}
-
-export declare const enum Severity {
-  Error = 'error',
-  Warning = 'warning',
-  Hint = 'hint'
 }
 
 /** Controls whether and how source maps are emitted. */

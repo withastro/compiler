@@ -1,10 +1,10 @@
 // Re-export types that are identical to the NAPI binding.
 // The Rust codegen crate is the source of truth for these types.
 export type {
-	CompilerError,
-	CompilerErrorLabel,
 	CompileResult,
 	Component,
+	DiagnosticLabel,
+	DiagnosticMessage,
 	HoistedScript,
 	ParseResult as BindingParseResult,
 	StyleBlock,
@@ -98,8 +98,8 @@ export interface SourceMap {
 export interface ParseResult {
 	/** The oxc AST in ESTree-compatible JSON format. */
 	ast: Record<string, any>;
-	/** Parse errors encountered. */
-	errors: import('@astrojs/compiler-binding').CompilerError[];
+	/** Diagnostic messages (parse errors, warnings). */
+	diagnostics: import('@astrojs/compiler-binding').DiagnosticMessage[];
 }
 
 // TODO: Stub until TSX is implemented in the Rust compiler

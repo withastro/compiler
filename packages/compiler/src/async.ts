@@ -1,7 +1,7 @@
 export type {
-	CompilerError,
-	CompilerErrorLabel,
 	CompileResult,
+	DiagnosticLabel,
+	DiagnosticMessage,
 	HoistedScript,
 	ParseOptions,
 	ParseResult,

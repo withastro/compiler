@@ -114,5 +114,4 @@ module.exports.extractStylesSync = __napiModule.exports.extractStylesSync
 module.exports.parseAstro = __napiModule.exports.parseAstro
 module.exports.parseAstroSync = __napiModule.exports.parseAstroSync
 module.exports.ScopedStyleStrategy = __napiModule.exports.ScopedStyleStrategy
-module.exports.Severity = __napiModule.exports.Severity
 module.exports.SourcemapOption = __napiModule.exports.SourcemapOption

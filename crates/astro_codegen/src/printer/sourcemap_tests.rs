@@ -3,7 +3,9 @@
 // Test sources are small; line/column counts never exceed u32.
 #![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 
-use crate::{SourcemapOption, TransformOptions, TransformResult, printer::tests::compile_astro_with_options};
+use crate::{
+    SourcemapOption, TransformOptions, TransformResult, printer::tests::compile_astro_with_options,
+};
 
 fn compile_astro_with_sourcemap(source: &str) -> TransformResult {
     compile_astro_with_options(
@@ -49,7 +51,9 @@ fn test_sourcemap_inline_appends_data_url_and_clears_map() {
             .with_filename("test.astro"),
     );
     assert!(
-        result.code.contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
+        result
+            .code
+            .contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
         "inline mode should append a sourceMappingURL data URL to code"
     );
     assert!(
@@ -69,7 +73,9 @@ fn test_sourcemap_both_appends_data_url_and_populates_map() {
             .with_filename("test.astro"),
     );
     assert!(
-        result.code.contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
+        result
+            .code
+            .contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
         "both mode should append a sourceMappingURL data URL to code"
     );
     assert!(

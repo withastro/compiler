@@ -24,7 +24,7 @@ describe('parse', () => {
 	});
 
 	it('has no errors', () => {
-		assert.equal(result.errors.length, 0);
+		assert.equal(result.diagnostics.length, 0);
 	});
 
 	it('has frontmatter', () => {
@@ -127,8 +127,8 @@ describe('parse: script tags', () => {
 
 describe('parse: empty file', () => {
 	it('parses an empty file', async () => {
-		const { ast, errors } = await parse('');
+		const { ast, diagnostics } = await parse('');
 		assert.equal(ast.type, 'AstroRoot');
-		assert.equal(errors.length, 0);
+		assert.equal(diagnostics.length, 0);
 	});
 });

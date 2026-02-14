@@ -2,6 +2,8 @@
 //!
 //! These types represent the result of transforming an Astro component.
 
+use crate::diagnostic::Diagnostic;
+
 /// The type of a hoisted script.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HoistedScriptType {
@@ -50,8 +52,8 @@ pub struct TransformResult {
     pub scope: String,
     /// Extracted CSS strings from `<style>` tags (stub: empty vec until CSS support).
     pub style_error: Vec<String>,
-    /// Diagnostic messages (stub: empty vec).
-    pub diagnostics: Vec<String>,
+    /// Diagnostic messages from compilation.
+    pub diagnostics: Vec<Diagnostic>,
     /// Extracted CSS from `<style>` tags (stub: empty vec until CSS support).
     pub css: Vec<String>,
     /// Hoisted scripts extracted from the template.

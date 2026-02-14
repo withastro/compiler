@@ -19,10 +19,12 @@
 //! ```
 
 pub mod css_scoping;
+pub mod diagnostic;
 mod options;
 mod printer;
 pub mod scanner;
 
+pub use diagnostic::{Diagnostic, DiagnosticLabel, DiagnosticSeverity};
 pub use options::{ScopedStyleStrategy, SourcemapOption, TransformOptions};
 pub use printer::{
     AstroCodegen, HoistedScriptType, StyleBlock, TransformResult, TransformResultHoistedScript,

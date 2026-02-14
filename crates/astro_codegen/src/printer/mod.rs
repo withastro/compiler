@@ -20,13 +20,13 @@ use oxc_codegen::{Codegen, CodegenOptions, Context, Gen, GenExpr};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
-use crate::{SourcemapOption, TransformOptions};
 use crate::css_scoping;
 use crate::scanner::{
     AstroScanner, HoistedScriptType as InternalHoistedScriptType, ScanResult,
     get_jsx_attribute_name, get_jsx_element_name, is_component_name, is_custom_element,
     should_hoist_script,
 };
+use crate::{SourcemapOption, TransformOptions};
 
 mod components;
 mod elements;

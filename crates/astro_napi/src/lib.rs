@@ -16,13 +16,13 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 use std::mem;
 
-use napi::{bindgen_prelude::AsyncTask, Task};
+use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use std::collections::HashMap;
 
-use crate::error::CompilerError;
-use astro_codegen::{extract_styles, transform, HoistedScriptType, TransformOptions};
+use crate::error::DiagnosticMessage;
+use astro_codegen::{Diagnostic, HoistedScriptType, TransformOptions, extract_styles, transform};
 use oxc_allocator::Allocator;
 use oxc_estree::CompactTSSerializer;
 use oxc_estree::ESTree;
@@ -204,10 +204,8 @@ pub struct CompileResult {
     pub propagation: bool,
     /// Style processing errors.
     pub style_error: Vec<String>,
-    /// Diagnostic messages.
-    pub diagnostics: Vec<String>,
-    /// Any compilation errors encountered.
-    pub errors: Vec<CompilerError>,
+    /// Diagnostic messages (errors, warnings, hints).
+    pub diagnostics: Vec<DiagnosticMessage>,
 }
 
 /// An extractable `<style>` block from an Astro component.
@@ -284,9 +282,10 @@ fn compile_astro_impl(source_text: &str, options: &CompileOptions) -> CompileRes
         .with_options(ParseOptions::default())
         .parse_astro();
 
-    // If there are parse errors, return them
+    // If there are parse errors, return them as diagnostics
     if !ret.errors.is_empty() {
-        let errors = CompilerError::from_diagnostics("", source_text, ret.errors);
+        let diagnostics = Diagnostic::from_oxc_list(&ret.errors);
+        let diagnostics = DiagnosticMessage::from_codegen_list(diagnostics);
         return CompileResult {
             code: String::new(),
             map: String::new(),
@@ -299,8 +298,7 @@ fn compile_astro_impl(source_text: &str, options: &CompileOptions) -> CompileRes
             contains_head: false,
             propagation: false,
             style_error: Vec::new(),
-            diagnostics: Vec::new(),
-            errors,
+            diagnostics,
         };
     }
 
@@ -380,8 +378,7 @@ fn compile_astro_impl(source_text: &str, options: &CompileOptions) -> CompileRes
         contains_head: result.contains_head,
         propagation: result.propagation,
         style_error: result.style_error,
-        diagnostics: result.diagnostics,
-        errors: Vec::new(),
+        diagnostics: DiagnosticMessage::from_codegen_list(result.diagnostics),
     }
 }
 
@@ -463,8 +460,8 @@ pub struct ParseResult {
     /// The AST serialized as a JSON string (ESTree-compatible format from oxc).
     /// Call `JSON.parse()` on this to get the AST object.
     pub ast: String,
-    /// Any parse errors encountered.
-    pub errors: Vec<CompilerError>,
+    /// Diagnostic messages (parse errors, warnings).
+    pub diagnostics: Vec<DiagnosticMessage>,
 }
 
 fn parse_astro_impl(source_text: &str) -> ParseResult {
@@ -475,10 +472,11 @@ fn parse_astro_impl(source_text: &str) -> ParseResult {
         .with_options(ParseOptions::default())
         .parse_astro();
 
-    let errors = if ret.errors.is_empty() {
+    let diagnostics = if ret.errors.is_empty() {
         Vec::new()
     } else {
-        CompilerError::from_diagnostics("", source_text, ret.errors)
+        let diags = Diagnostic::from_oxc_list(&ret.errors);
+        DiagnosticMessage::from_codegen_list(diags)
     };
 
     // Serialize the AST to JSON using the ESTree serializer
@@ -486,7 +484,7 @@ fn parse_astro_impl(source_text: &str) -> ParseResult {
     ret.root.serialize(&mut serializer);
     let ast = serializer.into_string();
 
-    ParseResult { ast, errors }
+    ParseResult { ast, diagnostics }
 }
 
 /// Parse an Astro file into an AST synchronously.

@@ -72,11 +72,11 @@ export function mapResult(
  */
 export function mapParseResult(result: {
 	ast: string;
-	errors: CompileResult['errors'];
+	diagnostics: CompileResult['diagnostics'];
 }): ParseResult {
 	return {
 		ast: JSON.parse(result.ast),
-		errors: result.errors,
+		diagnostics: result.diagnostics,
 	};
 }
 
