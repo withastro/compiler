@@ -9,6 +9,7 @@ const (
 	ERROR_UNMATCHED_IMPORT            DiagnosticCode = 1003
 	ERROR_UNSUPPORTED_SLOT_ATTRIBUTE  DiagnosticCode = 1004
 	ERROR_UNTERMINATED_STRING         DiagnosticCode = 1005
+	ERROR_MISSING_FRONTMATTER_FENCE   DiagnosticCode = 1006
 	WARNING                           DiagnosticCode = 2000
 	WARNING_UNTERMINATED_HTML_COMMENT DiagnosticCode = 2001
 	WARNING_UNCLOSED_HTML_TAG         DiagnosticCode = 2002

@@ -349,7 +349,7 @@ func (p *printer) printFuncPrelude(opts transform.TransformOptions, printAstroGl
 	p.println(fmt.Sprintf("const %s = %s(%s(%s, $$props, %s) => {", componentName, CREATE_COMPONENT, p.getAsyncFuncPrefix(), RESULT, SLOTS))
 	if printAstroGlobal {
 		p.addNilSourceMapping()
-		p.println(fmt.Sprintf("const Astro = %s.createAstro($$Astro, $$props, %s);", RESULT, SLOTS))
+		p.println(fmt.Sprintf("const Astro = %s.createAstro($$props, %s);", RESULT, SLOTS))
 		p.addNilSourceMapping()
 		p.println(fmt.Sprintf("Astro.self = %s;", componentName))
 	}
@@ -412,7 +412,7 @@ func (p *printer) printAttributesToObject(n *astro.Node) {
 			p.printf(`"%s"`, a.Key)
 			p.print(":")
 			p.addSourceMapping(a.ValLoc)
-			p.print(`"` + escapeDoubleQuote(a.Val) + `"`)
+			p.print(`"` + escapeDoubleQuote(escapeNewlines(a.Val)) + `"`)
 		case astro.EmptyAttribute:
 			p.addSourceMapping(a.KeyLoc)
 			p.printf(`"%s"`, a.Key)
