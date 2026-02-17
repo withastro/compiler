@@ -848,7 +848,12 @@ func inHeadIM(p *parser) bool {
 			}
 			return true
 		case a.Head:
-			// Ignore the token.
+			// Ignore the token, but copy attributes and remove implicit marker
+			// if an explicit <head> tag is encountered (fixes issue #1124)
+			if p.head != nil {
+				copyAttributes(p.head, p.tok)
+				removeImplicitMarker(p.head)
+			}
 			return true
 		case a.Template:
 			// TODO: remove this divergence from the HTML5 spec.
@@ -1099,6 +1104,18 @@ func copyAttributes(dst *Node, src Token) {
 	}
 }
 
+// removeImplicitMarker removes the ImplicitNodeMarker attribute from a node.
+// This is used when an explicit tag is encountered for a node that was
+// previously created implicitly.
+func removeImplicitMarker(n *Node) {
+	for i, attr := range n.Attr {
+		if attr.Key == ImplicitNodeMarker {
+			n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
+			return
+		}
+	}
+}
+
 // Section 12.2.6.4.7.
 func inBodyIM(p *parser) bool {
 	switch p.tok.Type {
@@ -1150,6 +1167,28 @@ func inBodyIM(p *parser) bool {
 			p.originalIM = inBodyIM
 			return false
 		}
+		// Handle <html> tag first before the originalIM check, so that
+		// the implicit <head> is not converted to <body> when an explicit
+		// <html> tag is encountered (fixes issue #1124)
+		if p.tok.DataAtom == a.Html {
+			if p.inTemplateFragmentContext() {
+				p.addElement()
+				return true
+			}
+			if p.oe.contains(a.Template) {
+				return true
+			}
+			if len(p.oe) > 0 {
+				copyAttributes(p.oe[0], p.tok)
+				// Remove ImplicitNodeMarker if an explicit <html> tag is encountered
+				// This ensures that when a JSX comment appears between DOCTYPE and <html>,
+				// the explicit <html> tag is properly rendered (fixes issue #1124)
+				removeImplicitMarker(p.oe[0])
+			}
+			// Clear originalIM so that the subsequent <head> tag is not converted to <body>
+			p.originalIM = nil
+			return true
+		}
 		// It's possible we were moved here from inHeadIM
 		// via the children of a Component. We need to clear the originalIM
 		// and switch the implicit `head` tag to `body`
@@ -1163,16 +1202,7 @@ func inBodyIM(p *parser) bool {
 		}
 		switch p.tok.DataAtom {
 		case a.Html:
-			if p.inTemplateFragmentContext() {
-				p.addElement()
-				return true
-			}
-			if p.oe.contains(a.Template) {
-				return true
-			}
-			if len(p.oe) > 0 {
-				copyAttributes(p.oe[0], p.tok)
-			}
+			// Already handled above
 		case a.Base, a.Basefont, a.Bgsound, a.Link, a.Meta, a.Noframes, a.Script, a.Style, a.Template, a.Title:
 			return inHeadIM(p)
 		case a.Body:

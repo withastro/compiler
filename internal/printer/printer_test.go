@@ -2062,6 +2062,16 @@ import Analytics from '../components/Analytics.astro';
 <meta name="description" content="a description" />`,
 		},
 		{
+			name: "jsx comment between doctype and html",
+			source: `<!doctype html>
+{/* Comment */}
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+	</head>
+</html>`,
+    },
+    {
 			name:   "multiline class attribute on component",
 			source: "<Component class=\"some-class\n  another-class\n  third-class\">content</Component>",
 		},
@@ -2216,6 +2226,16 @@ const c = '\''
 		{
 			name:   "element with unterminated template literal attribute",
 			source: `<main id=` + BACKTICK + `gotcha />`,
+		},
+		{
+			name: "jsx comment between doctype and html",
+			source: `<!doctype html>
+{/* Comment */}
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+	</head>
+</html>`,
 		},
 	}
 
