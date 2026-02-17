@@ -3,6 +3,7 @@ package js_scanner
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -15,6 +16,162 @@ type testcase struct {
 	source string
 	want   string
 	only   bool
+}
+
+// Test cases for FindTopLevelReturns
+func TestFindTopLevelReturns(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   []int
+		only   bool
+	}{
+		{
+			name:   "basic top-level return",
+			source: `return "value";`,
+			want:   []int{0},
+		},
+		{
+			name: "return inside function declaration",
+			source: `function foo() {
+return "value";
+}`,
+			want: nil,
+		},
+		{
+			name: "return inside arrow function",
+			source: `const foo = () => {
+return "value";
+}`,
+			want: nil,
+		},
+		{
+			name: "return inside class method",
+			source: `class Component {
+	render() {
+		return "wow"!
+	}
+}`,
+			want: nil,
+		},
+		{
+			name: "return inside exported async function",
+			source: `export async function getStaticPaths({ paginate }: { paginate: PaginateFunction }) {
+	const { data: products }: { data: IProduct[] } = await getEntry("products", "products");
+
+	return paginate(products, {
+		pageSize: 10,
+	});
+}`,
+			want: nil,
+		},
+		{
+			name: "mixed: function with return, then top-level return",
+			source: `const foo = () => {
+return "value";
+}
+
+if (true) {
+return "value";
+		}
+`,
+			want: []int{51},
+		},
+		{
+			name: "multiple top-level returns",
+			source: `const foo = () => {
+return "value";
+}
+
+if (true) {
+return "value";
+		}
+if (true) {
+return "value";
+		}
+`,
+			want: []int{51, 83},
+		},
+		{
+			name: "return inside object method shorthand",
+			source: `const something = {
+	someFunction: () => {
+		return "Hello World";
+	},
+	someOtherFunction() {
+		return "Hello World";
+	},
+};`,
+			want: nil,
+		},
+		{
+			name: "return inside arrow function with satisfies",
+			source: `export const getStaticPaths = (({ paginate }) => {
+	const data = [0, 1, 2];
+	return paginate(data, {
+		pageSize: 10,
+	});
+}) satisfies GetStaticPaths;`,
+			want: nil,
+		},
+		{
+			name: "top-level return with Astro.redirect",
+			source: `if (something) {
+	return Astro.redirect();
+}`,
+			want: []int{18},
+		},
+		{
+			name: "no returns at all",
+			source: `const foo = "bar";
+console.log(foo);`,
+			want: nil,
+		},
+		{
+			name: "computed method in class with generic arrow",
+			source: `class Foo {
+	['get']() {
+		return 'ok';
+	}
+}
+const generic = <T,>(value: T) => { return value; };
+if (true) { return Astro.redirect('/test'); }`,
+			want: []int{110},
+		},
+		{
+			name: "computed method in object",
+			source: `const obj = { ['get']() { return 'obj'; } };
+if (true) { return Astro.redirect(); }`,
+			want: []int{57},
+		},
+		{
+			name: "generic arrow function",
+			source: `const generic = <T,>(value: T) => { return value; };
+if (true) { return Astro.redirect(); }`,
+			want: []int{65},
+		},
+	}
+
+	for _, tt := range tests {
+		if tt.only {
+			tests = []struct {
+				name   string
+				source string
+				want   []int
+				only   bool
+			}{tt}
+			break
+		}
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FindTopLevelReturns([]byte(tt.source))
+			if diff := test_utils.ANSIDiff(fmt.Sprint(tt.want), fmt.Sprint(got)); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
 func fixturesHoistImport() []testcase {
