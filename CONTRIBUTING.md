@@ -25,7 +25,7 @@ The compilation pipeline is:
 2. **Scanning** - `AstroScanner` pre-analyzes the AST to collect metadata (hydrated components, scripts, etc.)
 3. **Printing** - `AstroCodegen` generates JavaScript code from the AST
 
-The `packages/compiler/` TypeScript package provides the `@astrojs/compiler` npm API, wrapping the NAPI bindings.
+The `packages/compiler/` TypeScript package provides the `@astrojs/compiler-rs` npm API, wrapping the NAPI bindings.
 
 ## Building
 

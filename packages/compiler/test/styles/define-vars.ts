@@ -1,4 +1,4 @@
-import { transform, preprocessStyles } from '@astrojs/compiler';
+import { transform, preprocessStyles } from '@astrojs/compiler-rs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { preprocessStyle } from '../utils.js';

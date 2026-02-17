@@ -1,4 +1,4 @@
-import { convertToTSX, transform } from '@astrojs/compiler';
+import { convertToTSX, transform } from '@astrojs/compiler-rs';
 import { TraceMap, generatedPositionFor, originalPositionFor } from '@jridgewell/trace-mapping';
 import sass from 'sass';
 

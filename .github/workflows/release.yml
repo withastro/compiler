@@ -54,7 +54,7 @@ jobs:
         shell: bash
         working-directory: crates/astro_napi
 
-      - name: Build @astrojs/compiler
+      - name: Build @astrojs/compiler-rs
         run: pnpm run build:compiler
 
       # Check if this is a version PR merge by looking at the commit message.

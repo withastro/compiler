@@ -1,4 +1,4 @@
-import { type ParseResult, parse } from '@astrojs/compiler';
+import { type ParseResult, parse } from '@astrojs/compiler-rs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 

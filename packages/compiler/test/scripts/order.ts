@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { transform } from '@astrojs/compiler';
+import { transform } from '@astrojs/compiler-rs';
 
 describe('scripts/order', () => {
 	it('outputs scripts in expected order', async () => {

@@ -1,4 +1,4 @@
-import { convertToTSX } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler-rs';
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { TSXResult } from '../../../types.js';

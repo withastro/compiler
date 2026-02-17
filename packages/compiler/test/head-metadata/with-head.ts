@@ -1,4 +1,4 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler-rs';
 import { before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 

@@ -1,4 +1,4 @@
-import { convertToTSX } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler-rs';
 import { TraceMap, generatedPositionFor } from '@jridgewell/trace-mapping';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';

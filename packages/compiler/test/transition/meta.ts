@@ -1,4 +1,4 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler-rs';
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -10,8 +10,8 @@ let result: TransformResult;
 
 describe('transition/meta', () => {
 	before(async () => {
-		result = await transform(FIXTURE, {
-			resolvePath: async (s) => s,
+		result = transform(FIXTURE, {
+			resolvePath: (s) => s,
 		});
 	});
 

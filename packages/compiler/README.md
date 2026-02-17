@@ -5,7 +5,7 @@ Astro's compiler, written in Rust with [NAPI-RS](https://napi.rs/) bindings for 
 ## Install
 
 ```
-npm install @astrojs/compiler
+npm install @astrojs/compiler-rs
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ npm install @astrojs/compiler
 The Astro compiler transforms `.astro` component files into JavaScript modules whose default export generates HTML.
 
 ```js
-import { transform } from "@astrojs/compiler";
+import { transform } from "@astrojs/compiler-rs";
 
 const result = transform(source, {
   filename: "/Users/astro/Code/project/src/pages/index.astro",
@@ -28,7 +28,7 @@ const result = transform(source, {
 The compiler can emit an ESTree-compatible AST using the `parse` method.
 
 ```js
-import { parse } from "@astrojs/compiler";
+import { parse } from "@astrojs/compiler-rs";
 
 const result = parse(source);
 

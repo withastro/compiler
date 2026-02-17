@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
-import { type ParseResult, parse } from '@astrojs/compiler';
+import { type ParseResult, parse } from '@astrojs/compiler-rs';
 
 const FIXTURE = `---
 const name = "World";

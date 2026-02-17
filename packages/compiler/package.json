@@ -1,5 +1,5 @@
 {
-  "name": "@astrojs/compiler",
+  "name": "@astrojs/compiler-rs",
   "author": "withastro",
   "license": "MIT",
   "type": "module",

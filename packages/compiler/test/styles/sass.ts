@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
-import { type TransformResult, transform, preprocessStyles } from '@astrojs/compiler';
+import { type TransformResult, transform, preprocessStyles } from '@astrojs/compiler-rs';
 import { preprocessStyle } from '../utils.js';
 
 const FIXTURE = `

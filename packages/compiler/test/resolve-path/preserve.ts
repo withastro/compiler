@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
-import { type TransformResult, transform } from '@astrojs/compiler';
-import { transform as transformAsync } from '@astrojs/compiler/async';
+import { type TransformResult, transform } from '@astrojs/compiler-rs';
+import { transform as transformAsync } from '@astrojs/compiler-rs/async';
 
 const FIXTURE = `
 ---
