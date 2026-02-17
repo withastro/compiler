@@ -37,7 +37,7 @@ jobs:
       - name: Download artifacts from CI
         uses: actions/download-artifact@v7
         with:
-          path: artifacts
+          path: crates/astro_napi/artifacts
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
