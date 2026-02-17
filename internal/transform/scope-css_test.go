@@ -301,6 +301,11 @@ func TestScopeStyle(t *testing.T) {
 			want:   ".header:where(.astro-xxxxxx){background-color:white;&.dark{background-color:blue}}",
 		},
 		{
+			name:   "nesting without ampersand",
+			source: ".nesting-root{p{color:#123456}:global(h1){color:#abcdef}}",
+			want:   ".nesting-root:where(.astro-xxxxxx){p:where(.astro-xxxxxx){color:#123456}h1{color:#abcdef}}",
+		},
+		{
 			name: "@container",
 			source: `@container (min-width: 200px) and (min-height: 200px) {
         h1 {
