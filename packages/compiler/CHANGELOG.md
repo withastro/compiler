@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 3.0.0-beta.1
+
+### Patch Changes
+
+- 755f046: Fixes a CSS scoping regression where selectors using the nesting selector (`&`) with pseudo-classes or pseudo-elements (e.g. `&:last-of-type`, `&::before`) inside `:global()` contexts would incorrectly receive a duplicate scope attribute.
+- f89451a: Fixed an issue where explicit `<html>` and `<head>` tags were removed from output when a JSX comment appeared between DOCTYPE and the `<html>` tag.
+- 8275bdd: Fixes a bug where trailing whitespaces were preserved before `<style>` tags after transformation, in certain cases. Now trailing whitespaces are correctly removed.
+- e329d20: Fix slot attribute stripped inside expression
+- 615eb21: Fix CSS nesting so nested selectors without an ampersand are parsed and scoped correctly.
+
 ## 3.0.0-beta.0
 
 ### Major Changes
