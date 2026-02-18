@@ -1,5 +1,5 @@
 ---
-"@astrojs/compiler": minor
+"@astrojs/compiler": patch
 ---
 
 fixed a bug where the Astro compiler incorrectly handled the 'as' property name in Props interfaces.
