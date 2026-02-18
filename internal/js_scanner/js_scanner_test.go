@@ -932,3 +932,103 @@ func TestGetObjectKeys(t *testing.T) {
 		})
 	}
 }
+
+// propsTestCase represents a test case for GetPropsType
+type propsTestCase struct {
+	name   string
+	source string
+	want   Props
+}
+
+// makeProps is a helper to create Props structs concisely
+func makeProps(ident string, statement string, generics string) Props {
+	return Props{
+		Ident:     ident,
+		Statement: statement,
+		Generics:  generics,
+	}
+}
+
+// getPropsTypeTestCases returns all test cases for GetPropsType
+func getPropsTypeTestCases() []propsTestCase {
+	const defaultType = "Record<string, any>"
+
+	return []propsTestCase{
+		// Basic cases
+		{
+			name:   "no props",
+			source: `const foo = "bar"`,
+			want:   makeProps(defaultType, "", ""),
+		},
+		{
+			name: "interface Props",
+			source: `interface Props {
+				foo: string;
+			}`,
+			want: makeProps("Props", "", ""),
+		},
+		{
+			name: "type Props",
+			source: `type Props = {
+				foo: string;
+			}`,
+			want: makeProps("Props", "", ""),
+		},
+
+		// Generics
+		{
+			name: "Props with generics",
+			source: `interface Props<T> {
+				foo: T;
+			}`,
+			want: makeProps("Props", "<T>", "<T>"),
+		},
+
+		// Issue #927: 'as' prop name handling
+		{
+			name: "destructuring with 'as' prop name without type assertion - issue #927",
+			source: `interface Props {
+				as?: string;
+				href?: string;
+			}
+			const { as: Component, href } = Astro.props;`,
+			want: makeProps("Props", "", ""),
+		},
+		{
+			name: "destructuring with 'as' prop name with type assertion",
+			source: `interface Props {
+				as?: string;
+				href?: string;
+			}
+			const { as: Component, href } = Astro.props as Props;`,
+			want: makeProps("Props", "", ""),
+		},
+	}
+}
+
+// checks if two Props are equal and reports errors
+func assertPropsEqual(t *testing.T, got, want Props, source string) {
+	t.Helper()
+
+	if got.Ident != want.Ident {
+		t.Errorf("Ident mismatch:\n  got:  %q\n  want: %q", got.Ident, want.Ident)
+		t.Logf("Source:\n%s", source)
+	}
+	if got.Statement != want.Statement {
+		t.Errorf("Statement mismatch:\n  got:  %q\n  want: %q", got.Statement, want.Statement)
+	}
+	if got.Generics != want.Generics {
+		t.Errorf("Generics mismatch:\n  got:  %q\n  want: %q", got.Generics, want.Generics)
+	}
+}
+
+func TestGetPropsType(t *testing.T) {
+	tests := getPropsTypeTestCases()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetPropsType([]byte(tt.source))
+			assertPropsEqual(t, got, tt.want, tt.source)
+		})
+	}
+}
