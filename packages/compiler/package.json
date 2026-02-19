@@ -15,6 +15,10 @@
     "type": "git",
     "url": "https://github.com/withastro/compiler-rs.git"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "files": [
     "dist",
     "types.d.ts",

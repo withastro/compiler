@@ -80,8 +80,6 @@ jobs:
       - name: Publish NAPI platform packages
         if: steps.check.outputs.is_release == 'true'
         run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          npm config set provenance true
           pnpm napi version
           for dir in ./npm/*/; do
             if [ -f "$dir/package.json" ]; then
@@ -90,8 +88,6 @@ jobs:
             fi
           done
         working-directory: crates/astro_napi
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Release PR or Publish
         id: changesets
@@ -101,5 +97,3 @@ jobs:
           publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
