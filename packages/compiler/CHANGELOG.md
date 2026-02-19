@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 0.1.0
+
+### Minor Changes
+
+- 582d663: Initial release
+
+### Patch Changes
+
+- Updated dependencies [582d663]
+  - @astrojs/compiler-binding@0.1.0
+
 ## 0.2.0
 
 ### Minor Changes
