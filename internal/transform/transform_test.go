@@ -314,6 +314,54 @@ func TestFullTransform(t *testing.T) {
 	}
 }
 
+func TestTransformTransitionAndHeadPropagationFlags(t *testing.T) {
+	tests := []struct {
+		name                string
+		source              string
+		wantTransition      bool
+		wantHeadPropagation bool
+	}{
+		{
+			name:                "server:defer only",
+			source:              `<Component server:defer />`,
+			wantTransition:      false,
+			wantHeadPropagation: true,
+		},
+		{
+			name:                "transition directive",
+			source:              `<div transition:animate="slide"></div>`,
+			wantTransition:      true,
+			wantHeadPropagation: true,
+		},
+		{
+			name:                "transition:persist-props alone does not count as transition directive",
+			source:              `<Component transition:persist-props="true" />`,
+			wantTransition:      false,
+			wantHeadPropagation: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			transformOptions := TransformOptions{}
+			ExtractStyles(doc, &transformOptions)
+			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
+
+			if doc.Transition != tt.wantTransition {
+				t.Fatalf("unexpected doc.Transition value: want %v, got %v", tt.wantTransition, doc.Transition)
+			}
+			if doc.HeadPropagation != tt.wantHeadPropagation {
+				t.Fatalf("unexpected doc.HeadPropagation value: want %v, got %v", tt.wantHeadPropagation, doc.HeadPropagation)
+			}
+		})
+	}
+}
+
 func TestTransformTrailingSpace(t *testing.T) {
 	tests := []struct {
 		name   string
