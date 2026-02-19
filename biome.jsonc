@@ -10,7 +10,8 @@
       "!crates/astro_napi/*.js",
       "!crates/astro_napi/*.cjs",
       "!crates/astro_napi/*.mjs",
-      "!crates/astro_napi/index.d.ts"
+      "!crates/astro_napi/index.d.ts",
+      "!crates/astro_napi/npm"
     ]
   },
   "vcs": {
