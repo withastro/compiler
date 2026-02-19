@@ -1,0 +1,40 @@
+{
+  "name": "@astrojs/compiler-binding-linux-arm64-gnu",
+  "version": "0.1.0",
+  "cpu": [
+    "arm64"
+  ],
+  "main": "astro.linux-arm64-gnu.node",
+  "files": [
+    "astro.linux-arm64-gnu.node"
+  ],
+  "description": "Astro Compiler",
+  "keywords": [
+    "astro",
+    "compiler",
+    "javascript",
+    "typescript"
+  ],
+  "author": "Astro contributors",
+  "homepage": "https://astro.build",
+  "license": "MIT",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/withastro/compiler.git",
+    "directory": "crates/astro_napi"
+  },
+  "bugs": "https://github.com/withastro/compiler/issues",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "os": [
+    "linux"
+  ],
+  "libc": [
+    "glibc"
+  ]
+}
