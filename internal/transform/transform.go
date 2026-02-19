@@ -51,10 +51,13 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if shouldScope {
 			ScopeElement(n, opts)
 		}
-		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) || HasAttr(n, SERVER_DEFER) {
+		if HasAttr(n, TRANSITION_ANIMATE) || HasAttr(n, TRANSITION_NAME) || HasAttr(n, TRANSITION_PERSIST) {
 			doc.Transition = true
 			doc.HeadPropagation = true
 			getOrCreateTransitionScope(n, &opts, i)
+		}
+		if HasAttr(n, SERVER_DEFER) {
+			doc.HeadPropagation = true
 		}
 		if len(definedVars) > 0 {
 			didAdd := AddDefineVars(n, definedVars)
