@@ -5,12 +5,15 @@
     "@astrojs/compiler": "2.13.1"
   },
   "changesets": [
+    "brown-tires-melt",
     "fix-css-double-scoping",
     "fix-jsx-comment-doctype",
     "fix-trailing-whitespace",
     "little-spoons-search",
+    "major-glasses-check",
     "neat-camels-raise",
     "orange-lands-search",
+    "seven-toes-tell",
     "silver-deers-buy",
     "tame-lemons-nest"
   ]

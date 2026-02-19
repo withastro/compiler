@@ -1,5 +1,16 @@
 # @astrojs/compiler
 
+## 3.0.0-beta.2
+
+### Patch Changes
+
+- 811e90f: Fixes an issue where `server:defer` was treated like a transition directive, causing ViewTransitions CSS to be included even when no `transition:*` directives were used.
+- 56ef0ca: Fixes TSX output to transform top-level returns into throws in order to avoid downstream TypeScript parsing issues
+- 02de370: fixed a bug where the Astro compiler incorrectly handled the 'as' property name in Props interfaces.
+
+  This allows Astro components to use 'as' as a prop name (common pattern for polymorphic components) without breaking TypeScript type inference. The Props type is now correctly preserved when destructuring objects with an 'as'
+  property.
+
 ## 3.0.0-beta.1
 
 ### Patch Changes
