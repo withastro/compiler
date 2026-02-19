@@ -5,15 +5,14 @@
   "type": "module",
   "bugs": "https://github.com/withastro/compiler-rs/issues",
   "homepage": "https://astro.build",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "scripts": {
     "build": "tsup"
   },
   "main": "./dist/index.js",
-  "types": "./dist/shared/types.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/withastro/compiler-rs.git"
+    "url": "git+https://github.com/withastro/compiler-rs.git"
   },
   "publishConfig": {
     "access": "public",
@@ -44,7 +43,6 @@
       "require": "./dist/utils.cjs",
       "default": "./dist/utils.js"
     },
-    "./types": "./dist/types.d.ts",
     "./package.json": "./package.json"
   },
   "dependencies": {

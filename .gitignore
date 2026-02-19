@@ -7,7 +7,7 @@ node_modules
 debug.test
 __debug_bin
 
-astro_napi/npm
+crates/astro_napi/npm
 
 # Rust
 /target

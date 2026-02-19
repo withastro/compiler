@@ -4,7 +4,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/withastro/compiler.git"
+    "url": "git+https://github.com/withastro/compiler-rs.git"
   },
   "scripts": {
     "build:napi": "pnpm --filter ./crates/astro_napi run build-dev",
