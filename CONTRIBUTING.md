@@ -8,8 +8,6 @@ Contributions are welcome to the Astro compiler!
 
 [Rust][rust] is needed to work with this repo. Install it via [rustup][rustup].
 
-The workspace uses oxc crates (parser, AST, etc.) as git dependencies.
-
 ### Node
 
 You will also need [Node.js][node] installed, as well as pnpm (`npm i -g pnpm`). Run `pnpm install` to install dependencies.
@@ -27,7 +25,7 @@ The compilation pipeline is:
 2. **Scanning** - `AstroScanner` pre-analyzes the AST to collect metadata (hydrated components, scripts, etc.)
 3. **Printing** - `AstroCodegen` generates JavaScript code from the AST
 
-The `packages/compiler/` TypeScript package provides the `@astrojs/compiler` npm API, wrapping the NAPI bindings.
+The `packages/compiler/` TypeScript package provides the `@astrojs/compiler-rs` npm API, wrapping the NAPI bindings.
 
 ## Building
 

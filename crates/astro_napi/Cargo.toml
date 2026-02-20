@@ -9,9 +9,6 @@ rust-version.workspace = true
 publish = false
 description = "Astro compiler Node.js NAPI binding"
 
-[lints]
-workspace = true
-
 [lib]
 crate-type = ["cdylib", "lib"]
 test = false

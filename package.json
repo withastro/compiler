@@ -1,34 +1,40 @@
 {
   "name": "root",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/withastro/compiler.git"
+    "url": "git+https://github.com/withastro/compiler-rs.git"
   },
   "scripts": {
     "build:napi": "pnpm --filter ./crates/astro_napi run build-dev",
-    "build:compiler": "pnpm --filter @astrojs/compiler run build",
+    "build:compiler": "pnpm --filter @astrojs/compiler-rs run build",
     "build:all": "pnpm run build:napi && pnpm run build:compiler",
-    "check": "biome check",
-    "ci": "biome ci --diagnostic-level=warn",
-    "check:write": "biome check --write",
-    "prerelease": "pnpm run build:compiler",
+    "format": "pnpm run format:code && pnpm run format:imports",
+    "format:ci": "pnpm run format:code:ci && pnpm run format:imports:ci",
+    "format:code": "biome format --write && cargo fmt",
+    "format:code:ci": "biome format && cargo fmt",
+    "format:imports": "biome check --formatter-enabled=false --write",
+    "format:imports:ci": "biome ci --formatter-enabled=false",
+    "lint": "biome lint && cargo clippy",
+    "lint:ci": "biome ci --formatter-enabled=false --enforce-assist=false --reporter=github && cargo clippy",
+    "lint:fix": "biome lint --write --unsafe && cargo clippy --fix --allow-dirty --all-features",
     "release": "changeset publish",
     "test": "node --import tsx --test 'packages/compiler/test/**/*.ts'",
     "test:ci": "pnpm run test"
   },
-  "packageManager": "pnpm@10.22.0",
+  "packageManager": "pnpm@10.29.3",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "crates/astro_napi"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.8.1",
-    "@changesets/cli": "^2.25.0",
-    "acorn": "^8.15.0",
-    "sass": "^1.55.0",
-    "tsx": "^4.16.2",
-    "typescript": "~5.5.3"
+    "@biomejs/biome": "2.3.15",
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
+    "sass": "^1.97.3",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

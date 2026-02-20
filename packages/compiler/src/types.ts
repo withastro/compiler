@@ -1,3 +1,21 @@
+// Re-export types that are identical to the NAPI binding.
+// The Rust codegen crate is the source of truth for these types.
+export type {
+	CompileResult,
+	Component,
+	DiagnosticLabel,
+	DiagnosticMessage,
+	HoistedScript,
+	ParseResult as BindingParseResult,
+	StyleBlock,
+} from '@astrojs/compiler-binding';
+import type { CompileOptions, CompileResult } from '@astrojs/compiler-binding';
+
+/** Severity level for a diagnostic message. */
+export type DiagnosticSeverity = 'error' | 'warning' | 'information' | 'hint';
+
+// ---- TS-only types (not expressible in the NAPI layer) ----
+
 export interface PreprocessorResult {
 	code: string;
 	map?: string;
@@ -7,26 +25,45 @@ export interface PreprocessorError {
 	error: string;
 }
 
+/**
+ * Result of preprocessing `<style>` blocks via {@link preprocessStyles}.
+ *
+ * This is an opaque value — pass it to `transform()` via the
+ * `preprocessedStyles` option. Do not inspect or modify it.
+ */
+export interface PreprocessedStyles {
+	/** Preprocessed CSS per extractable `<style>`, in document order.
+	 *  `undefined` = use original content, `""` = error (empty). */
+	styles: (string | undefined)[];
+	/** Error messages from the preprocessor. */
+	styleError: string[];
+}
+
 export interface ParseOptions {
 	position?: boolean;
 }
 
-export interface TransformOptions {
-	internalURL?: string;
-	filename?: string;
-	normalizedFilename?: string;
-	sourcemap?: boolean | 'inline' | 'external' | 'both';
-	astroGlobalArgs?: string;
-	compact?: boolean;
-	resultScopedSlot?: boolean;
-	scopedStyleStrategy?: 'where' | 'class' | 'attribute';
-	transitionsAnimationURL?: string;
+/**
+ * Options for compiling Astro files to JavaScript.
+ *
+ * Extends the NAPI `CompileOptions` with TS-only features:
+ * - `resolvePath` callback for post-compilation path resolution
+ * - `preprocessedStyles` uses the opaque `PreprocessedStyles` type
+ *
+ * Fields that are internal to the NAPI layer (`resolvePathProvided`,
+ * `stripSlotComments`) are omitted — they are set automatically by
+ * the wrapper functions.
+ */
+export interface TransformOptions
+	extends Omit<CompileOptions, 'resolvePathProvided' | 'preprocessedStyles'> {
 	resolvePath?: (specifier: string) => string;
-	preprocessStyle?: (
-		content: string,
-		attrs: Record<string, string>
-	) => null | Promise<PreprocessorResult | PreprocessorError>;
-	annotateSourceFile?: boolean;
+	/**
+	 * Preprocessed style content from {@link preprocessStyles}.
+	 *
+	 * When provided, the compiler uses these preprocessed CSS strings
+	 * instead of the raw `<style>` content from the template.
+	 */
+	preprocessedStyles?: PreprocessedStyles;
 }
 
 /** TransformOptions variant for the async entrypoint, where resolvePath may return a Promise. */
@@ -48,62 +85,8 @@ export type ConvertToTSXOptions = Pick<
 	includeStyles?: boolean;
 };
 
-export type HoistedScript = { type: string } & (
-	| {
-			type: 'external';
-			src: string;
-	  }
-	| {
-			type: 'inline';
-			code: string;
-			map: string;
-	  }
-);
-
-export interface Component {
-	exportName: string;
-	localName: string;
-	specifier: string;
-	resolvedPath: string;
-}
-
-export interface CompilerErrorLabel {
-	message: string | null;
-	/** Byte offset start in source */
-	start: number;
-	/** Byte offset end in source */
-	end: number;
-	/** 1-based line number in the source */
-	line: number;
-	/** 0-based column number in the source */
-	column: number;
-}
-
-export interface CompilerError {
-	severity: 'Error' | 'Warning' | 'Advice';
-	message: string;
-	labels: CompilerErrorLabel[];
-	helpMessage: string | null;
-	codeframe: string | null;
-}
-
-export interface TransformResult {
-	code: string;
-	map: string;
-	scope: string;
-	styleError: string[];
-	// TODO: Currently always empty on the Rust compiler
-	diagnostics: any[];
-	/** Compilation errors from the Rust compiler (oxc-based). */
-	errors: CompilerError[];
-	css: string[];
-	scripts: HoistedScript[];
-	hydratedComponents: Component[];
-	clientOnlyComponents: Component[];
-	serverComponents: Component[];
-	containsHead: boolean;
-	propagation: boolean;
-}
+/** The public result type returned by `transform()` / async `transform()`. */
+export type TransformResult = CompileResult;
 
 export interface SourceMap {
 	file: string;
@@ -118,15 +101,9 @@ export interface SourceMap {
 export interface ParseResult {
 	/** The oxc AST in ESTree-compatible JSON format. */
 	ast: Record<string, any>;
-	/** Parse errors encountered. */
-	errors: CompilerError[];
+	/** Diagnostic messages (parse errors, warnings). */
+	diagnostics: import('@astrojs/compiler-binding').DiagnosticMessage[];
 }
 
 // TODO: Stub until TSX is implemented in the Rust compiler
 export type TSXResult = any;
-
-export declare function transform(input: string, options?: TransformOptions): TransformResult;
-
-export declare function parse(input: string, options?: ParseOptions): ParseResult;
-
-export declare function convertToTSX(input: string, options?: ConvertToTSXOptions): TSXResult;

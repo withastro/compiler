@@ -4,12 +4,15 @@
 //! via `$$renderComponent`, including hydration directives (`client:load`,
 //! `client:visible`, `client:only`, etc.) and `set:html`/`set:text` on components.
 
-use oxc_ast::ast::*;
 use super::AstroCodegen;
+use super::elements::ScopeId;
 use super::escape::{decode_html_entities, escape_double_quotes};
 use super::expr_to_string;
 use super::runtime;
+use crate::css_scoping;
+use crate::options::ScopedStyleStrategy;
 use crate::scanner::{get_jsx_attribute_name, is_custom_element};
+use oxc_ast::ast::*;
 
 /// A client hydration directive parsed from a component's attributes.
 pub(super) enum HydrationDirective {
@@ -43,7 +46,26 @@ pub(super) struct HydrationInfo {
     pub component_export: Option<String>,
 }
 
+/// Information about a `server:defer` directive on a component.
+pub(super) struct ServerDeferInfo {
+    /// Resolved component import path.
+    pub component_path: Option<String>,
+    /// Resolved component export name.
+    pub component_export: Option<String>,
+}
+
 impl<'a> AstroCodegen<'a> {
+    /// Check whether a component has a `server:defer` directive.
+    pub(super) fn has_server_defer(attrs: &[JSXAttributeItem<'a>]) -> bool {
+        attrs.iter().any(|attr| {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                get_jsx_attribute_name(&attr.name) == "server:defer"
+            } else {
+                false
+            }
+        })
+    }
+
     /// Extract hydration info from a component's attributes.
     ///
     /// Returns `None` if the component has no `client:*` directive.
@@ -80,7 +102,17 @@ impl<'a> AstroCodegen<'a> {
         // Check if this is a custom element (has dash in name)
         let is_custom = is_custom_element(name);
 
-        // For ALL hydrated components (not just client:only), resolve component path and export
+        // Check for server:defer directive
+        let mut server_defer_info = if Self::has_server_defer(&el.opening_element.attributes) {
+            Some(ServerDeferInfo {
+                component_path: None,
+                component_export: None,
+            })
+        } else {
+            None
+        };
+
+        // Resolve component path and export for client:* hydrated components
         // This info is used for client:component-path and client:component-export attributes
         if let Some(info) = &mut hydration_info {
             // Handle member expressions like "components.A" or "defaultImport.Counter1"
@@ -103,6 +135,29 @@ impl<'a> AstroCodegen<'a> {
                 }
             } else if let Some(import_info) = self.component_imports.get(name) {
                 info.component_path = Some(import_info.specifier.clone());
+                info.component_export = Some(import_info.export_name.clone());
+            }
+        }
+
+        // Resolve component path and export for server:defer components.
+        // Use resolve_specifier to match the Go compiler's ResolveIdForMatch behaviour —
+        // the resolved path must match the key used in serverIslandNameMap.
+        if let Some(info) = &mut server_defer_info {
+            if name.contains('.') {
+                let parts: Vec<&str> = name.split('.').collect();
+                let namespace = parts[0];
+                let property = parts[1..].join(".");
+                if let Some(import_info) = self.component_imports.get(namespace) {
+                    info.component_path =
+                        Some(self.options.resolve_specifier(&import_info.specifier));
+                    info.component_export = if import_info.is_namespace {
+                        Some(property)
+                    } else {
+                        Some(format!("{}.{}", import_info.export_name, property))
+                    };
+                }
+            } else if let Some(import_info) = self.component_imports.get(name) {
+                info.component_path = Some(self.options.resolve_specifier(&import_info.specifier));
                 info.component_export = Some(import_info.export_name.clone());
             }
         }
@@ -136,6 +191,19 @@ impl<'a> AstroCodegen<'a> {
 
         self.print(",{");
 
+        // Determine if this component should receive a scope identifier.
+        // Like the Go compiler, inject scope into all components (PascalCase and custom elements)
+        // that are not in the NeverScopedElements list.
+        let scope_id = if self.has_scoped_styles && css_scoping::should_scope_element(name) {
+            let hash = &self.source_hash;
+            match self.options.scoped_style_strategy() {
+                ScopedStyleStrategy::Attribute => Some(ScopeId::DataAttribute(hash.clone())),
+                _ => Some(ScopeId::Class(format!("astro-{hash}"))),
+            }
+        } else {
+            None
+        };
+
         // Components always receive slot as a prop.
         // Only HTML elements have the slot attribute stripped when inside named slots.
         let prev_skip_slot = self.skip_slot_attribute;
@@ -145,11 +213,13 @@ impl<'a> AstroCodegen<'a> {
         self.print_component_attributes_filtered(
             &el.opening_element.attributes,
             hydration_info.as_ref(),
+            server_defer_info.as_ref(),
             if set_directive.is_some() {
                 Some(&["set:html", "set:text"])
             } else {
                 None
             },
+            scope_id.as_ref(),
         );
 
         self.skip_slot_attribute = prev_skip_slot;
@@ -234,46 +304,15 @@ impl<'a> AstroCodegen<'a> {
                             }
                         }
                         Some(JSXAttributeValue::ExpressionContainer(expr)) => {
-                            let mut needs_unescape = true;
-
                             if let Some(e) = expr.expression.as_expression() {
-                                // Template literals:
-                                // - Static (no expressions): don't need $$unescapeHTML
-                                // - Dynamic with only empty quasis: don't need $$unescapeHTML
-                                // - Dynamic with non-empty quasis: need $$unescapeHTML
-                                if let Expression::TemplateLiteral(tl) = e {
-                                    if tl.expressions.is_empty() {
-                                        needs_unescape = false;
-                                        // For set:html with static template literal, decode HTML entities
-                                        if is_html && tl.quasis.len() == 1 {
-                                            let raw = tl.quasis[0].value.raw.as_str();
-                                            let decoded = decode_html_entities(raw);
-                                            return Some((
-                                                format!("`{decoded}`"),
-                                                is_html,
-                                                false,
-                                                false,
-                                                attr.span,
-                                            ));
-                                        }
-                                    } else {
-                                        let all_quasis_empty = tl
-                                            .quasis
-                                            .iter()
-                                            .all(|q| q.value.raw.as_str().trim().is_empty());
-                                        if all_quasis_empty {
-                                            needs_unescape = false;
-                                        }
-                                    }
-                                }
+                                // set:html needs $$unescapeHTML for expressions, but NOT for
+                                // template literals — the Go compiler passes template literals
+                                // through as-is without unescaping.
+                                let is_template_literal =
+                                    matches!(e, Expression::TemplateLiteral(_));
+                                let needs_unescape = is_html && !is_template_literal;
                                 let code = expr_to_string(e);
-                                return Some((
-                                    code,
-                                    is_html,
-                                    needs_unescape,
-                                    false,
-                                    attr.span,
-                                ));
+                                return Some((code, is_html, needs_unescape, false, attr.span));
                             }
                             (None, true, false)
                         }
@@ -291,7 +330,9 @@ impl<'a> AstroCodegen<'a> {
         &mut self,
         attrs: &[JSXAttributeItem<'a>],
         hydration: Option<&HydrationInfo>,
+        server_defer: Option<&ServerDeferInfo>,
         skip_names: Option<&[&str]>,
+        scope_id: Option<&ScopeId>,
     ) {
         let mut first = true;
 
@@ -315,6 +356,18 @@ impl<'a> AstroCodegen<'a> {
                 }
             }
         }
+
+        // Track whether the scope class was merged into an existing class attribute
+        let mut scope_injected = false;
+
+        // Determine the scope class string (for class/where strategy only)
+        let scope_class = scope_id.and_then(|sid| {
+            if sid.is_attribute_strategy() {
+                None
+            } else {
+                Some(sid.class_value())
+            }
+        });
 
         // Print regular attributes first
         for attr in attrs {
@@ -358,6 +411,39 @@ impl<'a> AstroCodegen<'a> {
                     self.print("\"");
                     self.print(&name);
                     self.print("\":");
+
+                    // Merge scope class into class attribute value (matches Go compiler).
+                    // Static:  class="foo" → "class":"foo astro-HASH"
+                    // Dynamic: class={expr} → "class":(((expr) ?? "") + " astro-HASH")
+                    // Boolean: class        → "class":"astro-HASH"
+                    if name == "class"
+                        && let Some(sc) = &scope_class
+                    {
+                        match &attr.value {
+                            None => {
+                                // Boolean class attribute → just the scope class
+                                self.print(&format!("\"{sc}\""));
+                            }
+                            Some(JSXAttributeValue::StringLiteral(lit)) => {
+                                let val = lit.value.as_str();
+                                if val.is_empty() {
+                                    self.print(&format!("\"{sc}\""));
+                                } else {
+                                    self.print(&format!("\"{} {sc}\"", escape_double_quotes(val)));
+                                }
+                            }
+                            Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                                self.print("(((");
+                                self.print_jsx_expression(&expr.expression);
+                                self.print(&format!(") ?? \"\") + \" {sc}\")"));
+                            }
+                            _ => {
+                                self.print(&format!("\"{sc}\""));
+                            }
+                        }
+                        scope_injected = true;
+                        continue;
+                    }
 
                     match &attr.value {
                         None => {
@@ -453,6 +539,27 @@ impl<'a> AstroCodegen<'a> {
             ));
         }
 
+        // Add scope identifier as a prop if not already merged into an existing class attribute.
+        // For attribute strategy: always add "data-astro-cid-HASH": true
+        // For class/where strategy: add "class": "astro-HASH" only if no class attr existed
+        if let Some(sid) = scope_id {
+            if sid.is_attribute_strategy() {
+                if !first {
+                    self.print(",");
+                }
+                first = false;
+                let attr_name = sid.data_attr_name();
+                self.print(&format!("\"{attr_name}\":true"));
+            } else if !scope_injected {
+                if !first {
+                    self.print(",");
+                }
+                first = false;
+                let sc = sid.class_value();
+                self.print(&format!("\"class\":\"{sc}\""));
+            }
+        }
+
         // Add hydration attributes if present
         if let Some(hydration) = hydration {
             if !first {
@@ -479,6 +586,24 @@ impl<'a> AstroCodegen<'a> {
                 } else {
                     self.print(&format!(",\"client:component-export\":(\"{export}\")"));
                 }
+            }
+        }
+
+        // Add server:defer attributes if present — these signal the runtime to replace this
+        // component with a server island placeholder instead of rendering it inline.
+        if let Some(server_defer) = server_defer {
+            if !first {
+                self.print(",");
+            }
+            // Matches Go compiler: "server:component-directive": "defer"
+            self.print("\"server:component-directive\":\"defer\"");
+
+            if let Some(path) = &server_defer.component_path {
+                self.print(&format!(",\"server:component-path\":(\"{path}\")"));
+            }
+
+            if let Some(export) = &server_defer.component_export {
+                self.print(&format!(",\"server:component-export\":(\"{export}\")"));
             }
         }
     }

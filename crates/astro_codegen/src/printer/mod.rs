@@ -20,12 +20,13 @@ use oxc_codegen::{Codegen, CodegenOptions, Context, Gen, GenExpr};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
-use crate::TransformOptions;
+use crate::css_scoping;
 use crate::scanner::{
     AstroScanner, HoistedScriptType as InternalHoistedScriptType, ScanResult,
     get_jsx_attribute_name, get_jsx_element_name, is_component_name, is_custom_element,
     should_hoist_script,
 };
+use crate::{SourcemapOption, TransformOptions};
 
 mod components;
 mod elements;
@@ -126,6 +127,125 @@ pub fn transform<'a>(
     codegen.build(root)
 }
 
+/// Metadata about an extractable `<style>` block in an Astro component.
+///
+/// Returned by [`extract_styles`] so that callers (e.g. the TS wrapper) can
+/// preprocess style content before compilation.
+#[derive(Debug, Clone)]
+pub struct StyleBlock {
+    /// Zero-based index of this style block among all extractable styles.
+    pub index: usize,
+    /// The CSS/preprocessor text content between `<style>` and `</style>`.
+    pub content: String,
+    /// The element's attributes as key-value pairs.
+    /// Only quoted and empty (boolean) attributes are included — expression
+    /// attributes (like `define:vars={...}`) are omitted, matching the Go
+    /// compiler's `GetAttrs` behavior.
+    pub attrs: Vec<(String, String)>,
+}
+
+/// Extract style block metadata from an Astro AST without performing compilation.
+///
+/// This walks the template to find all extractable `<style>` elements (i.e.
+/// those that are **not** `is:inline`, `set:html`, `set:text`, or inside
+/// non-hoistable contexts like `<svg>`/`<noscript>`/`<template>`).
+///
+/// For each extractable style, it returns a [`StyleBlock`] with the text
+/// content and attributes. The blocks are returned in document order and
+/// their `index` fields are sequential (0, 1, 2, …).
+///
+/// This is the first step in the "Rust extract → TS preprocess → Rust compile"
+/// pipeline for `preprocessStyle` support.
+pub fn extract_styles<'a>(root: &'a AstroRoot<'a>) -> Vec<StyleBlock> {
+    let mut blocks = Vec::new();
+    extract_styles_from_children(&root.body, false, &mut blocks);
+    blocks
+}
+
+fn extract_styles_from_children<'a>(
+    children: &[JSXChild<'a>],
+    in_non_hoistable: bool,
+    blocks: &mut Vec<StyleBlock>,
+) {
+    for child in children {
+        match child {
+            JSXChild::Element(el) => {
+                let name = get_jsx_element_name(&el.opening_element.name);
+                if name == "style" && !in_non_hoistable && should_extract_style_element(el) {
+                    // Extract content and attrs
+                    let content = extract_style_text(el);
+                    let attrs = extract_style_attrs(el);
+                    blocks.push(StyleBlock {
+                        index: blocks.len(),
+                        content,
+                        attrs,
+                    });
+                } else {
+                    let non_hoistable = in_non_hoistable
+                        || matches!(name.as_str(), "svg" | "noscript" | "template");
+                    extract_styles_from_children(&el.children, non_hoistable, blocks);
+                }
+            }
+            JSXChild::Fragment(frag) => {
+                extract_styles_from_children(&frag.children, in_non_hoistable, blocks);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Check if a `<style>` element should be extracted (same logic as
+/// `AstroCodegen::should_extract_style` but as a free function).
+fn should_extract_style_element(el: &JSXElement<'_>) -> bool {
+    let attrs = &el.opening_element.attributes;
+    for attr in attrs {
+        if let JSXAttributeItem::Attribute(attr) = attr {
+            let name = get_jsx_attribute_name(&attr.name);
+            if name == "is:inline" || name == "set:html" || name == "set:text" {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+/// Extract the text content of a `<style>` element.
+fn extract_style_text(el: &JSXElement<'_>) -> String {
+    let mut text = String::new();
+    for child in &el.children {
+        if let JSXChild::Text(t) = child {
+            text.push_str(t.value.as_str());
+        }
+    }
+    text
+}
+
+/// Extract quoted and empty (boolean) attributes from a `<style>` element.
+/// Expression attributes (like `define:vars={...}`) are omitted, matching
+/// the Go compiler's `GetAttrs` behavior.
+fn extract_style_attrs(el: &JSXElement<'_>) -> Vec<(String, String)> {
+    let mut attrs = Vec::new();
+    for attr_item in &el.opening_element.attributes {
+        if let JSXAttributeItem::Attribute(attr) = attr_item {
+            let name = get_jsx_attribute_name(&attr.name);
+            match &attr.value {
+                None => {
+                    // Boolean/empty attribute (e.g. `is:global`)
+                    attrs.push((name, String::new()));
+                }
+                Some(JSXAttributeValue::StringLiteral(lit)) => {
+                    // Quoted attribute (e.g. `lang="scss"`)
+                    attrs.push((name, lit.value.as_str().to_string()));
+                }
+                _ => {
+                    // Expression attributes are skipped
+                }
+            }
+        }
+    }
+    attrs
+}
+
 /// Astro code generator.
 ///
 /// Transforms an `AstroRoot` AST into JavaScript code that can be executed
@@ -159,8 +279,24 @@ pub struct AstroCodegen<'a> {
     transition_counter: usize,
     /// Base hash for the source file (computed once)
     source_hash: String,
-    /// Sourcemap builder (present when `options.sourcemap` is true)
+    /// Sourcemap builder (present when `options.sourcemap` is enabled)
     sourcemap_builder: Option<AstroSourcemapBuilder<'a>>,
+    /// Collected CSS strings from extracted `<style>` elements (scoped).
+    /// Each entry corresponds to one `<style>` tag.
+    extracted_css: Vec<String>,
+    /// Whether any style was scoped (i.e., at least one non-global, non-inline style exists).
+    has_scoped_styles: bool,
+    /// Tracks whether we're inside an element that prevents style hoisting
+    /// (svg, noscript, template).
+    in_non_hoistable: bool,
+    /// Collected `define:vars` expression values from `<style>` elements.
+    /// Each entry is the raw JS expression string (e.g., `{color:'green'}`).
+    define_vars_values: Vec<String>,
+    /// Whether any element has received `$$definedVars` style injection.
+    define_vars_injected: bool,
+    /// Counter for the current extractable style index during prescan.
+    /// Used to look up preprocessed style content from `options.preprocessed_styles`.
+    style_extraction_index: usize,
 }
 
 /// Information about an imported module for metadata.
@@ -195,11 +331,20 @@ impl<'a> AstroCodegen<'a> {
         options: TransformOptions,
         scan_result: ScanResult,
     ) -> Self {
-        // Compute base hash for the source file
-        let source_hash = Self::compute_source_hash(source_text);
+        // Compute base hash for the source file.
+        // Use normalizedFilename (like Go's compiler) so that different files
+        // with identical content get different scope hashes.  Fall back to
+        // source text only when no filename is supplied (i.e. "<stdin>").
+        let hash_input = options
+            .normalized_filename
+            .as_deref()
+            .or(options.filename.as_deref())
+            .filter(|s| *s != "<stdin>")
+            .unwrap_or(source_text);
+        let source_hash = Self::compute_source_hash(hash_input);
 
         // Initialize sourcemap builder if requested
-        let sourcemap_builder = if options.sourcemap {
+        let sourcemap_builder = if options.sourcemap.is_enabled() {
             let path = options.filename.as_deref().unwrap_or("<stdin>");
             Some(AstroSourcemapBuilder::new(
                 std::path::Path::new(path),
@@ -226,6 +371,12 @@ impl<'a> AstroCodegen<'a> {
             transition_counter: 0,
             source_hash,
             sourcemap_builder,
+            extracted_css: Vec::new(),
+            has_scoped_styles: false,
+            in_non_hoistable: false,
+            define_vars_values: Vec::new(),
+            define_vars_injected: false,
+            style_extraction_index: 0,
         }
     }
 
@@ -418,24 +569,26 @@ impl<'a> AstroCodegen<'a> {
     pub fn build(mut self, root: &'a AstroRoot<'a>) -> TransformResult {
         self.print_astro_root(root);
 
-        // Build public hoisted scripts from internal representation
+        // Build public hoisted scripts from internal representation.
+        // DefineVars scripts are rendered inline as IIFEs and are NOT bundled as
+        // virtual modules — exclude them from the public scripts array.
         let scripts = self
             .scan_result
             .hoisted_scripts
             .iter()
-            .map(|s| match s.script_type {
-                InternalHoistedScriptType::External => TransformResultHoistedScript {
+            .filter_map(|s| match s.script_type {
+                InternalHoistedScriptType::External => Some(TransformResultHoistedScript {
                     script_type: HoistedScriptType::External,
                     src: s.src.clone(),
                     code: None,
-                },
-                InternalHoistedScriptType::Inline | InternalHoistedScriptType::DefineVars => {
-                    TransformResultHoistedScript {
-                        script_type: HoistedScriptType::Inline,
-                        code: s.value.clone(),
-                        src: None,
-                    }
-                }
+                }),
+                InternalHoistedScriptType::Inline => Some(TransformResultHoistedScript {
+                    script_type: HoistedScriptType::Inline,
+                    code: s.value.clone(),
+                    src: None,
+                }),
+                // DefineVars are printed inline — skip them here
+                InternalHoistedScriptType::DefineVars => None,
             })
             .collect();
 
@@ -467,7 +620,9 @@ impl<'a> AstroCodegen<'a> {
             })
             .collect();
 
-        let propagation = self.scan_result.uses_transitions;
+        // propagation is true for transition directives AND server:defer components.
+        let propagation = self.scan_result.uses_transitions
+            || !self.scan_result.server_deferred_components.is_empty();
         let contains_head = self.has_explicit_head;
         let scope = self.source_hash.clone();
         let intermediate_code = self.code.into_string();
@@ -475,7 +630,7 @@ impl<'a> AstroCodegen<'a> {
         let source_path = self.options.filename.as_deref().unwrap_or("<stdin>");
 
         // Strip TypeScript and compose sourcemaps.
-        let (code, map) = strip_and_compose_sourcemaps(
+        let (mut code, sourcemap) = strip_and_compose_sourcemaps(
             self.allocator,
             &intermediate_code,
             phase1_sourcemap,
@@ -483,13 +638,33 @@ impl<'a> AstroCodegen<'a> {
             self.source_text,
         );
 
+        // Apply sourcemap mode: inline, both, or external.
+        let sourcemap_mode = self.options.sourcemap;
+        let map = match (sourcemap, sourcemap_mode) {
+            (Some(sm), SourcemapOption::Inline) => {
+                code.push_str("\n//# sourceMappingURL=");
+                code.push_str(&sm.to_data_url());
+                String::new()
+            }
+            (Some(sm), SourcemapOption::Both) => {
+                let json = sm.to_json_string();
+                code.push_str("\n//# sourceMappingURL=");
+                code.push_str(&sm.to_data_url());
+                json
+            }
+            (Some(sm), _) => sm.to_json_string(),
+            (None, _) => String::new(),
+        };
+
+        let css = std::mem::take(&mut self.extracted_css);
+
         TransformResult {
             code,
             map,
             scope,
             style_error: Vec::new(),
             diagnostics: Vec::new(),
-            css: Vec::new(),
+            css,
             scripts,
             hydrated_components,
             client_only_components,
@@ -502,10 +677,17 @@ impl<'a> AstroCodegen<'a> {
     // --- Orchestration / top-level printing ---
 
     fn print_astro_root(&mut self, root: &'a AstroRoot<'a>) {
+        // Pre-scan: extract styles from the template so we know the CSS count
+        // before printing. This walks the AST to find <style> elements,
+        // extracts their CSS, applies scoping, and stores in self.extracted_css.
+        self.prescan_styles(&root.body);
+
         // 1. Print internal imports
         self.print_internal_imports();
 
-        // 2. Extract and print user imports from frontmatter
+        // 2. Extract and print user imports from frontmatter.
+        // CSS imports come AFTER user imports (matching Go compiler order) so that
+        // component CSS is ordered before the page's own CSS in the final bundle.
         let (imports, exports, other_statements) =
             self.split_frontmatter(root.frontmatter.as_deref());
 
@@ -518,6 +700,10 @@ impl<'a> AstroCodegen<'a> {
         if !imports.is_empty() {
             self.println("");
         }
+
+        // 2b. Print CSS imports (one per extracted style) — after user imports so that
+        // component stylesheets imported by user code precede this page's own styles.
+        self.print_css_imports();
 
         // 3. Print namespace imports for modules (for metadata) - skip client:only components
         self.print_namespace_imports();
@@ -597,7 +783,64 @@ impl<'a> AstroCodegen<'a> {
         self.println(&format!("}} from \"{url}\";"));
 
         if self.scan_result.uses_transitions {
-            self.println("import \"transitions.css\";");
+            let url = self
+                .options
+                .transitions_animation_url
+                .as_deref()
+                .unwrap_or("transitions.css");
+            self.println(&format!("import \"{url}\";"));
+        }
+    }
+
+    /// Pre-scan the template body to extract `<style>` elements.
+    /// This populates `self.extracted_css` and `self.has_scoped_styles`
+    /// before any printing happens.
+    fn prescan_styles(&mut self, body: &[JSXChild<'a>]) {
+        for child in body {
+            self.prescan_styles_child(child, false);
+        }
+    }
+
+    fn prescan_styles_child(&mut self, child: &JSXChild<'a>, in_non_hoistable: bool) {
+        match child {
+            JSXChild::Element(el) => {
+                let name = get_jsx_element_name(&el.opening_element.name);
+                if name == "style" && !in_non_hoistable && self.should_extract_style(el) {
+                    self.extract_style_element(el);
+                } else {
+                    // Mark descendant context as non-hoistable for svg/noscript/template
+                    let non_hoistable = in_non_hoistable
+                        || matches!(name.as_str(), "svg" | "noscript" | "template");
+                    for c in &el.children {
+                        self.prescan_styles_child(c, non_hoistable);
+                    }
+                }
+            }
+            JSXChild::Fragment(frag) => {
+                for c in &frag.children {
+                    self.prescan_styles_child(c, in_non_hoistable);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Print CSS import statements, one per extracted `<style>` tag.
+    /// Format: `import "filename?astro&type=style&index=N&lang.css";`
+    fn print_css_imports(&mut self) {
+        if self.extracted_css.is_empty() {
+            return;
+        }
+        let filename = self
+            .options
+            .filename
+            .clone()
+            .unwrap_or_else(|| "<stdin>".to_string());
+
+        for i in 0..self.extracted_css.len() {
+            self.println(&format!(
+                "import \"{filename}?astro&type=style&index={i}&lang.css\";"
+            ));
         }
     }
 
@@ -864,23 +1107,35 @@ impl<'a> AstroCodegen<'a> {
                             }
                         }
 
+                        // Only skip the import if ALL specifiers are exclusively client:only
+                        // (i.e. they appear with client:only but NOT with any other directive).
+                        // If a component is used with both client:only and e.g. client:load,
+                        // it needs to be imported for SSR rendering.
                         let is_client_only_import = if let Some(specifiers) = &import.specifiers {
-                            specifiers.iter().any(|spec| {
-                                let local_name = match spec {
-                                    ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                        s.local.name.as_str()
-                                    }
-                                    ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                        s.local.name.as_str()
-                                    }
-                                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                        s.local.name.as_str()
-                                    }
-                                };
-                                self.scan_result
-                                    .client_only_component_names
-                                    .contains(local_name)
-                            })
+                            !specifiers.is_empty()
+                                && specifiers.iter().all(|spec| {
+                                    let local_name = match spec {
+                                        ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
+                                            s.local.name.as_str()
+                                        }
+                                        ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                                            s.local.name.as_str()
+                                        }
+                                        ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
+                                            s.local.name.as_str()
+                                        }
+                                    };
+                                    // Must be in client_only_component_names AND NOT in
+                                    // hydrated_components (which tracks non-client:only usage)
+                                    self.scan_result
+                                        .client_only_component_names
+                                        .contains(local_name)
+                                        && !self
+                                            .scan_result
+                                            .hydrated_components
+                                            .iter()
+                                            .any(|c| c.name == local_name)
+                                })
                         } else {
                             false
                         };
@@ -994,6 +1249,16 @@ impl<'a> AstroCodegen<'a> {
             self.println("");
         }
 
+        // Emit $$definedVars declaration if define:vars is present on any <style>
+        if !self.define_vars_values.is_empty() {
+            let joined = self.define_vars_values.join(",");
+            self.println(&format!(
+                "const $$definedVars = {}([{}]);",
+                runtime::DEFINE_STYLE_VARS,
+                joined
+            ));
+        }
+
         self.print("return ");
         self.print(runtime::RENDER);
         self.print("`");
@@ -1015,7 +1280,12 @@ impl<'a> AstroCodegen<'a> {
             Some(f) => format!("'{}'", escape_single_quote(f)),
             None => "undefined".to_string(),
         };
-        let propagation = if self.scan_result.uses_transitions {
+        // Head propagation is enabled for both transition directives AND server:defer components.
+        // (server:defer does NOT set uses_transitions — that's transition-specific — but still
+        // needs the "self" propagation arg so that <head> content is forwarded correctly.)
+        let propagation = if self.scan_result.uses_transitions
+            || !self.scan_result.server_deferred_components.is_empty()
+        {
             "\"self\""
         } else {
             "undefined"
@@ -1166,28 +1436,50 @@ impl<'a> AstroCodegen<'a> {
     fn print_jsx_element(&mut self, el: &JSXElement<'a>) {
         let name = get_jsx_element_name(&el.opening_element.name);
 
+        // Handle <style> elements — extract CSS, skip from template output
+        // (only if not inside svg/noscript/template)
+        if name == "style" && !self.in_non_hoistable && self.should_extract_style(el) {
+            // Style was already extracted during prescan — just skip it from template
+            return;
+        }
+
         // Handle <script> elements that should be hoisted
         if name == "script" && Self::is_hoisted_script(el) {
-            if self.element_depth > 0 {
-                self.add_source_mapping_for_span(el.opening_element.span);
-                let filename = self
-                    .options
-                    .filename
-                    .clone()
-                    .unwrap_or_else(|| "/src/pages/index.astro".to_string());
-                let index = self.script_index;
-                self.script_index += 1;
+            self.add_source_mapping_for_span(el.opening_element.span);
 
-                self.print("${");
-                self.print(runtime::RENDER_SCRIPT);
+            // define:vars scripts are NOT bundled via $$renderScript — they stay
+            // inline in the template as an IIFE: <script>(function(){${$$defineScriptVars({...})}...})();</script>
+            if let Some(define_vars_expr) = Self::get_define_vars_expr(el) {
+                let text_content = Self::get_script_text_content(el);
+                self.print("<script>");
+                self.print("(function(){${");
+                self.print(runtime::DEFINE_SCRIPT_VARS);
                 self.print("(");
-                self.print(runtime::RESULT);
-                self.print(",\"");
-                self.print(&filename);
-                self.print("?astro&type=script&index=");
-                self.print(&index.to_string());
-                self.print("&lang.ts\")}");
+                self.print(&define_vars_expr);
+                self.print(")}");
+                self.print(&escape_template_literal(&text_content));
+                self.print("})();");
+                self.print("</script>");
+                return;
             }
+
+            let filename = self
+                .options
+                .filename
+                .clone()
+                .unwrap_or_else(|| "/src/pages/index.astro".to_string());
+            let index = self.script_index;
+            self.script_index += 1;
+
+            self.print("${");
+            self.print(runtime::RENDER_SCRIPT);
+            self.print("(");
+            self.print(runtime::RESULT);
+            self.print(",\"");
+            self.print(&filename);
+            self.print("?astro&type=script&index=");
+            self.print(&index.to_string());
+            self.print("&lang.ts\")}");
             return;
         }
 
@@ -1203,6 +1495,157 @@ impl<'a> AstroCodegen<'a> {
         }
 
         self.element_depth -= 1;
+    }
+
+    /// Check if a `<style>` element should be extracted (removed from template
+    /// and its CSS emitted separately).
+    ///
+    /// A `<style>` is extracted unless:
+    /// - It has `is:inline` (render as raw HTML)
+    /// - It has `set:html` or `set:text` (directive-driven content)
+    /// - It is inside an `<svg>`, `<noscript>`, or other non-hoistable context
+    ///   (approximated by checking element_depth — styles at depth 0 are always
+    ///   hoisted; the Go compiler has a more precise `IsHoistable` check)
+    fn should_extract_style(&self, el: &JSXElement<'a>) -> bool {
+        let attrs = &el.opening_element.attributes;
+
+        // Don't extract if has is:inline
+        if Self::has_is_inline_attribute(attrs) {
+            return false;
+        }
+
+        // Don't extract if has set:html or set:text
+        if Self::extract_set_directive(attrs).is_some() {
+            return false;
+        }
+
+        true
+    }
+
+    /// Extract a `<style>` element: collect its CSS content, apply scoping,
+    /// and skip the element from the template output.
+    fn extract_style_element(&mut self, el: &JSXElement<'a>) {
+        // Capture the current extraction index and bump it for the next style
+        let current_index = self.style_extraction_index;
+        self.style_extraction_index += 1;
+
+        // Check for is:global attribute
+        let is_global = el.opening_element.attributes.iter().any(|attr| {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                get_jsx_attribute_name(&attr.name) == "is:global"
+            } else {
+                false
+            }
+        });
+
+        // Check for define:vars attribute and collect its value
+        let has_define_vars = self.collect_define_vars(el);
+
+        // Get CSS content: use preprocessed content if available, otherwise read from AST.
+        let css_content = if let Some(preprocessed) = self
+            .options
+            .preprocessed_styles
+            .as_ref()
+            .and_then(|styles| styles.get(current_index))
+            .and_then(|entry| entry.as_ref())
+        {
+            preprocessed.clone()
+        } else {
+            self.extract_style_text_content(el)
+        };
+        let css_trimmed = css_content.trim();
+
+        if css_trimmed.is_empty() {
+            // Empty style — still counts for scoping purposes if not global
+            // or if it has define:vars
+            if !is_global || has_define_vars {
+                self.has_scoped_styles = true;
+            }
+            return;
+        }
+
+        // Apply CSS scoping (unless is:global)
+        let scoped_css = if is_global {
+            css_trimmed.to_string()
+        } else {
+            self.has_scoped_styles = true;
+            css_scoping::scope_css(
+                css_trimmed,
+                &self.source_hash,
+                self.options.scoped_style_strategy(),
+            )
+        };
+
+        self.extracted_css.push(scoped_css);
+    }
+
+    /// Check for `define:vars` attribute on a `<style>` element and collect its value.
+    /// Returns `true` if `define:vars` was found.
+    fn collect_define_vars(&mut self, el: &JSXElement<'a>) -> bool {
+        for attr in &el.opening_element.attributes {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                let name = get_jsx_attribute_name(&attr.name);
+                if name == "define:vars" {
+                    match &attr.value {
+                        Some(JSXAttributeValue::StringLiteral(lit)) => {
+                            self.define_vars_values
+                                .push(format!("'{}'", lit.value.as_str()));
+                        }
+                        Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                            if let Some(e) = expr.expression.as_expression() {
+                                self.define_vars_values.push(expr_to_string(e));
+                            }
+                        }
+                        _ => {}
+                    }
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Extract the text content of a `<style>` element.
+    fn extract_style_text_content(&self, el: &JSXElement<'a>) -> String {
+        let mut text = String::new();
+        for child in &el.children {
+            if let JSXChild::Text(t) = child {
+                text.push_str(t.value.as_str());
+            }
+        }
+        text
+    }
+
+    /// Extract the `define:vars` expression string from a `<script>` element, if present.
+    fn get_define_vars_expr(el: &JSXElement<'a>) -> Option<String> {
+        for attr in &el.opening_element.attributes {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                let name = get_jsx_attribute_name(&attr.name);
+                if name == "define:vars" {
+                    return match &attr.value {
+                        Some(JSXAttributeValue::StringLiteral(lit)) => {
+                            Some(format!("'{}'", lit.value.as_str()))
+                        }
+                        Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                            expr.expression.as_expression().map(expr_to_string)
+                        }
+                        _ => None,
+                    };
+                }
+            }
+        }
+        None
+    }
+
+    /// Extract the text content of a `<script>` element.
+    fn get_script_text_content(el: &JSXElement<'a>) -> String {
+        let mut text = String::new();
+        for child in &el.children {
+            if let JSXChild::Text(t) = child {
+                text.push_str(t.value.as_str());
+            }
+        }
+        text
     }
 
     /// Check if a script element should be hoisted.
@@ -1313,7 +1756,7 @@ struct RawToken {
 /// function carries forward Phase 1 tokens that were not covered by Phase 2 by
 /// computing line/column adjustments between the intermediate and final code.
 ///
-/// Returns `(final_code, sourcemap_json)` where `sourcemap_json` is empty if
+/// Returns `(final_code, Option<SourceMap>)` where the sourcemap is `None` if
 /// no sourcemap was requested.
 ///
 /// # Panics
@@ -1326,18 +1769,14 @@ fn strip_and_compose_sourcemaps(
     phase1_sourcemap: Option<AstroSourcemapBuilder<'_>>,
     source_path: &str,
     source_text: &str,
-) -> (String, String) {
+) -> (String, Option<oxc_sourcemap::SourceMap>) {
     let generate_sourcemap = phase1_sourcemap.is_some();
     let (code, phase2_map) = strip_typescript(allocator, intermediate_code, generate_sourcemap);
 
     let map = if let (Some(phase2_map), Some(phase1_sm)) = (phase2_map, phase1_sourcemap) {
         let phase1_map = phase1_sm.into_sourcemap();
-        let composed = sourcemap_builder::remap_sourcemap(
-            &phase2_map,
-            &phase1_map,
-            source_path,
-            source_text,
-        );
+        let composed =
+            sourcemap_builder::remap_sourcemap(&phase2_map, &phase1_map, source_path, source_text);
 
         // Supplement: carry forward Phase 1 template-literal tokens,
         // but ONLY on lines where the intermediate and final content
@@ -1386,8 +1825,7 @@ fn strip_and_compose_sourcemaps(
             // escape_insert_positions lists intermediate columns where
             // a `\` was inserted in the final text (empty for exact or
             // whitespace-only matches).
-            let line_col_info: FxHashMap<usize, (i64, Vec<usize>)> = (i_line
-                ..inter_lines.len())
+            let line_col_info: FxHashMap<usize, (i64, Vec<usize>)> = (i_line..inter_lines.len())
                 .filter_map(|il| {
                     // il >= i_line is guaranteed by the range, so this
                     // never underflows.  f_line + (il - i_line) is the
@@ -1530,8 +1968,7 @@ fn strip_and_compose_sourcemaps(
             supplement_phase1_tokens(&phase1_map, &ctx, &mut all_tokens);
 
             // Sort by generated position (line first, then column).
-            all_tokens
-                .sort_by(|a, b| a.dst_line.cmp(&b.dst_line).then(a.dst_col.cmp(&b.dst_col)));
+            all_tokens.sort_by(|a, b| a.dst_line.cmp(&b.dst_line).then(a.dst_col.cmp(&b.dst_col)));
 
             // Deduplicate tokens at the same generated position.
             all_tokens.dedup_by(|a, b| a.dst_line == b.dst_line && a.dst_col == b.dst_col);
@@ -1557,9 +1994,9 @@ fn strip_and_compose_sourcemaps(
             composed
         };
 
-        composed.to_json_string()
+        Some(composed)
     } else {
-        String::new()
+        None
     };
 
     (code, map)
@@ -1628,15 +2065,12 @@ fn supplement_phase1_tokens(
                 // adds 1 byte (the `\`) that shifts subsequent
                 // columns.
                 let tc = token_col as usize;
-                let escape_shift = i64::try_from(
-                    escape_positions.iter().filter(|&&pos| pos <= tc).count(),
-                )
-                .expect("escape count exceeds i64");
+                let escape_shift =
+                    i64::try_from(escape_positions.iter().filter(|&&pos| pos <= tc).count())
+                        .expect("escape count exceeds i64");
 
-                let ac = u32::try_from(
-                    (i64::from(token_col) + ws_delta + escape_shift).max(0),
-                )
-                .expect("adjusted column exceeds u32");
+                let ac = u32::try_from((i64::from(token_col) + ws_delta + escape_shift).max(0))
+                    .expect("adjusted column exceeds u32");
                 (al, ac)
             } else if let Some(result) = try_anchor_supplement(token_col, gen_line, ctx) {
                 result
@@ -1645,7 +2079,10 @@ fn supplement_phase1_tokens(
             };
 
         // Skip if already covered by composition.
-        if ctx.composed_positions.contains(&(adjusted_line, adjusted_col)) {
+        if ctx
+            .composed_positions
+            .contains(&(adjusted_line, adjusted_col))
+        {
             continue;
         }
 
@@ -1687,14 +2124,18 @@ fn try_anchor_supplement(
         let nearest = anchors.iter().rev().find(|&&(ic, _, _)| ic <= token_col);
         let &(anchor_ic, anchor_fl, anchor_fc) = nearest?;
         let delta = i64::from(anchor_fc) - i64::from(anchor_ic);
-        let candidate_col =
-            u32::try_from((i64::from(token_col) + delta).max(0)).expect("candidate col exceeds u32");
+        let candidate_col = u32::try_from((i64::from(token_col) + delta).max(0))
+            .expect("candidate col exceeds u32");
 
         // Verify: the text at the candidate final position must match the
         // intermediate text at the token position.  This confirms we are in
         // a quasi region (not a reformatted expression).
         let i_text = ctx.inter_lines.get(gen_line).copied().unwrap_or("");
-        let f_text = ctx.final_lines.get(anchor_fl as usize).copied().unwrap_or("");
+        let f_text = ctx
+            .final_lines
+            .get(anchor_fl as usize)
+            .copied()
+            .unwrap_or("");
         let tc = token_col as usize;
         let cc = candidate_col as usize;
         // Use a short verification window; 2 bytes is enough to confirm
@@ -1735,7 +2176,8 @@ fn try_anchor_supplement(
         let search_start = expected_fl.saturating_sub(5);
         let search_end = (expected_fl + 6).min(ctx.final_lines.len());
 
-        for (fl, f_text) in ctx.final_lines
+        for (fl, f_text) in ctx
+            .final_lines
             .iter()
             .enumerate()
             .take(search_end)
@@ -1743,8 +2185,7 @@ fn try_anchor_supplement(
         {
             // Check same column (the text is quasi literal,
             // so the column should be identical).
-            if tc + verify_len <= f_text.len()
-                && &f_text.as_bytes()[tc..tc + verify_len] == needle
+            if tc + verify_len <= f_text.len() && &f_text.as_bytes()[tc..tc + verify_len] == needle
             {
                 let fl_u32 = u32::try_from(fl).expect("final line exceeds u32");
                 return Some((fl_u32, token_col));
@@ -1757,8 +2198,7 @@ fn try_anchor_supplement(
             let i_ws = i64::try_from(i_text.len() - i_trimmed.len()).unwrap_or(0);
             let ws_adj = f_ws - i_ws;
             let adj_col_i64 = (i64::from(token_col) + ws_adj).max(0);
-            let adj_col =
-                usize::try_from(adj_col_i64).expect("adjusted column exceeds usize");
+            let adj_col = usize::try_from(adj_col_i64).expect("adjusted column exceeds usize");
             if adj_col + verify_len <= f_text.len()
                 && &f_text.as_bytes()[adj_col..adj_col + verify_len] == needle
             {
@@ -2573,6 +3013,146 @@ import Component from "test";
         );
     }
 
+    #[test]
+    fn test_transitions_animation_url_option() {
+        // When transitionsAnimationURL is provided, the compiler should use it
+        // instead of the default "transitions.css" bare specifier.
+        let source = r#"<div transition:persist>content</div>"#;
+        let result = compile_astro_with_options(
+            source,
+            TransformOptions::new()
+                .with_internal_url("http://localhost:3000/")
+                .with_transitions_animation_url("astro/transitions.css"),
+        );
+
+        assert!(
+            result.code.contains(r#"import "astro/transitions.css";"#),
+            "Should use the provided transitionsAnimationURL: {}",
+            result.code
+        );
+        assert!(
+            !result.code.contains(r#"import "transitions.css";"#),
+            "Should NOT use the default transitions.css when URL is provided: {}",
+            result.code
+        );
+    }
+
+    #[test]
+    fn test_transitions_default_url_without_option() {
+        // When transitionsAnimationURL is NOT provided, fall back to "transitions.css".
+        let source = r#"<div transition:persist>content</div>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains(r#"import "transitions.css";"#),
+            "Should use default transitions.css when no URL option is provided: {output}"
+        );
+    }
+
+    // === CSS scope injection tests ===
+
+    #[test]
+    fn test_dynamic_class_with_scoped_styles_no_extra_brace() {
+        // When a dynamic class expression is used on an element with scoped styles,
+        // the output should not have an extra closing brace leaking into HTML.
+        // Regression: `class}=""` was produced due to `}}}}` in format string.
+        let source = r#"---
+const myClass = "foo";
+---
+<svg class={myClass}><path d="M0 0"/></svg>
+<style>svg { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        // The template literal expression should end with `)}` not `)}}`
+        assert!(
+            !output.contains("}}"),
+            "Should not have double closing braces in template expression: {output}"
+        );
+        // And there should be no `class}` in the output
+        assert!(
+            !output.contains("class}"),
+            "Should not have malformed class}} attribute: {output}"
+        );
+        // The $$addAttribute call for class should be well-formed
+        assert!(
+            output.contains(r#", "class")"#),
+            "Should have well-formed $$addAttribute call for class: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_static_class_merged_with_scope() {
+        // When a component has a static class="foo" and scoped styles are active,
+        // the scope class should be merged into the value: "class":"foo astro-HASH"
+        // NOT two separate "class" keys (which would lose the first one in JS).
+        let source = r#"---
+import Comp from './Comp.astro';
+---
+<Comp class="hide" />
+<style>div { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        // Should have merged class value like "hide astro-XXXX"
+        assert!(
+            output.contains(r#""hide astro-"#),
+            "Component static class should be merged with scope class: {output}"
+        );
+        // Should NOT have two separate "class" keys
+        let class_count = output.matches(r#""class""#).count();
+        assert_eq!(
+            class_count, 1,
+            "Should have exactly one \"class\" key, got {class_count}: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_dynamic_class_merged_with_scope() {
+        // When a component has a dynamic class={expr} and scoped styles are active,
+        // the scope class should be merged: "class":(((expr) ?? "") + " astro-HASH")
+        let source = r#"---
+import Comp from './Comp.astro';
+const cls = "foo";
+---
+<Comp class={cls} />
+<style>div { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        // Should have the ?? "" + " astro-" pattern
+        assert!(
+            output.contains(r#"?? "") + " astro-"#),
+            "Component dynamic class should use nullish coalescing with scope class: {output}"
+        );
+        // Should NOT have two separate "class" keys
+        let class_count = output.matches(r#""class""#).count();
+        assert_eq!(
+            class_count, 1,
+            "Should have exactly one \"class\" key, got {class_count}: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_no_class_gets_scope_class() {
+        // When a component has no class attribute and scoped styles are active,
+        // a separate "class":"astro-HASH" should be added.
+        let source = r#"---
+import Comp from './Comp.astro';
+---
+<Comp variant="primary" />
+<style>div { color: red; }</style>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains(r#""astro-"#),
+            "Component without class should get scope class prop: {output}"
+        );
+        // Should have exactly one "class" key
+        let class_count = output.matches(r#""class""#).count();
+        assert_eq!(
+            class_count, 1,
+            "Should have exactly one \"class\" key, got {class_count}: {output}"
+        );
+    }
+
     // === Test 3: Adversarial/edge-case input tests ===
 
     #[test]
@@ -2876,7 +3456,8 @@ const items = ["a", "b", "c"];
         let output = compile_astro(source);
 
         assert!(
-            output.contains("data-astro-transition-persist") || output.contains("$$createTransitionScope"),
+            output.contains("data-astro-transition-persist")
+                || output.contains("$$createTransitionScope"),
             "Should handle transition:persist: {output}"
         );
     }
@@ -3089,6 +3670,564 @@ const slotName = "dynamic";
         assert!(
             output.contains("Fallback content"),
             "Fallback content should be present: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // extract_styles tests
+    // -------------------------------------------------------------------------
+
+    fn parse_and_extract_styles(source: &str) -> Vec<StyleBlock> {
+        let allocator = Allocator::default();
+        let source_type = SourceType::astro();
+        let ret = Parser::new(&allocator, source, source_type).parse_astro();
+        assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+        extract_styles(&ret.root)
+    }
+
+    #[test]
+    fn test_extract_styles_boolean_attr_is_global() {
+        // Boolean attribute `is:global` must be present in attrs with an empty-string
+        // value. The caller (TS side) uses `'is:global' in attrs` to detect it, so the
+        // key must exist — the value being "" vs true is intentional for the Rust path.
+        let source = "<style is:global>h1 { color: red; }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 1, "Should extract one style block");
+        let attrs = &blocks[0].attrs;
+        let is_global = attrs.iter().find(|(k, _)| k == "is:global");
+        assert!(
+            is_global.is_some(),
+            "is:global key must be present in attrs: {attrs:?}"
+        );
+        assert_eq!(
+            is_global.unwrap().1,
+            "",
+            "Boolean attr value must be empty string for Rust compiler path: {attrs:?}"
+        );
+        assert_eq!(
+            blocks[0].content.trim(),
+            "h1 { color: red; }",
+            "Style content should be extracted"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_quoted_attr_lang() {
+        // Quoted attribute `lang="scss"` must round-trip with its value preserved.
+        let source = r#"<style lang="scss">$color: red;</style>"#;
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 1, "Should extract one style block");
+        let attrs = &blocks[0].attrs;
+        let lang = attrs.iter().find(|(k, _)| k == "lang");
+        assert!(lang.is_some(), "lang key must be present: {attrs:?}");
+        assert_eq!(
+            lang.unwrap().1,
+            "scss",
+            "lang value must be 'scss': {attrs:?}"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_is_inline_not_extracted() {
+        // `<style is:inline>` must NOT be extracted — it's rendered as-is in HTML.
+        let source = "<style is:inline>h1 { color: red; }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            0,
+            "is:inline style must not be extracted: {blocks:?}"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_inside_svg_not_extracted() {
+        // Styles inside <svg> are non-hoistable and must not be extracted.
+        let source = "<svg><style>circle { fill: red; }</style></svg>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            0,
+            "Style inside <svg> must not be extracted: {blocks:?}"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_inside_noscript_not_extracted() {
+        let source = "<noscript><style>h1 { color: red; }</style></noscript>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            0,
+            "Style inside <noscript> must not be extracted: {blocks:?}"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_expression_attr_omitted() {
+        // Expression attributes like `define:vars={...}` must be omitted from attrs
+        // (they can't be serialised to string), matching the Go compiler's GetAttrs.
+        let source = "<style define:vars={{ color: 'red' }}>h1 { color: var(--color); }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            1,
+            "Style with define:vars should still be extracted"
+        );
+        let has_define_vars = blocks[0].attrs.iter().any(|(k, _)| k == "define:vars");
+        assert!(
+            !has_define_vars,
+            "Expression attr define:vars must not appear in attrs: {:?}",
+            blocks[0].attrs
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_multiple_blocks_sequential_indices() {
+        // Multiple <style> blocks must get sequential indices 0, 1, 2 in document order.
+        let source = r"<style>a { color: red; }</style>
+<div></div>
+<style>b { color: blue; }</style>
+<style>c { color: green; }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            3,
+            "Should extract three style blocks: {blocks:?}"
+        );
+        assert_eq!(blocks[0].index, 0);
+        assert_eq!(blocks[1].index, 1);
+        assert_eq!(blocks[2].index, 2);
+        assert!(
+            blocks[0].content.contains("red"),
+            "First block should have red style"
+        );
+        assert!(
+            blocks[1].content.contains("blue"),
+            "Second block should have blue style"
+        );
+        assert!(
+            blocks[2].content.contains("green"),
+            "Third block should have green style"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_multiple_attrs() {
+        // A style with both boolean and quoted attrs — both must appear.
+        let source = r#"<style is:global lang="scss">h1 { color: red; }</style>"#;
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 1);
+        let attrs = &blocks[0].attrs;
+        assert!(
+            attrs.iter().any(|(k, v)| k == "is:global" && v.is_empty()),
+            "is:global must be present with empty value: {attrs:?}"
+        );
+        assert!(
+            attrs.iter().any(|(k, v)| k == "lang" && v == "scss"),
+            "lang must be present with value 'scss': {attrs:?}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // HTML element directive stripping tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_is_global_stripped_from_html_output() {
+        // `is:global` is a compile-time directive and must NOT appear in the
+        // rendered HTML string output.
+        let source = "<style is:global>h1 { color: red; }</style>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("is:global"),
+            "is:global must be stripped from compiled output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_is_inline_stripped_from_style_output() {
+        // `is:inline` is a compile-time directive and must NOT appear in the
+        // rendered HTML string output.
+        let source = "<style is:inline>h1 { color: red; }</style>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("is:inline"),
+            "is:inline must be stripped from compiled output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_is_inline_stripped_from_script_output() {
+        let source = "<script is:inline>console.log(1)</script>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("is:inline"),
+            "is:inline must be stripped from script output: {output}"
+        );
+        assert!(
+            output.contains("console.log(1)"),
+            "Inline script content should be in output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_define_vars_stripped_from_style_output() {
+        // `define:vars` on a style element must not appear as an HTML attribute.
+        let source = "<style define:vars={{ color: 'red' }}>h1 { color: var(--color); }</style>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("define:vars"),
+            "define:vars must be stripped from style HTML output: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Component boolean attribute tests — must emit `true` in JS props object
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_component_boolean_attr_emits_true() {
+        // A boolean (valueless) attribute on a component element must be emitted
+        // as the JS boolean `true` in the props object, matching Go compiler output.
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp disabled />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"disabled\":true") || output.contains("\"disabled\": true"),
+            "Boolean component attr must emit true in props: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_boolean_attr_is_global_emits_true() {
+        // Even Astro-namespace boolean attrs on components must emit `true`, not "".
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp is:global />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"is:global\":true") || output.contains("\"is:global\": true"),
+            "Boolean is:global on component must emit true in props: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_quoted_attr_preserves_value() {
+        let source = r#"---
+import MyComp from 'test';
+---
+<MyComp class="foo" />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"class\":\"foo\"") || output.contains("\"class\": \"foo\""),
+            "Quoted component attr must preserve its value: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // should_hoist_script / scanner tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_script_plain_is_hoisted() {
+        // A plain `<script>` with no attributes must be hoisted as inline.
+        let source = "<script>console.log('hello')</script>";
+        let output = compile_astro(source);
+
+        // Hoisted scripts appear in the `scripts` metadata array, not inline in the template.
+        assert!(
+            output.contains("\"inline\"") || output.contains("type:\"inline\""),
+            "Plain script must be hoisted as inline: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_type_module_is_hoisted() {
+        // `<script type="module">` must be hoisted.
+        let source = r#"<script type="module">console.log('hello')</script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"inline\"") || output.contains("type:\"inline\""),
+            "type=module script must be hoisted as inline: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_src_only_is_hoisted_external() {
+        // `<script src="...">` with ONLY `src` must be hoisted as external.
+        let source = r#"<script src="/script.js"></script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"external\"") || output.contains("type:\"external\""),
+            "src-only script must be hoisted as external: {output}"
+        );
+        assert!(
+            output.contains("/script.js"),
+            "Hoisted external script must preserve src: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_src_with_extra_attr_not_hoisted() {
+        // `<script src="..." type="module">` must NOT be hoisted (extra attrs).
+        // It stays as inline HTML in the template string.
+        let source = r#"<script src="/script.js" type="module"></script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("\"external\""),
+            "Script with src+type must not be hoisted as external: {output}"
+        );
+        // The raw tag should appear in the template string.
+        assert!(
+            output.contains("/script.js"),
+            "Non-hoisted script should still appear in template: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_is_inline_not_hoisted() {
+        // `<script is:inline>` must NEVER be hoisted.
+        let source = "<script is:inline>console.log('hello')</script>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("type:\"inline\"") && !output.contains("\"inline\":{"),
+            "is:inline script must not be hoisted: {output}"
+        );
+        // Should appear literally in the template.
+        assert!(
+            output.contains("console.log"),
+            "is:inline script content should be in template: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_src_with_data_attr_not_hoisted() {
+        // `<script src="..." data-foo="bar">` — any extra attr blocks hoisting.
+        let source = r#"<script src="/script.js" data-foo="bar"></script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("\"external\""),
+            "Script with extra data-attr must not be hoisted: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // set:html must always use $$unescapeHTML (including template literals)
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_set_html_variable_uses_unescape_html() {
+        // `set:html={someVar}` must wrap the value in $$unescapeHTML.
+        let source = r"---
+const html = '<b>bold</b>';
+---
+<div set:html={html} />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$unescapeHTML"),
+            "set:html with variable must use $$unescapeHTML: {output}"
+        );
+        assert!(
+            !output.contains("set:html"),
+            "set:html directive must be stripped from output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_set_html_template_literal_no_unescape_html() {
+        // `set:html={`template ${literal}`}` must NOT wrap with $$unescapeHTML.
+        // The Go compiler passes template literals through as-is — matching Go behavior.
+        let source = r#"---
+const name = 'world';
+---
+<div set:html={`Hello <b>${name}</b>`} />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("$$unescapeHTML(`"),
+            "set:html with template literal must NOT use $$unescapeHTML: {output}"
+        );
+        assert!(
+            output.contains("`Hello <b>${name}</b>`"),
+            "set:html template literal should be passed through as-is: {output}"
+        );
+    }
+
+    #[test]
+    fn test_set_html_string_literal_uses_unescape_html() {
+        // Even a plain string literal must go through $$unescapeHTML.
+        let source = r#"<div set:html={"<b>bold</b>"} />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$unescapeHTML"),
+            "set:html with string literal must use $$unescapeHTML: {output}"
+        );
+    }
+
+    #[test]
+    fn test_set_text_does_not_use_unescape_html() {
+        // `set:text` is the safe (escaped) counterpart — the rendered expression must
+        // NOT be wrapped in $$unescapeHTML(). $$unescapeHTML may still appear in the
+        // import statement, so we check the template body specifically.
+        let source = r"---
+const text = '<b>bold</b>';
+---
+<div set:text={text} />";
+        let output = compile_astro(source);
+
+        // The template render string must contain the raw variable, not wrapped.
+        assert!(
+            output.contains("${text}"),
+            "set:text should emit the variable directly: {output}"
+        );
+        assert!(
+            !output.contains("$$unescapeHTML(text)"),
+            "set:text must not wrap in $$unescapeHTML(): {output}"
+        );
+        assert!(
+            !output.contains("set:text"),
+            "set:text directive must be stripped from output: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // server:defer prop injection tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_server_defer_injects_component_directive() {
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("server:component-directive"),
+            "server:defer must inject server:component-directive: {output}"
+        );
+    }
+
+    #[test]
+    fn test_server_defer_injects_component_path() {
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("server:component-path"),
+            "server:defer must inject server:component-path: {output}"
+        );
+    }
+
+    #[test]
+    fn test_server_defer_injects_component_export() {
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("server:component-export"),
+            "server:defer must inject server:component-export: {output}"
+        );
+    }
+
+    #[test]
+    fn test_server_defer_does_not_set_client_hydration() {
+        // server:defer is NOT a client hydration directive — must not emit
+        // client:component-hydration or any transition-related props.
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("client:component-hydration"),
+            "server:defer must not emit client:component-hydration: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // client:only import suppression tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_client_only_import_is_suppressed() {
+        // When a component is used exclusively with client:only, its import must be
+        // suppressed (the server never needs to load it).
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp client:only='react' />";
+        let output = compile_astro(source);
+
+        // The import must be replaced / suppressed — should not appear as a live import.
+        assert!(
+            !output.contains("import MyComp from \"test\""),
+            "client:only import must be suppressed: {output}"
+        );
+    }
+
+    #[test]
+    fn test_non_client_only_import_not_suppressed() {
+        // A component used with client:load (not client:only) must keep its import.
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp client:load />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("import MyComp from \"test\""),
+            "client:load import must NOT be suppressed: {output}"
+        );
+    }
+
+    #[test]
+    fn test_mixed_import_not_suppressed_when_also_client_only() {
+        // If the SAME import specifier exports one component used normally and another
+        // exclusively as client:only, the import must be kept (not suppressed).
+        let source = r"---
+import { CompA, CompB } from 'test';
+---
+<CompA />
+<CompB client:only='react' />";
+        let output = compile_astro(source);
+
+        // CompA is used normally so the import must be preserved.
+        assert!(
+            output.contains("import") && output.contains("\"test\""),
+            "Mixed import must not be suppressed when one specifier is used normally: {output}"
         );
     }
 }

@@ -1,4 +1,4 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler-rs';
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
 
@@ -28,11 +28,11 @@ describe('client-only-unfound', { skip: true }, () => {
 		assert.strictEqual(result.diagnostics.length, 1);
 		assert.strictEqual(
 			result.diagnostics[0].text,
-			'Unable to find matching import statement for client:only component'
+			'Unable to find matching import statement for client:only component',
 		);
 		assert.strictEqual(
 			FIXTURE.split('\n')[result.diagnostics[0].location.line - 1],
-			'    <MyComponent client:only />'
+			'    <MyComponent client:only />',
 		);
 	});
 });

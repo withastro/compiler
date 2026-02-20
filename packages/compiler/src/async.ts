@@ -1,28 +1,32 @@
 export type {
-	CompilerError,
-	CompilerErrorLabel,
+	CompileResult,
+	DiagnosticLabel,
+	DiagnosticMessage,
+	DiagnosticSeverity,
 	HoistedScript,
 	ParseOptions,
 	ParseResult,
+	PreprocessedStyles,
+	PreprocessorError,
 	PreprocessorResult,
 	TransformResult,
 } from './types.js';
 export type { AsyncTransformOptions as TransformOptions } from './types.js';
 import { compileAstro, parseAstro } from '@astrojs/compiler-binding';
 import { mapOptions, mapParseResult, mapResult } from './shared.js';
+export { preprocessStyles } from './shared.js';
 import type { AsyncTransformOptions, Component, ParseResult, TransformResult } from './types.js';
 
 export async function transform(
 	input: string,
-	options?: AsyncTransformOptions
+	options?: AsyncTransformOptions,
 ): Promise<TransformResult> {
-	const result = mapResult(await compileAstro(input, mapOptions(options)), options?.sourcemap);
+	const result = mapResult(
+		await compileAstro(input, mapOptions(options)),
+		options?.preprocessedStyles,
+	);
 
 	// Post-process: call resolvePath for each component specifier if provided.
-	// The Rust codegen emits raw specifiers in the code string since the
-	// resolvePath callback cannot cross the NAPI boundary. We resolve paths
-	// on the metadata objects and also rewrite client:component-path values
-	// in the generated code so the Astro runtime sees the resolved paths.
 	if (typeof options?.resolvePath === 'function') {
 		const resolve = options.resolvePath;
 		const allComponents: Component[] = [

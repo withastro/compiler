@@ -1,134 +1,86 @@
-use std::sync::Arc;
-
 use napi_derive::napi;
 
-use oxc_diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic};
+use astro_codegen::Diagnostic;
 
-#[napi(object, use_nullable = true)]
+/// Severity level for a diagnostic message.
+#[napi(string_enum)]
 #[derive(Clone)]
-pub struct OxcError {
-    pub severity: Severity,
-    pub message: String,
-    pub labels: Vec<ErrorLabel>,
-    pub help_message: Option<String>,
-    pub codeframe: Option<String>,
+pub enum DiagnosticSeverity {
+    #[napi(value = "error")]
+    Error,
+    #[napi(value = "warning")]
+    Warning,
+    #[napi(value = "information")]
+    Information,
+    #[napi(value = "hint")]
+    Hint,
 }
 
-impl OxcError {
-    pub fn new(message: String) -> Self {
-        Self {
-            severity: Severity::Error,
-            message,
-            labels: vec![],
-            help_message: None,
-            codeframe: None,
-        }
-    }
-
-    pub fn from_diagnostics(
-        filename: &str,
-        source_text: &str,
-        diagnostics: Vec<OxcDiagnostic>,
-    ) -> Vec<Self> {
-        if diagnostics.is_empty() {
-            return vec![];
-        }
-        let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
-        diagnostics
-            .into_iter()
-            .map(|e| Self::from_diagnostic(source_text, &source, e))
-            .collect()
-    }
-
-    pub fn from_diagnostic(
-        source_text: &str,
-        named_source: &Arc<NamedSource<String>>,
-        diagnostic: OxcDiagnostic,
-    ) -> Self {
-        let severity = Severity::from(diagnostic.severity);
-        let message = diagnostic.message.to_string();
-        let help_message = diagnostic.help.as_ref().map(ToString::to_string);
-        let labels = diagnostic
-            .labels
-            .as_ref()
-            .map(|labels| {
-                labels
-                    .iter()
-                    .map(|label| ErrorLabel::new(label, source_text))
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
-        let codeframe = diagnostic.with_source_code(Arc::clone(named_source));
-        Self {
-            severity,
-            message,
-            labels,
-            help_message,
-            codeframe: Some(format!("{codeframe:?}")),
+impl From<astro_codegen::DiagnosticSeverity> for DiagnosticSeverity {
+    fn from(s: astro_codegen::DiagnosticSeverity) -> Self {
+        match s {
+            astro_codegen::DiagnosticSeverity::Error => Self::Error,
+            astro_codegen::DiagnosticSeverity::Warning => Self::Warning,
+            astro_codegen::DiagnosticSeverity::Information => Self::Information,
+            astro_codegen::DiagnosticSeverity::Hint => Self::Hint,
         }
     }
 }
 
+/// A labeled source span within a diagnostic.
 #[napi(object, use_nullable = true)]
 #[derive(Clone)]
-pub struct ErrorLabel {
-    pub message: Option<String>,
+pub struct DiagnosticLabel {
+    /// Optional label text (e.g. "expected closing tag here").
+    pub text: Option<String>,
+    /// Byte offset of the span start.
     pub start: u32,
+    /// Byte offset of the span end (exclusive).
     pub end: u32,
-    /// 1-based line number in the source.
+    /// 1-based line number.
     pub line: u32,
-    /// 0-based column number in the source.
+    /// 0-based column number.
     pub column: u32,
 }
 
-impl ErrorLabel {
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn new(label: &LabeledSpan, source_text: &str) -> Self {
-        let start = label.offset();
-        let end = start + label.len();
-        let (line, column) = byte_offset_to_line_column(source_text, start);
-        Self {
-            message: label.label().map(ToString::to_string),
-            start: start as u32,
-            end: end as u32,
-            line,
-            column,
-        }
-    }
-}
-
-/// Convert a UTF-8 byte offset to a 1-based line and 0-based column.
-fn byte_offset_to_line_column(source: &str, offset: usize) -> (u32, u32) {
-    let mut line = 1u32;
-    let mut col = 0u32;
-    for (i, ch) in source.char_indices() {
-        if i >= offset {
-            break;
-        }
-        if ch == '\n' {
-            line += 1;
-            col = 0;
-        } else {
-            col += 1;
-        }
-    }
-    (line, col)
-}
-
-#[napi(string_enum)]
+/// A diagnostic message produced by the compiler.
+#[napi(object)]
 #[derive(Clone)]
-pub enum Severity {
-    Error,
-    Warning,
-    Advice,
+pub struct DiagnosticMessage {
+    #[napi(ts_type = "'error' | 'warning' | 'information' | 'hint'")]
+    pub severity: DiagnosticSeverity,
+    /// Human-readable message text.
+    pub text: String,
+    /// Optional hint/suggestion for fixing the issue.
+    pub hint: String,
+    /// Labeled source spans.
+    pub labels: Vec<DiagnosticLabel>,
 }
 
-impl From<oxc_diagnostics::Severity> for Severity {
-    fn from(value: oxc_diagnostics::Severity) -> Self {
-        match value {
-            oxc_diagnostics::Severity::Error => Self::Error,
-            oxc_diagnostics::Severity::Warning => Self::Warning,
-            oxc_diagnostics::Severity::Advice => Self::Advice,
+impl From<Diagnostic> for DiagnosticMessage {
+    fn from(d: Diagnostic) -> Self {
+        Self {
+            severity: DiagnosticSeverity::from(d.severity),
+            text: d.text,
+            hint: d.hint,
+            labels: d
+                .labels
+                .into_iter()
+                .map(|l| DiagnosticLabel {
+                    text: l.text,
+                    start: l.start,
+                    end: l.end,
+                    line: l.line,
+                    column: l.column,
+                })
+                .collect(),
         }
+    }
+}
+
+impl DiagnosticMessage {
+    /// Convert a list of codegen diagnostics to NAPI diagnostic messages.
+    pub fn from_codegen_list(diagnostics: Vec<Diagnostic>) -> Vec<Self> {
+        diagnostics.into_iter().map(Self::from).collect()
     }
 }

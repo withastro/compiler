@@ -3,6 +3,28 @@
 //! Some fields (such as `compact`, `sourcemap`, CSS scoping) are accepted but
 //! stubbed for API compatibility.
 
+/// Controls whether and how source maps are emitted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SourcemapOption {
+    /// Do not generate a source map.
+    #[default]
+    None,
+    /// Generate a source map in the `map` field of the result (default when enabled).
+    External,
+    /// Append an inline `//# sourceMappingURL=data:...` comment to the code.
+    /// The `map` field will be empty.
+    Inline,
+    /// Both: append the inline comment to the code **and** populate the `map` field.
+    Both,
+}
+
+impl SourcemapOption {
+    /// Whether sourcemap generation is enabled (any mode other than `None`).
+    pub fn is_enabled(self) -> bool {
+        self != Self::None
+    }
+}
+
 /// Scoped style strategy for CSS scoping.
 ///
 /// Determines how Astro scopes CSS selectors to components.
@@ -31,12 +53,14 @@ pub struct TransformOptions {
     /// Defaults to `"astro/runtime/server/index.js"`.
     pub internal_url: Option<String>,
 
-    /// Whether to generate a source map.
+    /// Source map generation mode.
     ///
-    /// When `true`, the `map` field in `TransformResult` will contain a
-    /// JSON-encoded source map that maps the generated JavaScript back to
-    /// the original `.astro` source file.
-    pub sourcemap: bool,
+    /// - `None` (default): no source map.
+    /// - `External`: populate the `map` field with a JSON source map.
+    /// - `Inline`: append an inline `//# sourceMappingURL=data:...` comment
+    ///   to the code; `map` will be empty.
+    /// - `Both`: append the inline comment **and** populate `map`.
+    pub sourcemap: SourcemapOption,
 
     /// Arguments passed to `$$createAstro` when the Astro global is used.
     /// Defaults to `"https://astro.build"`.
@@ -63,7 +87,8 @@ pub struct TransformOptions {
 
     /// URL for the view transitions animation CSS.
     ///
-    /// **Stub**: accepted for API compatibility.
+    /// When set, the compiler emits `import "<url>";` instead of the default
+    /// `import "transitions.css";` for components that use transition directives.
     pub transitions_animation_url: Option<String>,
 
     /// Whether to annotate generated code with the source file path.
@@ -103,6 +128,17 @@ pub struct TransformOptions {
     /// when `resolve_path` is `Some`, but will still use the filepath.Join
     /// fallback for populating `resolved_path` on metadata structs.
     pub resolve_path_provided: bool,
+
+    /// Preprocessed style content, indexed by extractable style order.
+    ///
+    /// When provided, the codegen uses these strings as CSS content instead
+    /// of reading from the AST's `<style>` text children. Each entry
+    /// corresponds to an extractable style in document order (matching the
+    /// indices from [`extract_styles`]).
+    ///
+    /// An entry of `None` means "use the original content from the AST".
+    /// An entry of `Some("")` means "style had a preprocessing error — use empty content".
+    pub preprocessed_styles: Option<Vec<Option<String>>>,
 }
 
 impl Default for TransformOptions {
@@ -111,7 +147,7 @@ impl Default for TransformOptions {
             filename: None,
             normalized_filename: None,
             internal_url: None,
-            sourcemap: false,
+            sourcemap: SourcemapOption::default(),
             astro_global_args: None,
             compact: false,
             result_scoped_slot: false,
@@ -121,6 +157,7 @@ impl Default for TransformOptions {
             strip_slot_comments: true,
             resolve_path: None,
             resolve_path_provided: false,
+            preprocessed_styles: None,
         }
     }
 }
@@ -175,10 +212,10 @@ impl TransformOptions {
         self
     }
 
-    /// Enable or disable source map generation.
+    /// Set the source map generation mode.
     #[must_use]
-    pub fn with_sourcemap(mut self, enabled: bool) -> Self {
-        self.sourcemap = enabled;
+    pub fn with_sourcemap(mut self, mode: SourcemapOption) -> Self {
+        self.sourcemap = mode;
         self
     }
 
@@ -210,7 +247,7 @@ impl TransformOptions {
         self
     }
 
-    /// Set the view transitions animation URL (stub).
+    /// Set the view transitions animation URL.
     #[must_use]
     pub fn with_transitions_animation_url(mut self, url: impl Into<String>) -> Self {
         self.transitions_animation_url = Some(url.into());
@@ -273,6 +310,11 @@ impl TransformOptions {
         } else {
             specifier.to_string()
         }
+    }
+
+    /// Get the configured scoped style strategy.
+    pub fn scoped_style_strategy(&self) -> ScopedStyleStrategy {
+        self.scoped_style_strategy
     }
 
     /// Get the internal URL, with default fallback.

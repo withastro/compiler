@@ -1,4 +1,4 @@
-import { convertToTSX } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler-rs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -9,7 +9,7 @@ describe('tsx/line-terminator', { skip: true }, () => {
 		for (const input of inputs) {
 			try {
 				await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
-			} catch (e) {
+			} catch (_e) {
 				err = 1;
 			}
 		}

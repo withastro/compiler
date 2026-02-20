@@ -6,7 +6,8 @@ node_modules
 /astro
 debug.test
 __debug_bin
-packages/compiler/sourcemap.mjs
+
+crates/astro_napi/npm
 
 # Rust
 /target

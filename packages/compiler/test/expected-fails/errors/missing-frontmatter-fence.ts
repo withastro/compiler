@@ -1,4 +1,4 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler-rs';
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
 
@@ -24,17 +24,17 @@ describe('missing-frontmatter-fence', { skip: true }, () => {
 		assert.strictEqual(result.diagnostics[0].code, 1006);
 		assert.strictEqual(
 			result.diagnostics[0].text,
-			'The closing frontmatter fence (---) is missing an opening fence'
+			'The closing frontmatter fence (---) is missing an opening fence',
 		);
 		assert.strictEqual(
 			result.diagnostics[0].hint,
-			'Add --- at the beginning of your file before any import statements or code'
+			'Add --- at the beginning of your file before any import statements or code',
 		);
 		const loc = result.diagnostics[0].location;
 		assert.strictEqual(FIXTURE.split('\n')[loc.line - 1], '---');
 		assert.strictEqual(
 			FIXTURE.split('\n')[loc.line - 1].slice(loc.column - 1, loc.column - 1 + loc.length),
-			'---'
+			'---',
 		);
 	});
 });

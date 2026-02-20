@@ -1,4 +1,4 @@
-import { type TransformResult, transform } from '@astrojs/compiler';
+import { type TransformResult, transform } from '@astrojs/compiler-rs';
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -17,7 +17,7 @@ let result: TransformResult;
 describe('styles/emit-scope', () => {
 	before(async () => {
 		result = await transform(FIXTURE, {
-			sourcemap: true,
+			sourcemap: 'external',
 		});
 	});
 

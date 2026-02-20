@@ -14,7 +14,7 @@ body:
         ✅ I am using a version of Node that supports ESM (`v12.20.0+`, `v14.13.1+`, or `v16.0.0+`)
   - type: input
     attributes:
-      label: What version of `@astrojs/compiler` are you using?
+      label: What version of `@astrojs/compiler-rs` are you using?
       placeholder: 0.0.0
     validations:
       required: true

@@ -152,8 +152,11 @@ impl<'a> AstroScanner<'a> {
             if let JSXAttributeItem::Attribute(attr) = attr {
                 let attr_name = get_jsx_attribute_name(&attr.name);
 
-                // Detect transition directives
-                if attr_name.starts_with("transition:") || attr_name == "server:defer" {
+                // Detect transition directives.
+                // Note: server:defer does NOT set uses_transitions — it only enables
+                // head propagation. Only actual transition:* attributes trigger transition
+                // handling (matching Go compiler fix in #1149).
+                if attr_name.starts_with("transition:") {
                     self.uses_transitions = true;
                 }
 
@@ -438,22 +441,28 @@ pub fn is_custom_element(name: &str) -> bool {
 
 pub fn should_hoist_script(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>) -> bool {
     let mut has_type_module = false;
+    let mut has_src = false;
+    let mut has_other = false;
     let mut is_inline = false;
+    let mut has_define_vars = false;
 
     for attr in attrs {
         if let JSXAttributeItem::Attribute(attr) = attr {
             let attr_name = get_jsx_attribute_name(&attr.name);
             match attr_name.as_str() {
                 "is:inline" => is_inline = true,
-                "define:vars" => return true,
+                "define:vars" => has_define_vars = true,
+                "src" => has_src = true,
                 "type" => {
                     if let Some(JSXAttributeValue::StringLiteral(lit)) = &attr.value
                         && lit.value == "module"
                     {
                         has_type_module = true;
+                    } else {
+                        has_other = true;
                     }
                 }
-                _ => {}
+                _ => has_other = true,
             }
         }
     }
@@ -462,22 +471,20 @@ pub fn should_hoist_script(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>)
         return false;
     }
 
-    // Scripts with no attributes at all, or with just `type="module"`, are hoistable.
-    attrs.is_empty() || has_type_module || no_meaningful_attrs(attrs)
-}
-
-fn no_meaningful_attrs(attrs: &oxc_allocator::Vec<'_, JSXAttributeItem<'_>>) -> bool {
-    for attr in attrs {
-        if let JSXAttributeItem::Attribute(attr) = attr {
-            let name = get_jsx_attribute_name(&attr.name);
-            match name.as_str() {
-                "src" => return true, // src-only scripts are hoistable
-                "type" | "is:inline" | "define:vars" => {}
-                _ => return false,
-            }
-        }
+    if has_define_vars {
+        return true;
     }
-    true
+
+    // A script with a `src` pointing to an external file is only hoistable if
+    // `src` is the sole attribute (matching Go compiler behaviour). Adding any
+    // other attribute — including `type="module"` — means the script is treated
+    // as inline HTML and left in place rather than being bundled.
+    if has_src {
+        return !has_type_module && !has_other;
+    }
+
+    // Scripts with no attributes at all, or with just `type="module"`, are hoistable.
+    attrs.is_empty() || (has_type_module && !has_other)
 }
 
 fn get_property_key_name(key: &PropertyKey<'_>) -> String {

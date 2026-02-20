@@ -1,19 +1,18 @@
 // --- Sourcemap tests ---
 
 // Test sources are small; line/column counts never exceed u32.
-#![allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss
-)]
+#![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 
-use crate::{TransformOptions, TransformResult, printer::tests::compile_astro_with_options};
+use crate::{
+    SourcemapOption, TransformOptions, TransformResult, printer::tests::compile_astro_with_options,
+};
 
 fn compile_astro_with_sourcemap(source: &str) -> TransformResult {
     compile_astro_with_options(
         source,
         TransformOptions::new()
             .with_internal_url("http://localhost:3000/")
-            .with_sourcemap(true)
+            .with_sourcemap(SourcemapOption::External)
             .with_filename("test.astro"),
     )
 }
@@ -38,6 +37,67 @@ fn test_sourcemap_disabled_produces_empty_map() {
     assert!(
         result.map.is_empty(),
         "sourcemap should be empty when disabled"
+    );
+}
+
+#[test]
+fn test_sourcemap_inline_appends_data_url_and_clears_map() {
+    let source = "<h1>Hello</h1>";
+    let result = compile_astro_with_options(
+        source,
+        TransformOptions::new()
+            .with_internal_url("http://localhost:3000/")
+            .with_sourcemap(SourcemapOption::Inline)
+            .with_filename("test.astro"),
+    );
+    assert!(
+        result
+            .code
+            .contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
+        "inline mode should append a sourceMappingURL data URL to code"
+    );
+    assert!(
+        result.map.is_empty(),
+        "inline mode should leave map field empty"
+    );
+}
+
+#[test]
+fn test_sourcemap_both_appends_data_url_and_populates_map() {
+    let source = "<h1>Hello</h1>";
+    let result = compile_astro_with_options(
+        source,
+        TransformOptions::new()
+            .with_internal_url("http://localhost:3000/")
+            .with_sourcemap(SourcemapOption::Both)
+            .with_filename("test.astro"),
+    );
+    assert!(
+        result
+            .code
+            .contains("//# sourceMappingURL=data:application/json;charset=utf-8;base64,"),
+        "both mode should append a sourceMappingURL data URL to code"
+    );
+    assert!(
+        !result.map.is_empty(),
+        "both mode should also populate the map field"
+    );
+    // The map field should be valid JSON
+    let _: serde_json::Value =
+        serde_json::from_str(&result.map).expect("map should be valid JSON in both mode");
+}
+
+#[test]
+fn test_sourcemap_external_no_data_url_in_code() {
+    let source = "<h1>Hello</h1>";
+    let result = compile_astro_with_sourcemap(source);
+    assert!(
+        !result.code.contains("sourceMappingURL"),
+        "external mode should not append sourceMappingURL to code"
+    );
+    assert!(
+        !result.map.is_empty(),
+        "external mode should populate the map field"
     );
 }
 
@@ -276,7 +336,7 @@ console.log(
         source,
         TransformOptions::new()
             .with_internal_url("http://localhost:3000/")
-            .with_sourcemap(true)
+            .with_sourcemap(SourcemapOption::External)
             .with_filename("rust-compiler.astro"),
     );
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map)
@@ -1561,9 +1621,9 @@ return <li>{doubled}</li>;
 
 #[test]
 fn test_sourcemap_hoisted_script_root_no_false_mapping() {
-    // Case 1: A hoisted <script> at root level (element_depth == 0)
-    // produces no output, so it must NOT create a mapping that falsely
-    // points the source <script> to the next generated element (<h1>).
+    // A hoisted <script> at root level now emits $$renderScript(...),
+    // so source line 3 should map to $$renderScript, NOT to the next
+    // element (<h1>).
     let source = r#"---
 const name = "World";
 ---
@@ -1579,6 +1639,13 @@ const name = "World";
     assert_tokens_in_bounds(source, &result);
     let sm = oxc_sourcemap::SourceMap::from_json_string(&result.map).unwrap();
     let tokens: Vec<_> = sm.get_tokens().collect();
+
+    // The generated code should now contain $$renderScript for the root-level script
+    assert!(
+        result.code.contains("$$renderScript"),
+        "root-level hoisted script should produce $$renderScript. Got:\n{}",
+        result.code
+    );
 
     // There should be NO token that maps source line 3 (the <script> line)
     // to generated text that starts with "<h1".
@@ -1993,10 +2060,12 @@ fn test_sourcemap_hoisted_script_nested_maps_to_render_script() {
     // containing "$$renderScript".
     let gen_lines: Vec<&str> = result.code.lines().collect();
     let maps_to_render_script = tokens.iter().any(|t| {
-        if t.get_src_line() == 1 && t.get_src_col() == 0
-            && let Some(line) = gen_lines.get(t.get_dst_line() as usize) {
-                return line.contains("$$renderScript");
-            }
+        if t.get_src_line() == 1
+            && t.get_src_col() == 0
+            && let Some(line) = gen_lines.get(t.get_dst_line() as usize)
+        {
+            return line.contains("$$renderScript");
+        }
         false
     });
     assert!(

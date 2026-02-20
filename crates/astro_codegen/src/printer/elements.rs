@@ -8,9 +8,43 @@
 
 use super::escape::{escape_double_quotes, escape_html_attribute};
 use super::runtime;
-use super::{expr_to_string, AstroCodegen};
+use super::{AstroCodegen, expr_to_string};
+use crate::css_scoping;
+use crate::options::ScopedStyleStrategy;
 use crate::scanner::get_jsx_attribute_name;
 use oxc_ast::ast::*;
+
+/// Scope identifier for an element — either a CSS class or a data attribute,
+/// depending on the `scopedStyleStrategy`.
+#[derive(Clone)]
+pub(super) enum ScopeId {
+    /// `where` or `class` strategy: inject `class="astro-{hash}"`.
+    Class(String),
+    /// `attribute` strategy: inject `data-astro-cid-{hash}` as a boolean attribute.
+    DataAttribute(String),
+}
+
+impl ScopeId {
+    /// The value to embed in class lists / spread attributes (e.g. `"astro-{hash}"`).
+    pub(super) fn class_value(&self) -> String {
+        match self {
+            ScopeId::Class(v) => v.clone(),
+            ScopeId::DataAttribute(v) => format!("astro-{v}"),
+        }
+    }
+
+    /// The attribute name for the `attribute` strategy (e.g. `"data-astro-cid-{hash}"`).
+    pub(super) fn data_attr_name(&self) -> String {
+        match self {
+            ScopeId::DataAttribute(v) => format!("data-astro-cid-{v}"),
+            ScopeId::Class(_) => unreachable!("data_attr_name called on Class variant"),
+        }
+    }
+
+    pub(super) fn is_attribute_strategy(&self) -> bool {
+        matches!(self, ScopeId::DataAttribute(_))
+    }
+}
 
 /// Returns `true` for HTML void elements that must not have a closing tag.
 pub(super) fn is_void_element(name: &str) -> bool {
@@ -68,6 +102,13 @@ impl<'a> AstroCodegen<'a> {
         let is_head = name == "head";
         let was_in_head = self.in_head;
 
+        // Track non-hoistable context for nested style elements
+        let is_non_hoistable = matches!(name, "svg" | "noscript" | "template");
+        let was_in_non_hoistable = self.in_non_hoistable;
+        if is_non_hoistable {
+            self.in_non_hoistable = true;
+        }
+
         if is_head {
             self.in_head = true;
             self.has_explicit_head = true;
@@ -79,12 +120,30 @@ impl<'a> AstroCodegen<'a> {
         // Extract set:html and set:text directives
         let set_directive = Self::extract_set_directive(&el.opening_element.attributes);
 
+        // Determine if this element should receive a scope identifier
+        let scope_id = if self.has_scoped_styles && css_scoping::should_scope_element(name) {
+            let hash = &self.source_hash;
+            match self.options.scoped_style_strategy() {
+                ScopedStyleStrategy::Attribute => Some(ScopeId::DataAttribute(hash.clone())),
+                _ => Some(ScopeId::Class(format!("astro-{hash}"))),
+            }
+        } else {
+            None
+        };
+
         // Opening tag
         self.print("<");
         self.print(name);
 
-        // Attributes (excluding set:html and set:text)
-        self.print_html_attributes(&el.opening_element.attributes);
+        // Determine if this element should receive $$definedVars style injection
+        let inject_define_vars = self.should_inject_define_vars(name);
+
+        // Attributes (excluding set:html and set:text), with scope injection
+        self.print_html_attributes(
+            &el.opening_element.attributes,
+            scope_id.as_ref(),
+            inject_define_vars,
+        );
 
         // Close the opening tag and handle content
         self.print(">");
@@ -138,6 +197,9 @@ impl<'a> AstroCodegen<'a> {
 
         if is_head {
             self.in_head = was_in_head;
+        }
+        if is_non_hoistable {
+            self.in_non_hoistable = was_in_non_hoistable;
         }
     }
 
@@ -241,15 +303,15 @@ impl<'a> AstroCodegen<'a> {
                         }
                         Some(JSXAttributeValue::ExpressionContainer(expr)) => {
                             let mut value_str = String::new();
-                            let mut is_literal = false;
+                            let mut is_template_literal = false;
                             if let Some(e) = expr.expression.as_expression() {
-                                is_literal = matches!(
-                                    e,
-                                    Expression::StringLiteral(_) | Expression::TemplateLiteral(_)
-                                );
                                 value_str = expr_to_string(e);
+                                is_template_literal = matches!(e, Expression::TemplateLiteral(_));
                             }
-                            let needs_unescape = directive_type == "html" && !is_literal;
+                            // set:html needs $$unescapeHTML for expressions, but NOT for
+                            // template literals — the Go compiler passes template literals
+                            // through as-is without unescaping.
+                            let needs_unescape = directive_type == "html" && !is_template_literal;
                             (value_str, needs_unescape, false)
                         }
                         _ => ("void 0".to_string(), false, false),
@@ -267,9 +329,21 @@ impl<'a> AstroCodegen<'a> {
         None
     }
 
+    /// Returns `true` if this element should receive `$$definedVars` style injection.
+    fn should_inject_define_vars(&self, name: &str) -> bool {
+        !self.define_vars_values.is_empty() && css_scoping::should_scope_element(name)
+    }
+
     /// Print all HTML attributes for an element, handling transition directives,
-    /// `class`/`class:list` merging, and spread attributes.
-    pub(super) fn print_html_attributes(&mut self, attrs: &[JSXAttributeItem<'a>]) {
+    /// `class`/`class:list` merging, spread attributes, and optional scope injection.
+    ///
+    /// `scope_id` contains the scope identifier when the element should be scoped.
+    pub(super) fn print_html_attributes(
+        &mut self,
+        attrs: &[JSXAttributeItem<'a>],
+        scope_id: Option<&ScopeId>,
+        inject_define_vars: bool,
+    ) {
         // Check for class + class:list combination that needs merging
         let mut static_class: Option<&str> = None;
         let mut class_list_expr: Option<&JSXExpressionContainer<'a>> = None;
@@ -345,12 +419,37 @@ impl<'a> AstroCodegen<'a> {
             ));
         }
 
+        // Track whether the scope class was already injected into an existing class/class:list
+        let mut scope_injected = false;
+        let mut has_class_attr = false;
+        // Track whether $$definedVars style injection was already handled
+        let mut define_vars_style_injected = false;
+
+        // Pre-scan for class/class:list attributes
+        for attr in attrs {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                let name = get_jsx_attribute_name(&attr.name);
+                if name == "class" || name == "class:list" {
+                    has_class_attr = true;
+                    break;
+                }
+            }
+        }
+
         for attr in attrs {
             match attr {
                 JSXAttributeItem::Attribute(attr) => {
                     let name = get_jsx_attribute_name(&attr.name);
                     // Skip set:html and set:text — handled separately
                     if name == "set:html" || name == "set:text" {
+                        continue;
+                    }
+                    // Skip define:vars — Astro directive, not an HTML attribute
+                    if name == "define:vars" {
+                        continue;
+                    }
+                    // Skip is:global — Astro directive, not an HTML attribute
+                    if name == "is:global" {
                         continue;
                     }
                     // Skip slot attribute if we're inside a conditional slot context
@@ -370,16 +469,59 @@ impl<'a> AstroCodegen<'a> {
                     if has_merged_class && name == "class" {
                         continue;
                     }
-                    // Handle merged class:list
+                    // Handle `style` attribute with define:vars injection
+                    if name == "style" && inject_define_vars {
+                        self.print_style_with_define_vars(attr);
+                        define_vars_style_injected = true;
+                        self.define_vars_injected = true;
+                        continue;
+                    }
+                    // Handle merged class:list (with scope class injection)
                     if has_merged_class && name == "class:list" {
                         if let (Some(static_val), Some(expr)) = (static_class, class_list_expr) {
                             self.add_source_mapping_for_span(attr.span);
                             self.print(&format!("${{{}([", runtime::ADD_ATTRIBUTE));
-                            self.print(&format!("\"{}\"", escape_double_quotes(static_val)));
+                            // Inject scope class into static_val if needed
+                            if let Some(sid) = scope_id {
+                                if sid.is_attribute_strategy() {
+                                    // For attribute strategy, don't merge into class
+                                    self.print(&format!(
+                                        "\"{}\"",
+                                        escape_double_quotes(static_val)
+                                    ));
+                                } else {
+                                    self.print(&format!(
+                                        "\"{} {}\"",
+                                        escape_double_quotes(static_val),
+                                        sid.class_value()
+                                    ));
+                                    scope_injected = true;
+                                }
+                            } else {
+                                self.print(&format!("\"{}\"", escape_double_quotes(static_val)));
+                            }
                             self.print(", ");
                             self.print_jsx_expression(&expr.expression);
                             self.print("], \"class:list\")}");
                         }
+                        continue;
+                    }
+                    // Handle class attribute with scope class injection
+                    if let Some(sid) = scope_id
+                        && !sid.is_attribute_strategy()
+                        && name == "class"
+                    {
+                        self.print_html_attribute_with_scope(attr, &sid.class_value());
+                        scope_injected = true;
+                        continue;
+                    }
+                    // Handle class:list attribute with scope class injection
+                    if let Some(sid) = scope_id
+                        && !sid.is_attribute_strategy()
+                        && name == "class:list"
+                    {
+                        self.print_class_list_with_scope(attr, &sid.class_value());
+                        scope_injected = true;
                         continue;
                     }
                     // transition:persist-props → data-astro-transition-persist-props
@@ -395,10 +537,54 @@ impl<'a> AstroCodegen<'a> {
                 }
                 JSXAttributeItem::SpreadAttribute(spread) => {
                     self.add_source_mapping_for_span(spread.span);
+                    // If we have a scope identifier and no explicit class/class:list,
+                    // pass it as the 3rd argument to $$spreadAttributes
+                    if let Some(sid) = scope_id
+                        && !has_class_attr
+                        && !scope_injected
+                    {
+                        self.print(&format!("${{{}(", runtime::SPREAD_ATTRIBUTES));
+                        self.print_expression(&spread.argument);
+                        // Always pass the class through $$spreadAttributes for runtime
+                        // merging, regardless of scoped style strategy. The runtime's
+                        // spreadAttributes only handles { class: ... } — it doesn't
+                        // process arbitrary data attributes.
+                        // For attribute strategy, the data-astro-cid-* attribute is
+                        // added directly on the element by the fallback below.
+                        let sc = sid.class_value();
+                        self.print(&format!(",undefined,{{\"class\":\"{sc}\"}})}}"));
+                        // Note: do NOT set scope_injected here for attribute strategy,
+                        // so the data-astro-cid-* attribute is still added directly
+                        // on the element by the fallback at the end of this function.
+                        if !sid.is_attribute_strategy() {
+                            scope_injected = true;
+                        }
+                        continue;
+                    }
                     self.print(&format!("${{{}(", runtime::SPREAD_ATTRIBUTES));
                     self.print_expression(&spread.argument);
                     self.print(")}");
                 }
+            }
+        }
+
+        // If define:vars injection is needed but no `style` attribute existed, add one
+        if inject_define_vars && !define_vars_style_injected {
+            self.print(&format!(
+                "${{{}($$definedVars, \"style\")}}",
+                runtime::ADD_ATTRIBUTE
+            ));
+            self.define_vars_injected = true;
+        }
+
+        // If scope wasn't injected into any existing attribute, add it
+        if let Some(sid) = scope_id
+            && !scope_injected
+        {
+            if sid.is_attribute_strategy() {
+                self.print(&format!(" {}", sid.data_attr_name()));
+            } else {
+                self.print(&format!(" class=\"{}\"", sid.class_value()));
             }
         }
     }
@@ -450,6 +636,132 @@ impl<'a> AstroCodegen<'a> {
 
         // Convert to base32-like lowercase string (8 chars)
         Self::to_base32_like(hash)
+    }
+
+    /// Print a `style` attribute merged with `$$definedVars`.
+    ///
+    /// Handles all attribute value types following the Go compiler's `injectDefineVars()` logic:
+    /// - Empty/boolean `style` → `${$$addAttribute($$definedVars, "style")}`
+    /// - Quoted `style="val"` → `` ${$$addAttribute(`${"val"}; ${$$definedVars}`, "style")} ``
+    /// - Expression `style={expr}` → if object `{...}` then `${$$addAttribute([{...},$$definedVars], "style")}`,
+    ///   else `` ${$$addAttribute(`${expr}; ${$$definedVars}`, "style")} ``
+    /// - Shorthand `{style}` → `` ${$$addAttribute(`${style}; ${$$definedVars}`, "style")} ``
+    /// - Template literal `` style=`val` `` → `` ${$$addAttribute(`${`val`}; ${$$definedVars}`, "style")} ``
+    fn print_style_with_define_vars(&mut self, attr: &JSXAttribute<'a>) {
+        self.add_source_mapping_for_span(attr.span);
+        match &attr.value {
+            None => {
+                // Empty/boolean style → $$definedVars
+                self.print(&format!(
+                    "${{{}($$definedVars, \"style\")}}",
+                    runtime::ADD_ATTRIBUTE
+                ));
+            }
+            Some(JSXAttributeValue::StringLiteral(lit)) => {
+                // Quoted style="val" → `${"val"}; ${$$definedVars}`
+                let val = lit.value.as_str();
+                self.print(&format!(
+                    "${{{}(`${{\"{}\"}}; ${{$$definedVars}}`, \"style\")}}",
+                    runtime::ADD_ATTRIBUTE,
+                    escape_double_quotes(val)
+                ));
+            }
+            Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                if let Some(e) = expr.expression.as_expression() {
+                    // Check if the expression is an ObjectExpression at the AST level
+                    // (rather than relying on the string representation, which may be
+                    // wrapped in parentheses by the codegen).
+                    let is_object = matches!(e, Expression::ObjectExpression(_));
+                    let expr_str = expr_to_string(e);
+                    if is_object {
+                        // Object expression: [{...},$$definedVars]
+                        // Strip parentheses if present (oxc wraps objects in parens
+                        // to avoid ambiguity with block statements).
+                        let obj_str = expr_str
+                            .trim()
+                            .strip_prefix('(')
+                            .and_then(|s| s.strip_suffix(')'))
+                            .unwrap_or(expr_str.trim());
+                        self.print(&format!(
+                            "${{{}([{},$$definedVars], \"style\")}}",
+                            runtime::ADD_ATTRIBUTE,
+                            obj_str
+                        ));
+                    } else {
+                        // Other expression: `${expr}; ${$$definedVars}`
+                        self.print(&format!(
+                            "${{{}(`${{{}}}; ${{$$definedVars}}`, \"style\")}}",
+                            runtime::ADD_ATTRIBUTE,
+                            expr_str
+                        ));
+                    }
+                } else {
+                    // Fallback: just $$definedVars
+                    self.print(&format!(
+                        "${{{}($$definedVars, \"style\")}}",
+                        runtime::ADD_ATTRIBUTE
+                    ));
+                }
+            }
+            _ => {
+                // Fallback: just $$definedVars
+                self.print(&format!(
+                    "${{{}($$definedVars, \"style\")}}",
+                    runtime::ADD_ATTRIBUTE
+                ));
+            }
+        }
+    }
+
+    /// Print a class attribute with scope class appended.
+    fn print_html_attribute_with_scope(&mut self, attr: &JSXAttribute<'a>, scope_class: &str) {
+        self.add_source_mapping_for_span(attr.span);
+        match &attr.value {
+            None => {
+                // Empty class attribute → just the scope class
+                self.print(&format!(" class=\"{scope_class}\""));
+            }
+            Some(JSXAttributeValue::StringLiteral(lit)) => {
+                // Static class: append scope class
+                let val = lit.value.as_str();
+                if val.is_empty() {
+                    self.print(&format!(" class=\"{scope_class}\""));
+                } else {
+                    self.print(&format!(
+                        " class=\"{} {scope_class}\"",
+                        escape_html_attribute(val)
+                    ));
+                }
+            }
+            Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                // Dynamic class: expression + scope class
+                // Output: ${$$addAttribute((expr ?? "") + " astro-XXXX", "class")}
+                self.print(&format!("${{{}((", runtime::ADD_ATTRIBUTE));
+                self.print_jsx_expression(&expr.expression);
+                self.print(&format!(" ?? \"\") + \" {scope_class}\", \"class\")}}"));
+            }
+            _ => {
+                // Fallback: just output scope class
+                self.print(&format!(" class=\"{scope_class}\""));
+            }
+        }
+    }
+
+    /// Print a class:list attribute with scope class appended.
+    fn print_class_list_with_scope(&mut self, attr: &JSXAttribute<'a>, scope_class: &str) {
+        self.add_source_mapping_for_span(attr.span);
+        match &attr.value {
+            Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                // class:list={expr} → ${$$addAttribute([expr, "astro-XXXX"], "class:list")}
+                self.print(&format!("${{{}([(", runtime::ADD_ATTRIBUTE));
+                self.print_jsx_expression(&expr.expression);
+                self.print(&format!("), \"{scope_class}\"], \"class:list\")}}"));
+            }
+            _ => {
+                // Fallback: just output scope class
+                self.print(&format!(" class=\"{scope_class}\""));
+            }
+        }
     }
 
     /// Print a single HTML attribute (static or dynamic).

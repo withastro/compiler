@@ -1,4 +1,4 @@
-import { convertToTSX } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler-rs';
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { TSXResult } from '../../../types.js';
@@ -25,13 +25,13 @@ describe('tsx-errors/fragment-shorthand', { skip: true }, () => {
 		assert.strictEqual(result.diagnostics.length, 1);
 		assert.strictEqual(
 			result.diagnostics[0].text,
-			'Unable to assign attributes when using <> Fragment shorthand syntax!'
+			'Unable to assign attributes when using <> Fragment shorthand syntax!',
 		);
 		const loc = result.diagnostics[0].location;
 		assert.strictEqual(FIXTURE.split('\n')[loc.line - 1], `    < data-test="hello"><div></div></>`);
 		assert.strictEqual(
 			FIXTURE.split('\n')[loc.line - 1].slice(loc.column - 1, loc.column - 1 + loc.length),
-			`< data-test="hello">`
+			`< data-test="hello">`,
 		);
 	});
 });

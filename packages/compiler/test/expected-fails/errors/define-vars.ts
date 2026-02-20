@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { transform } from '@astrojs/compiler-rs';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
@@ -7,7 +7,7 @@ describe('define-vars', { skip: true }, () => {
 		const result = await transform(
 			`<Fragment><slot /></Fragment>
 <style define:vars={{ color: 'red' }}></style>`,
-			{ filename: '/src/components/Foo.astro' }
+			{ filename: '/src/components/Foo.astro' },
 		);
 		assert.ok(Array.isArray(result.diagnostics));
 		assert.strictEqual(result.diagnostics.length, 1);
@@ -18,7 +18,7 @@ describe('define-vars', { skip: true }, () => {
 		const result = await transform(
 			`<div><slot /></div>
 <style define:vars={{ color: 'red' }}></style>`,
-			{ filename: '/src/components/Foo.astro' }
+			{ filename: '/src/components/Foo.astro' },
 		);
 		assert.ok(Array.isArray(result.diagnostics));
 		assert.strictEqual(result.diagnostics.length, 0);

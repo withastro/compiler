@@ -1,4 +1,4 @@
-import { convertToTSX, transform } from '@astrojs/compiler';
+import { convertToTSX, transform } from '@astrojs/compiler-rs';
 import { TraceMap, generatedPositionFor, originalPositionFor } from '@jridgewell/trace-mapping';
 import sass from 'sass';
 
@@ -12,17 +12,9 @@ export async function preprocessStyle(value: any, attrs: any): Promise<any> {
 	return null;
 }
 
-export function transformSass(value: string) {
-	return new Promise((resolve, reject) => {
-		sass.render({ data: value }, (err, result) => {
-			if (err) {
-				reject(err);
-				return;
-			}
-			resolve({ code: result.css.toString('utf8'), map: result.map });
-			return;
-		});
-	});
+export function transformSass(value: string): { code: string } {
+	const result = sass.compileString(value);
+	return { code: result.css };
 }
 
 export function getPositionFor(input: string, snippet: string) {
@@ -36,18 +28,19 @@ export function getPositionFor(input: string, snippet: string) {
 		if (c === '\n') {
 			line++;
 			column = 0;
+		} else {
+			column++;
 		}
-		column++;
 		index++;
 	}
 	return null;
 }
 
-export async function testTSXSourcemap(input: string, snippet: string) {
+export function testTSXSourcemap(input: string, snippet: string) {
 	const snippetLoc = getPositionFor(input, snippet);
 	if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
 
-	const { code, map } = await convertToTSX(input, { sourcemap: 'both', filename: 'index.astro' });
+	const { map } = convertToTSX(input, { sourcemap: 'both', filename: 'index.astro' });
 	const tracer = new TraceMap(map as any);
 
 	const generated = generatedPositionFor(tracer, {
@@ -56,7 +49,6 @@ export async function testTSXSourcemap(input: string, snippet: string) {
 		column: snippetLoc.column,
 	});
 	if (!generated || generated.line === null) {
-		console.log(code);
 		throw new Error(`"${snippet}" position incorrectly mapped in generated output.`);
 	}
 	const originalPosition = originalPositionFor(tracer, {
@@ -71,7 +63,7 @@ export async function testJSSourcemap(input: string, snippet: string) {
 	const snippetLoc = getPositionFor(input, snippet);
 	if (!snippetLoc) throw new Error(`Unable to find "${snippet}"`);
 
-	const { code, map } = await transform(input, {
+	const { map } = await transform(input, {
 		sourcemap: 'both',
 		filename: 'index.astro',
 		resolvePath: (i: string) => i,
@@ -84,7 +76,6 @@ export async function testJSSourcemap(input: string, snippet: string) {
 		column: snippetLoc.column,
 	});
 	if (!generated || generated.line === null) {
-		console.log(code);
 		throw new Error(`"${snippet}" position incorrectly mapped in generated output.`);
 	}
 	const originalPosition = originalPositionFor(tracer, {

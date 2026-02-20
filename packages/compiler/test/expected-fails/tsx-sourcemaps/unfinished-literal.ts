@@ -1,4 +1,4 @@
-import { convertToTSX } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler-rs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -10,7 +10,7 @@ describe('tsx-sourcemaps/unfinished-literal', { skip: true }, () => {
 		try {
 			const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
 			assert.ok(output.code.includes('class={``}'));
-		} catch (e) {
+		} catch (_e) {
 			error = 1;
 		}
 
@@ -23,7 +23,7 @@ describe('tsx-sourcemaps/unfinished-literal', { skip: true }, () => {
 		try {
 			const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
 			assert.ok(output.code.includes(`id="gotcha"`));
-		} catch (e) {
+		} catch (_e) {
 			error = 1;
 		}
 
@@ -36,7 +36,7 @@ describe('tsx-sourcemaps/unfinished-literal', { skip: true }, () => {
 		try {
 			const output = await convertToTSX(input, { filename: 'index.astro', sourcemap: 'inline' });
 			assert.ok(output.code.includes(`id="gotcha"`));
-		} catch (e) {
+		} catch (_e) {
 			error = 1;
 		}
 

@@ -9,9 +9,6 @@ rust-version.workspace = true
 publish = false
 description = "Astro code generation - transforms Astro AST into JavaScript"
 
-[lints]
-workspace = true
-
 [lib]
 doctest = true
 
@@ -20,6 +17,7 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_codegen = { workspace = true, features = ["sourcemap"] }
+oxc_diagnostics = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["code_buffer"] }
 oxc_parser = { workspace = true, features = ["astro"] }
 oxc_semantic = { workspace = true }
@@ -30,7 +28,9 @@ oxc_transformer = { workspace = true }
 oxc_sourcemap = { workspace = true }
 
 cow-utils = { workspace = true }
+lightningcss = { workspace = true }
 rustc-hash = { workspace = true }
+smallvec = "1"
 
 [dev-dependencies]
 divan = { workspace = true }

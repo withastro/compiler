@@ -3,6 +3,7 @@ source: crates/astro_codegen/tests/snapshots.rs
 input_file: crates/astro_codegen/tests/fixtures/define_vars_on_style_tag_with_style_quoted_attribute_on_element.astro
 ---
 import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
+import "<stdin>?astro&type=style&index=0&lang.css";
 export const $$metadata = $$createMetadata(import.meta.url, {
 	modules: [],
 	hydratedComponents: [],
@@ -11,6 +12,7 @@ export const $$metadata = $$createMetadata(import.meta.url, {
 	hoisted: []
 });
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
-	return $$render`<style${$$addAttribute({ color: "green" }, "define:vars")}>h1{color:var(--color)}</style>${$$maybeRenderHead($$result)}<h1 style="color: yellow;">testing</h1>`;
+	const $$definedVars = $$defineStyleVars([{ color: "green" }]);
+	return $$render`${$$maybeRenderHead($$result)}<h1${$$addAttribute(`${"color: yellow;"}; ${$$definedVars}`, "style")} class="astro-2bzoa7ch">testing</h1>`;
 }, undefined, undefined);
 export default $$Component;

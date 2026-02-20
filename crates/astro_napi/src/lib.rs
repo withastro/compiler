@@ -19,20 +19,51 @@ use std::mem;
 use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
-use crate::error::OxcError;
-use astro_codegen::{HoistedScriptType, TransformOptions, transform};
+use std::collections::HashMap;
+
+use crate::error::DiagnosticMessage;
+use astro_codegen::{Diagnostic, HoistedScriptType, TransformOptions, extract_styles, transform};
 use oxc_allocator::Allocator;
 use oxc_estree::CompactTSSerializer;
 use oxc_estree::ESTree;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
-/// Options for compiling Astro files to JavaScript.
+/// Controls whether and how source maps are emitted.
+#[napi(string_enum)]
+pub enum SourcemapOption {
+    /// Generate a source map in the `map` field of the result.
+    #[napi(value = "external")]
+    External,
+    /// Append an inline `//# sourceMappingURL=data:...` comment to the code.
+    /// The `map` field will be empty.
+    #[napi(value = "inline")]
+    Inline,
+    /// Both: append the inline comment **and** populate the `map` field.
+    #[napi(value = "both")]
+    Both,
+}
+
+/// Strategy for CSS scoping.
 ///
-/// Some fields (such as `sourcemap`, `compact`, CSS scoping) are stubs accepted for API compatibility.
+/// Determines how Astro scopes CSS selectors to components.
+#[napi(string_enum)]
+pub enum ScopedStyleStrategy {
+    /// Use `:where(.astro-XXXX)` selector (default).
+    #[napi(value = "where")]
+    Where,
+    /// Use `.astro-XXXX` class selector.
+    #[napi(value = "class")]
+    Class,
+    /// Use `[data-astro-cid-XXXX]` attribute selector.
+    #[napi(value = "attribute")]
+    Attribute,
+}
+
+/// Options for compiling Astro files to JavaScript.
 #[napi(object)]
 #[derive(Default)]
-pub struct AstroCompileOptions {
+pub struct CompileOptions {
     /// The filename of the Astro component being compiled.
     /// Used in the `$$createComponent` call for debugging.
     pub filename: Option<String>,
@@ -43,14 +74,17 @@ pub struct AstroCompileOptions {
 
     /// The import specifier for Astro runtime functions.
     /// Defaults to `"astro/runtime/server/index.js"`.
+    #[napi(js_name = "internalURL")]
     pub internal_url: Option<String>,
 
-    /// Whether to generate a source map.
-    /// When `true`, the `map` field in the result will contain a JSON-encoded
-    /// source map that maps the generated JavaScript back to the original `.astro` source.
+    /// Source map generation mode.
     ///
-    /// @default false
-    pub sourcemap: Option<bool>,
+    /// - `"external"`: populate the `map` field with a JSON source map.
+    /// - `"inline"`: append an inline `//# sourceMappingURL=data:...` comment; `map` will be empty.
+    /// - `"both"`: append the inline comment **and** populate `map`.
+    /// - `undefined`: no source map (default).
+    #[napi(ts_type = "'external' | 'inline' | 'both'")]
+    pub sourcemap: Option<SourcemapOption>,
 
     /// Arguments passed to `$$createAstro` when the Astro global is used.
     /// Defaults to `"https://astro.build"`.
@@ -68,14 +102,15 @@ pub struct AstroCompileOptions {
     /// @default false
     pub result_scoped_slot: Option<bool>,
 
-    /// Strategy for CSS scoping: `"where"`, `"class"`, or `"attribute"`.
-    /// **Stub**: not yet implemented.
+    /// Strategy for CSS scoping.
     ///
     /// @default "where"
-    pub scoped_style_strategy: Option<String>,
+    #[napi(ts_type = "'where' | 'class' | 'attribute'")]
+    pub scoped_style_strategy: Option<ScopedStyleStrategy>,
 
     /// URL for the view transitions animation CSS.
-    /// **Stub**: not yet implemented.
+    /// When set, replaces the default `"transitions.css"` bare specifier in the emitted import.
+    #[napi(js_name = "transitionsAnimationURL")]
     pub transitions_animation_url: Option<String>,
 
     /// Whether to annotate generated code with the source file path.
@@ -103,12 +138,23 @@ pub struct AstroCompileOptions {
     ///
     /// @default false
     pub resolve_path_provided: Option<bool>,
+
+    /// Preprocessed style content, indexed by extractable style order.
+    ///
+    /// When provided, the codegen uses these strings as CSS content instead
+    /// of reading from the AST's `<style>` text children. Each entry
+    /// corresponds to an extractable style in document order (matching the
+    /// indices from `extractStylesSync`).
+    ///
+    /// An entry of `undefined` means "use the original content from the AST".
+    /// An entry of `""` means "style had a preprocessing error — use empty content".
+    pub preprocessed_styles: Option<Vec<Option<String>>>,
 }
 
 /// A hoisted script extracted from an Astro component.
 #[napi(object)]
 #[derive(Clone)]
-pub struct NapiHoistedScript {
+pub struct HoistedScript {
     /// The script type: `"inline"` or `"external"`.
     #[napi(js_name = "type")]
     pub script_type: String,
@@ -118,10 +164,10 @@ pub struct NapiHoistedScript {
     pub src: Option<String>,
 }
 
-/// A hydrated component reference found in the template.
+/// A component reference found in the template (hydrated, client-only, or server-deferred).
 #[napi(object)]
 #[derive(Clone)]
-pub struct NapiHydratedComponent {
+pub struct Component {
     /// The export name from the module (e.g., `"default"`).
     pub export_name: String,
     /// The local variable name used in the component.
@@ -134,7 +180,7 @@ pub struct NapiHydratedComponent {
 
 /// Result of compiling an Astro file.
 #[napi(object)]
-pub struct AstroCompileResult {
+pub struct CompileResult {
     /// The generated JavaScript code.
     pub code: String,
     /// Source map JSON string. Contains a JSON-encoded source map when
@@ -142,37 +188,92 @@ pub struct AstroCompileResult {
     pub map: String,
     /// CSS scope hash for the component.
     pub scope: String,
-    /// Extracted CSS from `<style>` tags (empty until CSS support).
+    /// Extracted CSS from `<style>` tags.
     pub css: Vec<String>,
     /// Hoisted scripts extracted from the template.
-    pub scripts: Vec<NapiHoistedScript>,
+    pub scripts: Vec<HoistedScript>,
     /// Components with `client:*` hydration directives (except `client:only`).
-    pub hydrated_components: Vec<NapiHydratedComponent>,
+    pub hydrated_components: Vec<Component>,
     /// Components with `client:only` directive.
-    pub client_only_components: Vec<NapiHydratedComponent>,
+    pub client_only_components: Vec<Component>,
     /// Components with `server:defer` directive.
-    pub server_components: Vec<NapiHydratedComponent>,
+    pub server_components: Vec<Component>,
     /// Whether the template contains an explicit `<head>` element.
     pub contains_head: bool,
     /// Whether the component propagates head content.
     pub propagation: bool,
-    /// Style processing errors (stub: always empty).
+    /// Style processing errors.
     pub style_error: Vec<String>,
-    /// Diagnostic messages (stub: always empty).
-    pub diagnostics: Vec<String>,
-    /// Any compilation errors encountered (oxc-specific).
-    pub errors: Vec<OxcError>,
+    /// Diagnostic messages (errors, warnings, hints).
+    pub diagnostics: Vec<DiagnosticMessage>,
 }
 
-fn parse_scoped_style_strategy(s: Option<&str>) -> astro_codegen::ScopedStyleStrategy {
+/// An extractable `<style>` block from an Astro component.
+///
+/// Returned by `extractStylesSync` for each `<style>` element that would be
+/// extracted and processed during compilation.
+#[napi(object)]
+#[derive(Clone)]
+pub struct StyleBlock {
+    /// Zero-based index of this style block among all extractable styles.
+    pub index: u32,
+    /// The CSS/preprocessor text content between `<style>` and `</style>`.
+    pub content: String,
+    /// The element's attributes as key-value pairs.
+    /// Only quoted and empty (boolean) attributes are included — expression
+    /// attributes (like `define:vars={...}`) are omitted.
+    pub attrs: HashMap<String, String>,
+}
+
+/// Extract style block metadata from an Astro source without performing compilation.
+///
+/// Returns an array of style blocks in document order. Each block contains the
+/// text content and attributes of an extractable `<style>` element.
+///
+/// This is the first step in the "Rust extract → TS preprocess → Rust compile"
+/// pipeline for `preprocessStyle` support.
+#[napi]
+pub fn extract_styles_sync(source_text: String) -> Vec<StyleBlock> {
+    let allocator = Allocator::default();
+    let source_type = SourceType::astro();
+
+    let ret = Parser::new(&allocator, &source_text, source_type)
+        .with_options(ParseOptions::default())
+        .parse_astro();
+
+    if !ret.errors.is_empty() {
+        return Vec::new();
+    }
+
+    let blocks = extract_styles(&ret.root);
+    blocks
+        .into_iter()
+        .map(|b| StyleBlock {
+            index: b.index as u32,
+            content: b.content,
+            attrs: b.attrs.into_iter().collect(),
+        })
+        .collect()
+}
+
+fn napi_to_codegen_sourcemap(s: &Option<SourcemapOption>) -> astro_codegen::SourcemapOption {
     match s {
-        Some("class") => astro_codegen::ScopedStyleStrategy::Class,
-        Some("attribute") => astro_codegen::ScopedStyleStrategy::Attribute,
+        Some(SourcemapOption::External) => astro_codegen::SourcemapOption::External,
+        Some(SourcemapOption::Inline) => astro_codegen::SourcemapOption::Inline,
+        Some(SourcemapOption::Both) => astro_codegen::SourcemapOption::Both,
+        None => astro_codegen::SourcemapOption::None,
+    }
+}
+
+fn napi_to_codegen_strategy(s: &Option<ScopedStyleStrategy>) -> astro_codegen::ScopedStyleStrategy {
+    match s {
+        Some(ScopedStyleStrategy::Class) => astro_codegen::ScopedStyleStrategy::Class,
+        Some(ScopedStyleStrategy::Attribute) => astro_codegen::ScopedStyleStrategy::Attribute,
         _ => astro_codegen::ScopedStyleStrategy::Where,
     }
 }
 
-fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> AstroCompileResult {
+fn compile_astro_impl(source_text: &str, options: &CompileOptions) -> CompileResult {
     let allocator = Allocator::default();
     let source_type = SourceType::astro();
 
@@ -181,10 +282,11 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
         .with_options(ParseOptions::default())
         .parse_astro();
 
-    // If there are parse errors, return them
+    // If there are parse errors, return them as diagnostics
     if !ret.errors.is_empty() {
-        let errors = OxcError::from_diagnostics("", source_text, ret.errors);
-        return AstroCompileResult {
+        let diagnostics = Diagnostic::from_oxc_list(source_text, &ret.errors);
+        let diagnostics = DiagnosticMessage::from_codegen_list(diagnostics);
+        return CompileResult {
             code: String::new(),
             map: String::new(),
             scope: String::new(),
@@ -196,8 +298,7 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
             contains_head: false,
             propagation: false,
             style_error: Vec::new(),
-            diagnostics: Vec::new(),
-            errors,
+            diagnostics,
         };
     }
 
@@ -208,21 +309,17 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
         filename: options.filename.clone(),
         normalized_filename: options.normalized_filename.clone(),
         internal_url: options.internal_url.clone(),
-        sourcemap: options.sourcemap.unwrap_or(false),
+        sourcemap: napi_to_codegen_sourcemap(&options.sourcemap),
         astro_global_args: options.astro_global_args.clone(),
         compact: options.compact.unwrap_or(false),
         result_scoped_slot: options.result_scoped_slot.unwrap_or(false),
-        scoped_style_strategy: parse_scoped_style_strategy(
-            options.scoped_style_strategy.as_deref(),
-        ),
+        scoped_style_strategy: napi_to_codegen_strategy(&options.scoped_style_strategy),
         transitions_animation_url: options.transitions_animation_url.clone(),
         annotate_source_file: options.annotate_source_file.unwrap_or(false),
         strip_slot_comments: options.strip_slot_comments.unwrap_or(true),
         resolve_path: None,
-        // Signal that caller has resolvePath — codegen skips $$metadata emission,
-        // but still uses filepath.Join fallback for resolved_path. The real
-        // resolution happens post-compilation in the TS wrapper layer.
         resolve_path_provided,
+        preprocessed_styles: options.preprocessed_styles.clone(),
     };
 
     // Generate JavaScript code
@@ -233,12 +330,12 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
         .scripts
         .into_iter()
         .map(|s| match s.script_type {
-            HoistedScriptType::External => NapiHoistedScript {
+            HoistedScriptType::External => HoistedScript {
                 script_type: "external".to_string(),
                 src: s.src,
                 code: None,
             },
-            HoistedScriptType::Inline => NapiHoistedScript {
+            HoistedScriptType::Inline => HoistedScript {
                 script_type: "inline".to_string(),
                 code: s.code,
                 src: None,
@@ -246,40 +343,30 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
         })
         .collect();
 
+    let map_component = |c: astro_codegen::TransformResultHydratedComponent| Component {
+        export_name: c.export_name,
+        local_name: c.local_name,
+        specifier: c.specifier,
+        resolved_path: c.resolved_path,
+    };
+
     let hydrated_components = result
         .hydrated_components
         .into_iter()
-        .map(|c| NapiHydratedComponent {
-            export_name: c.export_name,
-            local_name: c.local_name,
-            specifier: c.specifier,
-            resolved_path: c.resolved_path,
-        })
+        .map(map_component)
         .collect();
-
     let client_only_components = result
         .client_only_components
         .into_iter()
-        .map(|c| NapiHydratedComponent {
-            export_name: c.export_name,
-            local_name: c.local_name,
-            specifier: c.specifier,
-            resolved_path: c.resolved_path,
-        })
+        .map(map_component)
         .collect();
-
     let server_components = result
         .server_components
         .into_iter()
-        .map(|c| NapiHydratedComponent {
-            export_name: c.export_name,
-            local_name: c.local_name,
-            specifier: c.specifier,
-            resolved_path: c.resolved_path,
-        })
+        .map(map_component)
         .collect();
 
-    AstroCompileResult {
+    CompileResult {
         code: result.code,
         map: result.map,
         scope: result.scope,
@@ -291,19 +378,15 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
         contains_head: result.contains_head,
         propagation: result.propagation,
         style_error: result.style_error,
-        diagnostics: result.diagnostics,
-        errors: Vec::new(),
+        diagnostics: DiagnosticMessage::from_codegen_list(result.diagnostics),
     }
 }
 
 /// Compile Astro file to JavaScript synchronously on current thread.
 ///
-/// This transforms an Astro file into JavaScript code compatible with the Astro runtime.
-/// The output follows the same format as the official Astro compiler.
-///
 /// @example
 /// ```javascript
-/// import { compileAstroSync } from '@astrojs/compiler';
+/// import { compileAstroSync } from '@astrojs/compiler-binding';
 ///
 /// const result = compileAstroSync(`---
 /// const name = "World";
@@ -315,24 +398,20 @@ fn compile_astro_impl(source_text: &str, options: &AstroCompileOptions) -> Astro
 /// console.log(result.code); // Generated JavaScript
 /// ```
 #[napi]
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub fn compile_astro_sync(
-    source_text: String,
-    options: Option<AstroCompileOptions>,
-) -> AstroCompileResult {
+pub fn compile_astro_sync(source_text: String, options: Option<CompileOptions>) -> CompileResult {
     let options = options.unwrap_or_default();
     compile_astro_impl(&source_text, &options)
 }
 
-pub struct AstroCompileTask {
+pub struct CompileTask {
     source_text: String,
-    options: AstroCompileOptions,
+    options: CompileOptions,
 }
 
 #[napi]
-impl Task for AstroCompileTask {
-    type JsValue = AstroCompileResult;
-    type Output = AstroCompileResult;
+impl Task for CompileTask {
+    type JsValue = CompileResult;
+    type Output = CompileResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
         let source_text = mem::take(&mut self.source_text);
@@ -346,16 +425,13 @@ impl Task for AstroCompileTask {
 
 /// Compile Astro file to JavaScript asynchronously on a separate thread.
 ///
-/// This transforms an Astro file into JavaScript code compatible with the Astro runtime.
-/// The output follows the same format as the official Astro compiler.
-///
 /// Generally `compileAstroSync` is preferable to use as it does not have the overhead
 /// of spawning a thread. If you need to parallelize compilation of multiple files,
 /// it is recommended to use worker threads.
 ///
 /// @example
 /// ```javascript
-/// import { compileAstro } from '@astrojs/compiler';
+/// import { compileAstro } from '@astrojs/compiler-binding';
 ///
 /// const result = await compileAstro(`---
 /// const name = "World";
@@ -369,10 +445,10 @@ impl Task for AstroCompileTask {
 #[napi]
 pub fn compile_astro(
     source_text: String,
-    options: Option<AstroCompileOptions>,
-) -> AsyncTask<AstroCompileTask> {
+    options: Option<CompileOptions>,
+) -> AsyncTask<CompileTask> {
     let options = options.unwrap_or_default();
-    AsyncTask::new(AstroCompileTask {
+    AsyncTask::new(CompileTask {
         source_text,
         options,
     })
@@ -380,15 +456,15 @@ pub fn compile_astro(
 
 /// Result of parsing an Astro file into an AST.
 #[napi(object)]
-pub struct AstroParseResult {
+pub struct ParseResult {
     /// The AST serialized as a JSON string (ESTree-compatible format from oxc).
     /// Call `JSON.parse()` on this to get the AST object.
     pub ast: String,
-    /// Any parse errors encountered.
-    pub errors: Vec<OxcError>,
+    /// Diagnostic messages (parse errors, warnings).
+    pub diagnostics: Vec<DiagnosticMessage>,
 }
 
-fn parse_astro_impl(source_text: &str) -> AstroParseResult {
+fn parse_astro_impl(source_text: &str) -> ParseResult {
     let allocator = Allocator::default();
     let source_type = SourceType::astro();
 
@@ -396,10 +472,11 @@ fn parse_astro_impl(source_text: &str) -> AstroParseResult {
         .with_options(ParseOptions::default())
         .parse_astro();
 
-    let errors = if ret.errors.is_empty() {
+    let diagnostics = if ret.errors.is_empty() {
         Vec::new()
     } else {
-        OxcError::from_diagnostics("", source_text, ret.errors)
+        let diags = Diagnostic::from_oxc_list(source_text, &ret.errors);
+        DiagnosticMessage::from_codegen_list(diags)
     };
 
     // Serialize the AST to JSON using the ESTree serializer
@@ -407,7 +484,7 @@ fn parse_astro_impl(source_text: &str) -> AstroParseResult {
     ret.root.serialize(&mut serializer);
     let ast = serializer.into_string();
 
-    AstroParseResult { ast, errors }
+    ParseResult { ast, diagnostics }
 }
 
 /// Parse an Astro file into an AST synchronously.
@@ -416,7 +493,7 @@ fn parse_astro_impl(source_text: &str) -> AstroParseResult {
 ///
 /// @example
 /// ```javascript
-/// import { parseAstroSync } from '@astrojs/compiler';
+/// import { parseAstroSync } from '@astrojs/compiler-binding';
 ///
 /// const { ast } = parseAstroSync(`---
 /// const name = "World";
@@ -427,19 +504,18 @@ fn parse_astro_impl(source_text: &str) -> AstroParseResult {
 /// console.log(tree.type); // "AstroRoot"
 /// ```
 #[napi]
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub fn parse_astro_sync(source_text: String) -> AstroParseResult {
+pub fn parse_astro_sync(source_text: String) -> ParseResult {
     parse_astro_impl(&source_text)
 }
 
-pub struct AstroParseTask {
+pub struct ParseTask {
     source_text: String,
 }
 
 #[napi]
-impl Task for AstroParseTask {
-    type JsValue = AstroParseResult;
-    type Output = AstroParseResult;
+impl Task for ParseTask {
+    type JsValue = ParseResult;
+    type Output = ParseResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
         let source_text = mem::take(&mut self.source_text);
@@ -455,6 +531,6 @@ impl Task for AstroParseTask {
 ///
 /// Returns the oxc AST in ESTree-compatible JSON format.
 #[napi]
-pub fn parse_astro(source_text: String) -> AsyncTask<AstroParseTask> {
-    AsyncTask::new(AstroParseTask { source_text })
+pub fn parse_astro(source_text: String) -> AsyncTask<ParseTask> {
+    AsyncTask::new(ParseTask { source_text })
 }

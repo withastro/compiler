@@ -15,6 +15,6 @@ const Astro = $$Astro;
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 	const Astro = $$result.createAstro($$props, $$slots);
 	Astro.self = $$Component;
-	return $$render`${$$render`${$$renderComponent($$result, "Fragment", Fragment, {}, { "default": () => $$render`${$$renderComponent($$result, "Fragment", Fragment, {}, { "default": () => $$render`${$$unescapeHTML(`<${Node.tag} ${stringifyAttributes(Node.attributes)}>`)}` })}${Node.children.map((child) => $$render`${$$renderComponent($$result, "Astro.self", Astro.self, { "node": child })}`)}${$$renderComponent($$result, "Fragment", Fragment, {}, { "default": () => $$render`${$$unescapeHTML(`</${Node.tag}>`)}` })}` })}`}`;
+	return $$render`${$$render`${$$renderComponent($$result, "Fragment", Fragment, {}, { "default": () => $$render`${$$renderComponent($$result, "Fragment", Fragment, {}, { "default": () => $$render`${`<${Node.tag} ${stringifyAttributes(Node.attributes)}>`}` })}${Node.children.map((child) => $$render`${$$renderComponent($$result, "Astro.self", Astro.self, { "node": child })}`)}${$$renderComponent($$result, "Fragment", Fragment, {}, { "default": () => $$render`${`</${Node.tag}>`}` })}` })}`}`;
 }, undefined, undefined);
 export default $$Component;

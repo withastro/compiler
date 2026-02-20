@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { transform } from '@astrojs/compiler';
+import { transform } from '@astrojs/compiler-rs';
 
 const FIXTURE = `
 ---

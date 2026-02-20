@@ -1,4 +1,4 @@
-import { convertToTSX } from '@astrojs/compiler';
+import { convertToTSX } from '@astrojs/compiler-rs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -128,7 +128,7 @@ describe('tsx/meta', { skip: true }, () => {
 					lang: '',
 				},
 			],
-			'expected metaRanges.scripts to match snapshot'
+			'expected metaRanges.scripts to match snapshot',
 		);
 	});
 
@@ -176,7 +176,7 @@ describe('tsx/meta', { skip: true }, () => {
 					lang: 'pcss',
 				},
 			],
-			'expected metaRanges.styles to match snapshot'
+			'expected metaRanges.styles to match snapshot',
 		);
 	});
 
@@ -210,7 +210,7 @@ describe('tsx/meta', { skip: true }, () => {
 					lang: '',
 				},
 			],
-			'expected metaRanges.scripts to match snapshot'
+			'expected metaRanges.scripts to match snapshot',
 		);
 		assert.deepStrictEqual(
 			metaRanges.styles,
@@ -234,7 +234,7 @@ describe('tsx/meta', { skip: true }, () => {
 					lang: 'css',
 				},
 			],
-			'expected metaRanges.styles to match snapshot'
+			'expected metaRanges.styles to match snapshot',
 		);
 	});
 
@@ -268,7 +268,7 @@ describe('tsx/meta', { skip: true }, () => {
 					lang: '',
 				},
 			],
-			'expected metaRanges.scripts to match snapshot'
+			'expected metaRanges.scripts to match snapshot',
 		);
 	});
 });

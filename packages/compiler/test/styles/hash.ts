@@ -1,4 +1,4 @@
-import { transform } from '@astrojs/compiler';
+import { transform } from '@astrojs/compiler-rs';
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -36,7 +36,7 @@ const scopes: string[] = [];
 describe('styles/hash', () => {
 	before(async () => {
 		const [{ scope: a }, { scope: b }, { scope: c }, { scope: d }] = await Promise.all(
-			[FIXTURE_A, FIXTURE_B, FIXTURE_C, FIXTURE_D].map((source) => transform(source))
+			[FIXTURE_A, FIXTURE_B, FIXTURE_C, FIXTURE_D].map((source) => transform(source)),
 		);
 		scopes.push(a, b, c, d);
 	});

@@ -11,6 +11,6 @@ export const $$metadata = $$createMetadata(import.meta.url, {
 	hoisted: []
 });
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
-	return $$render`${$$renderComponent($$result, "Layout", Layout, {})}`;
+	return $$render`${$$renderScript($$result, "/src/pages/index.astro?astro&type=script&index=0&lang.ts")}${$$renderComponent($$result, "Layout", Layout, {})}`;
 }, undefined, undefined);
 export default $$Component;
