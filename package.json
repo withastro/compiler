@@ -7,7 +7,7 @@
     "url": "https://github.com/withastro/compiler.git"
   },
   "scripts": {
-    "build": "make wasm",
+    "build": "CGO_ENABLED=0 GOOS=js GOARCH=wasm go build \"-ldflags=-s -w\" -trimpath -o ./packages/compiler/wasm/astro.wasm ./cmd/astro-wasm/astro-wasm.go",
     "build:compiler": "pnpm --filter @astrojs/compiler run build",
     "build:all": "pnpm run build && pnpm run build:compiler",
     "check": "biome check",
