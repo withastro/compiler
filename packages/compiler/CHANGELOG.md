@@ -1,5 +1,13 @@
 # @astrojs/compiler-rs
 
+## 0.1.1
+
+### Patch Changes
+
+- ae6e49c: Fixes various issues encountered in Astro tests
+- Updated dependencies [ae6e49c]
+  - @astrojs/compiler-binding@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
