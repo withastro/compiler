@@ -411,10 +411,7 @@ impl<'a> AstroCodegen<'a> {
     }
 
     /// Print a regular/async/generator function expression with JSX-aware body.
-    pub(super) fn print_function_expression(
-        &mut self,
-        func: &oxc_ast::ast::Function<'a>,
-    ) {
+    pub(super) fn print_function_expression(&mut self, func: &oxc_ast::ast::Function<'a>) {
         // `async function* name(params) { body }`
         if func.r#async {
             self.print("async ");

@@ -1283,14 +1283,13 @@ impl<'a> AstroCodegen<'a> {
         // Head propagation is enabled for both transition directives AND server:defer components.
         // (server:defer does NOT set uses_transitions — that's transition-specific — but still
         // needs the "self" propagation arg so that <head> content is forwarded correctly.)
-        let propagation =
-            if self.scan_result.uses_transitions
-                || !self.scan_result.server_deferred_components.is_empty()
-            {
-                "\"self\""
-            } else {
-                "undefined"
-            };
+        let propagation = if self.scan_result.uses_transitions
+            || !self.scan_result.server_deferred_components.is_empty()
+        {
+            "\"self\""
+        } else {
+            "undefined"
+        };
         self.println(&format!("}}, {filename_part}, {propagation});"));
     }
 
@@ -3723,7 +3722,11 @@ const slotName = "dynamic";
         let attrs = &blocks[0].attrs;
         let lang = attrs.iter().find(|(k, _)| k == "lang");
         assert!(lang.is_some(), "lang key must be present: {attrs:?}");
-        assert_eq!(lang.unwrap().1, "scss", "lang value must be 'scss': {attrs:?}");
+        assert_eq!(
+            lang.unwrap().1,
+            "scss",
+            "lang value must be 'scss': {attrs:?}"
+        );
     }
 
     #[test]
@@ -3771,7 +3774,11 @@ const slotName = "dynamic";
         let source = "<style define:vars={{ color: 'red' }}>h1 { color: var(--color); }</style>";
         let blocks = parse_and_extract_styles(source);
 
-        assert_eq!(blocks.len(), 1, "Style with define:vars should still be extracted");
+        assert_eq!(
+            blocks.len(),
+            1,
+            "Style with define:vars should still be extracted"
+        );
         let has_define_vars = blocks[0].attrs.iter().any(|(k, _)| k == "define:vars");
         assert!(
             !has_define_vars,
@@ -3789,7 +3796,11 @@ const slotName = "dynamic";
 <style>c { color: green; }</style>";
         let blocks = parse_and_extract_styles(source);
 
-        assert_eq!(blocks.len(), 3, "Should extract three style blocks: {blocks:?}");
+        assert_eq!(
+            blocks.len(),
+            3,
+            "Should extract three style blocks: {blocks:?}"
+        );
         assert_eq!(blocks[0].index, 0);
         assert_eq!(blocks[1].index, 1);
         assert_eq!(blocks[2].index, 2);
@@ -3816,7 +3827,7 @@ const slotName = "dynamic";
         assert_eq!(blocks.len(), 1);
         let attrs = &blocks[0].attrs;
         assert!(
-            attrs.iter().any(|(k, v)| k == "is:global" && v == ""),
+            attrs.iter().any(|(k, v)| k == "is:global" && v.is_empty()),
             "is:global must be present with empty value: {attrs:?}"
         );
         assert!(
@@ -4047,10 +4058,9 @@ const html = '<b>bold</b>';
     }
 
     #[test]
-    fn test_set_html_template_literal_uses_unescape_html() {
-        // `set:html={`template ${literal}`}` must ALSO wrap with $$unescapeHTML.
-        // This was a bug where template literals were treated as "already safe literals"
-        // and bypassed $$unescapeHTML — now fixed.
+    fn test_set_html_template_literal_no_unescape_html() {
+        // `set:html={`template ${literal}`}` must NOT wrap with $$unescapeHTML.
+        // The Go compiler passes template literals through as-is — matching Go behavior.
         let source = r#"---
 const name = 'world';
 ---
@@ -4058,8 +4068,12 @@ const name = 'world';
         let output = compile_astro(source);
 
         assert!(
-            output.contains("$$unescapeHTML"),
-            "set:html with template literal must use $$unescapeHTML: {output}"
+            !output.contains("$$unescapeHTML(`"),
+            "set:html with template literal must NOT use $$unescapeHTML: {output}"
+        );
+        assert!(
+            output.contains("`Hello <b>${name}</b>`"),
+            "set:html template literal should be passed through as-is: {output}"
         );
     }
 

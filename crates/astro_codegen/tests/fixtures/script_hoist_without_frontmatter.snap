@@ -8,13 +8,10 @@ export const $$metadata = $$createMetadata(import.meta.url, {
 	hydratedComponents: [],
 	clientOnlyComponents: [],
 	hydrationDirectives: new Set([]),
-	hoisted: [{
-		type: "inline",
-		value: `console.log("Hello");`
-	}]
+	hoisted: []
 });
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 	return $$render`${$$maybeRenderHead($$result)}<main>
-                                ${$$renderScript($$result, "/src/pages/index.astro?astro&type=script&index=0&lang.ts")}</main>`;
+                                <script type="module" hoist>console.log("Hello");<\/script></main>`;
 }, undefined, undefined);
 export default $$Component;

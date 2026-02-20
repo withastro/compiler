@@ -103,15 +103,14 @@ impl<'a> AstroCodegen<'a> {
         let is_custom = is_custom_element(name);
 
         // Check for server:defer directive
-        let mut server_defer_info =
-            if Self::has_server_defer(&el.opening_element.attributes) {
-                Some(ServerDeferInfo {
-                    component_path: None,
-                    component_export: None,
-                })
-            } else {
-                None
-            };
+        let mut server_defer_info = if Self::has_server_defer(&el.opening_element.attributes) {
+            Some(ServerDeferInfo {
+                component_path: None,
+                component_export: None,
+            })
+        } else {
+            None
+        };
 
         // Resolve component path and export for client:* hydrated components
         // This info is used for client:component-path and client:component-export attributes
@@ -158,8 +157,7 @@ impl<'a> AstroCodegen<'a> {
                     };
                 }
             } else if let Some(import_info) = self.component_imports.get(name) {
-                info.component_path =
-                    Some(self.options.resolve_specifier(&import_info.specifier));
+                info.component_path = Some(self.options.resolve_specifier(&import_info.specifier));
                 info.component_export = Some(import_info.export_name.clone());
             }
         }
@@ -307,10 +305,12 @@ impl<'a> AstroCodegen<'a> {
                         }
                         Some(JSXAttributeValue::ExpressionContainer(expr)) => {
                             if let Some(e) = expr.expression.as_expression() {
-                                // set:html in an expression container always needs $$unescapeHTML,
-                                // even for static template literals — they may contain HTML tags
-                                // that must not be double-escaped. Matches Go compiler behavior.
-                                let needs_unescape = is_html;
+                                // set:html needs $$unescapeHTML for expressions, but NOT for
+                                // template literals — the Go compiler passes template literals
+                                // through as-is without unescaping.
+                                let is_template_literal =
+                                    matches!(e, Expression::TemplateLiteral(_));
+                                let needs_unescape = is_html && !is_template_literal;
                                 let code = expr_to_string(e);
                                 return Some((code, is_html, needs_unescape, false, attr.span));
                             }

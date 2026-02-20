@@ -3,7 +3,6 @@ source: crates/astro_codegen/tests/snapshots.rs
 input_file: crates/astro_codegen/tests/fixtures/full_page_layout.astro
 ---
 import { Fragment, render as $$render, createAstro as $$createAstro, createComponent as $$createComponent, renderComponent as $$renderComponent, renderHead as $$renderHead, maybeRenderHead as $$maybeRenderHead, unescapeHTML as $$unescapeHTML, renderSlot as $$renderSlot, mergeSlots as $$mergeSlots, addAttribute as $$addAttribute, spreadAttributes as $$spreadAttributes, defineStyleVars as $$defineStyleVars, defineScriptVars as $$defineScriptVars, renderTransition as $$renderTransition, createTransitionScope as $$createTransitionScope, renderScript as $$renderScript, createMetadata as $$createMetadata } from "http://localhost:3000/";
-import "<stdin>?astro&type=style&index=0&lang.css";
 import BaseHead from "~/components/BaseHead.astro";
 import Footer from "~/components/Footer.astro";
 import Header from "~/components/Header.astro";
@@ -11,6 +10,7 @@ import HeaderDrawerContent from "~/components/HeaderDrawerContent.astro";
 import HeaderNav from "~/components/HeaderNav.astro";
 import SkipLink from "~/components/SkipLink.astro";
 import "~/styles/tailwind.css";
+import "<stdin>?astro&type=style&index=0&lang.css";
 import * as $$module1 from "~/components/BaseHead.astro";
 import * as $$module2 from "~/components/Footer.astro";
 import * as $$module3 from "~/components/Header.astro";

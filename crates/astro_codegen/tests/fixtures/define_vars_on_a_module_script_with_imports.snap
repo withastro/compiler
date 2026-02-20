@@ -14,6 +14,6 @@ export const $$metadata = $$createMetadata(import.meta.url, {
 	}]
 });
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
-	return $$render`${$$renderScript($$result, "/src/pages/index.astro?astro&type=script&index=0&lang.ts")}`;
+	return $$render`<script>(function(){${$$defineScriptVars({ foo: "bar" })}import 'foo';\\nvar three = foo;})();<\/script>`;
 }, undefined, undefined);
 export default $$Component;
