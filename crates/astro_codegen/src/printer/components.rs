@@ -46,7 +46,26 @@ pub(super) struct HydrationInfo {
     pub component_export: Option<String>,
 }
 
+/// Information about a `server:defer` directive on a component.
+pub(super) struct ServerDeferInfo {
+    /// Resolved component import path.
+    pub component_path: Option<String>,
+    /// Resolved component export name.
+    pub component_export: Option<String>,
+}
+
 impl<'a> AstroCodegen<'a> {
+    /// Check whether a component has a `server:defer` directive.
+    pub(super) fn has_server_defer(attrs: &[JSXAttributeItem<'a>]) -> bool {
+        attrs.iter().any(|attr| {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                get_jsx_attribute_name(&attr.name) == "server:defer"
+            } else {
+                false
+            }
+        })
+    }
+
     /// Extract hydration info from a component's attributes.
     ///
     /// Returns `None` if the component has no `client:*` directive.
@@ -83,7 +102,18 @@ impl<'a> AstroCodegen<'a> {
         // Check if this is a custom element (has dash in name)
         let is_custom = is_custom_element(name);
 
-        // For ALL hydrated components (not just client:only), resolve component path and export
+        // Check for server:defer directive
+        let mut server_defer_info =
+            if Self::has_server_defer(&el.opening_element.attributes) {
+                Some(ServerDeferInfo {
+                    component_path: None,
+                    component_export: None,
+                })
+            } else {
+                None
+            };
+
+        // Resolve component path and export for client:* hydrated components
         // This info is used for client:component-path and client:component-export attributes
         if let Some(info) = &mut hydration_info {
             // Handle member expressions like "components.A" or "defaultImport.Counter1"
@@ -106,6 +136,30 @@ impl<'a> AstroCodegen<'a> {
                 }
             } else if let Some(import_info) = self.component_imports.get(name) {
                 info.component_path = Some(import_info.specifier.clone());
+                info.component_export = Some(import_info.export_name.clone());
+            }
+        }
+
+        // Resolve component path and export for server:defer components.
+        // Use resolve_specifier to match the Go compiler's ResolveIdForMatch behaviour —
+        // the resolved path must match the key used in serverIslandNameMap.
+        if let Some(info) = &mut server_defer_info {
+            if name.contains('.') {
+                let parts: Vec<&str> = name.split('.').collect();
+                let namespace = parts[0];
+                let property = parts[1..].join(".");
+                if let Some(import_info) = self.component_imports.get(namespace) {
+                    info.component_path =
+                        Some(self.options.resolve_specifier(&import_info.specifier));
+                    info.component_export = if import_info.is_namespace {
+                        Some(property)
+                    } else {
+                        Some(format!("{}.{}", import_info.export_name, property))
+                    };
+                }
+            } else if let Some(import_info) = self.component_imports.get(name) {
+                info.component_path =
+                    Some(self.options.resolve_specifier(&import_info.specifier));
                 info.component_export = Some(import_info.export_name.clone());
             }
         }
@@ -161,6 +215,7 @@ impl<'a> AstroCodegen<'a> {
         self.print_component_attributes_filtered(
             &el.opening_element.attributes,
             hydration_info.as_ref(),
+            server_defer_info.as_ref(),
             if set_directive.is_some() {
                 Some(&["set:html", "set:text"])
             } else {
@@ -251,38 +306,11 @@ impl<'a> AstroCodegen<'a> {
                             }
                         }
                         Some(JSXAttributeValue::ExpressionContainer(expr)) => {
-                            let mut needs_unescape = true;
-
                             if let Some(e) = expr.expression.as_expression() {
-                                // Template literals:
-                                // - Static (no expressions): don't need $$unescapeHTML
-                                // - Dynamic with only empty quasis: don't need $$unescapeHTML
-                                // - Dynamic with non-empty quasis: need $$unescapeHTML
-                                if let Expression::TemplateLiteral(tl) = e {
-                                    if tl.expressions.is_empty() {
-                                        needs_unescape = false;
-                                        // For set:html with static template literal, decode HTML entities
-                                        if is_html && tl.quasis.len() == 1 {
-                                            let raw = tl.quasis[0].value.raw.as_str();
-                                            let decoded = decode_html_entities(raw);
-                                            return Some((
-                                                format!("`{decoded}`"),
-                                                is_html,
-                                                false,
-                                                false,
-                                                attr.span,
-                                            ));
-                                        }
-                                    } else {
-                                        let all_quasis_empty = tl
-                                            .quasis
-                                            .iter()
-                                            .all(|q| q.value.raw.as_str().trim().is_empty());
-                                        if all_quasis_empty {
-                                            needs_unescape = false;
-                                        }
-                                    }
-                                }
+                                // set:html in an expression container always needs $$unescapeHTML,
+                                // even for static template literals — they may contain HTML tags
+                                // that must not be double-escaped. Matches Go compiler behavior.
+                                let needs_unescape = is_html;
                                 let code = expr_to_string(e);
                                 return Some((code, is_html, needs_unescape, false, attr.span));
                             }
@@ -302,6 +330,7 @@ impl<'a> AstroCodegen<'a> {
         &mut self,
         attrs: &[JSXAttributeItem<'a>],
         hydration: Option<&HydrationInfo>,
+        server_defer: Option<&ServerDeferInfo>,
         skip_names: Option<&[&str]>,
         scope_id: Option<&ScopeId>,
     ) {
@@ -557,6 +586,24 @@ impl<'a> AstroCodegen<'a> {
                 } else {
                     self.print(&format!(",\"client:component-export\":(\"{export}\")"));
                 }
+            }
+        }
+
+        // Add server:defer attributes if present — these signal the runtime to replace this
+        // component with a server island placeholder instead of rendering it inline.
+        if let Some(server_defer) = server_defer {
+            if !first {
+                self.print(",");
+            }
+            // Matches Go compiler: "server:component-directive": "defer"
+            self.print("\"server:component-directive\":\"defer\"");
+
+            if let Some(path) = &server_defer.component_path {
+                self.print(&format!(",\"server:component-path\":(\"{path}\")"));
+            }
+
+            if let Some(export) = &server_defer.component_export {
+                self.print(&format!(",\"server:component-export\":(\"{export}\")"));
             }
         }
     }

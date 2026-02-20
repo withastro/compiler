@@ -303,15 +303,13 @@ impl<'a> AstroCodegen<'a> {
                         }
                         Some(JSXAttributeValue::ExpressionContainer(expr)) => {
                             let mut value_str = String::new();
-                            let mut is_literal = false;
                             if let Some(e) = expr.expression.as_expression() {
-                                is_literal = matches!(
-                                    e,
-                                    Expression::StringLiteral(_) | Expression::TemplateLiteral(_)
-                                );
                                 value_str = expr_to_string(e);
                             }
-                            let needs_unescape = directive_type == "html" && !is_literal;
+                            // set:html in an expression container always needs $$unescapeHTML,
+                            // even for static template literals — they may contain HTML tags
+                            // that must not be double-escaped. Matches Go compiler behavior.
+                            let needs_unescape = directive_type == "html";
                             (value_str, needs_unescape, false)
                         }
                         _ => ("void 0".to_string(), false, false),

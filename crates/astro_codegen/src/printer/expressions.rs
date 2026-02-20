@@ -177,6 +177,28 @@ impl<'a> AstroCodegen<'a> {
                 // Handle arrow functions that may return JSX
                 self.print_arrow_function(arrow);
             }
+            Expression::FunctionExpression(func) => {
+                self.add_source_mapping_for_span(expr.span());
+                // Handle regular/async/generator function expressions that may
+                // contain JSX (e.g. `async function* () { yield <Foo /> }`)
+                self.print_function_expression(func);
+            }
+            Expression::YieldExpression(yield_expr) => {
+                self.add_source_mapping_for_span(expr.span());
+                self.print("yield");
+                if yield_expr.delegate {
+                    self.print("*");
+                }
+                if let Some(arg) = &yield_expr.argument {
+                    self.print(" ");
+                    self.print_expression(arg);
+                }
+            }
+            Expression::AwaitExpression(await_expr) => {
+                self.add_source_mapping_for_span(expr.span());
+                self.print("await ");
+                self.print_expression(&await_expr.argument);
+            }
             _ => {
                 self.add_source_mapping_for_span(expr.span());
                 // For all other expressions, use regular codegen
@@ -334,6 +356,29 @@ impl<'a> AstroCodegen<'a> {
                 }
                 self.print("}");
             }
+            Statement::ForOfStatement(for_of) => {
+                self.add_source_mapping_for_span(for_of.span);
+                self.print(if for_of.r#await { "for await(" } else { "for(" });
+                // left side: variable declaration or assignment target
+                match &for_of.left {
+                    oxc_ast::ast::ForStatementLeft::VariableDeclaration(decl) => {
+                        let code = gen_to_string(decl.as_ref());
+                        self.print(&code);
+                    }
+                    other => {
+                        let start = other.span().start as usize;
+                        let end = other.span().end as usize;
+                        if start < self.source_text.len() && end <= self.source_text.len() {
+                            self.print(&self.source_text[start..end]);
+                        }
+                    }
+                }
+                self.print(" of ");
+                self.print_expression(&for_of.right);
+                self.print(") ");
+                self.print_jsx_aware_statement(&for_of.body);
+                self.print("\n");
+            }
             Statement::SwitchStatement(switch_stmt) => {
                 self.add_source_mapping_for_span(switch_stmt.span);
                 self.print("switch (");
@@ -362,6 +407,37 @@ impl<'a> AstroCodegen<'a> {
                 self.print(&code);
                 self.print("\n");
             }
+        }
+    }
+
+    /// Print a regular/async/generator function expression with JSX-aware body.
+    pub(super) fn print_function_expression(
+        &mut self,
+        func: &oxc_ast::ast::Function<'a>,
+    ) {
+        // `async function* name(params) { body }`
+        if func.r#async {
+            self.print("async ");
+        }
+        self.print("function");
+        if func.generator {
+            self.print("*");
+        }
+        if let Some(id) = &func.id {
+            self.print(" ");
+            self.print(id.name.as_str());
+        }
+        self.print("(");
+        let params = &func.params;
+        for (i, param) in params.items.iter().enumerate() {
+            if i > 0 {
+                self.print(", ");
+            }
+            self.print_binding_pattern(&param.pattern);
+        }
+        self.print(") ");
+        if let Some(body) = &func.body {
+            self.print_jsx_aware_function_body(body);
         }
     }
 

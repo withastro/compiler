@@ -569,24 +569,26 @@ impl<'a> AstroCodegen<'a> {
     pub fn build(mut self, root: &'a AstroRoot<'a>) -> TransformResult {
         self.print_astro_root(root);
 
-        // Build public hoisted scripts from internal representation
+        // Build public hoisted scripts from internal representation.
+        // DefineVars scripts are rendered inline as IIFEs and are NOT bundled as
+        // virtual modules — exclude them from the public scripts array.
         let scripts = self
             .scan_result
             .hoisted_scripts
             .iter()
-            .map(|s| match s.script_type {
-                InternalHoistedScriptType::External => TransformResultHoistedScript {
+            .filter_map(|s| match s.script_type {
+                InternalHoistedScriptType::External => Some(TransformResultHoistedScript {
                     script_type: HoistedScriptType::External,
                     src: s.src.clone(),
                     code: None,
-                },
-                InternalHoistedScriptType::Inline | InternalHoistedScriptType::DefineVars => {
-                    TransformResultHoistedScript {
-                        script_type: HoistedScriptType::Inline,
-                        code: s.value.clone(),
-                        src: None,
-                    }
-                }
+                }),
+                InternalHoistedScriptType::Inline => Some(TransformResultHoistedScript {
+                    script_type: HoistedScriptType::Inline,
+                    code: s.value.clone(),
+                    src: None,
+                }),
+                // DefineVars are printed inline — skip them here
+                InternalHoistedScriptType::DefineVars => None,
             })
             .collect();
 
@@ -618,7 +620,9 @@ impl<'a> AstroCodegen<'a> {
             })
             .collect();
 
-        let propagation = self.scan_result.uses_transitions;
+        // propagation is true for transition directives AND server:defer components.
+        let propagation = self.scan_result.uses_transitions
+            || !self.scan_result.server_deferred_components.is_empty();
         let contains_head = self.has_explicit_head;
         let scope = self.source_hash.clone();
         let intermediate_code = self.code.into_string();
@@ -681,10 +685,9 @@ impl<'a> AstroCodegen<'a> {
         // 1. Print internal imports
         self.print_internal_imports();
 
-        // 1b. Print CSS imports (one per extracted style)
-        self.print_css_imports();
-
-        // 2. Extract and print user imports from frontmatter
+        // 2. Extract and print user imports from frontmatter.
+        // CSS imports come AFTER user imports (matching Go compiler order) so that
+        // component CSS is ordered before the page's own CSS in the final bundle.
         let (imports, exports, other_statements) =
             self.split_frontmatter(root.frontmatter.as_deref());
 
@@ -697,6 +700,10 @@ impl<'a> AstroCodegen<'a> {
         if !imports.is_empty() {
             self.println("");
         }
+
+        // 2b. Print CSS imports (one per extracted style) — after user imports so that
+        // component stylesheets imported by user code precede this page's own styles.
+        self.print_css_imports();
 
         // 3. Print namespace imports for modules (for metadata) - skip client:only components
         self.print_namespace_imports();
@@ -1100,23 +1107,35 @@ impl<'a> AstroCodegen<'a> {
                             }
                         }
 
+                        // Only skip the import if ALL specifiers are exclusively client:only
+                        // (i.e. they appear with client:only but NOT with any other directive).
+                        // If a component is used with both client:only and e.g. client:load,
+                        // it needs to be imported for SSR rendering.
                         let is_client_only_import = if let Some(specifiers) = &import.specifiers {
-                            specifiers.iter().any(|spec| {
-                                let local_name = match spec {
-                                    ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                        s.local.name.as_str()
-                                    }
-                                    ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                        s.local.name.as_str()
-                                    }
-                                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                        s.local.name.as_str()
-                                    }
-                                };
-                                self.scan_result
-                                    .client_only_component_names
-                                    .contains(local_name)
-                            })
+                            !specifiers.is_empty()
+                                && specifiers.iter().all(|spec| {
+                                    let local_name = match spec {
+                                        ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
+                                            s.local.name.as_str()
+                                        }
+                                        ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                                            s.local.name.as_str()
+                                        }
+                                        ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
+                                            s.local.name.as_str()
+                                        }
+                                    };
+                                    // Must be in client_only_component_names AND NOT in
+                                    // hydrated_components (which tracks non-client:only usage)
+                                    self.scan_result
+                                        .client_only_component_names
+                                        .contains(local_name)
+                                        && !self
+                                            .scan_result
+                                            .hydrated_components
+                                            .iter()
+                                            .any(|c| c.name == local_name)
+                                })
                         } else {
                             false
                         };
@@ -1261,11 +1280,17 @@ impl<'a> AstroCodegen<'a> {
             Some(f) => format!("'{}'", escape_single_quote(f)),
             None => "undefined".to_string(),
         };
-        let propagation = if self.scan_result.uses_transitions {
-            "\"self\""
-        } else {
-            "undefined"
-        };
+        // Head propagation is enabled for both transition directives AND server:defer components.
+        // (server:defer does NOT set uses_transitions — that's transition-specific — but still
+        // needs the "self" propagation arg so that <head> content is forwarded correctly.)
+        let propagation =
+            if self.scan_result.uses_transitions
+                || !self.scan_result.server_deferred_components.is_empty()
+            {
+                "\"self\""
+            } else {
+                "undefined"
+            };
         self.println(&format!("}}, {filename_part}, {propagation});"));
     }
 
@@ -1422,6 +1447,23 @@ impl<'a> AstroCodegen<'a> {
         // Handle <script> elements that should be hoisted
         if name == "script" && Self::is_hoisted_script(el) {
             self.add_source_mapping_for_span(el.opening_element.span);
+
+            // define:vars scripts are NOT bundled via $$renderScript — they stay
+            // inline in the template as an IIFE: <script>(function(){${$$defineScriptVars({...})}...})();</script>
+            if let Some(define_vars_expr) = Self::get_define_vars_expr(el) {
+                let text_content = Self::get_script_text_content(el);
+                self.print("<script>");
+                self.print("(function(){${");
+                self.print(runtime::DEFINE_SCRIPT_VARS);
+                self.print("(");
+                self.print(&define_vars_expr);
+                self.print(")}");
+                self.print(&escape_template_literal(&text_content));
+                self.print("})();");
+                self.print("</script>");
+                return;
+            }
+
             let filename = self
                 .options
                 .filename
@@ -1566,6 +1608,38 @@ impl<'a> AstroCodegen<'a> {
 
     /// Extract the text content of a `<style>` element.
     fn extract_style_text_content(&self, el: &JSXElement<'a>) -> String {
+        let mut text = String::new();
+        for child in &el.children {
+            if let JSXChild::Text(t) = child {
+                text.push_str(t.value.as_str());
+            }
+        }
+        text
+    }
+
+    /// Extract the `define:vars` expression string from a `<script>` element, if present.
+    fn get_define_vars_expr(el: &JSXElement<'a>) -> Option<String> {
+        for attr in &el.opening_element.attributes {
+            if let JSXAttributeItem::Attribute(attr) = attr {
+                let name = get_jsx_attribute_name(&attr.name);
+                if name == "define:vars" {
+                    return match &attr.value {
+                        Some(JSXAttributeValue::StringLiteral(lit)) => {
+                            Some(format!("'{}'", lit.value.as_str()))
+                        }
+                        Some(JSXAttributeValue::ExpressionContainer(expr)) => {
+                            expr.expression.as_expression().map(expr_to_string)
+                        }
+                        _ => None,
+                    };
+                }
+            }
+        }
+        None
+    }
+
+    /// Extract the text content of a `<script>` element.
+    fn get_script_text_content(el: &JSXElement<'a>) -> String {
         let mut text = String::new();
         for child in &el.children {
             if let JSXChild::Text(t) = child {
@@ -3597,6 +3671,549 @@ const slotName = "dynamic";
         assert!(
             output.contains("Fallback content"),
             "Fallback content should be present: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // extract_styles tests
+    // -------------------------------------------------------------------------
+
+    fn parse_and_extract_styles(source: &str) -> Vec<StyleBlock> {
+        let allocator = Allocator::default();
+        let source_type = SourceType::astro();
+        let ret = Parser::new(&allocator, source, source_type).parse_astro();
+        assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+        extract_styles(&ret.root)
+    }
+
+    #[test]
+    fn test_extract_styles_boolean_attr_is_global() {
+        // Boolean attribute `is:global` must be present in attrs with an empty-string
+        // value. The caller (TS side) uses `'is:global' in attrs` to detect it, so the
+        // key must exist — the value being "" vs true is intentional for the Rust path.
+        let source = "<style is:global>h1 { color: red; }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 1, "Should extract one style block");
+        let attrs = &blocks[0].attrs;
+        let is_global = attrs.iter().find(|(k, _)| k == "is:global");
+        assert!(
+            is_global.is_some(),
+            "is:global key must be present in attrs: {attrs:?}"
+        );
+        assert_eq!(
+            is_global.unwrap().1,
+            "",
+            "Boolean attr value must be empty string for Rust compiler path: {attrs:?}"
+        );
+        assert_eq!(
+            blocks[0].content.trim(),
+            "h1 { color: red; }",
+            "Style content should be extracted"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_quoted_attr_lang() {
+        // Quoted attribute `lang="scss"` must round-trip with its value preserved.
+        let source = r#"<style lang="scss">$color: red;</style>"#;
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 1, "Should extract one style block");
+        let attrs = &blocks[0].attrs;
+        let lang = attrs.iter().find(|(k, _)| k == "lang");
+        assert!(lang.is_some(), "lang key must be present: {attrs:?}");
+        assert_eq!(lang.unwrap().1, "scss", "lang value must be 'scss': {attrs:?}");
+    }
+
+    #[test]
+    fn test_extract_styles_is_inline_not_extracted() {
+        // `<style is:inline>` must NOT be extracted — it's rendered as-is in HTML.
+        let source = "<style is:inline>h1 { color: red; }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            0,
+            "is:inline style must not be extracted: {blocks:?}"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_inside_svg_not_extracted() {
+        // Styles inside <svg> are non-hoistable and must not be extracted.
+        let source = "<svg><style>circle { fill: red; }</style></svg>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            0,
+            "Style inside <svg> must not be extracted: {blocks:?}"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_inside_noscript_not_extracted() {
+        let source = "<noscript><style>h1 { color: red; }</style></noscript>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(
+            blocks.len(),
+            0,
+            "Style inside <noscript> must not be extracted: {blocks:?}"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_expression_attr_omitted() {
+        // Expression attributes like `define:vars={...}` must be omitted from attrs
+        // (they can't be serialised to string), matching the Go compiler's GetAttrs.
+        let source = "<style define:vars={{ color: 'red' }}>h1 { color: var(--color); }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 1, "Style with define:vars should still be extracted");
+        let has_define_vars = blocks[0].attrs.iter().any(|(k, _)| k == "define:vars");
+        assert!(
+            !has_define_vars,
+            "Expression attr define:vars must not appear in attrs: {:?}",
+            blocks[0].attrs
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_multiple_blocks_sequential_indices() {
+        // Multiple <style> blocks must get sequential indices 0, 1, 2 in document order.
+        let source = r"<style>a { color: red; }</style>
+<div></div>
+<style>b { color: blue; }</style>
+<style>c { color: green; }</style>";
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 3, "Should extract three style blocks: {blocks:?}");
+        assert_eq!(blocks[0].index, 0);
+        assert_eq!(blocks[1].index, 1);
+        assert_eq!(blocks[2].index, 2);
+        assert!(
+            blocks[0].content.contains("red"),
+            "First block should have red style"
+        );
+        assert!(
+            blocks[1].content.contains("blue"),
+            "Second block should have blue style"
+        );
+        assert!(
+            blocks[2].content.contains("green"),
+            "Third block should have green style"
+        );
+    }
+
+    #[test]
+    fn test_extract_styles_multiple_attrs() {
+        // A style with both boolean and quoted attrs — both must appear.
+        let source = r#"<style is:global lang="scss">h1 { color: red; }</style>"#;
+        let blocks = parse_and_extract_styles(source);
+
+        assert_eq!(blocks.len(), 1);
+        let attrs = &blocks[0].attrs;
+        assert!(
+            attrs.iter().any(|(k, v)| k == "is:global" && v == ""),
+            "is:global must be present with empty value: {attrs:?}"
+        );
+        assert!(
+            attrs.iter().any(|(k, v)| k == "lang" && v == "scss"),
+            "lang must be present with value 'scss': {attrs:?}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // HTML element directive stripping tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_is_global_stripped_from_html_output() {
+        // `is:global` is a compile-time directive and must NOT appear in the
+        // rendered HTML string output.
+        let source = "<style is:global>h1 { color: red; }</style>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("is:global"),
+            "is:global must be stripped from compiled output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_is_inline_stripped_from_style_output() {
+        // `is:inline` is a compile-time directive and must NOT appear in the
+        // rendered HTML string output.
+        let source = "<style is:inline>h1 { color: red; }</style>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("is:inline"),
+            "is:inline must be stripped from compiled output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_is_inline_stripped_from_script_output() {
+        let source = "<script is:inline>console.log(1)</script>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("is:inline"),
+            "is:inline must be stripped from script output: {output}"
+        );
+        assert!(
+            output.contains("console.log(1)"),
+            "Inline script content should be in output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_define_vars_stripped_from_style_output() {
+        // `define:vars` on a style element must not appear as an HTML attribute.
+        let source = "<style define:vars={{ color: 'red' }}>h1 { color: var(--color); }</style>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("define:vars"),
+            "define:vars must be stripped from style HTML output: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Component boolean attribute tests — must emit `true` in JS props object
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_component_boolean_attr_emits_true() {
+        // A boolean (valueless) attribute on a component element must be emitted
+        // as the JS boolean `true` in the props object, matching Go compiler output.
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp disabled />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"disabled\":true") || output.contains("\"disabled\": true"),
+            "Boolean component attr must emit true in props: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_boolean_attr_is_global_emits_true() {
+        // Even Astro-namespace boolean attrs on components must emit `true`, not "".
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp is:global />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"is:global\":true") || output.contains("\"is:global\": true"),
+            "Boolean is:global on component must emit true in props: {output}"
+        );
+    }
+
+    #[test]
+    fn test_component_quoted_attr_preserves_value() {
+        let source = r#"---
+import MyComp from 'test';
+---
+<MyComp class="foo" />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"class\":\"foo\"") || output.contains("\"class\": \"foo\""),
+            "Quoted component attr must preserve its value: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // should_hoist_script / scanner tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_script_plain_is_hoisted() {
+        // A plain `<script>` with no attributes must be hoisted as inline.
+        let source = "<script>console.log('hello')</script>";
+        let output = compile_astro(source);
+
+        // Hoisted scripts appear in the `scripts` metadata array, not inline in the template.
+        assert!(
+            output.contains("\"inline\"") || output.contains("type:\"inline\""),
+            "Plain script must be hoisted as inline: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_type_module_is_hoisted() {
+        // `<script type="module">` must be hoisted.
+        let source = r#"<script type="module">console.log('hello')</script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"inline\"") || output.contains("type:\"inline\""),
+            "type=module script must be hoisted as inline: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_src_only_is_hoisted_external() {
+        // `<script src="...">` with ONLY `src` must be hoisted as external.
+        let source = r#"<script src="/script.js"></script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("\"external\"") || output.contains("type:\"external\""),
+            "src-only script must be hoisted as external: {output}"
+        );
+        assert!(
+            output.contains("/script.js"),
+            "Hoisted external script must preserve src: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_src_with_extra_attr_not_hoisted() {
+        // `<script src="..." type="module">` must NOT be hoisted (extra attrs).
+        // It stays as inline HTML in the template string.
+        let source = r#"<script src="/script.js" type="module"></script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("\"external\""),
+            "Script with src+type must not be hoisted as external: {output}"
+        );
+        // The raw tag should appear in the template string.
+        assert!(
+            output.contains("/script.js"),
+            "Non-hoisted script should still appear in template: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_is_inline_not_hoisted() {
+        // `<script is:inline>` must NEVER be hoisted.
+        let source = "<script is:inline>console.log('hello')</script>";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("type:\"inline\"") && !output.contains("\"inline\":{"),
+            "is:inline script must not be hoisted: {output}"
+        );
+        // Should appear literally in the template.
+        assert!(
+            output.contains("console.log"),
+            "is:inline script content should be in template: {output}"
+        );
+    }
+
+    #[test]
+    fn test_script_src_with_data_attr_not_hoisted() {
+        // `<script src="..." data-foo="bar">` — any extra attr blocks hoisting.
+        let source = r#"<script src="/script.js" data-foo="bar"></script>"#;
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("\"external\""),
+            "Script with extra data-attr must not be hoisted: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // set:html must always use $$unescapeHTML (including template literals)
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_set_html_variable_uses_unescape_html() {
+        // `set:html={someVar}` must wrap the value in $$unescapeHTML.
+        let source = r"---
+const html = '<b>bold</b>';
+---
+<div set:html={html} />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$unescapeHTML"),
+            "set:html with variable must use $$unescapeHTML: {output}"
+        );
+        assert!(
+            !output.contains("set:html"),
+            "set:html directive must be stripped from output: {output}"
+        );
+    }
+
+    #[test]
+    fn test_set_html_template_literal_uses_unescape_html() {
+        // `set:html={`template ${literal}`}` must ALSO wrap with $$unescapeHTML.
+        // This was a bug where template literals were treated as "already safe literals"
+        // and bypassed $$unescapeHTML — now fixed.
+        let source = r#"---
+const name = 'world';
+---
+<div set:html={`Hello <b>${name}</b>`} />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$unescapeHTML"),
+            "set:html with template literal must use $$unescapeHTML: {output}"
+        );
+    }
+
+    #[test]
+    fn test_set_html_string_literal_uses_unescape_html() {
+        // Even a plain string literal must go through $$unescapeHTML.
+        let source = r#"<div set:html={"<b>bold</b>"} />"#;
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("$$unescapeHTML"),
+            "set:html with string literal must use $$unescapeHTML: {output}"
+        );
+    }
+
+    #[test]
+    fn test_set_text_does_not_use_unescape_html() {
+        // `set:text` is the safe (escaped) counterpart — the rendered expression must
+        // NOT be wrapped in $$unescapeHTML(). $$unescapeHTML may still appear in the
+        // import statement, so we check the template body specifically.
+        let source = r"---
+const text = '<b>bold</b>';
+---
+<div set:text={text} />";
+        let output = compile_astro(source);
+
+        // The template render string must contain the raw variable, not wrapped.
+        assert!(
+            output.contains("${text}"),
+            "set:text should emit the variable directly: {output}"
+        );
+        assert!(
+            !output.contains("$$unescapeHTML(text)"),
+            "set:text must not wrap in $$unescapeHTML(): {output}"
+        );
+        assert!(
+            !output.contains("set:text"),
+            "set:text directive must be stripped from output: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // server:defer prop injection tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_server_defer_injects_component_directive() {
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("server:component-directive"),
+            "server:defer must inject server:component-directive: {output}"
+        );
+    }
+
+    #[test]
+    fn test_server_defer_injects_component_path() {
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("server:component-path"),
+            "server:defer must inject server:component-path: {output}"
+        );
+    }
+
+    #[test]
+    fn test_server_defer_injects_component_export() {
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("server:component-export"),
+            "server:defer must inject server:component-export: {output}"
+        );
+    }
+
+    #[test]
+    fn test_server_defer_does_not_set_client_hydration() {
+        // server:defer is NOT a client hydration directive — must not emit
+        // client:component-hydration or any transition-related props.
+        let source = r"---
+import MyComp from './MyComp.astro';
+---
+<MyComp server:defer />";
+        let output = compile_astro(source);
+
+        assert!(
+            !output.contains("client:component-hydration"),
+            "server:defer must not emit client:component-hydration: {output}"
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // client:only import suppression tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_client_only_import_is_suppressed() {
+        // When a component is used exclusively with client:only, its import must be
+        // suppressed (the server never needs to load it).
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp client:only='react' />";
+        let output = compile_astro(source);
+
+        // The import must be replaced / suppressed — should not appear as a live import.
+        assert!(
+            !output.contains("import MyComp from \"test\""),
+            "client:only import must be suppressed: {output}"
+        );
+    }
+
+    #[test]
+    fn test_non_client_only_import_not_suppressed() {
+        // A component used with client:load (not client:only) must keep its import.
+        let source = r"---
+import MyComp from 'test';
+---
+<MyComp client:load />";
+        let output = compile_astro(source);
+
+        assert!(
+            output.contains("import MyComp from \"test\""),
+            "client:load import must NOT be suppressed: {output}"
+        );
+    }
+
+    #[test]
+    fn test_mixed_import_not_suppressed_when_also_client_only() {
+        // If the SAME import specifier exports one component used normally and another
+        // exclusively as client:only, the import must be kept (not suppressed).
+        let source = r"---
+import { CompA, CompB } from 'test';
+---
+<CompA />
+<CompB client:only='react' />";
+        let output = compile_astro(source);
+
+        // CompA is used normally so the import must be preserved.
+        assert!(
+            output.contains("import") && output.contains("\"test\""),
+            "Mixed import must not be suppressed when one specifier is used normally: {output}"
         );
     }
 }

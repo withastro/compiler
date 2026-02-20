@@ -126,8 +126,18 @@ fn collect_slots_from_expression<'a>(expr: &'a JSXExpression<'a>, slots: &mut Ve
             collect_slots_from_inner_expression(&paren.expression, slots);
         }
         JSXExpression::ArrowFunctionExpression(arrow) => {
-            // Look for slots inside arrow function bodies (e.g., switch returning slotted JSX)
-            collect_slots_from_function_body(&arrow.body, slots);
+            if arrow.expression {
+                // Expression-body arrow: `() => <span slot="c">C</span>`
+                // The body has one ExpressionStatement wrapping the JSX.
+                if let Some(oxc_ast::ast::Statement::ExpressionStatement(expr_stmt)) =
+                    arrow.body.statements.first()
+                {
+                    collect_slots_from_inner_expression(&expr_stmt.expression, slots);
+                }
+            } else {
+                // Block-body arrow: look inside return/switch/if statements
+                collect_slots_from_function_body(&arrow.body, slots);
+            }
         }
         _ => {}
     }
@@ -157,7 +167,15 @@ fn collect_slots_from_inner_expression<'a>(expr: &'a Expression<'a>, slots: &mut
             collect_slots_from_inner_expression(&paren.expression, slots);
         }
         Expression::ArrowFunctionExpression(arrow) => {
-            collect_slots_from_function_body(&arrow.body, slots);
+            if arrow.expression {
+                if let Some(oxc_ast::ast::Statement::ExpressionStatement(expr_stmt)) =
+                    arrow.body.statements.first()
+                {
+                    collect_slots_from_inner_expression(&expr_stmt.expression, slots);
+                }
+            } else {
+                collect_slots_from_function_body(&arrow.body, slots);
+            }
         }
         _ => {}
     }
