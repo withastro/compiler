@@ -12,6 +12,206 @@ import (
 	"github.com/withastro/compiler/internal/loc"
 )
 
+// FindTopLevelReturns scans JavaScript/TypeScript source code and returns the
+// byte positions of all `return` statements that are at the top level (i.e., not
+// inside any function, arrow function, method, or class method).
+//
+// This is used to transform top-level returns into throws in TSX output, because
+// top-level returns are valid in Astro frontmatter but cause TypeScript parsing errors.
+func FindTopLevelReturns(source []byte) []int {
+	l := js.NewLexer(parse.NewInputBytes(source))
+	i := 0
+	returns := make([]int, 0)
+
+	// We need to track "function scope depth" - returns are only top-level
+	// if they're not inside any function body.
+	//
+	// The challenge is distinguishing between:
+	// - `if (cond) { return; }` - top-level return (inside if block)
+	// - `function f() { return; }` - not top-level (inside function)
+	// - `() => { return; }` - not top-level (inside arrow function)
+	// - `class C { method() { return; } }` - not top-level (inside class method)
+	// - `{ method() { return; } }` - not top-level (inside object method)
+	// - `{ ['computed']() { return; } }` - not top-level (computed method)
+	//
+	// Strategy: Track when we're expecting a function body to start.
+	// A function body starts with `{` after:
+	// - `function` keyword followed by optional name and `()`
+	// - `=>` (arrow function)
+	// - `identifier()` where `{` follows (method shorthand in objects/classes)
+	// - `[expr]()` where `{` follows (computed method in objects/classes)
+	functionScopeStack := make([]int, 0) // stack of brace depths when entering function scopes
+	braceDepth := 0
+	bracketDepth := 0
+
+	// Track parentheses depth to detect when we close params
+	parenDepth := 0
+	parenDepthAtFunctionStart := -1 // the paren depth when we saw `function` keyword
+
+	// Track if we're expecting a function body
+	expectingFunctionBody := false
+
+	// Track method shorthand: identifier + () + { = method shorthand
+	// We need to track the paren depth when we see an identifier, so we know
+	// if the identifier is BEFORE the parens (method shorthand) or INSIDE them (not method)
+	// E.g., `method() { }` vs `if (condition) { }`
+	identParenDepth := -1 // paren depth when we last saw an identifier at current level
+
+	// Track that we actually went through parens after seeing identifier
+	// This distinguishes `method() {` from `class Foo {`
+	wentThroughParensForMethod := false
+
+	// Track computed property: [expr] + () + { = computed method
+	// After we see `]` that closes a bracket at the same level, we may have a computed method
+	sawCloseBracketForMethod := false
+
+	for {
+		token, value := l.Next()
+
+		// Handle regex vs division ambiguity
+		if token == js.DivToken || token == js.DivEqToken {
+			if i+1 < len(source) {
+				lns := bytes.Split(source[i+1:], []byte{'\n'})
+				if bytes.Contains(lns[0], []byte{'/'}) {
+					token, value = l.RegExp()
+				}
+			}
+		}
+
+		if token == js.ErrorToken {
+			if l.Err() != io.EOF {
+				return returns
+			}
+			break
+		}
+
+		// Skip whitespace and comments
+		if token == js.WhitespaceToken || token == js.LineTerminatorToken ||
+			token == js.CommentToken || token == js.CommentLineTerminatorToken {
+			i += len(value)
+			continue
+		}
+
+		// Track identifiers (for method shorthand pattern: identifier + () + {)
+		// Only track if we're not already inside parens from something else
+		if js.IsIdentifier(token) {
+			identParenDepth = parenDepth
+			wentThroughParensForMethod = false
+			sawCloseBracketForMethod = false
+			i += len(value)
+			continue
+		}
+
+		// Track parentheses
+		if js.IsPunctuator(token) {
+			if value[0] == '(' {
+				parenDepth++
+				i += len(value)
+				continue
+			} else if value[0] == ')' {
+				parenDepth--
+				// If we close parens back to function start level, we expect function body next
+				if parenDepthAtFunctionStart >= 0 && parenDepth == parenDepthAtFunctionStart {
+					expectingFunctionBody = true
+					parenDepthAtFunctionStart = -1
+				}
+				// Check if we just closed parens back to where we saw an identifier
+				// This means we went through `identifier()` pattern
+				if identParenDepth >= 0 && parenDepth == identParenDepth {
+					wentThroughParensForMethod = true
+				}
+				i += len(value)
+				continue
+			}
+		}
+
+		// Track square brackets for computed properties [expr]
+		if js.IsPunctuator(token) {
+			if value[0] == '[' {
+				bracketDepth++
+				sawCloseBracketForMethod = false
+				i += len(value)
+				continue
+			} else if value[0] == ']' {
+				bracketDepth--
+				// Mark that we just closed a bracket - this could be a computed property name
+				// The next thing should be `()` for it to be a method
+				sawCloseBracketForMethod = true
+				identParenDepth = -1
+				i += len(value)
+				continue
+			}
+		}
+
+		// Detect arrow function: `=>` means we expect a function body
+		if token == js.ArrowToken {
+			expectingFunctionBody = true
+			identParenDepth = -1
+			sawCloseBracketForMethod = false
+			i += len(value)
+			continue
+		}
+
+		// Track function keywords - after `function`, we wait for `(` then `)`
+		if token == js.FunctionToken {
+			parenDepthAtFunctionStart = parenDepth
+			identParenDepth = -1
+			sawCloseBracketForMethod = false
+			i += len(value)
+			continue
+		}
+
+		// Track braces
+		if js.IsPunctuator(token) {
+			if value[0] == '{' {
+				// Check if this brace opens a function body
+				// This happens after:
+				// 1. `function name()` or `function()`
+				// 2. `=>`
+				// 3. `identifier()` (method shorthand) - identifier followed by () then {
+				// 4. `[expr]()` (computed method) - sawCloseBracketForMethod was set and we went through ()
+				isMethodShorthand := wentThroughParensForMethod
+				isComputedMethod := sawCloseBracketForMethod
+				if expectingFunctionBody || isMethodShorthand || isComputedMethod {
+					// Entering a function scope
+					functionScopeStack = append(functionScopeStack, braceDepth)
+					expectingFunctionBody = false
+				}
+				identParenDepth = -1
+				wentThroughParensForMethod = false
+				sawCloseBracketForMethod = false
+				braceDepth++
+				i += len(value)
+				continue
+			} else if value[0] == '}' {
+				braceDepth--
+				// Check if we're exiting a function scope
+				if len(functionScopeStack) > 0 && braceDepth == functionScopeStack[len(functionScopeStack)-1] {
+					functionScopeStack = functionScopeStack[:len(functionScopeStack)-1]
+				}
+				identParenDepth = -1
+				wentThroughParensForMethod = false
+				sawCloseBracketForMethod = false
+				i += len(value)
+				continue
+			}
+		}
+
+		// Reset identifier tracking on other tokens (but preserve sawCloseBracketForMethod
+		// through parens so `[expr]()` works)
+		identParenDepth = -1
+
+		// A return is top-level if we're not inside any function scope
+		if token == js.ReturnToken && len(functionScopeStack) == 0 {
+			returns = append(returns, i)
+		}
+
+		i += len(value)
+	}
+
+	return returns
+}
+
 type HoistedScripts struct {
 	Hoisted     [][]byte
 	HoistedLocs []loc.Loc
@@ -229,6 +429,12 @@ func isKeyword(value []byte) bool {
 	return js.Keywords[string(value)] != 0
 }
 
+// isPropsAliasing checks if we're in a Props aliasing context (import { Props as X })
+// rather than destructuring with 'as' property ({ as: Component })
+func isPropsAliasing(idents []string) bool {
+	return len(idents) > 0 && idents[len(idents)-1] == "Props"
+}
+
 func HoistImports(source []byte) HoistedScripts {
 	imports := make([][]byte, 0)
 	importLocs := make([]loc.Loc, 0)
@@ -340,7 +546,8 @@ outer:
 		if js.IsIdentifier(token) {
 			if isKeyword(value) {
 				// fix(#814): fix Props detection when using `{ Props as SomethingElse }`
-				if ident == "Props" && string(value) == "as" {
+				// fix(#927): only reset Props when 'as' follows 'Props' in the same context
+				if ident == "Props" && string(value) == "as" && isPropsAliasing(idents) {
 					start = 0
 					ident = defaultPropType
 					idents = make([]string, 0)

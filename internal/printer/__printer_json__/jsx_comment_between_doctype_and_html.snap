@@ -1,0 +1,20 @@
+
+[TestPrintToJSON/jsx_comment_between_doctype_and_html - 1]
+## Input
+
+```
+<!doctype html>
+{/* Comment */}
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+    </head>
+</html>
+```
+
+## Output
+
+```json
+{"type":"root","children":[{"type":"doctype","value":"html"},{"type":"expression","children":[{"type":"text","value":"/* Comment */"}]},{"type":"text","value":"\n"},{"type":"element","name":"html","attributes":[{"type":"attribute","kind":"quoted","name":"lang","value":"en","raw":"\"en\""}],"children":[{"type":"text","value":"\n\t"},{"type":"element","name":"head","attributes":[],"children":[{"type":"text","value":"\n\t\t"},{"type":"element","name":"meta","attributes":[{"type":"attribute","kind":"quoted","name":"charset","value":"UTF-8","raw":"\"UTF-8\""}],"children":[]},{"type":"text","value":"\n\t"}]},{"type":"text","value":"\n"}]}]}
+```
+---

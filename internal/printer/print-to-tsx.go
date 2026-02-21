@@ -2,6 +2,7 @@ package printer
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -425,7 +426,29 @@ declare const Astro: Readonly<import('astro').AstroGlobal<%s, typeof %s`, propsI
 				if len(c.Loc) > 0 {
 					p.addSourceMapping(c.Loc[0])
 				}
-				p.printTextWithSourcemap(c.Data, c.Loc[0])
+				// Find top-level returns and transform them to throws
+				// This is needed because top-level returns are valid in Astro frontmatter
+				// but cause TypeScript parsing errors in the generated TSX
+				topLevelReturns := js_scanner.FindTopLevelReturns([]byte(c.Data))
+				if len(topLevelReturns) > 0 {
+					// Build a new string with top-level returns replaced by throws
+					// Note: We use "throw " (with extra space) to preserve the same character
+					// count as "return" so sourcemaps remain accurate for the rest of the code
+					newString := make([]byte, 0, len(c.Data))
+					i := 0
+					for i < len(c.Data) {
+						if slices.Contains(topLevelReturns, i) {
+							newString = append(newString, []byte("throw ")...)
+							i += len("return")
+						} else {
+							newString = append(newString, c.Data[i])
+							i++
+						}
+					}
+					p.printTextWithSourcemap(string(newString), c.Loc[0])
+				} else {
+					p.printTextWithSourcemap(c.Data, c.Loc[0])
+				}
 			} else {
 				renderTsx(p, c, o)
 			}

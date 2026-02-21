@@ -1,5 +1,38 @@
 # @astrojs/compiler
 
+## 3.0.0-beta.1
+
+### Patch Changes
+
+- 755f046: Fixes a CSS scoping regression where selectors using the nesting selector (`&`) with pseudo-classes or pseudo-elements (e.g. `&:last-of-type`, `&::before`) inside `:global()` contexts would incorrectly receive a duplicate scope attribute.
+- f89451a: Fixed an issue where explicit `<html>` and `<head>` tags were removed from output when a JSX comment appeared between DOCTYPE and the `<html>` tag.
+- 8275bdd: Fixes a bug where trailing whitespaces were preserved before `<style>` tags after transformation, in certain cases. Now trailing whitespaces are correctly removed.
+- e329d20: Fix slot attribute stripped inside expression
+- 615eb21: Fix CSS nesting so nested selectors without an ampersand are parsed and scoped correctly.
+
+## 3.0.0-beta.0
+
+### Major Changes
+
+- c05e16e: Removes the first argument of `$$result.createAstro()`
+
+  `$$result.createAstro()` does not accept an `AstroGlobalPartial` as the first argument anymore:
+
+  ```diff
+  -const Astro = $$result.createAstro($$Astro, $$props, $$slots);
+  +const Astro = $$result.createAstro($$props, $$slots);
+  ```
+
+- c05e16e: Removes `renderScript` from `TransformOptions`. It is now the default and only behavior
+- c05e16e: Removes `experimentalScriptOrder` from `TransformOptions`. It is now the default and only behavior
+
+## 2.13.1
+
+### Patch Changes
+
+- 357b8fe: Fixes a panic when parsing files with a closing frontmatter fence (---) but no opening fence. The compiler now returns a helpful diagnostic error instead of crashing.
+- cba568f: Fixes the "Unterminated string literal" error when using multiline attribute values on components.
+
 ## 2.13.0
 
 ### Minor Changes

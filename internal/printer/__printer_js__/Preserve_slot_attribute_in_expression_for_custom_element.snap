@@ -1,9 +1,9 @@
 
-[TestPrinter/script_inline_(renderScript:_true) - 1]
+[TestPrinter/Preserve_slot_attribute_in_expression_for_custom_element - 1]
 ## Input
 
 ```
-<main><script is:inline type="module">console.log("Hello");</script>
+<body><my-element>{!href ? <button slot={slotName}>Button</button> : <a href={href} slot={slotName}>Link</a>}</my-element></body>
 ```
 
 ## Output
@@ -34,7 +34,7 @@ export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydra
 
 const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`${$$maybeRenderHead($$result)}<main><script type="module">console.log("Hello");</script></main>`;
+return $$render`${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render`${!href ? $$render`<button${$$addAttribute(slotName, "slot")}>Button</button>` : $$render`<a${$$addAttribute(href, "href")}${$$addAttribute(slotName, "slot")}>Link</a>`}`,})}</body>`;
 }, undefined, undefined);
 export default $$Component;
 ```

@@ -250,6 +250,7 @@ func TestFullTransform(t *testing.T) {
 			source: `<Component><h1>Hello world</h1></Component><style>:root{}</style>`,
 			want:   `<Component><h1>Hello world</h1></Component>`,
 		},
+
 		{
 			name:   "Component before html I",
 			source: `<Navigation /><html><body><h1>Astro</h1></body></html>`,
@@ -313,6 +314,54 @@ func TestFullTransform(t *testing.T) {
 	}
 }
 
+func TestTransformTransitionAndHeadPropagationFlags(t *testing.T) {
+	tests := []struct {
+		name                string
+		source              string
+		wantTransition      bool
+		wantHeadPropagation bool
+	}{
+		{
+			name:                "server:defer only",
+			source:              `<Component server:defer />`,
+			wantTransition:      false,
+			wantHeadPropagation: true,
+		},
+		{
+			name:                "transition directive",
+			source:              `<div transition:animate="slide"></div>`,
+			wantTransition:      true,
+			wantHeadPropagation: true,
+		},
+		{
+			name:                "transition:persist-props alone does not count as transition directive",
+			source:              `<Component transition:persist-props="true" />`,
+			wantTransition:      false,
+			wantHeadPropagation: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			transformOptions := TransformOptions{}
+			ExtractStyles(doc, &transformOptions)
+			Transform(doc, transformOptions, handler.NewHandler(tt.source, "/test.astro"))
+
+			if doc.Transition != tt.wantTransition {
+				t.Fatalf("unexpected doc.Transition value: want %v, got %v", tt.wantTransition, doc.Transition)
+			}
+			if doc.HeadPropagation != tt.wantHeadPropagation {
+				t.Fatalf("unexpected doc.HeadPropagation value: want %v, got %v", tt.wantHeadPropagation, doc.HeadPropagation)
+			}
+		})
+	}
+}
+
 func TestTransformTrailingSpace(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -339,7 +388,13 @@ func TestTransformTrailingSpace(t *testing.T) {
 			source: "<html><body>\n\n\n</body></html>",
 			want:   "<html><body>\n\n\n</body></html>",
 		},
+		{
+			name:   "trailing whitespace before style is removed",
+			source: "<html><head></head><body><slot />\n<style>div { color: red; }</style></body></html>",
+			want:   "<html><head></head><body><slot></slot></body></html>",
+		},
 	}
+
 	var b strings.Builder
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -390,8 +445,8 @@ func TestCompactTransform(t *testing.T) {
 		},
 		{
 			name:   "remove whitespace only",
-			source: `<head>  <script>console.log("hoisted")</script>  <head>`,
-			want:   `<head></head>`,
+			source: `<head>  <script>console.log("test")</script>  <head>`,
+			want:   `<head><script>console.log("test")</script></head>`,
 		},
 		{
 			name:   "collapse surrounding whitespace",

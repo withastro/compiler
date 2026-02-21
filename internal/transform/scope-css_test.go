@@ -179,7 +179,37 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "nested only pseudo element",
 			source: ".class{& .other_class{&::after{}}}",
-			want:   ".class:where(.astro-xxxxxx){& .other_class:where(.astro-xxxxxx){&:where(.astro-xxxxxx)::after{}}}",
+			want:   ".class:where(.astro-xxxxxx){& .other_class:where(.astro-xxxxxx){&::after{}}}",
+		},
+		{
+			name:   "global with nesting pseudo class",
+			source: "div :global(.curve){&:last-of-type{transform:scaleY(-1)}}",
+			want:   "div:where(.astro-xxxxxx) .curve{&:last-of-type{transform:scaleY(-1)}}",
+		},
+		{
+			name:   "global with nesting pseudo element",
+			source: "div :global(.icon){&::after{content:''}}",
+			want:   "div:where(.astro-xxxxxx) .icon{&::after{content:\"\"}}",
+		},
+		{
+			name:   "global with nesting multiple pseudo",
+			source: ".wrap :global(.item){&:first-child:hover{color:red}}",
+			want:   ".wrap:where(.astro-xxxxxx) .item{&:first-child:hover{color:red}}",
+		},
+		{
+			name:   "nesting & with pseudo element",
+			source: ".class{&::before{}}",
+			want:   ".class:where(.astro-xxxxxx){&::before{}}",
+		},
+		{
+			name:   "nesting & with pseudo class",
+			source: ".class{&:hover{}}",
+			want:   ".class:where(.astro-xxxxxx){&:hover{}}",
+		},
+		{
+			name:   "nesting & with multiple pseudo classes",
+			source: ".class{&:hover:focus{}}",
+			want:   ".class:where(.astro-xxxxxx){&:hover:focus{}}",
 		},
 		// the following tests assert we leave valid CSS alone
 		{
@@ -269,6 +299,11 @@ func TestScopeStyle(t *testing.T) {
 			name:   "nesting modifier",
 			source: ".header { background-color: white; &.dark { background-color: blue; }}",
 			want:   ".header:where(.astro-xxxxxx){background-color:white;&.dark{background-color:blue}}",
+		},
+		{
+			name:   "nesting without ampersand",
+			source: ".nesting-root{p{color:#123456}:global(h1){color:#abcdef}}",
+			want:   ".nesting-root:where(.astro-xxxxxx){p:where(.astro-xxxxxx){color:#123456}h1{color:#abcdef}}",
 		},
 		{
 			name: "@container",

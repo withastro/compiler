@@ -1,9 +1,9 @@
 
-[TestPrinter/script_mixed_handled_and_inline_(renderScript:_true) - 1]
+[TestPrinter/Preserve_slot_attribute_in_conditional_expression_for_custom_element - 1]
 ## Input
 
 ```
-<main><script>console.log("Hello");</script><script is:inline>console.log("World");</script>
+<body><my-element>{show && <div slot="content">Content</div>}</my-element></body>
 ```
 
 ## Output
@@ -30,12 +30,12 @@ import {
   createMetadata as $$createMetadata
 } from "http://localhost:3000/";
 
-export const $$metadata = $$createMetadata("/src/pages/index.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [{ type: 'inline', value: `console.log("Hello");` }] });
+export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: new Set([]), hoisted: [] });
 
-const $$Index = $$createComponent(($$result, $$props, $$slots) => {
+const $$Component = $$createComponent(($$result, $$props, $$slots) => {
 
-return $$render`${$$maybeRenderHead($$result)}<main>${$$renderScript($$result,"/src/pages/index.astro?astro&type=script&index=0&lang.ts")}<script>console.log("World");</script></main>`;
-}, '/src/pages/index.astro', undefined);
-export default $$Index;
+return $$render`${$$maybeRenderHead($$result)}<body>${$$renderComponent($$result,'my-element','my-element',{},{"default": () => $$render`${show && $$render`<div slot="content">Content</div>`}`,})}</body>`;
+}, undefined, undefined);
+export default $$Component;
 ```
 ---

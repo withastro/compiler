@@ -141,7 +141,7 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			}
 			// If there is no type selector and all subclass selectors are pseudo
 			// selectors, we need to add the scope before the first pseudo selector.
-			if sel.TypeSelector == nil && *onlyPseudoSubclassSelectors && i == 0 && s.Name != "global" && s.Name != "root" {
+			if !scoped && sel.TypeSelector == nil && *onlyPseudoSubclassSelectors && i == 0 && s.Name != "global" && s.Name != "root" {
 				scoped = p.printScopedSelector()
 			}
 			p.printPseudoClassSelector(*s, whitespace)

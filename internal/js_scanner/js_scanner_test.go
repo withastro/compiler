@@ -3,6 +3,7 @@ package js_scanner
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -15,6 +16,162 @@ type testcase struct {
 	source string
 	want   string
 	only   bool
+}
+
+// Test cases for FindTopLevelReturns
+func TestFindTopLevelReturns(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   []int
+		only   bool
+	}{
+		{
+			name:   "basic top-level return",
+			source: `return "value";`,
+			want:   []int{0},
+		},
+		{
+			name: "return inside function declaration",
+			source: `function foo() {
+return "value";
+}`,
+			want: nil,
+		},
+		{
+			name: "return inside arrow function",
+			source: `const foo = () => {
+return "value";
+}`,
+			want: nil,
+		},
+		{
+			name: "return inside class method",
+			source: `class Component {
+	render() {
+		return "wow"!
+	}
+}`,
+			want: nil,
+		},
+		{
+			name: "return inside exported async function",
+			source: `export async function getStaticPaths({ paginate }: { paginate: PaginateFunction }) {
+	const { data: products }: { data: IProduct[] } = await getEntry("products", "products");
+
+	return paginate(products, {
+		pageSize: 10,
+	});
+}`,
+			want: nil,
+		},
+		{
+			name: "mixed: function with return, then top-level return",
+			source: `const foo = () => {
+return "value";
+}
+
+if (true) {
+return "value";
+		}
+`,
+			want: []int{51},
+		},
+		{
+			name: "multiple top-level returns",
+			source: `const foo = () => {
+return "value";
+}
+
+if (true) {
+return "value";
+		}
+if (true) {
+return "value";
+		}
+`,
+			want: []int{51, 83},
+		},
+		{
+			name: "return inside object method shorthand",
+			source: `const something = {
+	someFunction: () => {
+		return "Hello World";
+	},
+	someOtherFunction() {
+		return "Hello World";
+	},
+};`,
+			want: nil,
+		},
+		{
+			name: "return inside arrow function with satisfies",
+			source: `export const getStaticPaths = (({ paginate }) => {
+	const data = [0, 1, 2];
+	return paginate(data, {
+		pageSize: 10,
+	});
+}) satisfies GetStaticPaths;`,
+			want: nil,
+		},
+		{
+			name: "top-level return with Astro.redirect",
+			source: `if (something) {
+	return Astro.redirect();
+}`,
+			want: []int{18},
+		},
+		{
+			name: "no returns at all",
+			source: `const foo = "bar";
+console.log(foo);`,
+			want: nil,
+		},
+		{
+			name: "computed method in class with generic arrow",
+			source: `class Foo {
+	['get']() {
+		return 'ok';
+	}
+}
+const generic = <T,>(value: T) => { return value; };
+if (true) { return Astro.redirect('/test'); }`,
+			want: []int{110},
+		},
+		{
+			name: "computed method in object",
+			source: `const obj = { ['get']() { return 'obj'; } };
+if (true) { return Astro.redirect(); }`,
+			want: []int{57},
+		},
+		{
+			name: "generic arrow function",
+			source: `const generic = <T,>(value: T) => { return value; };
+if (true) { return Astro.redirect(); }`,
+			want: []int{65},
+		},
+	}
+
+	for _, tt := range tests {
+		if tt.only {
+			tests = []struct {
+				name   string
+				source string
+				want   []int
+				only   bool
+			}{tt}
+			break
+		}
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FindTopLevelReturns([]byte(tt.source))
+			if diff := test_utils.ANSIDiff(fmt.Sprint(tt.want), fmt.Sprint(got)); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
 func fixturesHoistImport() []testcase {
@@ -772,6 +929,106 @@ func TestGetObjectKeys(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 
+		})
+	}
+}
+
+// propsTestCase represents a test case for GetPropsType
+type propsTestCase struct {
+	name   string
+	source string
+	want   Props
+}
+
+// makeProps is a helper to create Props structs concisely
+func makeProps(ident string, statement string, generics string) Props {
+	return Props{
+		Ident:     ident,
+		Statement: statement,
+		Generics:  generics,
+	}
+}
+
+// getPropsTypeTestCases returns all test cases for GetPropsType
+func getPropsTypeTestCases() []propsTestCase {
+	const defaultType = "Record<string, any>"
+
+	return []propsTestCase{
+		// Basic cases
+		{
+			name:   "no props",
+			source: `const foo = "bar"`,
+			want:   makeProps(defaultType, "", ""),
+		},
+		{
+			name: "interface Props",
+			source: `interface Props {
+				foo: string;
+			}`,
+			want: makeProps("Props", "", ""),
+		},
+		{
+			name: "type Props",
+			source: `type Props = {
+				foo: string;
+			}`,
+			want: makeProps("Props", "", ""),
+		},
+
+		// Generics
+		{
+			name: "Props with generics",
+			source: `interface Props<T> {
+				foo: T;
+			}`,
+			want: makeProps("Props", "<T>", "<T>"),
+		},
+
+		// Issue #927: 'as' prop name handling
+		{
+			name: "destructuring with 'as' prop name without type assertion - issue #927",
+			source: `interface Props {
+				as?: string;
+				href?: string;
+			}
+			const { as: Component, href } = Astro.props;`,
+			want: makeProps("Props", "", ""),
+		},
+		{
+			name: "destructuring with 'as' prop name with type assertion",
+			source: `interface Props {
+				as?: string;
+				href?: string;
+			}
+			const { as: Component, href } = Astro.props as Props;`,
+			want: makeProps("Props", "", ""),
+		},
+	}
+}
+
+// checks if two Props are equal and reports errors
+func assertPropsEqual(t *testing.T, got, want Props, source string) {
+	t.Helper()
+
+	if got.Ident != want.Ident {
+		t.Errorf("Ident mismatch:\n  got:  %q\n  want: %q", got.Ident, want.Ident)
+		t.Logf("Source:\n%s", source)
+	}
+	if got.Statement != want.Statement {
+		t.Errorf("Statement mismatch:\n  got:  %q\n  want: %q", got.Statement, want.Statement)
+	}
+	if got.Generics != want.Generics {
+		t.Errorf("Generics mismatch:\n  got:  %q\n  want: %q", got.Generics, want.Generics)
+	}
+}
+
+func TestGetPropsType(t *testing.T) {
+	tests := getPropsTypeTestCases()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetPropsType([]byte(tt.source))
+			assertPropsEqual(t, got, tt.want, tt.source)
 		})
 	}
 }

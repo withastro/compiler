@@ -34,7 +34,7 @@ var INTERNAL_IMPORTS = fmt.Sprintf("import {\n  %s\n} from \"%s\";\n", strings.J
 }, ",\n  "), "http://localhost:3000/")
 var PRELUDE = fmt.Sprintf(`const $$Component = %s(($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
 var PRELUDE_WITH_ASYNC = fmt.Sprintf(`const $$Component = %s(async ($$result, $$props, %s) => {`, CREATE_COMPONENT, SLOTS)
-var PRELUDE_ASTRO_GLOBAL = fmt.Sprintf(`const Astro = $$result.createAstro($$Astro, $$props, %s);
+var PRELUDE_ASTRO_GLOBAL = fmt.Sprintf(`const Astro = $$result.createAstro($$props, %s);
 Astro.self = $$Component;`, SLOTS)
 var RETURN = fmt.Sprintf("return %s%s", TEMPLATE_TAG, BACKTICK)
 var SUFFIX = fmt.Sprintf("%s;", BACKTICK) + `
@@ -51,7 +51,6 @@ type testcase struct {
 	source           string
 	only             bool
 	transitions      bool
-	transformOptions transform.TransformOptions
 	filename         string
 }
 
@@ -845,70 +844,37 @@ import Widget2 from '../components/Widget2.astro';
 			source: `<script>Here</script><div></div>`,
 		},
 		{
-			name:   "script (renderScript: true)",
+			name:   "script",
 			source: `<main><script>console.log("Hello");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script multiple (renderScript: true)",
+			name:   "script multiple",
 			source: `<main><script>console.log("Hello");</script><script>console.log("World");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script external (renderScript: true)",
+			name:   "script external",
 			source: `<main><script src="./hello.js"></script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script external in expression (renderScript: true)",
+			name:   "script external in expression",
 			source: `<main>{<script src="./hello.js"></script>}`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			// maintain the original behavior, though it may be
-			// unneeded as renderScript is now on by default
-			name:     "script external in expression (renderScript: false)",
-			source:   `<main>{<script src="./hello.js"></script>}`,
-			filename: "/src/pages/index.astro",
-		},
-		{
-			name:   "script in expression (renderScript: true)",
+			name:   "script in expression",
 			source: `<main>{true && <script>console.log("hello")</script>}`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:     "script in expression (renderScript: false)",
-			source:   `<main>{false && <script>console.log("hello")</script>}`,
-			filename: "/src/pages/index.astro",
-		},
-		{
-			name:   "script inline (renderScript: true)",
+			name:   "script inline",
 			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 		},
 		{
-			name:   "script mixed handled and inline (renderScript: true)",
+			name:   "script mixed handled and inline",
 			source: `<main><script>console.log("Hello");</script><script is:inline>console.log("World");</script>`,
-			transformOptions: transform.TransformOptions{
-				RenderScript: true,
-			},
 			filename: "/src/pages/index.astro",
 		},
 		{
@@ -1300,24 +1266,36 @@ import { Container, Col, Row } from 'react-bootstrap';
 			source: `<body><Component><Fragment slot=named><div>Default</div><div>Named</div></Fragment></Component></body>`,
 		},
 		{
-			name:  "Fragment with await",
+			name:   "Fragment with await",
 			source: `<body><Fragment> { await Promise.resolve("Awaited") } </Fragment></body>`,
 		},
 		{
-			name:  "Fragment shorthand with await",
+			name:   "Fragment shorthand with await",
 			source: `<body><> { await Promise.resolve("Awaited") } </></body>`,
 		},
 		{
-			name:  "Fragment wrapping link with awaited href",
+			name:   "Fragment wrapping link with awaited href",
 			source: `<head><Fragment><link rel="preload" href={(await import('../fonts/some-font.woff2')).default} as="font" crossorigin /></Fragment></head>`,
 		},
 		{
-			name:  "Component with await",
+			name:   "Component with await",
 			source: `<body><Component> { await Promise.resolve("Awaited") } </Component></body>`,
 		},
 		{
 			name:   "Preserve slots inside custom-element",
 			source: `<body><my-element><div slot=name>Name</div><div>Default</div></my-element></body>`,
+		},
+		{
+			name:   "Preserve slot attribute in expression for custom element",
+			source: `<body><my-element>{!href ? <button slot={slotName}>Button</button> : <a href={href} slot={slotName}>Link</a>}</my-element></body>`,
+		},
+		{
+			name:   "Preserve slot attribute in conditional expression for custom element",
+			source: `<body><my-element>{show && <div slot="content">Content</div>}</my-element></body>`,
+		},
+		{
+			name:   "Preserve slot attribute at root level in expression",
+			source: `{!href ? <button slot={slotName}>Button</button> : <a href={href} slot={slotName}>Link</a>}`,
 		},
 		{
 			name:   "Preserve namespaces",
@@ -2175,6 +2153,20 @@ import Analytics from '../components/Analytics.astro';
 <title>{title}</title>
 <meta name="description" content="a description" />`,
 		},
+		{
+			name: "jsx comment between doctype and html",
+			source: `<!doctype html>
+{/* Comment */}
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+	</head>
+</html>`,
+    },
+    {
+			name:   "multiline class attribute on component",
+			source: "<Component class=\"some-class\n  another-class\n  third-class\">content</Component>",
+		},
 	}
 	for _, tt := range tests {
 		if tt.only {
@@ -2197,11 +2189,8 @@ import Analytics from '../components/Analytics.astro';
 			}
 
 			hash := astro.HashString(code)
-			// combine from tt.transformOptions
 			transformOptions := transform.TransformOptions{
 				Scope:                   hash,
-				RenderScript:            tt.transformOptions.RenderScript,
-				ExperimentalScriptOrder: true,
 			}
 			transform.ExtractStyles(doc, &transformOptions)
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
@@ -2329,6 +2318,16 @@ const c = '\''
 		{
 			name:   "element with unterminated template literal attribute",
 			source: `<main id=` + BACKTICK + `gotcha />`,
+		},
+		{
+			name: "jsx comment between doctype and html",
+			source: `<!doctype html>
+{/* Comment */}
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+	</head>
+</html>`,
 		},
 	}
 
