@@ -44,3 +44,5 @@ test('tracks foobar', async () => {
 	const loc = await testJSSourcemap(input, 'foobar');
 	assert.equal(loc, { source: 'index.astro', line: 6, column: 7, name: null });
 });
+
+test.run();

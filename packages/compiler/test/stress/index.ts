@@ -247,3 +247,5 @@ function* throttle(max: number, tests: any) {
 }
 
 test();
+
+test.run();

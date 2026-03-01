@@ -8,3 +8,5 @@ test('404 generates a valid identifier', async () => {
 	const output = await convertToTSX(input, { filename: '404.astro', sourcemap: 'inline' });
 	assert.match(output.code, 'export default function __AstroComponent_');
 });
+
+test.run();

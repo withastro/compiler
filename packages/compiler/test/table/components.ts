@@ -28,3 +28,5 @@ const  MyTableRow = "tr";
 	}
 	assert.equal(error, 0, 'compiler should generate valid code');
 });
+
+test.run();
