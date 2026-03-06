@@ -1,5 +1,36 @@
 # @astrojs/compiler
 
+## 3.0.0
+
+### Major Changes
+
+- c05e16e: Removes the first argument of `$$result.createAstro()`
+
+  `$$result.createAstro()` does not accept an `AstroGlobalPartial` as the first argument anymore:
+
+  ```diff
+  -const Astro = $$result.createAstro($$Astro, $$props, $$slots);
+  +const Astro = $$result.createAstro($$props, $$slots);
+  ```
+
+- c05e16e: Removes `renderScript` from `TransformOptions`. It is now the default and only behavior
+- c05e16e: Removes `experimentalScriptOrder` from `TransformOptions`. It is now the default and only behavior
+
+### Patch Changes
+
+- 811e90f: Fixes an issue where `server:defer` was treated like a transition directive, causing ViewTransitions CSS to be included even when no `transition:*` directives were used.
+- 755f046: Fixes a CSS scoping regression where selectors using the nesting selector (`&`) with pseudo-classes or pseudo-elements (e.g. `&:last-of-type`, `&::before`) inside `:global()` contexts would incorrectly receive a duplicate scope attribute.
+- f89451a: Fixed an issue where explicit `<html>` and `<head>` tags were removed from output when a JSX comment appeared between DOCTYPE and the `<html>` tag.
+- 8275bdd: Fixes a bug where trailing whitespaces were preserved before `<style>` tags after transformation, in certain cases. Now trailing whitespaces are correctly removed.
+- 56ef0ca: Fixes TSX output to transform top-level returns into throws in order to avoid downstream TypeScript parsing issues
+- e329d20: Fix slot attribute stripped inside expression
+- 02de370: fixed a bug where the Astro compiler incorrectly handled the 'as' property name in Props interfaces.
+
+  This allows Astro components to use 'as' as a prop name (common pattern for polymorphic components) without breaking TypeScript type inference. The Props type is now correctly preserved when destructuring objects with an 'as'
+  property.
+
+- 615eb21: Fix CSS nesting so nested selectors without an ampersand are parsed and scoped correctly.
+
 ## 3.0.0-beta.1
 
 ### Patch Changes
