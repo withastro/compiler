@@ -20,7 +20,7 @@ func (p *printer) printScopedSelector() bool {
 	return true
 }
 
-func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bool, isLast bool) {
+func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bool, isLast bool, shouldScope bool) {
 	scoped := false
 	if !isFirst && sel.Combinator == "" {
 		// A space is required in between compound selectors if there is no
@@ -52,7 +52,11 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			whitespace = canDiscardWhitespaceAfter
 		}
 		if sel.TypeSelector.Name.Text == "*" {
-			scoped = p.printScopedSelector()
+			if shouldScope {
+				scoped = p.printScopedSelector()
+			} else {
+				p.printNamespacedName(*sel.TypeSelector, whitespace)
+			}
 		} else {
 			p.printNamespacedName(*sel.TypeSelector, whitespace)
 		}
@@ -60,7 +64,7 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 		case "body", "html":
 			scoped = true
 		default:
-			if !scoped {
+			if !scoped && shouldScope {
 				scoped = p.printScopedSelector()
 			}
 		}
@@ -83,19 +87,19 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			// This deliberately does not use identHash. From the specification:
 			// "In <id-selector>, the <hash-token>'s value must be an identifier."
 			p.printIdent(s.Name, identNormal, whitespace)
-			if !scoped {
+			if !scoped && shouldScope {
 				scoped = p.printScopedSelector()
 			}
 
 		case *css_ast.SSClass:
 			p.print(".")
 			p.printIdent(s.Name, identNormal, whitespace)
-			if !scoped {
+			if !scoped && shouldScope {
 				scoped = p.printScopedSelector()
 			}
 
 		case *css_ast.SSAttribute:
-			if !scoped {
+			if !scoped && shouldScope {
 				scoped = p.printScopedSelector()
 			}
 			p.print("[")
@@ -141,7 +145,7 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 			}
 			// If there is no type selector and all subclass selectors are pseudo
 			// selectors, we need to add the scope before the first pseudo selector.
-			if !scoped && sel.TypeSelector == nil && *onlyPseudoSubclassSelectors && i == 0 && s.Name != "global" && s.Name != "root" {
+			if !scoped && shouldScope && sel.TypeSelector == nil && *onlyPseudoSubclassSelectors && i == 0 && s.Name != "global" && s.Name != "root" {
 				scoped = p.printScopedSelector()
 			}
 			p.printPseudoClassSelector(*s, whitespace)
@@ -151,7 +155,7 @@ func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bo
 		}
 	}
 
-	if !scoped {
+	if !scoped && shouldScope {
 		p.printScopedSelector()
 	}
 

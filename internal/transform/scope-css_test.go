@@ -303,7 +303,12 @@ func TestScopeStyle(t *testing.T) {
 		{
 			name:   "nesting without ampersand",
 			source: ".nesting-root{p{color:#123456}:global(h1){color:#abcdef}}",
-			want:   ".nesting-root:where(.astro-xxxxxx){p:where(.astro-xxxxxx){color:#123456}h1{color:#abcdef}}",
+			want:   ".nesting-root:where(.astro-xxxxxx){p{color:#123456}h1{color:#abcdef}}",
+		},
+		{
+			name:   "nested descendant selector should stay unscoped",
+			source: "nav{a{color:deeppink}}",
+			want:   "nav:where(.astro-xxxxxx){a{color:deeppink}}",
 		},
 		{
 			name: "@container",
