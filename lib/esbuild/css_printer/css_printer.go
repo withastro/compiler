@@ -21,6 +21,7 @@ type printer struct {
 	css                    []byte
 	extractedLegalComments map[string]bool
 	builder                sourcemap.ChunkBuilder
+	selectorRuleDepth      int
 }
 
 type ScopeStrategy uint8
@@ -208,7 +209,9 @@ func (p *printer) printRule(rule css_ast.Rule, indent int32, omitTrailingSemicol
 		if !p.options.MinifyWhitespace {
 			p.print(" ")
 		}
+		p.selectorRuleDepth++
 		p.printRuleBlock(r.Rules, indent)
+		p.selectorRuleDepth--
 
 	case *css_ast.RQualified:
 		hasWhitespaceAfter := p.printTokens(r.Prelude, printTokensOpts{})
@@ -322,7 +325,20 @@ func (p *printer) printComplexSelectors(selectors []css_ast.ComplexSelector, ind
 		}
 
 		for j, compound := range complex.Selectors {
-			p.printCompoundSelector(compound, (!hasAtNest || i != 0) && j == 0, j+1 == len(complex.Selectors))
+			shouldScope := true
+			if p.selectorRuleDepth > 0 {
+				hasNestingSelector := false
+				for _, part := range complex.Selectors {
+					if part.NestingSelector != css_ast.NestingSelectorNone {
+						hasNestingSelector = true
+						break
+					}
+				}
+				if !hasNestingSelector {
+					shouldScope = false
+				}
+			}
+			p.printCompoundSelector(compound, (!hasAtNest || i != 0) && j == 0, j+1 == len(complex.Selectors), shouldScope)
 		}
 	}
 }
