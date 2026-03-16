@@ -1,5 +1,11 @@
 # @astrojs/compiler
 
+## 3.0.1
+
+### Patch Changes
+
+- 05ef961: Fix scoped CSS nesting so descendant selectors without `&` inside nested rules are not incorrectly re-scoped.
+
 ## 3.0.0
 
 ### Major Changes
