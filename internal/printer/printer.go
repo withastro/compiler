@@ -493,6 +493,34 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 		p.addNilSourceMapping()
 		p.print(`")}`)
 	case astro.SpreadAttribute:
+		excludeKeys := []string{}
+		foundSpread := false
+		for _, a := range n.Attr {
+			if !foundSpread {
+				if a.Type == astro.SpreadAttribute && a.Key == attr.Key && a.KeyLoc.Start == attr.KeyLoc.Start {
+					foundSpread = true
+				}
+				continue
+			}
+			if a.Type != astro.SpreadAttribute {
+				key := a.Key
+				if a.Namespace != "" {
+					key = a.Namespace + ":" + a.Key
+				}
+				found := false
+				for _, ek := range excludeKeys {
+					if ek == key {
+						found = true
+						break
+					}
+				}
+				if !found {
+					excludeKeys = append(excludeKeys, key)
+				}
+			}
+		}
+
+		// Check if we need to inject class for scoped styles
 		injectClass := false
 		for p := n.Parent; p != nil; p = p.Parent {
 			if p.Parent == nil && len(p.Styles) != 0 {
@@ -508,13 +536,32 @@ func (p *printer) printAttribute(attr astro.Attribute, n *astro.Node) {
 				}
 			}
 		}
+
 		p.print(fmt.Sprintf("${%s(", SPREAD_ATTRIBUTES))
 		p.addSourceMapping(loc.Loc{Start: attr.KeyLoc.Start - 3})
 		p.print(strings.TrimSpace(attr.Key))
-		if !injectClass {
-			p.print(`)}`)
+
+		// For excluded keys, we omit them from the spreadable object
+		// so the last specified parameter takes precedence
+		if len(excludeKeys) > 0 {
+			p.print(`,undefined,`)
+			if injectClass {
+				p.printf(`{"class":"astro-%s"}`, p.opts.Scope)
+			} else {
+				p.print(`undefined`)
+			}
+			p.print(`,[`)
+			for i, key := range excludeKeys {
+				if i > 0 {
+					p.print(`,`)
+				}
+				p.printf(`"%s"`, key)
+			}
+			p.print(`])}`)
+		} else if injectClass {
+			p.printf(`,undefined,{"class":"astro-%s"}`, p.opts.Scope)
 		} else {
-			p.printf(`,undefined,{"class":"astro-%s"})}`, p.opts.Scope)
+			p.print(`)}`)
 		}
 	case astro.ShorthandAttribute:
 		withoutComments := helpers.RemoveComments(attr.Key)
