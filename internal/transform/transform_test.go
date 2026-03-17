@@ -523,10 +523,266 @@ func TestCompactTransform(t *testing.T) {
 				t.Error(err)
 			}
 			transformOptions := TransformOptions{
-				Compact: true,
+				Compact: CompactDefault,
 			}
 			ExtractStyles(doc, &transformOptions)
 			// Clear doc.Styles to avoid scoping behavior, we're not testing that here
+			doc.Styles = make([]*astro.Node, 0)
+			Transform(doc, transformOptions, &handler.Handler{})
+			astro.PrintToSource(&b, doc)
+			got := strings.TrimSpace(b.String())
+			if tt.want != got {
+				t.Errorf("\nFAIL: %s\n  want: %s\n  got:  %s", tt.name, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestCompactJSXTransform(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		// Newline handling
+		{
+			name:   "rule1_unix_newline",
+			source: "<div>Hello\nWorld</div>",
+			want:   "<div>Hello World</div>",
+		},
+		{
+			name:   "rule1_windows_newline",
+			source: "<div>Hello\r\nWorld</div>",
+			want:   "<div>Hello World</div>",
+		},
+		{
+			name:   "rule1_old_mac_newline",
+			source: "<div>Hello\rWorld</div>",
+			want:   "<div>Hello World</div>",
+		},
+
+		// Tabs are whitespace (preserved on single-line text, trimmed on interior lines)
+		{
+			name:   "rule2_tab_preserved_single_line",
+			source: "<div>\tHello\t</div>",
+			want:   "<div>\tHello\t</div>",
+		},
+		{
+			name:   "rule2_multiple_tabs_preserved",
+			source: "<div>\t\tHello\t\t</div>",
+			want:   "<div>\t\tHello\t\t</div>",
+		},
+
+		// Leading spaces on non-first lines
+		{
+			name:   "rule3_trim_leading_line2",
+			source: "<div>A\n   B</div>",
+			want:   "<div>A B</div>",
+		},
+		{
+			name:   "rule3_preserve_leading_line1",
+			source: "<div>   A\nB</div>",
+			want:   "<div>   A B</div>",
+		},
+		{
+			name:   "rule3_trim_leading_all_nonfirst",
+			source: "<div>A\n   B\n   C</div>",
+			want:   "<div>A B C</div>",
+		},
+
+		// Trailing spaces on non-last lines
+		{
+			name:   "rule4_trim_trailing_line1",
+			source: "<div>A   \nB</div>",
+			want:   "<div>A B</div>",
+		},
+		{
+			name:   "rule4_preserve_trailing_last",
+			source: "<div>A\nB   </div>",
+			want:   "<div>A B   </div>",
+		},
+		{
+			name:   "rule4_trim_trailing_all_nonlast",
+			source: "<div>A   \nB   \nC</div>",
+			want:   "<div>A B C</div>",
+		},
+
+		// Empty lines contribute nothing
+		{
+			name:   "rule5_empty_line_middle",
+			source: "<div>A\n\nB</div>",
+			want:   "<div>A B</div>",
+		},
+		{
+			name:   "rule5_multiple_empty_lines",
+			source: "<div>A\n\n\n\nB</div>",
+			want:   "<div>A B</div>",
+		},
+		{
+			name:   "rule5_whitespace_only_line",
+			source: "<div>A\n   \nB</div>",
+			want:   "<div>A B</div>",
+		},
+
+		// Lines joined with single space
+		{
+			name:   "rule6_two_lines_joined",
+			source: "<div>Hello\nWorld</div>",
+			want:   "<div>Hello World</div>",
+		},
+		{
+			name:   "rule6_no_trailing_space_after_last",
+			source: "<div>Hello\nWorld\n</div>",
+			want:   "<div>Hello World</div>",
+		},
+
+		// Empty result discards text node
+		{
+			name:   "rule7_only_spaces_single_line",
+			source: "<div>   </div>",
+			want:   "<div>   </div>",
+		},
+		{
+			name:   "rule7_only_newline",
+			source: "<div>\n</div>",
+			want:   "<div></div>",
+		},
+		{
+			name:   "rule7_only_whitespace_multiline",
+			source: "<div>\n   \n</div>",
+			want:   "<div></div>",
+		},
+		{
+			name:   "rule7_whitespace_between_elements",
+			source: "<div>\n  <p></p>\n</div>",
+			want:   "<div><p></p></div>",
+		},
+
+		// Single line preserves both ends
+		{
+			name:   "single_line_both_ends",
+			source: "<div>  Hello  </div>",
+			want:   "<div>  Hello  </div>",
+		},
+		{
+			name:   "single_line_tabs",
+			source: "<div>\t\tHello\t\t</div>",
+			want:   "<div>\t\tHello\t\t</div>",
+		},
+
+		// Text adjacent to elements
+		{
+			name:   "text_before_element_same_line",
+			source: "<div>Hello <span></span></div>",
+			want:   "<div>Hello <span></span></div>",
+		},
+		{
+			name:   "text_after_element_same_line",
+			source: "<div><span></span> World</div>",
+			want:   "<div><span></span> World</div>",
+		},
+		{
+			name:   "text_before_element_diff_line",
+			source: "<div>Hello\n<span></span></div>",
+			want:   "<div>Hello<span></span></div>",
+		},
+
+		// Expressions
+		{
+			name:   "whitespace_between_expr_same_line",
+			source: "<div>{x}  {y}</div>",
+			want:   "<div>{x}  {y}</div>",
+		},
+		{
+			name:   "whitespace_between_expr_same_line_tab",
+			source: "<div>{x}\t{y}</div>",
+			want:   "<div>{x}\t{y}</div>",
+		},
+		{
+			name:   "whitespace_between_expr_diff_lines",
+			source: "<div>\n  {x}\n  {y}\n</div>",
+			want:   "<div>{x}{y}</div>",
+		},
+		{
+			name:   "text_then_expression",
+			source: "<div>hello {x}</div>",
+			want:   "<div>hello {x}</div>",
+		},
+		{
+			name:   "expression_then_text",
+			source: "<div>{x} hello</div>",
+			want:   "<div>{x} hello</div>",
+		},
+
+		// Pre/raw element preservation
+		{
+			name:   "pre_preserved",
+			source: "<pre>  Hello\n  World  </pre>",
+			want:   "<pre>  Hello\n  World  </pre>",
+		},
+		{
+			name:   "textarea_preserved",
+			source: "<textarea>  Hello\n  World  </textarea>",
+			want:   "<textarea>  Hello\n  World  </textarea>",
+		},
+
+		// Expression trim behavior
+		{
+			name:   "expression_trim_first",
+			source: "<div>{\n() => {\n\t\treturn <span />}}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
+		},
+		{
+			name:   "expression_trim_last",
+			source: "<div>{() => {\n\t\treturn <span />}\n}</div>",
+			want:   "<div>{() => {\n\t\treturn <span></span>}}</div>",
+		},
+
+		// Complex multi-line indented content
+		{
+			name: "typical_component_children",
+			source: `<div>
+  <h1>Title</h1>
+  <p>Content</p>
+</div>`,
+			want: "<div><h1>Title</h1><p>Content</p></div>",
+		},
+		{
+			name: "mixed_text_and_elements",
+			source: `<p>
+  Hello
+  <strong>World</strong>
+</p>`,
+			want: "<p>Hello<strong>World</strong></p>",
+		},
+		{
+			name: "mixed_text_elements_and_expression_container",
+			source: `<p>
+  Hello{' '}
+  <strong>World</strong>
+</p>`,
+			want: "<p>Hello{' '}<strong>World</strong></p>",
+		},
+
+		// Attributes (should be unaffected)
+		{
+			name:   "attributes",
+			source: `<div    a="1"    b={0} />`,
+			want:   `<div a="1" b={0}></div>`,
+		},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b.Reset()
+			doc, err := astro.Parse(strings.NewReader(tt.source))
+			if err != nil {
+				t.Error(err)
+			}
+			transformOptions := TransformOptions{
+				Compact: CompactJSX,
+			}
+			ExtractStyles(doc, &transformOptions)
 			doc.Styles = make([]*astro.Node, 0)
 			Transform(doc, transformOptions, &handler.Handler{})
 			astro.PrintToSource(&b, doc)
