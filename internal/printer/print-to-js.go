@@ -47,10 +47,11 @@ import (
 // becomes "<html><head><head/><body>abc</body></html>".
 func PrintToJS(sourcetext string, n *Node, cssLen int, opts transform.TransformOptions, h *handler.Handler) PrintResult {
 	p := &printer{
-		sourcetext: sourcetext,
-		opts:       opts,
-		builder:    sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
-		handler:    h,
+		sourcetext:         sourcetext,
+		opts:               opts,
+		builder:            sourcemap.MakeChunkBuilder(nil, sourcemap.GenerateLineOffsetTables(sourcetext, len(strings.Split(sourcetext, "\n")))),
+		handler:            h,
+		hasTemplateElement: n.ContainsTemplateElement,
 	}
 	return printToJs(p, n, cssLen, opts)
 }
@@ -531,6 +532,12 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 		return
 	}
 
+	// Emit template depth tracking for HTML <template> elements
+	if n.DataAtom == atom.Template && n.Data == "template" && !isComponent {
+		p.addNilSourceMapping()
+		p.print(fmt.Sprintf("${%s(%s)}", TEMPLATE_ENTER, RESULT))
+	}
+
 	// Add initial newline where there is danger of a newline beging ignored.
 	if c := n.FirstChild; c != nil && c.Type == TextNode && strings.HasPrefix(c.Data, "\n") {
 		switch n.Data {
@@ -796,6 +803,10 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 	}
 	if n.DataAtom == atom.Script || n.DataAtom == atom.Style {
 		p.printDefineVarsClose(n)
+	}
+	if n.DataAtom == atom.Template && n.Data == "template" && !isComponent {
+		p.addNilSourceMapping()
+		p.print(fmt.Sprintf("${%s(%s)}", TEMPLATE_EXIT, RESULT))
 	}
 	if isComponent || isSlot {
 		p.print(")}")
