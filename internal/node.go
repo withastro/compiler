@@ -101,6 +101,7 @@ type Node struct {
 	HydrationDirectives      map[string]bool
 	ServerComponents         []*HydratedComponentMetadata
 	ContainsHead             bool
+	ContainsTemplateElement  bool
 	HeadPropagation          bool
 
 	Type      NodeType
