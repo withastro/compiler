@@ -33,6 +33,7 @@ type printer struct {
 	hasInternalImports bool
 	hasCSSImports      bool
 	needsTransitionCSS bool
+	hasTemplateElement bool
 
 	// Optional, used only for TSX output
 	ranges TSXRanges
@@ -55,6 +56,8 @@ var DEFINE_STYLE_VARS = "$$defineStyleVars"
 var DEFINE_SCRIPT_VARS = "$$defineScriptVars"
 var CREATE_METADATA = "$$createMetadata"
 var RENDER_SCRIPT = "$$renderScript"
+var TEMPLATE_ENTER = "$$templateEnter"
+var TEMPLATE_EXIT = "$$templateExit"
 var METADATA = "$$metadata"
 var RESULT = "$$result"
 var SLOTS = "$$slots"
@@ -215,6 +218,12 @@ func (p *printer) printInternalImports(importSpecifier string, opts *RenderOptio
 	p.print("createTransitionScope as " + CREATE_TRANSITION_SCOPE + ",\n  ")
 	p.addNilSourceMapping()
 	p.print("renderScript as " + RENDER_SCRIPT + ",\n  ")
+	if p.hasTemplateElement {
+		p.addNilSourceMapping()
+		p.print("templateEnter as " + TEMPLATE_ENTER + ",\n  ")
+		p.addNilSourceMapping()
+		p.print("templateExit as " + TEMPLATE_EXIT + ",\n  ")
+	}
 
 	// Only needed if using fallback `resolvePath` as it calls `$$metadata.resolvePath`
 	if opts.opts.ResolvePath == nil {
