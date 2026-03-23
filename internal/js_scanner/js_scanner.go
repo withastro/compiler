@@ -804,7 +804,9 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 				if next == js.DotToken {
 					isMeta := false
 					for {
-						next, _ := l.Next()
+						next, nextInnerValue := l.Next()
+						i += len(nextInnerValue)
+						text = append(text, nextInnerValue...)
 						if next == js.MetaToken {
 							isMeta = true
 						}
@@ -919,6 +921,7 @@ func NextImportStatement(source []byte, pos int) (int, ImportStatement) {
 					break
 				}
 			}
+			continue
 		}
 
 		i += len(value)
