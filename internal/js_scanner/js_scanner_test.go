@@ -263,6 +263,20 @@ import Test from "../components/Test.astro";`,
 			want: `import Test from "../components/Test.astro";`,
 		},
 		{
+			name: "import.meta.env before import",
+			source: `export const prerender = import.meta.env.MY_VAR !== 'true';
+import { nanoid } from 'nanoid';`,
+			want: `import { nanoid } from 'nanoid';`,
+		},
+		{
+			name: "import.meta.env before multiple imports",
+			source: `export const prerender = import.meta.env.PUBLIC_PRERENDER;
+import { foo } from 'foo';
+import { bar } from 'bar';`,
+			want: `import { foo } from 'foo';
+import { bar } from 'bar';`,
+		},
+		{
 			name: "import/export",
 			source: `import { fn } from "package";
 export async fn() {}
