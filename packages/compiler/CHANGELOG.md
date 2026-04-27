@@ -1,5 +1,15 @@
 # @astrojs/compiler
 
+## 4.0.0
+
+### Major Changes
+
+- a0a1082: Calling `templateEnter` / `templateExit` when emitting `<template>`
+
+### Minor Changes
+
+- 51c38ef: Expand `compact` option to support JSX-style whitespace stripping
+
 ## 3.0.1
 
 ### Patch Changes
