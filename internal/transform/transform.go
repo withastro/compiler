@@ -3,8 +3,10 @@ package transform
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	astro "github.com/withastro/compiler/internal"
 	"github.com/withastro/compiler/internal/handler"
@@ -20,6 +22,14 @@ const DATA_ASTRO_RELOAD = "data-astro-reload"
 const TRANSITION_PERSIST_PROPS = "transition:persist-props"
 const SERVER_DEFER = "server:defer"
 
+type CompactMode uint8
+
+const (
+	CompactNone    CompactMode = iota
+	CompactDefault             // standard whitespace collapsing
+	CompactJSX                 // JSX-style whitespace stripping
+)
+
 type TransformOptions struct {
 	Scope                   string
 	Filename                string
@@ -28,7 +38,7 @@ type TransformOptions struct {
 	SourceMap               string
 	AstroGlobalArgs         string
 	ScopedStyleStrategy     string
-	Compact                 bool
+	Compact                 CompactMode
 	ResultScopedSlot        bool
 	TransitionsAnimationURL string
 	ResolvePath             func(string) string
@@ -104,7 +114,10 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 
 	TrimTrailingSpace(doc)
 
-	if opts.Compact {
+	switch opts.Compact {
+	case CompactJSX:
+		collapseWhitespaceJSX(doc)
+	case CompactDefault:
 		collapseWhitespace(doc)
 	}
 
@@ -301,12 +314,7 @@ func isRawElement(n *astro.Node) bool {
 		}
 	}
 	rawTags := []string{"pre", "listing", "iframe", "noembed", "noframes", "math", "plaintext", "script", "style", "textarea", "title", "xmp"}
-	for _, tag := range rawTags {
-		if n.Data == tag {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(rawTags, n.Data)
 }
 
 func isWhitespaceInsensitiveElement(n *astro.Node) bool {
@@ -378,6 +386,105 @@ func collapseWhitespace(doc *astro.Node) {
 					n.Data = n.Data + " "
 				}
 			}
+		}
+	})
+}
+
+// Strips whitespace from JSX text content, matching the de facto standard algorithm
+// used by all major JSX transpilers (Babel, TypeScript, SWC, esbuild).
+//
+// Rules:
+//   - First line: preserve leading whitespace, trim trailing whitespace
+//   - Middle lines: trim both leading and trailing whitespace
+//   - Last line: trim leading whitespace, preserve trailing whitespace
+//   - Non-empty lines are joined with a single space
+//   - Empty/whitespace-only lines contribute nothing
+//
+// Adapted from esbuild's fixWhitespaceAndDecodeJSXEntities (without entity decoding,
+// which is handled by our HTML parser):
+// https://github.com/evanw/esbuild/blob/9129e00/internal/js_lexer/js_lexer.go#L2135-L2188
+//
+// See also Babel's cleanJSXElementLiteralChild:
+// https://github.com/babel/babel/blob/8ddfe9c/packages/babel-types/src/utils/react/cleanJSXElementLiteralChild.ts#L5-L51
+func cleanJSXTextWhitespace(text string) string {
+	afterLastNonWhitespace := -1
+	firstNonWhitespace := 0 // 0 for first line (preserves leading whitespace)
+	var result strings.Builder
+	i := 0
+
+	for i < len(text) {
+		c, width := utf8.DecodeRuneInString(text[i:])
+
+		switch c {
+		// Line terminators: \r, \n, \u2028 (LS), \u2029 (PS)
+		// See: https://github.com/evanw/esbuild/blob/9129e00/internal/js_lexer/js_lexer.go#L2148
+		case '\r', '\n', '\u2028', '\u2029':
+			// Emit trimmed content from the current line
+			if firstNonWhitespace != -1 && afterLastNonWhitespace != -1 {
+				if result.Len() > 0 {
+					result.WriteByte(' ')
+				}
+				result.WriteString(text[firstNonWhitespace:afterLastNonWhitespace])
+			}
+			// Reset for next line
+			firstNonWhitespace = -1
+
+		// Simple whitespace
+		// See: https://github.com/evanw/esbuild/blob/9129e00/internal/js_lexer/js_lexer.go#L2162
+		case '\t', ' ':
+			// Whitespace: don't update tracking positions
+
+		default:
+			// Check for other Unicode whitespace (NBSP, etc.)
+			// See: https://github.com/evanw/esbuild/blob/9129e00/internal/js_lexer/js_lexer.go#L2167
+			if !unicode.IsSpace(c) {
+				afterLastNonWhitespace = i + width
+				if firstNonWhitespace == -1 {
+					firstNonWhitespace = i
+				}
+			}
+		}
+
+		i += width
+	}
+
+	// Handle last line: preserve trailing whitespace
+	// See: https://github.com/evanw/esbuild/blob/9129e00/internal/js_lexer/js_lexer.go#L2178-L2185
+	if firstNonWhitespace != -1 {
+		if result.Len() > 0 {
+			result.WriteByte(' ')
+		}
+		result.WriteString(text[firstNonWhitespace:])
+	}
+
+	return result.String()
+}
+
+// JSX-style whitespace stripping, matching the de facto standard used by Babel, TypeScript, SWC, and esbuild.
+func collapseWhitespaceJSX(doc *astro.Node) {
+	walk(doc, func(n *astro.Node) {
+		if n.Type == astro.TextNode {
+			// Don't trim any whitespace if the node or any of its ancestors is raw
+			if n.Closest(isRawElement) != nil {
+				return
+			}
+
+			// Trim the whitespace on each end of top-level expressions
+			if n.Parent != nil && n.Parent.Expression {
+				// Trim left whitespace in the first child
+				if n.PrevSibling == nil {
+					n.Data = strings.TrimLeftFunc(n.Data, unicode.IsSpace)
+				}
+				// Trim right whitespace in the last child
+				if n.NextSibling == nil {
+					n.Data = strings.TrimRightFunc(n.Data, unicode.IsSpace)
+				}
+				// Don't apply JSX text cleaning inside expressions
+				return
+			}
+
+			// Apply the standard JSX text whitespace algorithm
+			n.Data = cleanJSXTextWhitespace(n.Data)
 		}
 	})
 }

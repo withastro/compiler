@@ -41,3 +41,5 @@ test('does not panic on unfinished single quoted attribute', async () => {
 
 	assert.equal(error, 0, 'compiler should not have panicked');
 });
+
+test.run();

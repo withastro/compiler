@@ -68,3 +68,5 @@ test('preserve style tag position V', async () => {
 	assert.equal(lastChild.name, 'style', 'Expected last child node to be of type "style"');
 	assert.equal(lastChild.children[0].type, 'text', 'Expected last child node to be of type "text"');
 });
+
+test.run();

@@ -95,9 +95,12 @@ func makeTransformOptions(options js.Value) transform.TransformOptions {
 
 	astroGlobalArgs := jsString(options.Get("astroGlobalArgs"))
 
-	compact := false
-	if jsBool(options.Get("compact")) {
-		compact = true
+	compact := transform.CompactNone
+	compactVal := options.Get("compact")
+	if compactVal.Type() == js.TypeString && compactVal.String() == "jsx" {
+		compact = transform.CompactJSX
+	} else if jsBool(compactVal) {
+		compact = transform.CompactDefault
 	}
 
 	scopedSlot := false
