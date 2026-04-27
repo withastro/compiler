@@ -79,6 +79,9 @@ func Transform(doc *astro.Node, opts TransformOptions, h *handler.Handler) *astr
 		if n.DataAtom == a.Head && !IsImplicitNode(n) {
 			doc.ContainsHead = true
 		}
+		if n.DataAtom == a.Template && n.Data == "template" && !n.Component && !n.Fragment {
+			doc.ContainsTemplateElement = true
+		}
 		if opts.AnnotateSourceFile {
 			AnnotateElement(n, opts)
 		}

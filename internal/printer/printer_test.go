@@ -47,11 +47,11 @@ var CREATE_ASTRO_CALL = "const $$Astro = $$createAstro('https://astro.build');\n
 var RENDER_HEAD_RESULT = "${$$renderHead($$result)}"
 
 type testcase struct {
-	name             string
-	source           string
-	only             bool
-	transitions      bool
-	filename         string
+	name        string
+	source      string
+	only        bool
+	transitions bool
+	filename    string
 }
 
 type jsonTestcase struct {
@@ -844,28 +844,28 @@ import Widget2 from '../components/Widget2.astro';
 			source: `<script>Here</script><div></div>`,
 		},
 		{
-			name:   "script",
-			source: `<main><script>console.log("Hello");</script>`,
+			name:     "script",
+			source:   `<main><script>console.log("Hello");</script>`,
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script multiple",
-			source: `<main><script>console.log("Hello");</script><script>console.log("World");</script>`,
+			name:     "script multiple",
+			source:   `<main><script>console.log("Hello");</script><script>console.log("World");</script>`,
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script external",
-			source: `<main><script src="./hello.js"></script>`,
+			name:     "script external",
+			source:   `<main><script src="./hello.js"></script>`,
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script external in expression",
-			source: `<main>{<script src="./hello.js"></script>}`,
+			name:     "script external in expression",
+			source:   `<main>{<script src="./hello.js"></script>}`,
 			filename: "/src/pages/index.astro",
 		},
 		{
-			name:   "script in expression",
-			source: `<main>{true && <script>console.log("hello")</script>}`,
+			name:     "script in expression",
+			source:   `<main>{true && <script>console.log("hello")</script>}`,
 			filename: "/src/pages/index.astro",
 		},
 		{
@@ -873,8 +873,8 @@ import Widget2 from '../components/Widget2.astro';
 			source: `<main><script is:inline type="module">console.log("Hello");</script>`,
 		},
 		{
-			name:   "script mixed handled and inline",
-			source: `<main><script>console.log("Hello");</script><script is:inline>console.log("World");</script>`,
+			name:     "script mixed handled and inline",
+			source:   `<main><script>console.log("Hello");</script><script is:inline>console.log("World");</script>`,
 			filename: "/src/pages/index.astro",
 		},
 		{
@@ -2070,10 +2070,18 @@ import Analytics from '../components/Analytics.astro';
 		<meta charset="UTF-8" />
 	</head>
 </html>`,
-    },
-    {
+		},
+		{
 			name:   "multiline class attribute on component",
 			source: "<Component class=\"some-class\n  another-class\n  third-class\">content</Component>",
+		},
+		{
+			name:   "HTML template element emits depth tracking",
+			source: `<template id="tpl"><div>hello</div></template>`,
+		},
+		{
+			name:   "nested HTML template elements emit depth tracking",
+			source: `<template><template><div>inner</div></template></template>`,
 		},
 	}
 	for _, tt := range tests {
@@ -2098,7 +2106,7 @@ import Analytics from '../components/Analytics.astro';
 
 			hash := astro.HashString(code)
 			transformOptions := transform.TransformOptions{
-				Scope:                   hash,
+				Scope: hash,
 			}
 			transform.ExtractStyles(doc, &transformOptions)
 			transform.Transform(doc, transformOptions, h) // note: we want to test Transform in context here, but more advanced cases could be tested separately
