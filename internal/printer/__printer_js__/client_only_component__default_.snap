@@ -39,7 +39,6 @@ import {
   renderScript as $$renderScript,
   createMetadata as $$createMetadata
 } from "http://localhost:3000/";
-import Component from '../components';
 
 export const $$metadata = $$createMetadata(import.meta.url, { modules: [], hydratedComponents: [], clientOnlyComponents: ['../components'], hydrationDirectives: new Set(['only']), hoisted: [] });
 
