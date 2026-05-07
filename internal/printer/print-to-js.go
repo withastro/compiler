@@ -7,6 +7,7 @@ package printer
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -188,6 +189,17 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 						}
 						delete(clientOnlyBindings, name)
 					}
+					// Also exclude server-rendered components (no client: directive)
+					for _, comp := range n.Parent.ServerComponents {
+						name := comp.LocalName
+						if name == "" {
+							name = comp.Specifier
+						}
+						if idx := strings.Index(name, "."); idx != -1 {
+							name = name[:idx]
+						}
+						delete(clientOnlyBindings, name)
+					}
 
 					// Collect frontmatter body text to check for binding usage
 					var bodyText []byte
@@ -213,7 +225,7 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 										allDead = false
 										break
 									}
-									if bytes.Contains(bodyText, []byte(imp.LocalName)) {
+									if regexp.MustCompile(`\b` + regexp.QuoteMeta(imp.LocalName) + `\b`).Match(bodyText) {
 										allDead = false
 										break
 									}
