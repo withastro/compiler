@@ -509,6 +509,33 @@ import Component from '../components';
 </html>`,
 		},
 		{
+			name: "client:only preserves mixed import from same specifier",
+			source: `---
+import Component from '../components';
+import { helper } from '../components';
+const data = helper();
+---
+<Component client:only />
+<div>{data}</div>`,
+		},
+		{
+			name: "client:only preserves import when binding used in frontmatter",
+			source: `---
+import Component from '../components';
+console.log(Component.name);
+---
+<Component client:only />`,
+		},
+		{
+			name: "client:only preserves mixed binding import",
+			source: `---
+import Component, { helper } from '../components';
+const data = helper();
+---
+<Component client:only />
+<div>{data}</div>`,
+		},
+		{
 			name:   "iframe",
 			source: `<iframe src="something" />`,
 		},

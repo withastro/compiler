@@ -168,35 +168,59 @@ func render1(p *printer, n *Node, opts RenderOptions) {
 				}
 				render := js_scanner.HoistImports([]byte(c.Data))
 				if len(render.Hoisted) > 0 {
-					// Build set of specifiers used exclusively by client:only
-					// components. These imports are dead code in the prerender
-					// output (the compiler passes null to $$renderComponent) so
-					// we skip them to keep the module out of Rollup's graph.
-					clientOnlySpecifiers := make(map[string]bool)
-					for _, comp := range n.Parent.ClientOnlyComponents {
-						clientOnlySpecifiers[comp.Specifier] = true
+					// Build set of local binding names used exclusively by
+					// client:only components. The compiler passes null to
+					// $$renderComponent for these, so the import is dead code
+					// and can be stripped to keep Rollup from traversing the
+					// component's dependency tree during prerender.
+					clientOnlyBindings := make(map[string]bool)
+					for _, node := range n.Parent.ClientOnlyComponentNodes {
+						name := node.Data
+						if idx := strings.Index(name, "."); idx != -1 {
+							name = name[:idx]
+						}
+						clientOnlyBindings[name] = true
 					}
-					for _, comp := range n.Parent.HydratedComponents {
-						delete(clientOnlySpecifiers, comp.Specifier)
+					for _, node := range n.Parent.HydratedComponentNodes {
+						name := node.Data
+						if idx := strings.Index(name, "."); idx != -1 {
+							name = name[:idx]
+						}
+						delete(clientOnlyBindings, name)
 					}
-					for _, comp := range n.Parent.ServerComponents {
-						delete(clientOnlySpecifiers, comp.Specifier)
+
+					// Collect frontmatter body text to check for binding usage
+					var bodyText []byte
+					if len(clientOnlyBindings) > 0 {
+						for _, b := range render.Body {
+							bodyText = append(bodyText, b...)
+						}
 					}
 
 					for i, hoisted := range render.Hoisted {
 						if len(bytes.TrimSpace(hoisted)) == 0 {
 							continue
 						}
-						// Skip imports that exist solely for a client:only component.
-						// Only safe when: (1) the specifier is client-only-exclusive,
-						// (2) the import has exactly one binding (no mixed exports like
-						// `import Repl, { getMeta } from './Repl'`), and (3) the import
-						// is not a bare side-effect import (`import './Repl'`).
-						if len(clientOnlySpecifiers) > 0 {
+						// Strip an import only when every binding it introduces
+						// is a client-only-exclusive component identifier that
+						// does not appear in the frontmatter body.
+						if len(clientOnlyBindings) > 0 {
 							_, stmt := js_scanner.NextImportStatement(hoisted, 0)
-							if stmt.Specifier != "" && clientOnlySpecifiers[stmt.Specifier] &&
-								len(stmt.Imports) == 1 && !stmt.IsType {
-								continue
+							if len(stmt.Imports) > 0 && !stmt.IsType {
+								allDead := true
+								for _, imp := range stmt.Imports {
+									if !clientOnlyBindings[imp.LocalName] {
+										allDead = false
+										break
+									}
+									if bytes.Contains(bodyText, []byte(imp.LocalName)) {
+										allDead = false
+										break
+									}
+								}
+								if allDead {
+									continue
+								}
 							}
 						}
 						hoistedLoc := render.HoistedLocs[i]
