@@ -87,10 +87,12 @@ func escapeBackticks(src string) string {
 }
 
 func escapeSingleQuote(str string) string {
+	str = strings.Replace(str, "\\", "\\\\", -1)
 	return strings.Replace(str, "'", "\\'", -1)
 }
 
 func escapeDoubleQuote(str string) string {
+	str = strings.Replace(str, "\\", "\\\\", -1)
 	return strings.Replace(str, `"`, "\\\"", -1)
 }
 

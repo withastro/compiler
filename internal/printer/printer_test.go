@@ -391,6 +391,10 @@ import * as ns from '../components';
 			source: `<Component><div slot='"name"' /></Component>`,
 		},
 		{
+			name:   "component attribute with backslash",
+			source: `<Component path='C:\dir\' name={x} />`,
+		},
+		{
 			name:   "#955 ternary slot with text",
 			source: `<Component>Hello{isLeaf ? <p>Leaf</p> : <p>Branch</p>}world</Component>`,
 		},
