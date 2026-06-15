@@ -110,7 +110,7 @@ func convertAttributeValue(n *astro.Node, attrName string) string {
 		attr := transform.GetAttr(n, attrName)
 		switch attr.Type {
 		case astro.QuotedAttribute:
-			expr = fmt.Sprintf(`"%s"`, attr.Val)
+			expr = fmt.Sprintf(`"%s"`, escapeDoubleQuote(escapeNewlines(attr.Val)))
 		case astro.ExpressionAttribute:
 			expr = fmt.Sprintf(`(%s)`, attr.Val)
 		case astro.TemplateLiteralAttribute:

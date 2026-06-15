@@ -1997,6 +1997,12 @@ const items = ["Dog", "Cat", "Platipus"];
 			transitions: true,
 		},
 		{
+			name:        "transition:name with a quote in the value",
+			source:      `<div transition:name='one"two'></div>`,
+			filename:    "/projects/app/src/pages/page.astro",
+			transitions: true,
+		},
+		{
 			name:        "transition:animate with an expression",
 			source:      "<div transition:animate={slide({duration:15})}></div>",
 			filename:    "/projects/app/src/pages/page.astro",
