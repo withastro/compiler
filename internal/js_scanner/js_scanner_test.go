@@ -984,6 +984,35 @@ func getPropsTypeTestCases() []propsTestCase {
 			want: makeProps("Props", "<T>", "<T>"),
 		},
 
+		// Issue #16232: operators that the lexer emits as a single token
+		// containing `<` or `>` (e.g. `<<`, `<=`, `>>=`) must not be mistaken
+		// for generic angle brackets. Previously they desynced the bracket
+		// depth and offset tracking, crashing on otherwise valid Props.
+		{
+			name: "Props generic with left-shift default - issue #16232",
+			source: `interface Props<T extends number = (1 << 2)> {
+				foo: T;
+			}`,
+			want: makeProps("Props", "<T extends number = (1 << 2)>", "<T>"),
+		},
+		{
+			name: "Props generic with comparison default - issue #16232",
+			source: `interface Props<T extends number = (1 <= 2 ? 0 : 1)> {
+				foo: T;
+			}`,
+			want: makeProps("Props", "<T extends number = (1 <= 2 ? 0 : 1)>", "<T>"),
+		},
+
+		// Nested generics close with a `>>`/`>>>` token, which must still be
+		// counted as several closing brackets.
+		{
+			name: "Props with nested generics",
+			source: `interface Props<T extends Map<string, Array<number>>> {
+				foo: T;
+			}`,
+			want: makeProps("Props", "<T extends Map<string, Array<number>>>", "<T>"),
+		},
+
 		// Issue #927: 'as' prop name handling
 		{
 			name: "destructuring with 'as' prop name without type assertion - issue #927",

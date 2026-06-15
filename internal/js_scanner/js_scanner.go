@@ -479,6 +479,22 @@ type Props struct {
 	Generics  string
 }
 
+// isClosingAngleRun reports whether value is a non-empty run of `>` characters,
+// i.e. one of the `>`, `>>` or `>>>` tokens the lexer emits when several
+// generics close at once (`Foo<Bar<T>>`). It deliberately excludes operators
+// like `>=` and `>>=` that merely contain a `>`.
+func isClosingAngleRun(value []byte) bool {
+	if len(value) == 0 {
+		return false
+	}
+	for _, c := range value {
+		if c != '>' {
+			return false
+		}
+	}
+	return true
+}
+
 func GetPropsType(source []byte) Props {
 	defaultPropType := "Record<string, any>"
 	ident := defaultPropType
@@ -577,7 +593,13 @@ outer:
 			continue
 		}
 
-		if bytes.ContainsAny(value, "<>") {
+		// Only a bare `<` opens a generic, and only a run of `>` (e.g. `>>`
+		// closing `Foo<Bar<T>>`) closes one. Operators such as `<<`, `<=`,
+		// `>=` or `>>=` contain `<`/`>` but are not generic brackets, so they
+		// must be skipped here. Treating them as brackets previously desynced
+		// the `pairs['<']` depth and the `i` offset, which made `source[start:end]`
+		// panic on otherwise valid generic Props (e.g. `Props<T = (1 << 2)>`).
+		if bytes.Equal(value, []byte("<")) || isClosingAngleRun(value) {
 			if len(idents) > 0 && idents[len(idents)-1] == "Props" {
 				start = i
 				ident = "Props"
