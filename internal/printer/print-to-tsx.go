@@ -333,7 +333,10 @@ func getTextType(n *astro.Node) TextType {
 func renderTsx(p *printer, n *Node, o *TSXOptions) {
 	// Root of the document, print all children
 	if n.Type == DocumentNode {
-		source := []byte(p.sourcetext)
+		var source []byte
+		if n.FirstChild != nil && n.FirstChild.Type == FrontmatterNode && n.FirstChild.FirstChild != nil {
+			source = []byte(n.FirstChild.FirstChild.Data)
+		}
 		props := js_scanner.GetPropsType(source)
 		hasGetStaticPaths := js_scanner.HasGetStaticPaths(source)
 		hasChildren := false

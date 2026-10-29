@@ -1003,6 +1003,29 @@ func getPropsTypeTestCases() []propsTestCase {
 			const { as: Component, href } = Astro.props as Props;`,
 			want: makeProps("Props", "", ""),
 		},
+
+		// Issue #1169: comments and non-Props angle brackets
+		{
+			name: "comments with angle brackets before interface Props - issue #1169",
+			source: `/*
+			  header > nav, footer > nav
+			  <main>
+			*/
+			interface Props {
+				titulo: string;
+			}
+			const { titulo } = Astro.props;
+			// trailing comment with as keyword`,
+			want: makeProps("Props", "", ""),
+		},
+		{
+			name: "arrow function and generic type before generic Props",
+			source: `type Other<U> = (value: U) => U;
+			interface Props<T> {
+				foo: T;
+			}`,
+			want: makeProps("Props", "<T>", "<T>"),
+		},
 	}
 }
 

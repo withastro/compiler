@@ -506,7 +506,7 @@ outer:
 		token, value := l.Next()
 
 		if token == js.DivToken || token == js.DivEqToken {
-			if len(source) > i {
+			if i+1 < len(source) {
 				lns := bytes.Split(source[i+1:], []byte{'\n'})
 				if bytes.Contains(lns[0], []byte{'/'}) {
 					token, value = l.RegExp()
@@ -523,8 +523,9 @@ outer:
 			break
 		}
 
-		// Common delimiters. Track their length, then skip.
-		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken {
+		// Common delimiters and comments. Track their length, then skip.
+		if token == js.WhitespaceToken || token == js.LineTerminatorToken || token == js.SemicolonToken ||
+			token == js.CommentToken || token == js.CommentLineTerminatorToken {
 			i += len(value)
 			continue
 		}
@@ -577,27 +578,28 @@ outer:
 			continue
 		}
 
-		if bytes.ContainsAny(value, "<>") {
-			if len(idents) > 0 && idents[len(idents)-1] == "Props" {
-				start = i
-				ident = "Props"
-				idents = make([]string, 0)
-			}
-			for _, c := range value {
-				if c == '<' {
-					pairs['<']++
-					i += len(value)
-					continue
+		if token == js.LtToken || token == js.LtLtToken || token == js.GtToken || token == js.GtGtToken || token == js.GtGtGtToken {
+			if pairs['<'] > 0 || ((token == js.LtToken || token == js.LtLtToken) && len(idents) > 0 && idents[len(idents)-1] == "Props") {
+				if pairs['<'] == 0 {
+					start = i
+					ident = "Props"
+					idents = make([]string, 0)
 				}
-				if c == '>' {
-					pairs['<']--
-					if pairs['<'] == 0 {
-						end = i
-						// Important: only break out if we've already found `Props`!
-						if ident != defaultPropType {
-							break outer
-						} else {
-							continue
+				for offset, c := range value {
+					if c == '<' {
+						pairs['<']++
+						continue
+					}
+					if c == '>' {
+						pairs['<']--
+						if pairs['<'] == 0 {
+							end = i + offset + 1
+							// Important: only break out if we've already found `Props`!
+							if ident != defaultPropType {
+								break outer
+							} else {
+								continue
+							}
 						}
 					}
 				}

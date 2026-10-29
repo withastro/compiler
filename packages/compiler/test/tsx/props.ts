@@ -435,4 +435,28 @@ ${PREFIX()}`;
 	assert.snapshot(code, output, 'expected code to match snapshot');
 });
 
+test('props interface with comments containing angle brackets and template as attribute', async () => {
+	const input = `---
+/*
+  header > nav, footer > nav
+  <main>
+*/
+interface Props {
+  titulo: string;
+  descricao?: string;
+}
+
+const { titulo, descricao = 'default' } = Astro.props;
+---
+
+<head>
+  <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+  <title>{titulo}</title>
+  <meta name="description" content={descricao} />
+</head>
+`;
+	const { code } = await convertToTSX(input, { sourcemap: 'external' });
+	assert.ok(code.includes('(_props: Props): any {}'), 'expected Props type to be preserved');
+});
+
 test.run();
